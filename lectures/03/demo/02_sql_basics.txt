@@ -6,7 +6,13 @@
    "source": [
     "# Demo 2: SQL Basics\n",
     "\n",
-    "In this notebook, we'll learn the fundamentals of SQL queries using our NHANES data."
+    "In this notebook, we'll learn the fundamentals of SQL queries using our NHANES data. We'll start with basic SELECT statements and progress to more complex queries.\n",
+    "\n",
+    "## Learning Objectives\n",
+    "- Understand basic SQL syntax\n",
+    "- Learn to filter and group data\n",
+    "- Handle NULL values and errors\n",
+    "- Write basic analytical queries"
    ]
   },
   {
@@ -15,7 +21,7 @@
    "source": [
     "## Basic SELECT\n",
     "\n",
-    "Let's start with simple SELECT statements:"
+    "The SELECT statement is the foundation of SQL queries. It allows us to retrieve data from tables. Let's start with simple examples:"
    ]
   },
   {
@@ -24,7 +30,8 @@
    "metadata": {},
    "source": [
     "%%sql\n",
-    "-- Select all columns from demographics\n",
+    "-- Basic SELECT: retrieve all columns from demographics table\n",
+    "-- This is useful for exploring table structure and data\n",
     "SELECT * FROM demographics;"
    ]
   },
@@ -34,7 +41,8 @@
    "metadata": {},
    "source": [
     "%%sql\n",
-    "-- Select specific columns\n",
+    "-- Select specific columns: only retrieve columns we need\n",
+    "-- This is more efficient than SELECT *\n",
     "SELECT seqn, age, gender FROM demographics;"
    ]
   },
@@ -44,11 +52,12 @@
    "metadata": {},
    "source": [
     "%%sql\n",
-    "-- Use column aliases\n",
+    "-- Use column aliases: make column names more readable\n",
+    "-- Aliases are especially useful in complex queries\n",
     "SELECT \n",
-    "    seqn AS participant_id,\n",
-    "    age AS participant_age,\n",
-    "    gender AS participant_gender\n",
+    "    seqn AS participant_id,  -- Rename seqn to participant_id\n",
+    "    age AS participant_age,  -- Rename age to participant_age\n",
+    "    gender AS participant_gender  -- Rename gender to participant_gender\n",
     "FROM demographics;"
    ]
   },
@@ -58,7 +67,7 @@
    "source": [
     "## NULL Handling and Error Cases\n",
     "\n",
-    "Let's see how SQL handles NULL values and common error cases:"
+    "NULL values are a common source of confusion in SQL. Let's see how to handle them and look at some common error cases:"
    ]
   },
   {
@@ -68,12 +77,13 @@
    "source": [
     "%%sql\n",
     "-- NULL handling in aggregates\n",
+    "-- This query shows different ways to handle NULLs in aggregations\n",
     "SELECT \n",
     "    gender,\n",
-    "    COUNT(*) as total_count,\n",
-    "    COUNT(education) as non_null_education,\n",
-    "    AVG(age) as avg_age,\n",
-    "    AVG(CASE WHEN age IS NOT NULL THEN age ELSE 0 END) as avg_age_with_null_handling\n",
+    "    COUNT(*) as total_count,  -- Counts all rows, including NULLs\n",
+    "    COUNT(education) as non_null_education,  -- Counts only non-NULL education values\n",
+    "    AVG(age) as avg_age,  -- NULLs are excluded from average\n",
+    "    AVG(CASE WHEN age IS NOT NULL THEN age ELSE 0 END) as avg_age_with_null_handling  -- Explicit NULL handling\n",
     "FROM demographics\n",
     "GROUP BY gender;"
    ]
@@ -85,6 +95,7 @@
    "source": [
     "%%sql\n",
     "-- Error case: non-existent column\n",
+    "-- This will show an error message, helping us understand how SQL handles invalid column names\n",
     "SELECT non_existent_column FROM demographics;  -- Will show error"
    ]
   },
@@ -94,7 +105,7 @@
    "source": [
     "## WHERE Clause\n",
     "\n",
-    "Practice filtering data:"
+    "The WHERE clause allows us to filter rows based on conditions. This is essential for focusing on relevant data:"
    ]
   },
   {
@@ -104,6 +115,7 @@
    "source": [
     "%%sql\n",
     "-- Find participants over 50 years old\n",
+    "-- This is a basic numeric comparison\n",
     "SELECT * FROM demographics WHERE age > 50;"
    ]
   },
@@ -114,6 +126,7 @@
    "source": [
     "%%sql\n",
     "-- Find female participants\n",
+    "-- This shows string comparison in WHERE clause\n",
     "SELECT * FROM demographics WHERE gender = 'F';"
    ]
   },
@@ -124,6 +137,7 @@
    "source": [
     "%%sql\n",
     "-- Combine conditions\n",
+    "-- Shows how to use AND to combine multiple conditions\n",
     "SELECT * FROM demographics \n",
     "WHERE age > 50 AND gender = 'F';"
    ]
@@ -135,6 +149,7 @@
    "source": [
     "%%sql\n",
     "-- Use IN for multiple values\n",
+    "-- More efficient than multiple OR conditions\n",
     "SELECT * FROM demographics \n",
     "WHERE race IN ('White', 'Black');"
    ]
@@ -145,7 +160,7 @@
    "source": [
     "## GROUP BY and Aggregates\n",
     "\n",
-    "Practice grouping and aggregation:"
+    "GROUP BY allows us to summarize data by groups. This is essential for data analysis:"
    ]
   },
   {
@@ -155,6 +170,7 @@
    "source": [
     "%%sql\n",
     "-- Count participants by gender\n",
+    "-- Basic grouping and counting\n",
     "SELECT gender, COUNT(*) AS count\n",
     "FROM demographics\n",
     "GROUP BY gender;"
@@ -167,6 +183,7 @@
    "source": [
     "%%sql\n",
     "-- Calculate average age by race\n",
+    "-- Shows how to use aggregate functions with GROUP BY\n",
     "SELECT race, AVG(age) AS avg_age\n",
     "FROM demographics\n",
     "GROUP BY race;"
@@ -179,12 +196,13 @@
    "source": [
     "%%sql\n",
     "-- Multiple aggregates\n",
+    "-- Shows how to calculate multiple statistics in one query\n",
     "SELECT \n",
     "    race,\n",
-    "    COUNT(*) AS count,\n",
-    "    AVG(age) AS avg_age,\n",
-    "    MIN(age) AS min_age,\n",
-    "    MAX(age) AS max_age\n",
+    "    COUNT(*) AS count,  -- Number of participants\n",
+    "    AVG(age) AS avg_age,  -- Average age\n",
+    "    MIN(age) AS min_age,  -- Youngest participant\n",
+    "    MAX(age) AS max_age  -- Oldest participant\n",
     "FROM demographics\n",
     "GROUP BY race;"
    ]
@@ -195,7 +213,7 @@
    "source": [
     "## HAVING Clause\n",
     "\n",
-    "Filter aggregated results:"
+    "HAVING allows us to filter groups after aggregation. This is different from WHERE, which filters rows before grouping:"
    ]
   },
   {
@@ -205,6 +223,7 @@
    "source": [
     "%%sql\n",
     "-- Find races with more than 100 participants\n",
+    "-- Shows how to filter groups based on aggregate values\n",
     "SELECT race, COUNT(*) AS count\n",
     "FROM demographics\n",
     "GROUP BY race\n",
@@ -218,6 +237,7 @@
    "source": [
     "%%sql\n",
     "-- Find races with average age over 40\n",
+    "-- Another example of filtering groups\n",
     "SELECT race, AVG(age) AS avg_age\n",
     "FROM demographics\n",
     "GROUP BY race\n",
@@ -230,11 +250,17 @@
    "source": [
     "## Practice\n",
     "\n",
-    "Try these exercises:\n",
+    "Try these exercises to reinforce your understanding:\n",
     "1. Find the average BMI by gender\n",
     "2. Count participants by education level\n",
     "3. Find races with average BMI over 25\n",
-    "4. Calculate the percentage of participants by gender"
+    "4. Calculate the percentage of participants by gender\n",
+    "\n",
+    "Tips:\n",
+    "- Start with simple queries and build complexity\n",
+    "- Check your results against the data\n",
+    "- Consider NULL values in your calculations\n",
+    "- Use appropriate aggregate functions"
    ]
   }
  ],

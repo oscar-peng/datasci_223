@@ -6,7 +6,13 @@
    "source": [
     "# Demo 3: Complex Queries\n",
     "\n",
-    "In this notebook, we'll explore more advanced SQL concepts using our NHANES data."
+    "In this notebook, we'll explore more advanced SQL concepts using our NHANES data. We'll focus on JOIN operations, window functions, and complex analytical queries.\n",
+    "\n",
+    "## Learning Objectives\n",
+    "- Master different types of JOIN operations\n",
+    "- Understand and use window functions for advanced analytics\n",
+    "- Write complex queries with subqueries and CTEs\n",
+    "- Handle common JOIN issues and edge cases"
    ]
   },
   {
@@ -15,7 +21,7 @@
    "source": [
     "## JOIN Operations\n",
     "\n",
-    "Practice different types of JOINs:"
+    "JOINs are fundamental for combining data from multiple tables. Let's explore different types of JOINs and their use cases:"
    ]
   },
   {
@@ -25,9 +31,16 @@
    "source": [
     "%%sql\n",
     "-- INNER JOIN: Find participants with both demographics and lab results\n",
-    "SELECT d.*, l.lbxglu, l.lbxcr\n",
+    "-- This is the most common type of JOIN, returning only matching records\n",
+    "SELECT \n",
+    "    d.seqn,\n",
+    "    d.age,\n",
+    "    d.gender,\n",
+    "    l.lbxglu,\n",
+    "    l.lbxcr\n",
     "FROM demographics d\n",
-    "INNER JOIN laboratory l ON d.seqn = l.seqn;"
+    "INNER JOIN laboratory l ON d.seqn = l.seqn\n",
+    "LIMIT 5;"
    ]
   },
   {
@@ -37,9 +50,16 @@
    "source": [
     "%%sql\n",
     "-- LEFT JOIN: Find all participants and their lab results (if any)\n",
-    "SELECT d.*, l.lbxglu, l.lbxcr\n",
+    "-- This preserves all records from the left table (demographics)\n",
+    "SELECT \n",
+    "    d.seqn,\n",
+    "    d.age,\n",
+    "    d.gender,\n",
+    "    l.lbxglu,\n",
+    "    l.lbxcr\n",
     "FROM demographics d\n",
-    "LEFT JOIN laboratory l ON d.seqn = l.seqn;"
+    "LEFT JOIN laboratory l ON d.seqn = l.seqn\n",
+    "LIMIT 5;"
    ]
   },
   {
@@ -49,13 +69,18 @@
    "source": [
     "%%sql\n",
     "-- Multiple JOINs: Combine demographics, examination, and lab data\n",
+    "-- This shows how to join multiple tables in a single query\n",
     "SELECT \n",
-    "    d.seqn, d.age, d.gender,\n",
+    "    d.seqn,\n",
+    "    d.age,\n",
+    "    d.gender,\n",
     "    e.bmxbmi,\n",
-    "    l.lbxglu, l.lbxcr\n",
+    "    l.lbxglu,\n",
+    "    l.lbxcr\n",
     "FROM demographics d\n",
     "LEFT JOIN examination e ON d.seqn = e.seqn\n",
-    "LEFT JOIN laboratory l ON d.seqn = l.seqn;"
+    "LEFT JOIN laboratory l ON d.seqn = l.seqn\n",
+    "LIMIT 5;"
    ]
   },
   {
@@ -64,7 +89,7 @@
    "source": [
     "## Common JOIN Issues\n",
     "\n",
-    "Let's look at some common JOIN problems:"
+    "Let's look at some common JOIN problems and how to avoid them:"
    ]
   },
   {
@@ -74,6 +99,7 @@
    "source": [
     "%%sql\n",
     "-- Cartesian join example (intentional mistake)\n",
+    "-- This shows what happens when you forget the JOIN condition\n",
     "SELECT COUNT(*) FROM demographics, examination;  -- Will show explosion"
    ]
   },
@@ -103,86 +129,9 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Subqueries\n",
-    "\n",
-    "Practice using subqueries:"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "source": [
-    "%%sql\n",
-    "-- Find participants with above average BMI\n",
-    "SELECT *\n",
-    "FROM demographics d\n",
-    "JOIN examination e ON d.seqn = e.seqn\n",
-    "WHERE e.bmxbmi > (\n",
-    "    SELECT AVG(bmxbmi) \n",
-    "    FROM examination\n",
-    ");"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "source": [
-    "%%sql\n",
-    "-- Find participants with abnormal lab values\n",
-    "SELECT d.*, l.*\n",
-    "FROM demographics d\n",
-    "JOIN laboratory l ON d.seqn = l.seqn\n",
-    "WHERE l.lbxglu > (\n",
-    "    SELECT AVG(lbxglu) + 2 * STDDEV(lbxglu)\n",
-    "    FROM laboratory\n",
-    ");"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## Common Table Expressions (CTEs)\n",
-    "\n",
-    "Practice using CTEs:"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "source": [
-    "%%sql\n",
-    "-- Calculate age groups using CTE\n",
-    "WITH age_groups AS (\n",
-    "    SELECT \n",
-    "        seqn,\n",
-    "        CASE \n",
-    "            WHEN age < 30 THEN '18-29'\n",
-    "            WHEN age < 40 THEN '30-39'\n",
-    "            WHEN age < 50 THEN '40-49'\n",
-    "            ELSE '50+'\n",
-    "        END AS age_group\n",
-    "    FROM demographics\n",
-    ")\n",
-    "SELECT \n",
-    "    age_group,\n",
-    "    COUNT(*) AS count,\n",
-    "    AVG(bmxbmi) AS avg_bmi\n",
-    "FROM age_groups\n",
-    "JOIN examination ON age_groups.seqn = examination.seqn\n",
-    "GROUP BY age_group;"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
     "## Window Functions\n",
     "\n",
-    "Practice using window functions:"
+    "Window functions are powerful tools for complex analytics. They allow us to perform calculations across sets of rows related to the current row:"
    ]
   },
   {
@@ -191,7 +140,8 @@
    "metadata": {},
    "source": [
     "%%sql\n",
-    "-- Better window function example\n",
+    "-- Rank participants by BMI within age groups\n",
+    "-- This shows how to use PARTITION BY to create groups\n",
     "SELECT \n",
     "    d.seqn,\n",
     "    d.age,\n",
@@ -207,7 +157,8 @@
     "        ORDER BY e.bmxbmi DESC\n",
     "    ) AS bmi_rank\n",
     "FROM demographics d\n",
-    "JOIN examination e ON d.seqn = e.seqn;"
+    "JOIN examination e ON d.seqn = e.seqn\n",
+    "LIMIT 10;"
    ]
   },
   {
@@ -217,11 +168,49 @@
    "source": [
     "%%sql\n",
     "-- Calculate running average of lab values\n",
+    "-- This shows how to use window frames for moving calculations\n",
     "SELECT \n",
     "    seqn,\n",
     "    lbxglu,\n",
-    "    AVG(lbxglu) OVER (ORDER BY seqn ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS running_avg\n",
-    "FROM laboratory;"
+    "    AVG(lbxglu) OVER (\n",
+    "        ORDER BY seqn \n",
+    "        ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING\n",
+    "    ) AS running_avg\n",
+    "FROM laboratory\n",
+    "LIMIT 10;"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "%%sql\n",
+    "-- Compare each participant's BMI to their age group average\n",
+    "-- This shows how to use window functions for comparative analysis\n",
+    "WITH age_groups AS (\n",
+    "    SELECT \n",
+    "        d.seqn,\n",
+    "        d.age,\n",
+    "        e.bmxbmi,\n",
+    "        CASE \n",
+    "            WHEN age < 30 THEN '18-29'\n",
+    "            WHEN age < 40 THEN '30-39'\n",
+    "            WHEN age < 50 THEN '40-49'\n",
+    "            ELSE '50+'\n",
+    "        END AS age_group\n",
+    "    FROM demographics d\n",
+    "    JOIN examination e ON d.seqn = e.seqn\n",
+    ")\n",
+    "SELECT \n",
+    "    seqn,\n",
+    "    age,\n",
+    "    bmxbmi,\n",
+    "    age_group,\n",
+    "    AVG(bmxbmi) OVER (PARTITION BY age_group) AS group_avg,\n",
+    "    bmxbmi - AVG(bmxbmi) OVER (PARTITION BY age_group) AS diff_from_avg\n",
+    "FROM age_groups\n",
+    "LIMIT 10;"
    ]
   },
   {
@@ -230,11 +219,17 @@
    "source": [
     "## Practice\n",
     "\n",
-    "Try these exercises:\n",
+    "Try these exercises to reinforce your understanding:\n",
     "1. Find participants with both high BMI and abnormal glucose levels\n",
     "2. Calculate the percentage of participants with diabetes by age group\n",
     "3. Rank participants by BMI within each race\n",
-    "4. Find participants whose lab values are more than 2 standard deviations from the mean"
+    "4. Find participants whose lab values are more than 2 standard deviations from the mean\n",
+    "\n",
+    "Tips:\n",
+    "- Start with simple queries and build complexity\n",
+    "- Use CTEs to break down complex problems\n",
+    "- Consider NULL values in your calculations\n",
+    "- Test your queries with small samples first"
    ]
   }
  ],

@@ -1,84 +1,94 @@
 # Demo 4: SQL and Python Integration
 
-## SQL Magic
+## Reading Data Directly
 
-Practice using SQL magic commands:
+Let's start by reading the CSV files directly into pandas:
 
 ```python
-# Basic SQL query
-%sql SELECT * FROM demographics LIMIT 5;
+import pandas as pd
 
-# Multi-line query
+# Read CSV files directly
+demographics_df = pd.read_csv('lectures/03/demo/data/demographics.csv')
+examination_df = pd.read_csv('lectures/03/demo/data/examination.csv')
+laboratory_df = pd.read_csv('lectures/03/demo/data/laboratory.csv')
+questionnaire_df = pd.read_csv('lectures/03/demo/data/questionnaire.csv')
+
+# Basic data exploration
+print("Demographics shape:", demographics_df.shape)
+print("\nFirst few rows of demographics:")
+print(demographics_df.head())
+```
+
+## SQL Magic with DataFrames
+
+Now let's use SQL magic to query our DataFrames:
+
+```python
+# Register DataFrames with DuckDB
+con = duckdb.connect(database=':memory:', read_only=False)
+con.register('demographics', demographics_df)
+con.register('examination', examination_df)
+con.register('laboratory', laboratory_df)
+con.register('questionnaire', questionnaire_df)
+
+# Use SQL magic
+%sql duckdb://localhost
+
+# Query the registered DataFrames
 %%sql
 SELECT 
     d.age,
-    AVG(e.bmxbmi) AS avg_bmi
+    d.gender,
+    e.bmxbmi,
+    l.lbxglu
 FROM demographics d
 JOIN examination e ON d.seqn = e.seqn
-GROUP BY d.age
-ORDER BY d.age;
+JOIN laboratory l ON d.seqn = l.seqn
+LIMIT 5;
 ```
 
-## Pandas Integration
+## Basic Visualizations
 
-Practice SQL to DataFrame conversion:
+Let's create some simple visualizations:
 
 ```python
-# Query to DataFrame
-df = %sql SELECT * FROM demographics
-df.head()
+import matplotlib.pyplot as plt
 
-# Complex query to DataFrame
-bmi_df = %sql SELECT d.*, e.bmxbmi FROM demographics d JOIN examination e ON d.seqn = e.seqn
-bmi_df.head()
+# Scatter plot of Age vs BMI
+plt.figure(figsize=(10, 6))
+plt.scatter(demographics_df['age'], examination_df['bmxbmi'], alpha=0.5)
+plt.xlabel('Age')
+plt.ylabel('BMI')
+plt.title('Age vs BMI')
+plt.show()
 
-# Analyze data in pandas
-bmi_by_age = bmi_df.groupby('age')['bmxbmi'].mean()
-bmi_by_age.plot(kind='bar')
+# Box plot of BMI by Gender
+plt.figure(figsize=(10, 6))
+plt.boxplot([
+    examination_df[demographics_df['gender'] == 'M']['bmxbmi'],
+    examination_df[demographics_df['gender'] == 'F']['bmxbmi']
+])
+plt.xticks([1, 2], ['Male', 'Female'])
+plt.ylabel('BMI')
+plt.title('BMI Distribution by Gender')
+plt.show()
 ```
 
-## Polars Integration
+## Polars Integration (Preview)
 
-Practice using Polars for high-performance queries:
+For large datasets, Polars can be more efficient. This will be covered in detail in the next lecture:
 
 ```python
 import polars as pl
 
-# Query to Polars DataFrame
-polars_df = pl.read_sql("""
-    SELECT 
-        d.age,
-        d.gender,
-        e.bmxbmi,
-        l.lbxglu
-    FROM demographics d
-    JOIN examination e ON d.seqn = e.seqn
-    JOIN laboratory l ON d.seqn = l.seqn
-""", con)
+# Read CSV with Polars
+demographics_pl = pl.read_csv('lectures/03/demo/data/demographics.csv')
+examination_pl = pl.read_csv('lectures/03/demo/data/examination.csv')
 
-# Fast aggregations
-polars_df.groupby('age').agg([
-    pl.col('bmxbmi').mean().alias('avg_bmi'),
-    pl.col('lbxglu').mean().alias('avg_glucose')
-])
-```
-
-## Visualization
-
-Create visualizations from SQL results:
-
-```python
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-# Get data for visualization
-viz_df = %sql SELECT d.age, d.gender, e.bmxbmi FROM demographics d JOIN examination e ON d.seqn = e.seqn
-
-# Create plots
-plt.figure(figsize=(10, 6))
-sns.boxplot(data=viz_df, x='age', y='bmxbmi', hue='gender')
-plt.title('BMI Distribution by Age and Gender')
-plt.show()
+# Basic operations
+print("Demographics shape:", demographics_pl.shape)
+print("\nFirst few rows:")
+print(demographics_pl.head())
 ```
 
 ## Practice

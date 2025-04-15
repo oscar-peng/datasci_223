@@ -1,0 +1,160 @@
+# Demo 4: SQL and Python Integration
+
+In this notebook, we'll explore how to integrate SQL with Python for data analysis. We'll cover pandas integration, visualization, and performance optimization.
+
+## Learning Objectives
+- Read and write data between SQL and pandas
+- Create visualizations from SQL query results
+- Optimize performance with different tools
+- Handle large datasets efficiently
+
+## Reading Data Directly
+
+Let's start by reading the CSV files directly into pandas:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read CSV files directly
+demographics_df = pd.read_csv('lectures/03/demo/data/demographics.csv')
+examination_df = pd.read_csv('lectures/03/demo/data/examination.csv')
+laboratory_df = pd.read_csv('lectures/03/demo/data/laboratory.csv')
+questionnaire_df = pd.read_csv('lectures/03/demo/data/questionnaire.csv')
+
+# Basic data exploration
+print("Demographics shape:", demographics_df.shape)
+print("\nFirst few rows of demographics:")
+print(demographics_df.head())
+
+# Check for missing values
+print("\nMissing values in demographics:")
+print(demographics_df.isnull().sum())
+```
+
+## SQL Magic with DataFrames
+
+Now let's use SQL magic to query our DataFrames:
+
+```python
+# Register DataFrames with DuckDB
+con = duckdb.connect(database=':memory:', read_only=False)
+con.register('demographics', demographics_df)
+con.register('examination', examination_df)
+con.register('laboratory', laboratory_df)
+con.register('questionnaire', questionnaire_df)
+
+# Use SQL magic
+%sql duckdb://localhost
+
+# Query the registered DataFrames
+%%sql
+-- Complex query combining multiple tables
+SELECT 
+    d.age,
+    d.gender,
+    e.bmxbmi,
+    l.lbxglu,
+    q.diq010 as diabetes_status
+FROM demographics d
+JOIN examination e ON d.seqn = e.seqn
+JOIN laboratory l ON d.seqn = l.seqn
+JOIN questionnaire q ON d.seqn = q.seqn
+LIMIT 5;
+```
+
+## Advanced Visualizations
+
+Let's create some advanced visualizations from our SQL query results:
+
+```python
+# Create a figure with multiple subplots
+fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+# Scatter plot of Age vs BMI
+sns.scatterplot(data=examination_df, x=demographics_df['age'], y='bmxbmi', 
+                hue=demographics_df['gender'], alpha=0.5, ax=axes[0, 0])
+axes[0, 0].set_title('Age vs BMI by Gender')
+axes[0, 0].set_xlabel('Age')
+axes[0, 0].set_ylabel('BMI')
+
+# Box plot of BMI by Gender
+sns.boxplot(data=examination_df, x=demographics_df['gender'], y='bmxbmi', ax=axes[0, 1])
+axes[0, 1].set_title('BMI Distribution by Gender')
+axes[0, 1].set_xlabel('Gender')
+axes[0, 1].set_ylabel('BMI')
+
+# Histogram of Glucose Levels
+sns.histplot(data=laboratory_df, x='lbxglu', bins=30, ax=axes[1, 0])
+axes[1, 0].set_title('Distribution of Glucose Levels')
+axes[1, 0].set_xlabel('Glucose Level')
+axes[1, 0].set_ylabel('Count')
+
+# Correlation Heatmap
+corr_data = pd.concat([
+    examination_df[['bmxbmi']],
+    laboratory_df[['lbxglu', 'lbxcr']],
+    demographics_df[['age']]
+], axis=1)
+sns.heatmap(corr_data.corr(), annot=True, cmap='coolwarm', ax=axes[1, 1])
+axes[1, 1].set_title('Correlation Heatmap')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Performance Optimization
+
+Let's compare different approaches for handling large datasets:
+
+```python
+import time
+import polars as pl
+
+# Time pandas operations
+start_time = time.time()
+pandas_result = pd.merge(
+    demographics_df,
+    examination_df,
+    on='seqn'
+).groupby('gender')['bmxbmi'].mean()
+pandas_time = time.time() - start_time
+
+# Time SQL operations
+start_time = time.time()
+%%sql
+SELECT gender, AVG(bmxbmi) as avg_bmi
+FROM demographics d
+JOIN examination e ON d.seqn = e.seqn
+GROUP BY gender;
+sql_time = time.time() - start_time
+
+# Time polars operations
+start_time = time.time()
+demographics_pl = pl.from_pandas(demographics_df)
+examination_pl = pl.from_pandas(examination_df)
+polars_result = demographics_pl.join(
+    examination_pl, on='seqn'
+).groupby('gender').agg(pl.col('bmxbmi').mean())
+polars_time = time.time() - start_time
+
+# Print results
+print(f"Pandas time: {pandas_time:.4f} seconds")
+print(f"SQL time: {sql_time:.4f} seconds")
+print(f"Polars time: {polars_time:.4f} seconds")
+```
+
+## Practice
+
+Try these exercises to reinforce your understanding:
+1. Create a scatter plot of BMI vs glucose levels, colored by diabetes status
+2. Calculate and visualize the correlation between lab values by age group
+3. Create a dashboard of key health metrics by demographic groups
+4. Compare performance between pandas, SQL, and polars for large queries
+
+Tips:
+- Use appropriate visualization types for different data types
+- Consider using subplots for multiple related visualizations
+- Profile your code to identify performance bottlenecks
+- Use appropriate tools for different data sizes 

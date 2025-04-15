@@ -193,7 +193,7 @@ WITH (FORMAT csv, HEADER true);
 ```
 
 ## Live demo!
-[Demo 1: Setup and Import](demo/01_setup_and_import.md)
+[Demo 1: Setup and Import](demo/01_setup_and_import.ipynb)
 
 ## 🤿 SQL Fundamentals
 
@@ -364,7 +364,7 @@ JOIN (
 ```
 
 ## Live demo!
-[Demo 2: SQL Basics](demo/02_sql_basics.md)
+[Demo 2: SQL Basics](demo/02_sql_basics.ipynb)
 
 ## 🚨 Advanced SQL
 
@@ -499,7 +499,7 @@ REFRESH MATERIALIZED VIEW sales_summary;
 - Consider materialized views for complex queries
 
 ## Live demo!
-[Demo 3: Complex Queries](demo/03_complex_queries.md)
+[Demo 3: Complex Queries](demo/03_complex_queries.ipynb)
 
 ## 🔄 SQL with Python
 
@@ -563,4 +563,4 @@ df = pd.read_sql_query(sql_query, engine)
 ```
 
 ## Live demo!
-[Demo 4: Python Integration](demo/04_python_integration.md)
+[Demo 4: Python Integration](demo/04_python_integration.ipynb)

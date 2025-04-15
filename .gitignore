@@ -1,0 +1,12 @@
+.DS_Store
+.venv/
+data/
+.vscode/
+animals/
+models/
+checkpoints/
+site/
+html/
+datasci_217/
+*.zip
+tmp/

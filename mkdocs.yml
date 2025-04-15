@@ -1,0 +1,101 @@
+site_name: Applied Data Science with Python
+site_description: UCSF DataSci 223 Course Materials
+docs_dir: lectures
+use_directory_urls: false
+
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default 
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-1
+        name: Switch to system preference
+  favicon: overrides/assets/images/favicon.png
+  features:
+    - header.autohide
+    - toc.integrate
+    - navigation.instant
+    - navigation.tracking
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - callouts
+#  - exporter:
+#      enabled: !ENV [CI, false]  # Disable in CI environment
+#      formats:
+#        pdf:
+#          enabled: !ENV [CI, false]  # Disable in CI environment
+#          concurrency: 4
+#          # Remove unrecognized options
+#          explicit: true
+
+nav:
+  - Home: index.md
+  - Course Information:
+    - Syllabus: syllabus.md
+    - Project: project.md
+    - References: references.md
+  - Lectures:
+      - '01. `git init`': 01/lecture_01.md
+      - '02. bugs, ducks, and data': 02/lecture_02.md
+  # - Lectures (PDF):
+  #   - '01. `git init`': 01/lecture_01.pdf
+  - Exercises:
+    - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
+    - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/christopherseaman/datasci_223
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/QdTYgR45er

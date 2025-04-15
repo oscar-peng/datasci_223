@@ -1,0 +1,623 @@
+<HTML>
+<HEAD>
+<LINK REL=STYLESHEET HREF="/books/philg.css" TYPE="text/css">
+<TITLE>Queries</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<table>
+<tr>
+<td>
+
+<a href="/images/pcd0222/los-angeles-traffic-44.tcl"><img HEIGHT=198 WIDTH=132 src="/images/pcd0222/los-angeles-traffic-44.1.jpg" ALT="Traffic on the 405.  Los Angeles, California.  View from the Getty Center."></a>
+
+
+<td>
+
+<H2>Queries</H2>
+
+part of 
+<a
+href="index.html">SQL for Web Nerds</a>
+by <a href="http://philip.greenspun.com/">Philip Greenspun</a>
+
+<td>
+<a href="/images/pcd0222/getty-center-cactus-garden-7.tcl"><img HEIGHT=198 WIDTH=132 src="/images/pcd0222/getty-center-cactus-garden-7.1.jpg" ALT="Cactus Garden overlooking the city. Getty Center.  Los Angeles, California."></a>
+
+
+</tr>
+</table>
+
+<hr>
+
+If you start up SQL*Plus, you can start browsing around immediately with
+the SELECT statement.  You don't even need to define a table; Oracle
+provides the built-in <code>dual</code> table for times when you're
+interested in a constant or a function:
+
+<blockquote>
+<pre><code>
+SQL> select 'Hello World' from dual;
+
+'HELLOWORLD
+-----------
+Hello World
+
+SQL> select 2+2 from dual;
+
+       2+2
+----------
+	 4
+
+SQL> select sysdate from dual;
+
+SYSDATE
+----------
+1999-02-14
+</code></pre>
+</blockquote>
+
+... or to test your knowledge of three-valued logic (see the "Data
+Modeling" chapter):
+
+<blockquote>
+<pre><code>
+SQL&gt; select 4+NULL from dual;
+
+    4+NULL
+----------
+
+</code></pre>
+</blockquote>
+
+(any expression involving NULL evaluates to NULL).
+
+<p>
+
+There is nothing magic about the <code>dual</code> table for these
+purposes; you can compute functions using the <code>bboard</code> table
+instead of <code>dual</code>:
+
+<blockquote>
+<pre><code>
+select sysdate,2+2,atan2(0, -1) from bboard;
+
+SYSDATE 	  2+2 ATAN2(0,-1)
+---------- ---------- -----------
+1999-01-14	    4  3.14159265
+1999-01-14	    4  3.14159265
+1999-01-14	    4  3.14159265
+1999-01-14	    4  3.14159265
+...
+
+1999-01-14	    4  3.14159265
+1999-01-14	    4  3.14159265
+1999-01-14	    4  3.14159265
+
+55010 rows selected.
+</code></pre>
+</blockquote>
+
+but not everyone wants 55010 copies of the same result.  The
+<code>dual</code> table is predefined during Oracle installation and,
+though it is just a plain old table, it is guaranteed to contain only
+one row because no user will have sufficient privileges to insert or
+delete rows from <code>dual</code>.
+
+<h3>Getting beyond Hello World</h3>
+
+To get beyond Hello World, pick a table of interest.  As we saw in the
+introduction,
+
+<blockquote><code><pre>
+select * from users;
+</pre></code></blockquote>
+
+would retrieve all the information from every row of the
+<code>users</code> table.  That's good for toy systems but in any
+production system, you'd be better off starting with 
+
+
+<blockquote>
+<pre><code>
+SQL> select count(*) from users;
+
+  COUNT(*)
+----------
+      7352
+</code></pre>
+</blockquote>
+
+You don't really want to look at 7352 rows of data, but you would like
+to see what's in the users table, start off by asking SQL*Plus to query
+Oracle's data dictionary and figure out what columns are available in
+the <code>users</code> table:
+
+<blockquote>
+<pre><code>
+SQL> describe users
+ Name				 Null?	  Type
+ ------------------------------- -------- ----
+ USER_ID			 NOT NULL NUMBER(38)
+ FIRST_NAMES			 NOT NULL VARCHAR2(100)
+ LAST_NAME			 NOT NULL VARCHAR2(100)
+ PRIV_NAME				  NUMBER(38)
+ EMAIL				 NOT NULL VARCHAR2(100)
+ PRIV_EMAIL				  NUMBER(38)
+ EMAIL_BOUNCING_P			  CHAR(1)
+ PASSWORD			 NOT NULL VARCHAR2(30)
+ URL					  VARCHAR2(200)
+ ON_VACATION_UNTIL			  DATE
+ LAST_VISIT				  DATE
+ SECOND_TO_LAST_VISIT			  DATE
+ REGISTRATION_DATE			  DATE
+ REGISTRATION_IP			  VARCHAR2(50)
+ ADMINISTRATOR_P			  CHAR(1)
+ DELETED_P				  CHAR(1)
+ BANNED_P				  CHAR(1)
+ BANNING_USER				  NUMBER(38)
+ BANNING_NOTE				  VARCHAR2(4000)
+</code></pre>
+</blockquote>
+
+
+The data dictionary is simply a set of built-in tables that Oracle uses
+to store information about the objects (tables, triggers, etc.) that
+have been defined.
+
+Thus SQL*Plus isn't performing any black magic when you type
+<code>describe</code>; it is simply querying
+<code>user_tab_columns</code>, a view of some of the tables in Oracle's
+data dictionary.  You could do the same explicitly, but it is a little
+cumbersome.
+
+<blockquote>
+<pre><code>
+column fancy_type format a20
+select column_name, data_type || '(' || data_length || ')' as fancy_type
+from user_tab_columns
+where table_name = 'USERS'
+order by column_id;
+</code></pre>
+</blockquote>
+
+Here we've had to make sure to put the table name ("USERS") in
+all-uppercase.  Oracle is case-insensitive for table and column names in
+queries but the data dictionary records names in uppercase.  Now that we
+know the names of the columns in the table, it will be easy to explore.
+
+<h3>Simple Queries from One Table</h3>
+
+A simple query from one table has the following structure:
+<ul>
+<li>the select list (which columns in our report)
+<li>the name of the table
+<li>the where clauses (which rows we want to see)
+<li>the order by clauses (how we want the rows arranged)
+</ul>
+
+Let's see some examples.  First, let's see how many users from MIT are
+registered on our site:
+
+<blockquote>
+<pre><code>
+SQL> select email
+from users
+where email like '%mit.edu';
+
+EMAIL
+------------------------------
+philg@mit.edu
+andy@california.mit.edu
+ben@mit.edu
+...
+wollman@lcs.mit.edu
+ghomsy@mit.edu
+hal@mit.edu
+...
+jpearce@mit.edu
+richmond@alum.mit.edu
+andy_roo@mit.edu
+kov@mit.edu
+fletch@mit.edu
+lsandon@mit.edu
+psz@mit.edu
+philg@ai.mit.edu
+philg@martigny.ai.mit.edu
+andy@californnia.mit.edu
+ty@mit.edu
+teadams@mit.edu
+
+68 rows selected.
+
+</code></pre>
+</blockquote>
+
+The <code>email like '%mit.edu'</code> says "every row where the email
+column ends in 'mit.edu'".  The percent sign is Oracle's wildcard
+character for "zero or more characters".  Underscore is the wildcard for
+"exactly one character": 
+
+<blockquote>
+<pre><code>
+SQL> select email 
+from users
+where email like '___@mit.edu';
+
+EMAIL
+------------------------------
+kov@mit.edu
+hal@mit.edu
+...
+ben@mit.edu
+psz@mit.edu
+</code></pre>
+</blockquote>
+
+Suppose that we notice in the above report some similar email
+addresses.  It is perhaps time to try out the ORDER BY clause:
+
+
+<blockquote>
+<pre><code>
+SQL> select email
+from users
+where email like '%mit.edu'
+order by email;
+
+EMAIL
+------------------------------
+andy@california.mit.edu
+andy@californnia.mit.edu
+andy_roo@mit.edu
+...
+ben@mit.edu
+...
+hal@mit.edu
+...
+philg@ai.mit.edu
+philg@martigny.ai.mit.edu
+philg@mit.edu
+</code></pre>
+</blockquote>
+
+Now we can see that this users table was generated by grinding over
+pre-ArsDigita Community Systems postings starting from 1995.  In those
+bad old days, users typed their email address and name with each
+posting.  Due to typos and people intentionally choosing to use
+different addresses at various times, we can see that we'll have to
+build some sort of application to help human beings merge some of the
+rows in the users table (e.g., all three occurrences of "philg" are in
+fact the same person (me)).
+
+<h3>Restricting results</h3>
+
+Suppose that you were featured on Yahoo in September 1998 and want to
+see how many users signed up during that month:
+
+<blockquote>
+<pre><code>
+SQL> select count(*) 
+from users
+where registration_date >= '1998-09-01' 
+and registration_date < '1998-10-01';
+
+  COUNT(*)
+----------
+       920
+</code></pre>
+</blockquote>
+
+We've combined two restrictions in the WHERE clause with an AND.  We can
+add another restriction with another AND:
+
+<blockquote>
+<pre><code>
+SQL> select count(*) 
+from users
+where registration_date >= '1998-09-01' 
+and registration_date < '1998-10-01'
+and email like '%mit.edu';
+
+  COUNT(*)
+----------
+        35
+</code></pre>
+</blockquote>
+
+OR and NOT are also available within the WHERE clause.  For example, the
+following query will tell us how many classified ads we have that either
+have no expiration date or whose expiration date is later than the
+current date/time.
+
+
+<blockquote>
+<pre><code>
+select count(*) 
+from classified_ads
+where expires >= sysdate
+or expires is null;
+</code></pre>
+</blockquote>
+
+
+<h3>Subqueries</h3>
+
+You can query one table, restricting the rows returned based on
+information from another table.  For example, to find users who have
+posted at least one classified ad:
+
+<blockquote>
+<pre><code>
+select user_id, email 
+from users 
+where 0 &lt; (select count(*) 
+           from classified_ads
+           where classified_ads.user_id = users.user_id);
+
+   USER_ID EMAIL
+---------- -----------------------------------
+     42485 twm@meteor.com
+     42489 trunghau@ecst.csuchico.edu
+     42389 ricardo.carvajal@kbs.msu.edu
+     42393 gon2foto@gte.net
+     42399 rob@hawaii.rr.com
+     42453 stefan9@ix.netcom.com
+     42346 silverman@pon.net
+     42153 gallen@wesleyan.edu
+...
+</code></pre>
+</blockquote>
+
+Conceptually, for each row in the <code>users</code> table Oracle is
+running the subquery against <code>classified_ads</code> to see how many
+ads are associated with that particular user ID.  Keep in mind that this
+is only <em>conceptually</em>; the Oracle SQL parser may elect to
+execute this query in a more efficient manner.
+
+<p>
+
+Another way to describe the same result set is using EXISTS:
+
+<blockquote>
+<pre><code>
+select user_id, email 
+from users 
+where exists (select 1
+              from classified_ads
+              where classified_ads.user_id = users.user_id);
+</code></pre>
+</blockquote>
+
+This may be more efficient for Oracle to execute since it hasn't been
+instructed to actually count the number of classified ads for each
+user, but only to check and see if any are present.  Think of
+EXISTS as a Boolean function that
+
+<ol>
+
+<li>takes a SQL query as its only parameter
+
+<li>returns TRUE if the query returns any rows at all, regardless of the
+contents of those rows (this is why we can use the constant 1 as the
+select list for the subquery)
+
+</ol>
+
+
+<h3>JOIN</h3>
+
+A professional SQL programmer would be unlikely to query for users who'd
+posted classified ads in the preceding manner.  The SQL programmer knows
+that, inevitably, the publisher will want information from the
+classified ad table along with the information from the users table.
+For example, we might want to see the users and, for each user, the
+sequence of ad postings:
+
+<blockquote>
+<pre><code>
+select users.user_id, users.email, classified_ads.posted
+from users, classified_ads
+where users.user_id = classified_ads.user_id
+order by users.email, posted;
+
+   USER_ID EMAIL			       POSTED
+---------- ----------------------------------- ----------
+     39406 102140.1200@compuserve.com	       1998-09-30
+     39406 102140.1200@compuserve.com	       1998-10-08
+     39406 102140.1200@compuserve.com	       1998-10-08
+     39842 102144.2651@compuserve.com	       1998-07-02
+     39842 102144.2651@compuserve.com	       1998-07-06
+     39842 102144.2651@compuserve.com	       1998-12-13
+...
+     41284 yme@inetport.com		       1998-01-25
+     41284 yme@inetport.com		       1998-02-18
+     41284 yme@inetport.com		       1998-03-08
+     35389 zhupanov@usa.net		       1998-12-10
+     35389 zhupanov@usa.net		       1998-12-10
+     35389 zhupanov@usa.net		       1998-12-10
+</code></pre>
+</blockquote>
+
+Because of the JOIN restriction, <code>where users.user_id =
+classified_ads.user_id</code>, we only see those users who have posted
+at least one classified ad, i.e., for whom a matching row may be found
+in the <code>classified_ads</code> table.  This has the same effect as
+the subquery above.
+
+<p>
+
+The <code>order by users.email, posted</code> is key to making sure that
+the rows are lumped together by user and then printed in order of
+ascending posting time.
+
+<h3>OUTER JOIN</h3>
+
+Suppose that we want an alphabetical list of all of our users, with
+classified ad posting dates for those users who have posted
+classifieds.   We can't do a simple JOIN because that will exclude users
+who haven't posted any ads.  What we need is an OUTER JOIN, where Oracle
+will "stick in NULLs" if it can't find a corresponding row in the
+<code>classified_ads</code> table.
+
+<blockquote>
+<pre><code>
+select users.user_id, users.email, classified_ads.posted
+from users, classified_ads
+where users.user_id = classified_ads.user_id(+)
+order by users.email, posted;
+
+...
+   USER_ID EMAIL			       POSTED
+---------- ----------------------------------- ----------
+     52790 dbrager@mindspring.com
+     37461 dbraun@scdt.intel.com
+     52791 dbrenner@flash.net
+     47177 dbronz@free.polbox.pl
+     37296 dbrouse@enter.net
+     47178 dbrown@cyberhighway.net
+     36985 dbrown@uniden.com		       1998-03-05
+     36985 dbrown@uniden.com		       1998-03-10
+     34283 dbs117@amaze.net
+     52792 dbsikorski@yahoo.com
+...
+</code></pre>
+</blockquote>
+
+The plus sign after <code>classified_ads.user_id</code> is our
+instruction to Oracle to "add NULL rows if you can't meet this JOIN
+constraint".
+
+<h3>Extending a simple query into a JOIN</h3>
+
+Suppose that you have a query from one table returning almost everything
+that you need, except for one column that's in another table.  Here's a
+way to develop the JOIN without risking breaking your application:
+
+<ol>
+<li>add the new table to your FROM clause
+<li>add a WHERE constraint to prevent Oracle from building a Cartesian
+product
+
+<li>hunt for ambiguous column names in the SELECT list and other
+portions of the query; prefix these with table names if necessary
+
+<li>test that you've not broken anything in your zeal to add additional
+info
+
+<li>add a new column to the SELECT list
+
+</ol>
+
+Here's an example from Problem Set 2 of a course that we give at MIT
+(see <a href="http://www.photo.net/teaching/psets/ps2/ps2.adp">http://www.photo.net/teaching/psets/ps2/ps2.adp</a>).
+Students build a conference room reservation system.  They generally
+define two tables:  <code>rooms</code> and
+<code>reservations</code>.  The top level page is supposed to show
+a user what reservations he or she is current holding:
+
+<blockquote>
+<pre><code>
+select room_id, start_time, end_time
+from reservations
+where user_id = 37
+</code></pre>
+</blockquote>
+
+This produces an unacceptable page because the rooms are referred to by
+an ID number rather than by name.  The name information is in the
+<code>rooms</code> table, so we'll have to turn this into a JOIN.
+
+<h4>Step 1:  add the new table to the FROM clause</h4>
+
+<blockquote>
+<pre><code>
+select room_id, start_time, end_time
+from reservations<b>, rooms</b>
+where user_id = 37
+</code></pre>
+</blockquote>
+
+We're in a world of hurt because Oracle is now going to join every row
+in <code>rooms</code> with every row in <code>reservations</code> where
+the <code>user_id</code> matches that of the logged-in user.
+
+<h4>Step 2:  add a constraint to the WHERE clause</h4>
+
+<blockquote>
+<pre><code>
+select room_id, start_time, end_time
+from reservations, rooms
+where user_id = 37
+<b>and reservations.room_id = rooms.room_id</b>
+</code></pre>
+</blockquote>
+
+<h4>Step 3:  look for ambiguously defined columns</h4>
+
+Both <code>reservations</code> and <code>rooms</code> contain columns
+called "room_id".  So we need to prefix the <code>room_id</code> column
+in the SELECT list with "reservations.".  Note that we don't have to prefix
+<code>start_time</code> and <code>end_time</code> because these columns
+are only present in <code>reservations</code>.
+
+<blockquote>
+<pre><code>
+select <b>reservations.room_id</b>, start_time, end_time
+from reservations, rooms
+where user_id = 37
+and reservations.room_id = rooms.room_id
+</code></pre>
+</blockquote>
+
+<h4>Step 4: test</h4>
+
+Test the query to make sure that you haven't broken anything.  You
+should get back the same rows with the same columns as before.
+
+<h4>Step 5: add a new column to the SELECT list</h4>
+
+We're finally ready to do what we set out to do: add
+<code>room_name</code> to the list of columns for which we're querying.
+
+<blockquote>
+<pre><code>
+select reservations.room_id, start_time, end_time, <b>rooms.room_name</b>
+from reservations, rooms
+where user_id = 37
+and reservations.room_id = rooms.room_id
+</code></pre>
+</blockquote>
+
+
+
+<h3>Reference</h3>
+
+<ul>
+<li>Oracle8 Server SQL Reference, <a
+href="http://www.oradoc.com/keyword/select">SELECT
+command section</a>
+
+</ul>
+
+
+
+<br><br>
+
+Next: <a href="complex-queries.html">complex queries</a>
+
+<hr><a href="http://philip.greenspun.com/"><address>philg@mit.edu</address></a><center><a href="/comments/add?page_id=3460">Add a comment</a></center>
+
+<script type="text/javascript">
+
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-315149-1']);
+	_gaq.push(['_trackPageview']);
+
+	(function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+
+</script></body></HTML>

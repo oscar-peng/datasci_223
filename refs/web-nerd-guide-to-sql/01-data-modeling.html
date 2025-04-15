@@ -1,0 +1,1329 @@
+<HTML>
+<HEAD>
+<LINK REL=STYLESHEET HREF="/books/philg.css" TYPE="text/css">
+<TITLE>Data Modeling</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<table>
+<tr>
+<td>
+<a href="/images/pcd1341/legs-overview-20.tcl"><img HEIGHT=134 WIDTH=196 src="/images/pcd1341/legs-overview-20.1.jpg" ALT="IMTA Show 1995 Manhattan"></a>
+
+
+<td>
+
+<H2>Data Modeling</H2>
+
+part of 
+<a
+href="index.html">SQL for Web Nerds</a>
+by <a href="http://philip.greenspun.com/">Philip Greenspun</a>
+
+<td>
+<a href="/images/pcd1341/little-boy-61.tcl"><img HEIGHT=198 WIDTH=132 src="/images/pcd1341/little-boy-61.1.jpg" ALT="IMTA Show 1995 Manhattan"></a>
+
+
+</tr>
+</table>
+
+<hr>
+
+<a href="/images/pcd1341/chicken-pox-51.tcl"><img hspace=5 vspace=5 align=right HEIGHT=134 WIDTH=196 src="/images/pcd1341/chicken-pox-51.1.jpg" ALT="Christina Perreault, aged 14, suffering from chicken pox at the 1995 IMTA Show in Manhattan.  Being made up by Francesca Milano."></a>
+
+
+Data modeling is the hardest and most important activity in the RDBMS
+world.  If you get the data model wrong, your application might not do
+what users need, it might be unreliable, it might fill up the database
+with garbage.  Why then do we start a SQL tutorial with the most
+challenging part of the job?  Because you can't do queries, inserts, and
+updates until you've defined some tables.  And defining tables is <i>data
+modeling</i>.
+
+<p>
+
+When data modeling, you are telling the RDBMS the following:
+
+<ul>
+<li>what elements of the data you will store
+<li>how large each element can be 
+<li>what kind of information each element can contain
+<li>what elements may be left blank
+<li>which elements are constrained to a fixed range
+<li>whether and how various tables are to be linked 
+</ul>
+
+<h3>Three-Valued Logic</h3>
+
+Programmers in most computer languages are familiar with Boolean logic.
+A variable may be either true or false.  Pervading SQL, however, is
+the alien idea of <i>three-valued logic</i>.  A column can be true,
+false, or NULL.  When building the data model you must affirmatively
+decide whether a NULL value will be permitted for a column and, if so,
+what it means.
+
+<p>
+
+For example, consider a table for recording user-submitted comments to a
+Web site.  The publisher has made the following stipulations:
+
+<ul>
+<li>comments won't go live until approved by an editor
+
+<li>the admin pages will present editors with all comments that are
+pending approval, i.e., have been submitted but neither approved nor
+disapproved by an editor already 
+
+</ul>
+
+Here's the data model:
+
+<blockquote>
+<pre><code>
+create table user_submitted_comments (
+	comment_id		integer primary key,
+	user_id			not null references users,
+	submission_time		date default sysdate not null,
+	ip_address		varchar(50) not null,
+	content			clob,
+	approved_p		char(1) check(approved_p in ('t','f'))
+);
+</code></pre>
+</blockquote>
+
+Implicit in this model is the assumption that <code>approved_p</code>
+can be NULL and that, if not explicitly set during the INSERT, that is
+what it will default to.  What about the check constraint?  It would
+seem to restrict <code>approved_p</code> to values of "t" or "f".  NULL,
+however, is a special value and if we wanted to prevent
+<code>approved_p</code> from taking on NULL we'd have to add an explicit
+<code>not null</code> constraint.
+
+<p>
+
+How do NULLs work with queries?  Let's fill
+<code>user_submitted_comments</code> with some sample data and see:
+
+<blockquote>
+<pre><code>
+insert into user_submitted_comments
+(comment_id, user_id, ip_address, content)
+values
+(1, 23069, '18.30.2.68', 'This article reminds me of Hemingway');
+
+Table created.
+
+SQL&gt; select first_names, last_name, content, user_submitted_comments.approved_p
+from user_submitted_comments, users 
+where user_submitted_comments.user_id = users.user_id;
+
+FIRST_NAMES  LAST_NAME	     CONTENT				  APPROVED_P
+------------ --------------- ------------------------------------ ------------
+Philip	     Greenspun	     This article reminds me of Hemingway
+</code></pre>
+</blockquote>
+
+We've successfully JOINed the <code>user_submitted_comments</code> and
+<code>users</code> table to get both the comment content and the name of
+the user who submitted it.  Notice that in the select list we had to
+explicitly request
+<code><b>user_submitted_comments</b>.approved_p</code>.  This is because
+the <code>users</code> table also has an <code>approved_p</code>
+column.  
+
+<P>
+
+When we inserted the comment row we did not specify a value for the
+<code>approved_p</code> column.  Thus we expect that the value would be
+NULL and in fact that's what it seems to be.  Oracle's SQL*Plus
+application indicates a NULL value with white space.
+
+<p>
+
+For the administration page, we'll want to show <em>only</em> those
+comments where the <code>approved_p</code> column is NULL:
+
+<blockquote>
+<pre><code>
+SQL&gt; select first_names, last_name, content, user_submitted_comments.approved_p
+from user_submitted_comments, users 
+where user_submitted_comments.user_id = users.user_id
+<b>and user_submitted_comments.approved_p = NULL</b>;
+
+no rows selected
+</code></pre>
+</blockquote>
+
+"No rows selected"?  That's odd.  We know for a fact that we have one
+row in the comments table and that is <code>approved_p</code> column is
+set to NULL.  How to debug the query?  The first thing to do is simplify
+by removing the JOIN:
+
+<blockquote>
+<pre><code>
+SQL&gt; select * from user_submitted_comments where approved_p = NULL;
+
+no rows selected
+</code></pre>
+</blockquote>
+
+What is happening here is that any expression involving NULL evaluates
+to NULL, including one that effectively looks like "NULL = NULL".  The
+WHERE clause is looking for expressions that evaluate to true.  What you
+need to use is the special test IS NULL:
+
+<blockquote>
+<pre><code>
+SQL&gt; select * from user_submitted_comments where approved_p <b>is NULL</b>;
+
+COMMENT_ID    USER_ID SUBMISSION_T IP_ADDRESS
+---------- ---------- ------------ ----------
+CONTENT 			     APPROVED_P
+------------------------------------ ------------
+	 1	23069 2000-05-27   18.30.2.68
+This article reminds me of Hemingway
+</code></pre>
+</blockquote>
+
+An adage among SQL programmers is that the only time you can use
+"=&nbsp;NULL" is in an UPDATE statement (to set a column's value to
+NULL).  It never makes sense to use "=&nbsp;NULL" in a WHERE clause.
+
+<p class="stb">
+
+The bottom line is that as a data modeler you will have to decide which
+columns can be NULL and what that value will mean.
+
+<h3>Back to the Mailing List</h3>
+
+Let's return to the mailing list data model from the introduction:
+
+<blockquote>
+<pre><code>
+create table mailing_list (
+        email           varchar(100) not null primary key,
+        name            varchar(100)
+);
+
+create table phone_numbers (
+        email           varchar(100) not null references mailing_list,
+        number_type     varchar(15) check (number_type in ('work','home','cell','beeper')),
+        phone_number    varchar(20) not null
+);
+</code></pre>
+</blockquote>
+
+This data model locks you into some realities:
+
+<ul>
+
+<li>You will not be sending out any physical New Year's cards to folks
+on your mailing list; you don't have any way to store their addresses.
+
+<li>You will not be sending out any electronic mail to folks who work at
+companies with elaborate Lotus Notes configurations; sometimes Lotus
+Notes results in email addresses that are longer than 100 characters.
+
+<li>You are running the risk of filling the database with garbage since
+you have not constrained phone numbers in any way.  American users could
+add or delete digits by mistake.  International users could mistype
+country codes.  
+
+<li>You are running the risk of not being able to serve rich people
+because the <code>number_type</code> column may be too constrained.
+Suppose William H. Gates the Third wishes to record some extra phone
+numbers with types of "boat", "ranch", "island", and "private_jet".  The 
+<code>check (number_type in ('work','home','cell','beeper'))</code>
+statement prevents Mr. Gates from doing this.
+
+<li>You run the risk of having records in the database for people whose
+name you don't know, since the <code>name</code> column of
+<code>mailing_list</code> is free to be NULL.
+
+<li>Changing a user's email address won't be the simplest possible
+operation.  You're using <code>email</code> as a key in two tables and
+therefore will have to update both tables.  The <code>references
+mailing_list</code> keeps you from making the mistake of only updating
+<code>mailing_list</code> and leaving orphaned rows in
+<code>phone_numbers</code>.  But if users changed their email addresses
+frequently, you might not want to do things this way.
+
+<li>Since you've no provision for storing a password or any other means
+of authentication, if you allow users to update their information, you
+run a minor risk of allowing a malicious change.  (The risk isn't as
+great as it seems because you probably won't be publishing the complete
+mailing list; an attacker would have to guess the names of people on
+your mailing list.)
+
+
+</ul>
+
+These aren't necessarily bad realities in which to be locked.  However,
+a good data modeler recognizes that every line of code in the .sql file
+has profound implications for the Web service.  
+
+<h3>Papering Over Your Mistakes with Triggers</h3>
+
+Suppose that you've been using the above data model to collect the names
+of Web site readers who'd like to be alerted when you add new articles.
+You haven't sent any notices for two months.  You want to send everyone
+who signed up in the last two months a "Welcome to my Web service;
+thanks for signing up; here's what's new" message.  You want to send the
+older subscribers a simple "here's what's new" message.  But you can't
+do this because you didn't store a registration date.  It is easy enough
+to fix the table:
+
+<blockquote>
+<pre><code>
+alter table mailing_list add (registration_date date);
+</code></pre>
+</blockquote>
+
+But what if you have 15 different Web scripts that use this table?  The
+ones that query it aren't a problem.  If they don't ask for the new
+column, they won't get it and won't realize that the table has been
+changed (this is one of the big selling features of the RDBMS).  But
+the scripts that update the table will all need to be changed.  If you
+miss a script, you're potentially stuck with a table where various
+random rows are missing critical information.
+
+<p>
+
+Oracle has a solution to your problem:  <i>triggers</i>.  A trigger is a
+way of telling Oracle "any time anyone touches this table, I want you to
+execute the following little fragment of code".  Here's how we define
+the trigger <code>mailing_list_registration_date</code>:
+
+<blockquote>
+<pre><code>
+create trigger mailing_list_registration_date
+before insert on mailing_list
+for each row
+when (new.registration_date is null)
+begin
+ :new.registration_date := sysdate;
+end;
+</code></pre>
+</blockquote>
+
+Note that the trigger only runs when someone is trying to insert a row
+with a NULL registration date.  If for some reason you need to copy over
+records from another database and they have a registration date, you
+don't want this trigger overwriting it with the date of the copy.
+
+<p>
+
+A second point to note about this trigger is that it runs <code>for each
+row</code>.  This is called a "row-level trigger" rather than a
+"statement-level trigger", which runs once per transaction, and is usually
+not what you want.
+
+<p>
+
+A third point is that we're using the magic Oracle procedure
+<code>sysdate</code>, which will return the current time.  The Oracle
+<code>date</code> type is precise to the second even though the default
+is to display only the day.
+
+<p>
+
+A fourth point is that, starting with Oracle 8, we could have done this
+more cleanly by adding a <code>default sysdate</code> instruction to the
+column's definition.
+
+<p>
+
+The final point worth noting is the <code>:new.</code> syntax.  This
+lets you refer to the new values being inserted.  There is an analogous
+</code>:old.</code> feature, which is useful for update triggers:
+
+<blockquote>
+<pre><code>
+create or replace trigger mailing_list_update
+before update on mailing_list
+for each row
+when (new.name &lt;&gt; old.name)
+begin
+  -- user is changing his or her name
+  -- record the fact in an audit table
+  insert into mailing_list_name_changes
+    (old_name, new_name)
+  values
+    (:old.name, :new.name);
+end;
+/
+show errors
+</code></pre>
+</blockquote>
+
+This time we used the <code>create or replace</code> syntax.  This keeps
+us from having to <code>drop trigger mailing_list_update</code> if we
+want to change the trigger definition.  We added a comment using the SQL
+comment shortcut "--".  The syntax <code>new.</code> and
+<code>old.</code> is used in the trigger definition, limiting the
+conditions under which the trigger runs.  Between the <code>begin</code>
+and <code>end</code>, we're in a PL/SQL block.  This is Oracle's
+procedural language, described later, in which <code>new.name</code>
+would mean "the <code>name</code> element from the record in
+<code>new</code>".  So you have to use <code>:new</code> instead.
+It is obscurities like this that lead to competent Oracle
+consultants being paid $200+ per hour.
+
+<p>
+
+The "/" and <code>show errors</code> at the end are instructions to
+Oracle's SQL*Plus program.  The slash says "I'm done typing this piece
+of PL/SQL, please evaluate what I've typed."  The "show errors" says "if
+you found anything to object to in what I just typed, please tell me".  
+
+
+<h3>The Discussion Forum -- philg's personal odyssey</h3>
+
+Back in 1995, I built a threaded discussion forum, described <i>ad
+nauseum</i> in <a
+href="/wtr/dead-trees/53013.htm">http://philip.greenspun.com/wtr/dead-trees/53013.htm</a>.
+Here's how I stored the postings:
+
+<blockquote>
+<pre><code>
+create table bboard (
+        msg_id          char(6) not null primary key,
+        refers_to       char(6),
+        email           varchar(200),
+        name            varchar(200),
+        one_line        varchar(700),
+        message         clob,
+        notify          char(1) default 'f' check (notify in ('t','f')),
+        posting_time    date,
+        sort_key        varchar(600)
+);
+</code></pre>
+</blockquote>
+
+German order reigns inside the system itself: messages are uniquely
+keyed with <code>msg_id</code>, refer to each other (i.e., say "I'm a
+response to msg X") with <code>refers_to</code>, and a thread can be
+displayed conveniently by using the <code>sort_key</code> column.
+
+<p>
+
+Italian chaos is permitted in the <code>email</code> and
+<code>name</code> columns; users could remain anonymous, masquerade as
+"president@whitehouse.gov" or give any name.
+
+<p>
+
+This seemed like a good idea when I built the system.  I was concerned
+that it work reliably.  I didn't care whether or not users put in bogus
+content; the admin pages made it really easy to remove such postings
+and, in any case, if someone had something interesting to say but needed
+to remain anonymous, why should the system reject their posting?
+
+<p class="stb">
+
+One hundred thousand postings later, as the moderator of the 
+<a href="http://www.photo.net/">photo.net</a> Q&A forum, I began to see the dimensions
+of my data modeling mistakes.
+
+<p>
+
+First, anonymous postings and fake email addresses didn't come from
+Microsoft employees revealing the dark truth about their evil bosses.
+They came from complete losers trying and failing to be funny or
+wishing to humiliate other readers.  Some fake addresses came from
+people scared by the rising tide of spam email (not a serious problem
+back in 1995).
+
+<p>
+
+Second, I didn't realize how the combination of my email alert systems,
+fake email addresses, and Unix mailers would result in my personal
+mailbox filling up with messages that couldn't be delivered to
+"asdf@asdf.com" or "duh@duh.net".
+
+<p>
+
+Although the solution involved changing some Web scripts, fundamentally
+the fix was add a column to store the IP address from which a post was
+made:
+
+<blockquote>
+<pre><code>
+alter table bboard add (originating_ip	varchar(16));
+</code></pre>
+</blockquote>
+
+Keeping these data enabled me to see that most of the anonymous posters
+were people who'd been using the forum for some time, typically from the
+same IP address.  I just sent them mail and asked them to stop,
+explaining the problem with bounced email.
+
+<p class="stb">
+
+After four years of operating the photo.net community, it became
+apparent that we needed ways to 
+
+<ul>
+
+<li>display site history for users who had changed their email addresses
+
+<li>discourage problem users from burdening the moderators and the
+community
+
+<li>carefully tie together user-contributed content in the various
+subsystems of photo.net
+
+</ul>
+
+The solution was obvious to any experienced database nerd:  a canonical
+users table and then content tables that reference it.  Here's a
+simplified version of the data model, taken from a toolkit for building
+online communities, describe in 
+<a href="/panda/community">http://philip.greenspun.com/panda/community</a>:
+
+<blockquote>
+<pre><code>
+create table users (
+	user_id			integer not null primary key,
+	first_names		varchar(100) not null,
+	last_name		varchar(100) not null,
+	email			varchar(100) not null unique,
+        ..
+);
+
+create table bboard (
+	msg_id		char(6) not null primary key,
+	refers_to	char(6),
+	topic		varchar(100) not null references bboard_topics,
+	category	varchar(200),	-- only used for categorized Q&A forums
+	originating_ip	varchar(16),	-- stored as string, separated by periods
+	user_id		integer not null references users,
+	one_line	varchar(700),
+	message		clob,
+	-- html_p - is the message in html or not
+	html_p		char(1) default 'f' check (html_p in ('t','f')),
+        ...
+);
+
+create table classified_ads (
+	classified_ad_id	integer not null primary key,
+	user_id			integer not null references users,
+	...
+);
+</code></pre>
+</blockquote>
+
+Note that a contributor's name and email address no longer appear in the
+<code>bboard</code> table.  That doesn't mean we don't know who posted a
+message.  In fact, this data model can't even represent an anonymous
+posting:  <code>user_id integer not null references users</code>
+requires that each posting be associated with a user ID and that there
+actually be a row in the <code>users</code> table with that ID.
+
+<p>
+
+First, let's talk about how much fun it is to move a live-on-the-Web
+600,000 hit/day service from one data model to another.  In this case,
+note that the original <code>bboard</code> data model had a single
+<code>name</code> column.  The community system has separate columns for
+first and last names.  A conversion script can easily split up "Joe
+Smith" but what is it to do with <a href="/bg/">William Henry Gates
+III</a>?
+
+<p>
+
+How do we copy over anonymous postings?  Remember that Oracle is not
+flexible or intelligent.  We said that we wanted every row in the
+<code>bboard</code> table to reference a row in the <code>users</code>
+table.  Oracle will abort any transaction that would result in a
+violation of this integrity constraint.  So we either have to drop all
+those anonymous postings (and any non-anonymous postings that refer to
+them) or we have to create a user called "Anonymous" and assign all the
+anonymous postings to that person.  The technical term for this kind of
+solution is <i>kludge</i>.
+
+<p>
+
+A more difficult problem than anonymous postings is presented by
+long-time users who have difficulty typing and or keeping a job.
+Consider a user who has identified himself as 
+
+<ol>
+<li>Joe Smith; jsmith@ibm.com
+<li>Jo Smith; jsmith@ibm.com (typo in name)
+<li>Joseph Smith; jsmth@ibm.com (typo in email)
+<li>Joe Smith; cantuseworkaddr@hotmail.com (new IBM policy)
+<li>Joe Smith-Jones; joe_smithjones@hp.com (got married, changed name,
+changed jobs)
+<li>Joe Smith-Jones; jsmith@somedivision.hp.com (valid but not
+canonical corporate email address)
+<li>Josephina Smith; jsmith@somedivision.hp.com (sex change; divorce)
+<li>Josephina Smith; josephina_smith@hp.com (new corporate address)
+<li>Siddhartha Bodhisattva; josephina_smith@hp.com (change of philosophy)
+<li>Siddhartha Bodhisattva; thinkwaitfast@hotmail.com (traveling for
+awhile to find enlightenment)
+</ol>
+
+Contemporary community members all recognize these postings as coming
+from the same person but it would be very challenging even to build a
+good semi-automated means of merging postings from this person into one
+user record.
+
+<p class="stb">
+
+Once we've copied everything into this new <em>normalized</em> data
+model, notice that we can't dig ourselves into the same hole again.  If
+a user has contributed 1000 postings, we don't have 1000 different
+records of that person's name and email address.  If a user changes
+jobs, we need only update one column in one row in one table.
+
+<p class="stb">
+
+The <code>html_p</code> column in the new data model is worth
+mentioning.  In 1995, I didn't understand the problems of user-submitted
+data.  Some users will submit plain text, which seems simple, but in
+fact you can't just spit this out as HTML.  If user A typed &lt; or &gt;
+characters, they might get swallowed by user B's Web browser.  Does this
+matter?  Consider that "&lt;g&gt;" is interpreted in various online
+circles as an abbreviation for "grin" but by Netscape Navigator as an
+unrecognized (and therefore ignore) HTML tag.  Compare the meaning of 
+
+<blockquote>
+"We shouldn't think it unfair that Bill Gates has more wealth than the
+100 million poorest Americans <em>combined</em>.  After all, he invented the 
+personal computer, the graphical user interface, and the Internet."
+</blockquote>
+
+with 
+
+<blockquote>
+"We shouldn't think it unfair that Bill Gates has more wealth than the
+100 million poorest Americans <em>combined</em>.  After all, he invented the 
+personal computer, the graphical user interface, and the Internet. &lt;g&gt;"
+</blockquote>
+
+
+<p>
+
+It would have been easy enough for me to make sure that such characters
+never got interpreted as markup.  In fact, with AOLserver one can do it
+with a single call to the built-in procedure <code>ns_quotehtml</code>.
+However, consider the case where a nerd posts some HTML.  Other users
+would then see 
+
+<blockquote>
+"For more examples of my brilliant thinking and modesty, check out &lt;a
+href="http://philip.greenspun.com/"&gt;my home page&lt;/a&gt;."
+</blockquote>
+
+I discovered that the only real solution is to ask the user whether the
+submission is an HTML fragment or plain text, show the user an approval
+page where the content may be previewed, and then remember what the user
+told us in an <code>html_p</code> column in the database.
+
+<p class="stb">
+
+Is this data model perfect?  Permanent?  Absolutely.  It will last for
+at least...  Whoa!  Wait a minute.  I didn't know that Dave Clark was
+replacing his original Internet Protocol, which the world has been
+running since around 1980, with IPv6
+(<a href="http://www.faqs.org/rfcs/rfc2460.html">http://www.faqs.org/rfcs/rfc2460.html</a>).  In the near future, we'll have IP
+addresses that are 128 bits long.  That's 16 bytes, each of which takes
+two hex characters to represent.  So we need 32 characters plus at least
+7 more for periods that separate the hex digits.  We might also need a
+couple of characters in front to say "this is a hex representation".
+Thus our brand new data model in fact has a crippling deficiency.  How
+easy is it to fix?  In Oracle:
+
+<blockquote>
+<pre><code>
+alter table bboard modify (originating_ip varchar(50));
+</code></pre>
+</blockquote>
+
+You won't always get off this easy.  Oracle won't let you shrink a
+column from a maximum of 50 characters to 16, even if no row has a value
+longer than 16 characters.  Oracle also makes it tough to add a column
+that is constrained <code>not null</code>.
+
+<h3>Representing Web Site Core Content</h3>
+
+Free-for-all Internet discussions can often be useful and occasionally
+are compelling, but the anchor of a good Web site is usually a set of
+carefully authored extended documents.  Historically these have tended
+to be stored in the Unix file system and they don't change too often.
+Hence I refer to them as <i>static pages</i>.  Examples of static
+pages on the photo.net server include this book chapter, the tutorial on
+light for photographers at <a
+href="http://www.photo.net/making-photographs/light">http://www.photo.net/making-photographs/light</a>.
+
+<p>
+
+We have some big goals to consider.  We want the data in the database to 
+
+<ul>
+
+<li>help community experts figure out which articles need revision and
+which new articles would be most valued by the community at large.
+
+<li>help contributors work together on a draft article or a new version
+of an old article.
+
+<li>collect and organize reader comments and discussion, both for
+presentation to other readers but also to assist authors in keeping
+content up-to-date.
+
+<li>collect and organize reader-submitted suggestions of related content
+out on the wider Internet (i.e., links).
+
+<li>help point readers to new or new-to-them content that might interest
+them, based on what they've read before or based on what kind of content
+they've said is interesting.
+
+</ul>
+
+
+The big goals lead to some more concrete objectives:
+
+<ul>
+<li>We will need a table that holds the static pages themselves.
+
+<li>Since there are potentially many comments per page, we need a
+separate table to hold the user-submitted comments.
+
+<li>Since there are potentially many related links per page, we need a
+separate table to hold the user-submitted links.
+
+<li>Since there are potentially many authors for one page, we need a
+separate table to register the author-page many-to-one relation.
+
+<li>Considering the "help point readers to stuff that will interest
+them" objective, it seems that we need to store the category or
+categories under which a page falls.  Since there are potentially many
+categories for one page, we need a separate table to hold the mapping
+between pages and categories.
+
+</ul>
+
+<blockquote>
+<pre><code>
+create table static_pages (
+	page_id		integer not null primary key,
+	url_stub	varchar(400) not null unique,
+	original_author	integer references users(user_id),
+	page_title	varchar(4000),
+	page_body	clob,
+	obsolete_p	char(1) default 'f' check (obsolete_p in ('t','f')),
+	members_only_p	char(1) default 'f' check (members_only_p in ('t','f')),
+	price		number,
+	copyright_info	varchar(4000),
+	accept_comments_p	char(1) default 't' check (accept_comments_p in ('t','f')),
+	accept_links_p		char(1) default 't' check (accept_links_p in ('t','f')),
+	last_updated		date,
+	-- used to prevent minor changes from looking like new content
+	publish_date		date
+);
+
+create table static_page_authors (
+	page_id		integer not null references static_pages,
+	user_id		integer not null references users,
+	notify_p	char(1) default 't' check (notify_p in ('t','f')),
+	unique(page_id,user_id)
+);
+
+</code></pre>
+</blockquote>
+
+Note that we use a generated integer <code>page_id</code> key for this
+table.  We could key the table by the <code>url_stub</code> (filename),
+but that would make it very difficult to reorganize files in the Unix
+file system (something that should actually happen very seldom on a Web
+server; it breaks links from foreign sites).
+
+<p>
+
+How to generate these unique integer keys when you have to insert a new
+row into <code>static_pages</code>?  You could 
+
+
+<ul>
+<li>lock the table
+<li>find the maximum <code>page_id</code> so far
+<li>add one to create a new unique <code>page_id</code>
+<li>insert the row
+<li>commit the transaction (releases the table lock)
+</ul>
+
+Much better is to use Oracle's built-in sequence generation facility:
+
+<blockquote>
+<pre><code>
+create sequence page_id_sequence start with 1;
+</code></pre>
+</blockquote>
+
+Then we can get new page IDs by using
+<code>page_id_sequence.nextval</code> in INSERT statements (see 
+<a href="transactions.html">the Transactions chapter</a> for a fuller
+discussion of sequences).
+
+
+
+<hr align=center width=400 size=5>
+
+<h3>Reference</h3>
+
+Here is a summary of the data modeling tools available to you in
+Oracle, each hyperlinked to the Oracle documentation.  This reference
+section covers the following:
+
+<ul>
+<li>data types
+<li>statements for creating, altering, and dropping tables
+<li>constraints
+</ul>
+
+<h4>Data Types</h4>
+
+For each column that you define for a table, you must specify the data
+type of that column.  Here are your options:
+
+<blockquote>
+
+<table cellspacing=3>
+<tr><th colspan=2>Character Data</th></tr>
+<tr><th valign=top>char(n)
+    <td>
+
+A fixed-length character string, e.g., <code>char(200)</code> will take
+up 200 bytes regardless of how long the string actually is.  This works
+well when the data truly are of fixed size, e.g., when you are recording
+a user's sex as "m" or "f".  This works badly when the data are of
+variable length.  Not only does it waste space on the disk and in the
+memory cache, but it makes comparisons fail.  For example, suppose you
+insert "rating" into a <code>comment_type</code> column of type
+<code>char(30)</code> and then your Tcl program queries the database.
+Oracle sends this column value back to procedural language clients
+padded with enough spaces to make up 30 total characters.  Thus if you
+have a comparison within Tcl of whether <code>$comment_type ==
+"rating"</code>, the comparison will fail because
+<code>$comment_type</code> is actually "rating" followed by 24 spaces.
+
+<br>
+<br>
+
+The maximum length char in Oracle8 is 2000 bytes.
+</tr>
+<tr><th valign=top>varchar(n)
+    <td>
+A variable-length character string, up to 4000 bytes long in Oracle8.
+These are stored in such a way as to minimize disk space usage, i.e., if
+you only put one character into a column of type
+<code>varchar(4000)</code>, Oracle only consumes two bytes on disk.
+The reason that you don't just make all the columns
+<code>varchar(4000)</code> is that the Oracle indexing system is limited
+to indexing keys of about 700 bytes.  
+</tr>
+<tr><th valign=top>clob
+    <td>
+A variable-length character string, up to 4 gigabytes long in Oracle8.
+The CLOB data type is useful for accepting user input from such
+applications as discussion forums.  Sadly, Oracle8 has tremendous
+limitations on how CLOB data may be inserted, modified, and queried.
+Use <code>varchar(4000)</code> if you can and 
+prepare to suffer if you can't.
+
+<p>
+
+In a spectacular demonstration of what happens when companies don't
+follow the lessons of 
+<a
+href="http://www.amazon.com/exec/obidos/ASIN/0201835959/pgreenspun-20"><cite>The
+Mythical Man Month</cite></a>, the regular string functions don't work
+on CLOBs.  You need to call identically named functions in the DBMS_LOB
+package.  These functions take the same arguments but in different
+orders.  You'll never be able to write a working line of code without 
+first reading 
+
+<a
+href="http://www.oradoc.com/keyword/dbms_lob">the
+DBMS_LOB section of the 
+<cite>Oracle8 Server Application Developer's Guide</cite></a>.
+
+</tr>
+<tr><th valign=top>nchar, nvarchar, nclob
+    <td>
+
+The n prefix stands for "national character set".  These work like char,
+varchar, and clob but for multi-byte characters (e.g., Unicode; see 
+<a href="http://www.unicode.org">http://www.unicode.org</a>).
+
+
+</tr>
+<tr><th colspan=2>Numeric Data</th></tr>
+<tr><th valign=top>number
+    <td>
+
+Oracle actually only has one internal data type that is used for storing
+numbers.  It can handle 38 digits of precision and exponents from -130
+to +126.  If you want to get fancy, you can specify precision and scale
+limits.  For example, <code>number(3,0)</code> says "round everything to an
+integer [scale 0] and accept numbers than range from -999 to +999".  If
+you're American and commercially minded, <code>number(9,2)</code> will
+probably work well for storing prices in dollars and cents (unless
+you're selling stuff to <a href="/WealthClock">Bill
+Gates</a>, in which case the billion dollar limit imposed by the
+precision of 9 might prove constraining).  If you <em>are</em>
+<a href="http://www.photo.net/bg/">Bill Gates</a>, you might not want to get distracted by
+insignificant numbers:  Tell Oracle to round everything to the nearest
+million with <code>number(38,-6)</code>.
+</tr>
+<tr><th valign=top>integer
+    <td>
+
+In terms of storage consumed and behavior, this is not any different
+from <code>number(38)</code> but I think it reads better and it is more
+in line with ANSI SQL (which would be a standard if anyone actually
+implemented it).
+
+</tr>
+
+<tr><th colspan=2>Dates and Date/Time Intervals (Version 9i and newer)</th></tr>
+<tr><th valign=top>timestamp
+    <td>
+
+A point in time, recorded with sub-second precision.  When creating a
+column you specify the number of digits of precision beyond one second
+from 0 (single second precision) to 9 (nanosecond precision).  Oracle's
+calendar can handle dates between between January 1, 4712 BC and
+December 31, 9999 AD.  You can put in values with the
+<code>to_timestamp</code> function and query them out using the
+<code>to_char</code> function.  Oracle offers several variants of this
+datatype for coping with data aggregated across multiple timezones.
+
+
+</tr>
+<tr><th valign=top>interval year to month
+    <td>
+
+An amount of time, expressed in years and months.
+
+<tr><th valign=top>interval day to second
+    <td>
+
+An amount of time, expressed in days, hours, minutes, and seconds.  Can
+be precise down to the nanosecond if desired.
+
+
+</tr>
+
+
+<tr><th colspan=2>Dates and Date/Time Intervals (Versions 8i and earlier)</th></tr>
+<tr><th valign=top>date
+    <td>
+
+<font color=red>Obsolete as of version 9i</font>.  A point in time,
+recorded with one-second precision, between January 1, 4712 BC and
+December 31, 4712 AD.  You can put in values with the
+<code>to_date</code> function and query them out using the
+<code>to_char</code> function.  If you don't use these functions, you're
+limited to specifying the date with the default system format mask,
+usually 'DD-MON-YY'.  This is a good recipe for a Year 2000 bug since
+January 23, 2000 would be '23-JAN-00'.  On better-maintained systems,
+this is often the ANSI default: 'YYYY-MM-DD', e.g., '2000-01-23' for
+January 23, 2000.
+
+
+</tr>
+<tr><th valign=top>number
+    <td>
+
+Hey, isn't this a typo?  What's <code>number</code> doing in the date
+section?  It is here because this is how Oracle versions prior to 9i
+represented date-time intervals, though their docs never say this
+explicitly.  If you add numbers to dates, you get new dates.  For
+example, tomorrow at exactly this time is <code>sysdate+1</code>.  To
+query for stuff submitted in the last hour, you limit to
+<code>submitted_date &gt; sysdate - 1/24</code>.
+
+
+<tr><th colspan=2>Binary Data</th></tr>
+<tr><th valign=top>blob
+
+    <td>BLOB stands for "Binary Large OBject".  It doesn't really have
+to be all that large, though Oracle will let you store up to 4 GB.  The
+BLOB data type was set up to permit the storage of images, sound
+recordings, and other inherently binary data.  In practice, it also gets
+used by fraudulent application software vendors.  They spend a few years
+kludging together some nasty format of their own.  Their MBA executive
+customers demand that the whole thing be RDBMS-based.  The software
+vendor learns enough about Oracle to "stuff everything into a BLOB".
+Then all the marketing and sales folks are happy because the application
+is now running from Oracle instead of from the file system.  Sadly, the
+programmers and users don't get much because you can't use SQL very
+effectively to query or update what's inside a BLOB.
+
+</tr>
+
+<tr><th valign=top>bfile
+
+    <td>A binary file, stored by the operating system (typically Unix)
+and kept track of by Oracle.  These would be useful when you
+need to get to information both from SQL (which is kept purposefully
+ignorant about what goes on in the wider world) and from an application
+that can only read from standard files (e.g., a typical Web server).
+The bfile data type is pretty new but to my mind it is already
+obsolete:  Oracle 8.1 (8i) lets external applications view content in
+the database as though it were a file on a Windows NT server.  So why
+not keep everything as a BLOB and enable Oracle's Internet File System? 
+
+
+</tr>
+
+
+
+</table>
+
+</blockquote>
+
+Despite this plethora of data types, Oracle has some glaring holes that
+torture developers.  For example, there is no Boolean data type.  A
+developer who needs an <code>approved_p</code> column is forced to use
+<code>char(1) check(this_column in ('t','f'))</code> and then, instead
+of the clean query <code>where approved_p</code> is forced into
+<code>where approved_p = 't'</code>.
+
+<p>
+
+Oracle8 includes a limited ability to create your own data types.
+Covering these is beyond the scope of this book.  See 
+Oracle8 Server Concepts, <a href="http://www.oradoc.com/keyword/user_datatypes">User-Defined Datatypes</a>.
+
+<h4>Tables</h4>
+
+The basics:
+
+<blockquote>
+<pre><code>
+CREATE TABLE your_table_name (
+       the_key_column	     key_data_type PRIMARY KEY,
+       a_regular_column	     a_data_type,
+       an_important_column   a_data_type NOT NULL,
+       ... up to 996 intervening columns in Oracle8 ...
+       the_last_column       a_data_type
+);
+</code></pre>
+</blockquote>
+
+Even in a simple example such as the one above, there are few items
+worth noting.  First, I like to define the key column(s) at the very
+top.  Second, the <code>primary key</code> constraint has some powerful
+effects.  It forces <code>the_key_column</code> to be non-null.  It
+causes the creation of an index on <code>the_key_column</code>, which
+will slow down updates to <code>your_table_name</code> but improve the
+speed of access when someone queries for a row with a particular value
+of <code>the_key_column</code>.  Oracle checks this index when inserting
+any new row and aborts the transaction if there is already a row with
+the same value for <code>the_key_column</code>.  Third, note that there
+is no comma following the definition of the last row.  If you are
+careless and leave the comma in, Oracle will give you a very confusing
+error message.
+
+<p class="stb">
+
+If you didn't get it right the first time, you'll probably want to 
+
+<blockquote>
+<pre><code>
+alter table your_table_name add (new_column_name a_data_type any_constraints);
+</code></pre>
+</blockquote>
+
+or
+
+<blockquote>
+<pre><code>
+alter table your_table_name modify (existing_column_name new_data_type new_constraints);
+</code></pre>
+</blockquote>
+
+In Oracle 8i you can drop a column:
+
+<blockquote>
+<pre><code>
+alter table your_table_name drop column existing_column_name;
+</code></pre>
+</blockquote>
+
+(see <a href="http://www.oradoc.com/keyword/drop_column">http://www.oradoc.com/keyword/drop_column</a>).
+
+<p>
+
+If you're still in the prototype stage, you'll probably
+find it easier to simply
+
+<blockquote>
+<pre><code>
+drop table your_table_name;
+</code></pre>
+</blockquote>
+
+and recreate it.  At any time, you can see what you've got defined in
+the database by querying Oracle's <i>Data Dictionary</i>:
+
+<blockquote>
+<pre><code>
+SQL> select table_name from user_tables order by table_name;
+
+TABLE_NAME
+------------------------------
+ADVS
+ADV_CATEGORIES
+ADV_GROUPS
+ADV_GROUP_MAP
+ADV_LOG
+ADV_USER_MAP
+AD_AUTHORIZED_MAINTAINERS
+AD_CATEGORIES
+AD_DOMAINS
+AD_INTEGRITY_CHECKS
+BBOARD
+...
+STATIC_CATEGORIES
+STATIC_PAGES
+STATIC_PAGE_AUTHORS
+USERS
+...
+</code></pre>
+</blockquote>
+
+after which you will typically type <code>describe
+table_name_of_interest</code> in SQL*Plus:
+
+<blockquote>
+<pre><code>
+SQL> describe users;
+ Name				 Null?	  Type
+ ------------------------------- -------- ----
+ USER_ID			 NOT NULL NUMBER(38)
+ FIRST_NAMES			 NOT NULL VARCHAR2(100)
+ LAST_NAME			 NOT NULL VARCHAR2(100)
+ PRIV_NAME				  NUMBER(38)
+ EMAIL				 NOT NULL VARCHAR2(100)
+ PRIV_EMAIL				  NUMBER(38)
+ EMAIL_BOUNCING_P			  CHAR(1)
+ PASSWORD			 NOT NULL VARCHAR2(30)
+ URL					  VARCHAR2(200)
+ ON_VACATION_UNTIL			  DATE
+ LAST_VISIT				  DATE
+ SECOND_TO_LAST_VISIT			  DATE
+ REGISTRATION_DATE			  DATE
+ REGISTRATION_IP			  VARCHAR2(50)
+ ADMINISTRATOR_P			  CHAR(1)
+ DELETED_P				  CHAR(1)
+ BANNED_P				  CHAR(1)
+ BANNING_USER				  NUMBER(38)
+ BANNING_NOTE				  VARCHAR2(4000)
+</code></pre>
+</blockquote>
+
+Note that Oracle displays its internal data types rather than the ones
+you've given, e.g., <code>number(38)</code> rather than
+<code>integer</code> and <code>varchar2</code> instead of the specified
+<code>varchar</code>.
+
+<h4>Constraints</h4>
+
+When you're defining a table, you can constrain single rows by adding
+some magic words after the data type:
+
+<ul>
+<li><code>not null</code>; requires a value for this column
+<li><code>unique</code>; two rows can't have the same value in this
+column (side effect in Oracle: creates an index)
+
+<li><code>primary key</code>; same as <code>unique</code> except that no
+row can have a null value for this column and other tables can refer to
+this column
+
+<li><code>check</code>; limit the range of values for column, e.g., 
+<code>rating   integer check(rating > 0 and rating <= 10)</code>
+
+<li><code>references</code>; this column can only contain values present
+in another table's primary key column, e.g., 
+<code>user_id	   not null references users</code> in the
+<code>bboard</code> table forces the <code>user_id</code> column to only
+point to valid users.  An interesting twist is that you don't have to
+give a data type for <code>user_id</code>; Oracle assigns this column to
+whatever data type the foreign key has (in this case <code>integer</code>).
+</ul>
+
+Constraints can apply to multiple columns:
+
+<blockquote>
+<pre><code>
+create table static_page_authors (
+	page_id		integer not null references static_pages,
+	user_id		integer not null references users,
+	notify_p	char(1) default 't' check (notify_p in ('t','f')),
+	unique(page_id,user_id)
+);
+</code></pre>
+</blockquote>
+
+Oracle will let us keep rows that have the same <code>page_id</code> and
+rows that have the same <code>user_id</code> but not rows that have the
+same value in both columns (which would not make sense; a person can't
+be the author of a document more than once).  Suppose that you run a
+university distinguished lecture series.  You want speakers who are
+professors at other universities or at least PhDs.  On the other hand,
+if someone controls enough money, be it his own or his company's, he's
+in.  Oracle stands ready:
+
+<blockquote>
+<pre><code>
+create table distinguished_lecturers (
+	lecturer_id		integer primary key,
+	name_and_title		varchar(100),
+	personal_wealth		number,
+	corporate_wealth	number,
+	check (instr(upper(name_and_title),'PHD') <> 0 
+               or instr(upper(name_and_title),'PROFESSOR') <> 0 
+               or (personal_wealth + corporate_wealth) > 1000000000)
+);
+
+insert into distinguished_lecturers 
+values
+(1,'Professor Ellen Egghead',-10000,200000);
+
+1 row created.
+
+insert into distinguished_lecturers 
+values
+(2,'Bill Gates, innovator',75000000000,18000000000);
+
+1 row created.
+
+insert into distinguished_lecturers 
+values
+(3,'Joe Average',20000,0);
+
+ORA-02290: check constraint (PHOTONET.SYS_C001819) violated
+</code></pre>
+</blockquote>
+
+As desired, Oracle prevented us from inserting some random average loser
+into the <code>distinguished_lecturers</code> table, but the error
+message was confusing in that it refers to a constraint given the name
+of "SYS_C001819" and owned by the PHOTONET user.  We can give our
+constraint a name at definition time:
+
+<blockquote>
+<pre><code>
+create table distinguished_lecturers (
+	lecturer_id		integer primary key,
+	name_and_title		varchar(100),
+	personal_wealth		number,
+	corporate_wealth	number,
+	<b>constraint ensure_truly_distinguished</b>
+        check (instr(upper(name_and_title),'PHD') <> 0 
+               or instr(upper(name_and_title),'PROFESSOR') <> 0 
+               or (personal_wealth + corporate_wealth) > 1000000000)
+);
+
+insert into distinguished_lecturers 
+values
+(3,'Joe Average',20000,0);
+
+ORA-02290: check constraint (PHOTONET.ENSURE_TRULY_DISTINGUISHED) violated
+</code></pre>
+</blockquote>
+
+Now the error message is easier to understand by application programmers.
+
+<h4>Creating More Elaborate Constraints with Triggers</h4>
+
+The default Oracle mechanisms for constraining data are not always
+adequate.  For example, the ArsDigita Community System auction module
+has a table called <code>au_categories</code>.  The
+<code>category_keyword</code> column is a unique shorthand way of
+referring to a category in a URL.  However, this column may be NULL
+because it is not the primary key to the table.  The shorthand method of
+referring to the category is optional.  
+
+<blockquote>
+<pre><code>
+create table au_categories (
+        category_id             integer primary key,
+        -- shorthand for referring to this category,
+        -- e.g. "bridges", for use in URLs
+        category_keyword        varchar(30),
+        -- human-readable name of this category,
+        -- e.g. "All types of bridges"
+        category_name           varchar(128) not null
+);
+</code></pre>
+</blockquote>
+
+We can't add a UNIQUE constraint to the <code>category_keyword</code>
+column.  That would allow the table to only have one row where
+<code>category_keyword</code> was NULL.  So we add a trigger that can
+execute an arbitrary PL/SQL expression and raise an error to prevent an
+INSERT if necessary:
+
+<blockquote>
+<pre><code>
+create or replace trigger au_category_unique_tr
+before insert
+on au_categories
+for each row
+declare
+        existing_count integer;
+begin
+        select count(*) into existing_count from au_categories
+            where category_keyword = :new.category_keyword;
+        if existing_count > 0
+        then
+            raise_application_error(-20010, 'Category keywords must be unique if used');
+        end if;
+end;
+</code></pre>
+</blockquote>
+
+This trigger queries the table to find out if there are any matching
+keywords already inserted.  If there are, it calls the built-in Oracle
+procedure <code>raise_application_error</code> to abort the transaction.
+
+<h3>The True Oracle Religion</h3>
+
+<ul>
+<li>Oracle8 Server Application Developer's Guide,
+<a href="http://www.oradoc.com/keyword/datatype_selection">Selecting a Datatype</a>
+<li>Oracle8 Server Concepts, <a href="http://www.oradoc.com/keyword/builtin_datatypes">Built-In Datatypes</a>
+<li>Oracle8 Server Concepts, <a href="http://www.oradoc.com/keyword/user_datatypes">User-Defined Datatypes</a>
+
+</ul>
+
+
+<br><br>
+
+Next:  <a href="queries.html">queries</a>
+
+<hr><a href="http://philip.greenspun.com/"><address>philg@mit.edu</address></a>
+
+<center><a href="/comments/add?page_id=3459">Add a comment</a></center>
+
+<script type="text/javascript">
+
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-315149-1']);
+	_gaq.push(['_trackPageview']);
+
+	(function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+
+</script></body>
+</html>

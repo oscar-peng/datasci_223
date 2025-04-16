@@ -1,94 +1,138 @@
 # Demo 4: SQL and Python Integration
 
-## Reading Data Directly
+In this notebook, we'll explore how to integrate SQL with Python for data analysis.
 
-Let's start by reading the CSV files directly into pandas:
+## Setup
+
+First, let's set up our environment:
 
 ```python
+%pip install jupysql duckdb-engine pandas polars --quiet
 import pandas as pd
+import duckdb
+%load_ext sql
+%config SqlMagic.autocommit=True
+%config SqlMagic.feedback = False
+%config SqlMagic.displaycon = False
 
-# Read CSV files directly
-demographics_df = pd.read_csv('lectures/03/demo/data/demographics.csv')
-examination_df = pd.read_csv('lectures/03/demo/data/examination.csv')
-laboratory_df = pd.read_csv('lectures/03/demo/data/laboratory.csv')
-questionnaire_df = pd.read_csv('lectures/03/demo/data/questionnaire.csv')
-
-# Basic data exploration
-print("Demographics shape:", demographics_df.shape)
-print("\nFirst few rows of demographics:")
-print(demographics_df.head())
+# Connect to DuckDB
+con = duckdb.connect(database=':memory:', read_only=False)
+%sql duckdb:///:memory:
 ```
 
-## SQL Magic with DataFrames
+## Load Data
 
-Now let's use SQL magic to query our DataFrames:
+Let's load our NHANES data:
 
 ```python
-# Register DataFrames with DuckDB
-con = duckdb.connect(database=':memory:', read_only=False)
-con.register('demographics', demographics_df)
-con.register('examination', examination_df)
-con.register('laboratory', laboratory_df)
-con.register('questionnaire', questionnaire_df)
+%%sql
+-- Clean up any existing tables
+DROP TABLE IF EXISTS questionnaire;
+DROP TABLE IF EXISTS laboratory;
+DROP TABLE IF EXISTS examination;
+DROP TABLE IF EXISTS demographics;
 
-# Use SQL magic
-%sql duckdb://localhost
+-- Load demographics
+CREATE TABLE demographics AS
+SELECT * FROM read_csv_auto('/home/christopher/code/datasci_223/data/demographic.csv');
 
-# Query the registered DataFrames
+-- Load examination
+CREATE TABLE examination AS
+SELECT * FROM read_csv_auto('/home/christopher/code/datasci_223/data/examination.csv');
+
+-- Load laboratory
+CREATE TABLE laboratory AS
+SELECT * FROM read_csv_auto('/home/christopher/code/datasci_223/data/labs.csv');
+
+-- Load questionnaire
+CREATE TABLE questionnaire AS
+SELECT * FROM read_csv_auto('/home/christopher/code/datasci_223/data/questionnaire.csv');
+```
+
+## SQL Magic
+
+Practice using SQL magic commands:
+
+```python
+# Basic SQL query
+%sql SELECT * FROM demographics LIMIT 5;
+```
+
+```python
 %%sql
 SELECT 
     d.age,
-    d.gender,
-    e.bmxbmi,
-    l.lbxglu
+    AVG(e.bmxbmi) AS avg_bmi
 FROM demographics d
 JOIN examination e ON d.seqn = e.seqn
-JOIN laboratory l ON d.seqn = l.seqn
-LIMIT 5;
+GROUP BY d.age
+ORDER BY d.age;
 ```
 
-## Basic Visualizations
+## Pandas Integration
 
-Let's create some simple visualizations:
+Practice SQL to DataFrame conversion:
 
 ```python
-import matplotlib.pyplot as plt
-
-# Scatter plot of Age vs BMI
-plt.figure(figsize=(10, 6))
-plt.scatter(demographics_df['age'], examination_df['bmxbmi'], alpha=0.5)
-plt.xlabel('Age')
-plt.ylabel('BMI')
-plt.title('Age vs BMI')
-plt.show()
-
-# Box plot of BMI by Gender
-plt.figure(figsize=(10, 6))
-plt.boxplot([
-    examination_df[demographics_df['gender'] == 'M']['bmxbmi'],
-    examination_df[demographics_df['gender'] == 'F']['bmxbmi']
-])
-plt.xticks([1, 2], ['Male', 'Female'])
-plt.ylabel('BMI')
-plt.title('BMI Distribution by Gender')
-plt.show()
+# Query to DataFrame
+df = %sql SELECT * FROM demographics
+df.head()
 ```
 
-## Polars Integration (Preview)
+```python
+# Complex query to DataFrame
+bmi_df = %sql SELECT d.*, e.bmxbmi FROM demographics d JOIN examination e ON d.seqn = e.seqn
+bmi_df.head()
+```
 
-For large datasets, Polars can be more efficient. This will be covered in detail in the next lecture:
+```python
+# Analyze data in pandas
+bmi_by_age = bmi_df.groupby('age')['bmxbmi'].mean()
+bmi_by_age.plot(kind='bar')
+```
+
+## Polars Integration
+
+Practice using Polars for high-performance queries:
 
 ```python
 import polars as pl
 
-# Read CSV with Polars
-demographics_pl = pl.read_csv('lectures/03/demo/data/demographics.csv')
-examination_pl = pl.read_csv('lectures/03/demo/data/examination.csv')
+# Query to Polars DataFrame
+polars_df = pl.read_sql("""
+    SELECT 
+        d.age,
+        d.gender,
+        e.bmxbmi,
+        l.lbxglu
+    FROM demographics d
+    JOIN examination e ON d.seqn = e.seqn
+    JOIN laboratory l ON d.seqn = l.seqn
+""", con)
 
-# Basic operations
-print("Demographics shape:", demographics_pl.shape)
-print("\nFirst few rows:")
-print(demographics_pl.head())
+# Fast aggregations
+polars_df.groupby('age').agg([
+    pl.col('bmxbmi').mean().alias('avg_bmi'),
+    pl.col('lbxglu').mean().alias('avg_glucose')
+])
+```
+
+## Visualization
+
+Create visualizations from SQL results:
+
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Get data for visualization
+viz_df = %sql SELECT d.age, d.gender, e.bmxbmi FROM demographics d JOIN examination e ON d.seqn = e.seqn
+
+# Create plots
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=viz_df, x='age', y='bmxbmi', hue='gender')
+plt.title('BMI Distribution by Age and Gender')
+plt.show()
 ```
 
 ## Practice
@@ -97,9 +141,4 @@ Try these exercises:
 1. Create a scatter plot of BMI vs glucose levels
 2. Calculate and visualize the correlation between lab values
 3. Create a dashboard of key health metrics by demographic groups
-4. Compare performance between pandas and polars for large queries
-
-## Next Steps
-- Advanced topics
-- Best practices
-- Resources for learning 
+4. Compare performance between pandas and polars for large queries 

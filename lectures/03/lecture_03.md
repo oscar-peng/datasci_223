@@ -11,23 +11,23 @@ pdf: true
 - 🏗️ Structure of a SQL statement
 - 📥 Data Import
 - 🤿 SQL Fundamentals
-    - Basics: semicolons and comments
-    - SELECT
-    - WHERE Clause
-    - GROUP BY and Aggregates
-    - HAVING Clause
-    - JOIN operations
-    - Subqueries
+    - Basics: semicolons and comments
+    - SELECT
+    - WHERE Clause
+    - GROUP BY and Aggregates
+    - HAVING Clause
+    - JOIN operations
+    - Subqueries
 - 🚨 Advanced SQL
-    - Data Modification (UPDATE, INSERT, DELETE)
-    - Common Table Expressions (CTEs)
-    - Window functions
-    - Views and Materialized Views
-    - Performance optimization
+    - Data Modification (UPDATE, INSERT, DELETE)
+    - Common Table Expressions (CTEs)
+    - Window functions
+    - Views and Materialized Views
+    - Performance optimization
 - 🔄 SQL with Python
-    - pandas integration
-    - SQLite
-    - SQLAlchemy
+    - pandas integration
+    - SQLite
+    - SQLAlchemy
 
 ## 📊 Why SQL?
 
@@ -87,8 +87,8 @@ import duckdb
 
 # Create a sample Pandas DataFrame
 data = {'ID': [1, 2, 3, 4],
-          'Name': ['Alice', 'Bob', 'Charlie', 'David'],
-          'Age': [25, 30, 22, 35]}
+        'Name': ['Alice', 'Bob', 'Charlie', 'David'],
+        'Age': [25, 30, 22, 35]}
 
 df = pd.DataFrame(data)
 
@@ -301,11 +301,11 @@ Aggregate functions perform operations on groups of rows defined by the `**GROUP
 ```SQL
 -- Multiple aggregates in one query
 SELECT 
-      department,
-      COUNT(*) AS employee_count,
-      AVG(salary) AS avg_salary,
-      MAX(salary) AS max_salary,
-      MIN(salary) AS min_salary
+    department,
+    COUNT(*) AS employee_count,
+    AVG(salary) AS avg_salary,
+    MAX(salary) AS max_salary,
+    MIN(salary) AS min_salary
 FROM employees
 GROUP BY department;
 ```
@@ -338,9 +338,9 @@ You can combine all three clauses to create powerful queries:
 ```SQL
 -- Complex example combining all clauses
 SELECT 
-      department,
-      COUNT(*) AS employee_count,
-      AVG(salary) AS avg_salary
+    department,
+    COUNT(*) AS employee_count,
+    AVG(salary) AS avg_salary
 FROM employees
 WHERE hire_date > '2020-01-01'  -- Filter rows first
 GROUP BY department              -- Group the filtered rows
@@ -366,9 +366,9 @@ Subqueries may also be named. This is especially useful in joins
 SELECT main_table.column1, main_table.column2, subquery.total_count
 FROM main_table
 JOIN (
-    SELECT related_column, COUNT(*) AS total_count
-    FROM related_table
-    GROUP BY related_column
+    SELECT related_column, COUNT(*) AS total_count
+    FROM related_table
+    GROUP BY related_column
 ) AS subquery ON main_table.column1 = subquery.related_column;
 ```
 
@@ -421,8 +421,8 @@ INSERT INTO demographics (seqn, age, gender, race)
 SELECT seqn, age, gender, race
 FROM temp_table
 WHERE NOT EXISTS (
-      SELECT 1 FROM demographics d 
-      WHERE d.seqn = temp_table.seqn
+    SELECT 1 FROM demographics d 
+    WHERE d.seqn = temp_table.seqn
 );
 ```
 
@@ -447,9 +447,9 @@ Complex deletion patterns using subqueries:
 -- Delete inactive users who haven't logged in for a year
 DELETE FROM users
 WHERE user_id IN (
-      SELECT user_id 
-      FROM login_history 
-      WHERE last_login < CURRENT_DATE - INTERVAL '1 year'
+    SELECT user_id 
+    FROM login_history 
+    WHERE last_login < CURRENT_DATE - INTERVAL '1 year'
 );
 ```
 
@@ -459,9 +459,9 @@ The `**WITH**` clause, also known as Common Table Expressions (CTE), allows you 
 
 ```SQL
 WITH temp_table AS (
-    SELECT column
-    FROM another_table
-    WHERE condition
+    SELECT column
+    FROM another_table
+    WHERE condition
 )
 
 SELECT *

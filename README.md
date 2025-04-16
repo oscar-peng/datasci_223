@@ -12,10 +12,6 @@
 
 This repository contains the course materials for UCSF DataSci 223: Applied Data Science with Python.
 
-## Lectures
-
-1. [Getting started with git, python, and markdown](01/index.md)
-
 ## Topics for your consideration
 
 1. _Debugging: Rubber ducks all the way down_

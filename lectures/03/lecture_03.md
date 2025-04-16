@@ -1,4 +1,8 @@
-# `JOIN` the `DISTINCT` with SQL
+---
+lecture_number: 02
+pdf: true
+---
+# `JOIN` the `DISTINCT` with SQL  [\[pdf\]](lecture_03.pdf)
 
 ## Outline
 

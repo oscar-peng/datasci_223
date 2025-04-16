@@ -69,14 +69,14 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
   - callouts
-#  - exporter:
-#      enabled: !ENV [CI, false]  # Disable in CI environment
-#      formats:
-#        pdf:
-#          enabled: !ENV [CI, false]  # Disable in CI environment
-#          concurrency: 4
-#          # Remove unrecognized options
-#          explicit: true
+  - exporter:
+      enabled: true
+      formats:
+        pdf:
+          enabled: true
+          concurrency: 4
+          # Remove unrecognized options
+          explicit: true
 
 nav:
   - Home: index.md
@@ -88,8 +88,6 @@ nav:
       - '01. `git init`': 01/lecture_01.md
       - '02. bugs, ducks, and data': 02/lecture_02.md
       - '03. `JOIN` the `DISTINCT` with SQL': 03/lecture_03.md
-  # - Lectures (PDF):
-  #   - '01. `git init`': 01/lecture_01.pdf
   - Exercises:
     - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
     - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU

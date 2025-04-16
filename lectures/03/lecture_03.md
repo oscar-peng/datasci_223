@@ -11,23 +11,23 @@ pdf: true
 - 🏗️ Structure of a SQL statement
 - 📥 Data Import
 - 🤿 SQL Fundamentals
-  - Basics: semicolons and comments
-  - SELECT
-  - WHERE Clause
-  - GROUP BY and Aggregates
-  - HAVING Clause
-  - JOIN operations
-  - Subqueries
+    - Basics: semicolons and comments
+    - SELECT
+    - WHERE Clause
+    - GROUP BY and Aggregates
+    - HAVING Clause
+    - JOIN operations
+    - Subqueries
 - 🚨 Advanced SQL
-  - Data Modification (UPDATE, INSERT, DELETE)
-  - Common Table Expressions (CTEs)
-  - Window functions
-  - Views and Materialized Views
-  - Performance optimization
+    - Data Modification (UPDATE, INSERT, DELETE)
+    - Common Table Expressions (CTEs)
+    - Window functions
+    - Views and Materialized Views
+    - Performance optimization
 - 🔄 SQL with Python
-  - pandas integration
-  - SQLite
-  - SQLAlchemy
+    - pandas integration
+    - SQLite
+    - SQLAlchemy
 
 ## 📊 Why SQL?
 
@@ -87,8 +87,8 @@ import duckdb
 
 # Create a sample Pandas DataFrame
 data = {'ID': [1, 2, 3, 4],
-        'Name': ['Alice', 'Bob', 'Charlie', 'David'],
-        'Age': [25, 30, 22, 35]}
+          'Name': ['Alice', 'Bob', 'Charlie', 'David'],
+          'Age': [25, 30, 22, 35]}
 
 df = pd.DataFrame(data)
 
@@ -117,7 +117,6 @@ con.register('sample_data', df)
 - Columnar storage (perfect for analytics)
 - Lightning fast for analytical queries
 - Seamless integration with Python
-
 
 ## 🏗️ Structure of a SQL statement
 
@@ -156,6 +155,7 @@ Start with the `select`, then walk through the execution order
 ## 📥 Data Import
 
 ### COPY Command
+
 The COPY command is the most efficient way to import data into SQL databases. It's much faster than INSERT statements for bulk data loading.
 
 ```sql
@@ -169,6 +169,7 @@ WITH (FORMAT csv, HEADER true, DELIMITER ',');
 ```
 
 Key features of COPY:
+
 - Direct file import
 - Support for various formats (CSV, JSON, etc.)
 - Header handling
@@ -177,6 +178,7 @@ Key features of COPY:
 - Data type inference
 
 ### CREATE TABLE AS COPY
+
 You can create and populate a table in one step using CREATE TABLE AS COPY:
 
 ```sql
@@ -187,16 +189,17 @@ WITH (FORMAT csv, HEADER true);
 
 -- With explicit column types
 CREATE TABLE demographics (
-    seqn INTEGER PRIMARY KEY,
-    age INTEGER,
-    gender TEXT,
-    race TEXT,
-    education TEXT
+      seqn INTEGER PRIMARY KEY,
+      age INTEGER,
+      gender TEXT,
+      race TEXT,
+      education TEXT
 ) AS COPY FROM 'lectures/03/demo/data/demographics.csv'
 WITH (FORMAT csv, HEADER true);
 ```
 
-## Live demo!
+## Live demo
+
 [Demo 1: Setup and Import](demo/01_setup_and_import.ipynb)
 
 ## 🤿 SQL Fundamentals
@@ -261,6 +264,7 @@ WHERE salary > 50000;
 ```
 
 Common WHERE operators:
+
 - Comparison: `=`, `>`, `<`, `>=`, `<=`, `<>`
 - Logical: `AND`, `OR`, `NOT`
 - Pattern matching: `LIKE`, `ILIKE`
@@ -297,11 +301,11 @@ Aggregate functions perform operations on groups of rows defined by the `**GROUP
 ```SQL
 -- Multiple aggregates in one query
 SELECT 
-    department,
-    COUNT(*) AS employee_count,
-    AVG(salary) AS avg_salary,
-    MAX(salary) AS max_salary,
-    MIN(salary) AS min_salary
+      department,
+      COUNT(*) AS employee_count,
+      AVG(salary) AS avg_salary,
+      MAX(salary) AS max_salary,
+      MIN(salary) AS min_salary
 FROM employees
 GROUP BY department;
 ```
@@ -321,6 +325,7 @@ HAVING AVG(salary) > 70000;
 ```
 
 Key differences between WHERE and HAVING:
+
 - WHERE filters rows before grouping
 - HAVING filters groups after aggregation
 - HAVING can use aggregate functions
@@ -333,9 +338,9 @@ You can combine all three clauses to create powerful queries:
 ```SQL
 -- Complex example combining all clauses
 SELECT 
-    department,
-    COUNT(*) AS employee_count,
-    AVG(salary) AS avg_salary
+      department,
+      COUNT(*) AS employee_count,
+      AVG(salary) AS avg_salary
 FROM employees
 WHERE hire_date > '2020-01-01'  -- Filter rows first
 GROUP BY department              -- Group the filtered rows
@@ -361,13 +366,14 @@ Subqueries may also be named. This is especially useful in joins
 SELECT main_table.column1, main_table.column2, subquery.total_count
 FROM main_table
 JOIN (
-  SELECT related_column, COUNT(*) AS total_count
-  FROM related_table
-  GROUP BY related_column
+    SELECT related_column, COUNT(*) AS total_count
+    FROM related_table
+    GROUP BY related_column
 ) AS subquery ON main_table.column1 = subquery.related_column;
 ```
 
-## Live demo!
+## Live demo
+
 [Demo 2: SQL Basics](demo/02_sql_basics.ipynb)
 
 ## 🚨 Advanced SQL
@@ -392,7 +398,9 @@ WHERE condition;
 ```
 
 #### Advanced INSERT Patterns
+
 While COPY is preferred for bulk loading, INSERT is useful for:
+
 - Adding single rows
 - Conditional inserts
 - Data transformation during insert
@@ -413,12 +421,13 @@ INSERT INTO demographics (seqn, age, gender, race)
 SELECT seqn, age, gender, race
 FROM temp_table
 WHERE NOT EXISTS (
-    SELECT 1 FROM demographics d 
-    WHERE d.seqn = temp_table.seqn
+      SELECT 1 FROM demographics d 
+      WHERE d.seqn = temp_table.seqn
 );
 ```
 
 #### UPDATE with JOIN
+
 You can update records based on joins with other tables:
 
 ```sql
@@ -431,15 +440,16 @@ AND d.name = 'Engineering';
 ```
 
 #### DELETE with Subqueries
+
 Complex deletion patterns using subqueries:
 
 ```sql
 -- Delete inactive users who haven't logged in for a year
 DELETE FROM users
 WHERE user_id IN (
-    SELECT user_id 
-    FROM login_history 
-    WHERE last_login < CURRENT_DATE - INTERVAL '1 year'
+      SELECT user_id 
+      FROM login_history 
+      WHERE last_login < CURRENT_DATE - INTERVAL '1 year'
 );
 ```
 
@@ -449,9 +459,9 @@ The `**WITH**` clause, also known as Common Table Expressions (CTE), allows you 
 
 ```SQL
 WITH temp_table AS (
-  SELECT column
-  FROM another_table
-  WHERE condition
+    SELECT column
+    FROM another_table
+    WHERE condition
 )
 
 SELECT *
@@ -502,7 +512,8 @@ REFRESH MATERIALIZED VIEW sales_summary;
 - Avoid unnecessary subqueries
 - Consider materialized views for complex queries
 
-## Live demo!
+## Live demo
+
 [Demo 3: Complex Queries](demo/03_complex_queries.ipynb)
 
 ## 🔄 SQL with Python
@@ -566,5 +577,6 @@ engine = create_engine('postgresql://user:password@localhost:5432/database')
 df = pd.read_sql_query(sql_query, engine)
 ```
 
-## Live demo!
+## Live demo
+
 [Demo 4: Python Integration](demo/04_python_integration.ipynb)

@@ -1,5 +1,23 @@
 # Reference materials
 
+## UCSF Library
+
+[UCSF library](https://www.library.ucsf.edu/) resources that might be helpful for your class project or future work:
+
+- **Library Databases Catalog**: [Library databases by subject/type/provider](https://guides.ucsf.edu/az.php)
+- **Research Guides**: [Great for finding data sources for population health, health service research, and COVID-19 research](https://guides.ucsf.edu/)
+- **UC Data Week Seminars**:
+    - [Digital Humanities Data](https://docs.google.com/presentation/d/1vYqIOm0YLVvosmKTDMmTeEDijmbkRE6OIqD0bishPo0/edit#slide=id.gbc0c25baf6_0_1997)
+    - [Social Sciences/Government Data](https://docs.google.com/presentation/d/17uks6NcY-5kJWYKl0sd5pITd4caZp4vSes7HjwFiCWk/edit#slide=id.p1)
+    - [GIS Data and Mapping](https://docs.google.com/presentation/d/1doAGDZyUVFrHGkGUf9o0A13UflLGYt-7s-DLQpVzwz0/edit#slide=id.p)
+    - [Web Archives as Data](https://docs.google.com/presentation/d/1VW6vpZWEiKu7O55pWAAbafXYvrJ82_0EDsg-pnsWrE8/edit#slide=id.p)
+    - Recordings and more materials available for [search](https://uc-love-data-week.github.io/)
+
+- **Informatics Tools**: [Seminar materials](https://courses.ucsf.edu/course/view.php?id=7912#section-6), including access to high-performance computing, research analysis environment, info commons, patient explorerR, imaging commons, EMERSE for querying and analyzing clinical notes, etc.
+- **Office Hours related to data assets and info commons**: [schedule](https://wiki.library.ucsf.edu/display/IC/Support#Support-OfficeHours)
+
+The data science and open scholarship team also has help desk hours and consultations for related questions: [DSOS team](https://www.library.ucsf.edu/ask-an-expert/data-science/)
+
 ## Command Line Resources
 - [LinuxCommand.org](http://linuxcommand.org/lc3_learning_the_shell.php) - Learning the shell
 - [The Linux Command Line book](http://linuxcommand.org/tlcl.php) - Free book by William Shotts
@@ -8,22 +26,35 @@
 - [PowerShell documentation](https://docs.microsoft.com/en-us/powershell/) - Microsoft's PowerShell docs
 - [regex101.com](https://regex101.com/) - Regular expression testing tool
 
-## Development Tools
-Since I will _NOT_ be supporting PyCharm
-- [Jetbrains' Learn PyCharm](https://www.jetbrains.com/pycharm/learn/) - PyCharm IDE tutorials
-- [Effective PyCharm Course](https://training.talkpython.fm/courses/explore_pycharm/mastering-pycharm-ide) - Advanced PyCharm training
-
-VS Code:
-- [Tutorial: Get started with Visual Studio Code](https://code.visualstudio.com/docs/getstarted/getting-started)
-- [Getting Started with Python in VS Code](https://code.visualstudio.com/docs/python/python-tutorial)
-- [Debug code with Visual Studio Code](https://code.visualstudio.com/docs/debugtest/debugging)
-
 ## Git and Markdown Resources
 - [GitHub Foundations](https://learn.microsoft.com/en-us/training/paths/github-foundations/) - THE tutorial for GitHub
 - [Atlassian Git tutorial](https://www.atlassian.com/git/tutorials/what-is-version-control) - Comprehensive Git guide
 - [Markdown Guide](https://www.markdownguide.org/basic-syntax/) - Markdown syntax reference
 - [Markdown Tutorial](https://www.markdowntutorial.com/) - Interactive Markdown learning
 - [CommonMark tutorial](https://commonmark.org/help/tutorial) - CommonMark standard tutorial
+
+## SQL Resources
+- [SQL For Web Nerds](https://philip.greenspun.com/sql/) - A concise introduction to SQL concepts by Philip Greenspun.
+ - [SQLZoo](https://sqlzoo.net/) - Interactive SQL tutorials with live editors and exercises.
+
+## Development Tools
+- [Jetbrains' Learn PyCharm](https://www.jetbrains.com/pycharm/learn/) - PyCharm IDE tutorials
+- [Effective PyCharm Course](https://training.talkpython.fm/courses/explore_pycharm/mastering-pycharm-ide) - Advanced PyCharm training
+- VS Code:
+    - [Tutorial: Get started with Visual Studio Code](https://code.visualstudio.com/docs/getstarted/getting-started)
+    - [Getting Started with Python in VS Code](https://code.visualstudio.com/docs/python/python-tutorial)
+
+### Debugging Resources
+- [Python Debugger (pdb) Documentation](https://docs.python.org/3/library/pdb.html) - Official pdb documentation
+- [Real Python Debugging Guide](https://realpython.com/python-debugging-pdb/) - Practical debugging techniques
+- [Python Testing with pytest](https://pragprog.com/titles/bopytest/python-testing-with-pytest/) - Testing as a debugging strategy
+- [Full Stack Python Debugging Guide](https://www.fullstackpython.com/debugging.html) - Comprehensive debugging techniques
+- [VS Code Debugging Guide](https://code.visualstudio.com/docs/python/debugging) - Visual debugging tutorial
+- [VS Code Debugging Overview](https://code.visualstudio.com/docs/debugtest/debugging) - General debugging concepts
+
+### Code Quality Tools
+- [Ruff Documentation](https://docs.astral.sh/ruff/) - Modern, fast Python linter written in Rust
+- [Pylint Documentation](https://pylint.org/) - Traditional Python linter with extensive rules
 
 ## Python Resources
 
@@ -50,26 +81,6 @@ Python: data science and analysis
 - [Machine Learning with PyTorch and Scikit-Learn, Rashka](https://learning.oreilly.com/library/view/machine-learning-with/9781801819312/)
 - [Deep Learning with PyTorch, Viehmann](https://learning.oreilly.com/library/view/deep-learning-with/9781617295263/)
 
-### UCSF Library
-
-[UCSF library](https://www.library.ucsf.edu/) resources that might be helpful for your class project or future work:
-
-- **Library Databases Catalog**: [Library databases by subject/type/provider](https://guides.ucsf.edu/az.php)
-- **Research Guides**: [Great for finding data sources for population health, health service research, and COVID-19 research](https://guides.ucsf.edu/)
-- **UC Data Week Seminars**:
-    - [Digital Humanities Data](https://docs.google.com/presentation/d/1vYqIOm0YLVvosmKTDMmTeEDijmbkRE6OIqD0bishPo0/edit#slide=id.gbc0c25baf6_0_1997)
-    - [Social Sciences/Government Data](https://docs.google.com/presentation/d/17uks6NcY-5kJWYKl0sd5pITd4caZp4vSes7HjwFiCWk/edit#slide=id.p1)
-    - [GIS Data and Mapping](https://docs.google.com/presentation/d/1doAGDZyUVFrHGkGUf9o0A13UflLGYt-7s-DLQpVzwz0/edit#slide=id.p)
-    - [Web Archives as Data](https://docs.google.com/presentation/d/1VW6vpZWEiKu7O55pWAAbafXYvrJ82_0EDsg-pnsWrE8/edit#slide=id.p)
-    - Recordings and more materials available for [search](https://uc-love-data-week.github.io/search)
-
-If you are working with EHR data from the info commons, in addition to the [wiki](https://wiki.library.ucsf.edu/display/IC/UCSF+Information+Commons+Wiki), this page might be worth checking out:
-
-- **Informatics Tools**: [Seminar materials](https://courses.ucsf.edu/course/view.php?id=7912#section-6), including access to high-performance computing, research analysis environment, info commons, patient explorerR, imaging commons, EMERSE for querying and analyzing clinical notes, etc.
-- **Office Hours related to data assets and info commons**: [schedule](https://wiki.library.ucsf.edu/display/IC/Support#Support-OfficeHours)
-
-The data science and open scholarship team also has help desk hours and consultations for related questions: [DSOS team](https://www.library.ucsf.edu/ask-an-expert/data-science/)
-
 ### Additional options
 
 Python: general introduction
@@ -85,7 +96,6 @@ Python: general introduction
 - [Introduction to Python](http://introtopython.org/) - Python basics tutorial
 - [A Byte of Python](https://python.swaroopch.com/) - Python book for beginners
 
-
 Python: data science
 
 - _Machine Learning from Scratch_ - author's [website](https://dafriedman97.github.io/mlbook/content/introduction.html), learn the nuts and bolts behind the tools
@@ -99,29 +109,3 @@ Python: library-specific
 ## Jupyter Notebook Resources
 - [Jupyter Documentation](https://jupyter.org/documentation) - Official documentation for Jupyter notebooks
 - [Dataquest Jupyter Tutorial](https://www.dataquest.io/blog/jupyter-notebook-tutorial/) - Beginner-friendly tutorial
-
-## Debugging Resources
-- [Python Debugger (pdb) Documentation](https://docs.python.org/3/library/pdb.html) - Official pdb documentation
-- [Real Python Debugging Guide](https://realpython.com/python-debugging-pdb/) - Practical debugging techniques
-- [Python Testing with pytest](https://pragprog.com/titles/bopytest/python-testing-with-pytest/) - Testing as a debugging strategy
-- [Full Stack Python Debugging Guide](https://www.fullstackpython.com/debugging.html) - Comprehensive debugging techniques
-
-## VS Code Resources
-- [VS Code Debugging Guide](https://code.visualstudio.com/docs/python/debugging) - Visual debugging tutorial
-- [VS Code Debugging Overview](https://code.visualstudio.com/docs/debugtest/debugging) - General debugging concepts
-
-## Data Processing Resources
-- [pandas Documentation](https://pandas.pydata.org/) - Standard data analysis library
-- [polars Documentation](https://pola.rs/) - Fast DataFrame library for large datasets
-- [Python for Data Analysis](https://wesmckinney.com/book/) - By pandas creator Wes McKinney
-- [Parquet Format Explained](https://parquet.apache.org/docs/) - Efficient columnar storage format
-- [Healthcare Data Analytics Using Python](https://link.springer.com/book/10.1007/978-1-4842-7986-7) - Specific to health data
-- [Polars vs. pandas: What's the Difference?](https://blog.jetbrains.com/pycharm/2024/07/polars-vs-pandas/) - Detailed comparison of performance and features
-- [Polars Lazy Evaluation Guide](https://docs.pola.rs/user-guide/lazy/using/) - How to use lazy evaluation for large datasets
-
-## Healthcare-Specific Resources
-- [Python for Healthcare Modelling and Data Science](https://www.routledge.com/Python-for-Healthcare-Modelling-and-Data-Science/Dauletbakov-Moussa/p/book/9781032124001) - Python applications in healthcare
-
-## Code Quality Tools
-- [Ruff Documentation](https://docs.astral.sh/ruff/) - Modern, fast Python linter written in Rust
-- [Pylint Documentation](https://pylint.org/) - Traditional Python linter with extensive rules

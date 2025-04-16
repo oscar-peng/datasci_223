@@ -137,14 +137,14 @@ LIMIT 10; -- Limit the output to the top 10 departments
 
 Explanation of each part:
 
-- `**SELECT DISTINCT**`**:** Selects unique department names.
-- `**COUNT(employee_id) AS total_employees**`**:** Counts the number of employees in each department and renames the column as "total_employees."
-- `**FROM employees**`**:** Specifies the main table as "employees."
-- `**JOIN departments ON employees.department_id = departments.department_id**`**:** Joins the "employees" table with the "departments" table based on the department_id.
-- `**WHERE employees.salary > 50000**`**:** Filters out employees with a salary less than or equal to 50000.
-- `**GROUP BY department_name**`**:** Groups the results by department_name.
-- `**ORDER BY total_employees DESC**`**:** Orders the results by the total number of employees in descending order.
-- `**LIMIT 10**`**:** Limits the output to the top 10 departments.
+- `SELECT DISTINCT`:** Selects unique department names.
+- `COUNT(employee_id) AS total_employees`:** Counts the number of employees in each department and renames the column as "total_employees."
+- `FROM employees`:** Specifies the main table as "employees."
+- `JOIN departments ON employees.department_id = departments.department_id`:** Joins the "employees" table with the "departments" table based on the department_id.
+- `WHERE employees.salary > 50000`:** Filters out employees with a salary less than or equal to 50000.
+- `GROUP BY department_name`:** Groups the results by department_name.
+- `ORDER BY total_employees DESC`:** Orders the results by the total number of employees in descending order.
+- `LIMIT 10`:** Limits the output to the top 10 departments.
 
 ### Read SQL the way a computer does
 
@@ -214,7 +214,7 @@ SQL statements are separated using semicolons. You may send multiple statements 
 
 Unlike python, SQL uses double-dashes to indicate comments. Comments may be on their own lines or on the same line as code.
 
-### `**SELECT**`
+### `SELECT`
 
 The SELECT statement is fundamental for retrieving data. It allows you to specify the columns you want to retrieve and the conditions for selecting rows. For example:
 
@@ -224,7 +224,7 @@ FROM table
 WHERE condition;
 ```
 
-The `**SELECT**` statement is versatile and can be customized to fetch specific columns from a table based on specified conditions.
+The `SELECT` statement is versatile and can be customized to fetch specific columns from a table based on specified conditions.
 
 ### JOIN Operations
 
@@ -238,10 +238,10 @@ INNER JOIN table2 ON table1.column1 = table2.column2;
 
 #### JOIN Types
 
-- `**INNER JOIN**`: Returns matching rows from both tables
-- `**LEFT JOIN**`: Returns all rows from left table + matching rows from right
-- `**RIGHT JOIN**`: Returns all rows from right table + matching rows from left
-- `**FULL JOIN**`: Returns all rows from both tables (use with caution!)
+- `INNER JOIN`: Returns matching rows from both tables
+- `LEFT JOIN`: Returns all rows from left table + matching rows from right
+- `RIGHT JOIN`: Returns all rows from right table + matching rows from left
+- `FULL JOIN`: Returns all rows from both tables (use with caution!)
 
 ![Types of JOINs](media/join_types.png)
 
@@ -252,7 +252,7 @@ INNER JOIN table2 ON table1.column1 = table2.column2;
 
 ### WHERE Clause
 
-The `**WHERE**` clause serves as your data gatekeeper, allowing you to filter rows based on specific conditions. It operates before grouping and aggregation, helping you focus on the data that truly matters.
+The `WHERE` clause serves as your data gatekeeper, allowing you to filter rows based on specific conditions. It operates before grouping and aggregation, helping you focus on the data that truly matters.
 
 **Example:**
 
@@ -273,7 +273,7 @@ Common WHERE operators:
 
 ### GROUP BY and Aggregates
 
-The `**GROUP BY**` clause groups rows that have the same values in specified columns into summary rows. It's often used with aggregate functions to perform calculations on each group.
+The `GROUP BY` clause groups rows that have the same values in specified columns into summary rows. It's often used with aggregate functions to perform calculations on each group.
 
 **Example:**
 
@@ -286,15 +286,15 @@ GROUP BY category;
 
 #### Aggregate Functions
 
-Aggregate functions perform operations on groups of rows defined by the `**GROUP BY**` clause. They summarize the data within each group, providing valuable aggregated results.
+Aggregate functions perform operations on groups of rows defined by the `GROUP BY` clause. They summarize the data within each group, providing valuable aggregated results.
 
 **Common Aggregate Functions:**
 
-- `**COUNT**`**:** Counts the number of rows in each group
-- `**SUM**`**:** Calculates the sum of values within each group
-- `**AVG**`**:** Computes the average value within each group
-- `**MIN**`**:** Finds the minimum value within each group
-- `**MAX**`**:** Identifies the maximum value within each group
+- `COUNT`:** Counts the number of rows in each group
+- `SUM`:** Calculates the sum of values within each group
+- `AVG`:** Computes the average value within each group
+- `MIN`:** Finds the minimum value within each group
+- `MAX`:** Identifies the maximum value within each group
 
 **Example:**
 
@@ -312,7 +312,7 @@ GROUP BY department;
 
 ### HAVING Clause
 
-While the `**WHERE**` clause filters individual rows, the `**HAVING**` clause steps in after grouping to filter groups based on conditions applied to aggregate values. It's your tool for fine-tuning group-level criteria.
+While the `WHERE` clause filters individual rows, the `HAVING` clause steps in after grouping to filter groups based on conditions applied to aggregate values. It's your tool for fine-tuning group-level criteria.
 
 **Example:**
 
@@ -358,7 +358,7 @@ FROM table
 WHERE column IN (SELECT column FROM another_table WHERE condition);
 ```
 
-Subqueries can be used in various parts of a SQL statement, such as the `**SELECT**`, `**FROM**`, and `**WHERE**` clauses.
+Subqueries can be used in various parts of a SQL statement, such as the `SELECT`, `FROM`, and `WHERE` clauses.
 
 Subqueries may also be named. This is especially useful in joins
 
@@ -455,7 +455,7 @@ WHERE user_id IN (
 
 ### Common Table Expressions (CTEs)
 
-The `**WITH**` clause, also known as Common Table Expressions (CTE), allows you to define temporary result sets that can be referenced within the context of a larger query. It enhances the readability and reusability of complex queries.
+The `WITH` clause, also known as Common Table Expressions (CTE), allows you to define temporary result sets that can be referenced within the context of a larger query. It enhances the readability and reusability of complex queries.
 
 ```SQL
 WITH temp_table AS (
@@ -471,7 +471,7 @@ JOIN temp_table ON main_table.column = temp_table.column;
 
 ### Window Functions
 
-Window functions operate across a set of table rows related to the current row. They provide a powerful way to perform calculations over a specified range of rows related to the current row. Window functions are typically used in conjunction with the `**OVER**` clause, which defines the window or set of rows the function operates on.
+Window functions operate across a set of table rows related to the current row. They provide a powerful way to perform calculations over a specified range of rows related to the current row. Window functions are typically used in conjunction with the `OVER` clause, which defines the window or set of rows the function operates on.
 
 ```SQL
 -- Example of calculating the running total of sales using a window function
@@ -479,7 +479,7 @@ SELECT date, sales, SUM(sales) OVER (ORDER BY date) AS running_total
 FROM sales_data;
 ```
 
-Common window functions include `**ROW_NUMBER**`, `**RANK**`, `**DENSE_RANK**`, `**LAG**`, and `**LEAD**`. These functions offer advanced analytical capabilities, allowing you to derive insights from your data that go beyond basic aggregations.
+Common window functions include `ROW_NUMBER`, `RANK`, `DENSE_RANK`, `LAG`, and `LEAD`. These functions offer advanced analytical capabilities, allowing you to derive insights from your data that go beyond basic aggregations.
 
 ### Views and Materialized Views
 
@@ -532,7 +532,7 @@ pip install pandas
 
 #### **Using SQL with Pandas**
 
-Pandas provides a convenient `**read_sql**` function that allows you to execute SQL queries and retrieve the results directly into a DataFrame.
+Pandas provides a convenient `read_sql` function that allows you to execute SQL queries and retrieve the results directly into a DataFrame.
 
 ```Python
 import pandas as pd

@@ -6,13 +6,19 @@
     - *Covered:* Core concepts (SELECT, FROM, WHERE, GROUP BY, JOINs), window functions, maybe CTEs. Connecting Python to DBs. (Dataset: Health-related).
 4. **Regression Concepts & Time-Series Forecasting (+ FE & ML Regressors):**
     - **Focus:** Supervised Learning intro, Regression task, Time-based splits, Regression evaluation, TS specifics & FE, Statistical & ML models.
-    - **Libraries:** `scikit-learn`, `statsmodels`, `pandas`/`polars`, optional `prophet`
+    - **Libraries:** `scikit-learn`, `statsmodels`, `lifelines`
     - **Methods:**
-        - *Core ML/Eval*: Time-based train_test_split (e.g., TimeSeriesSplit), mean_squared_error, mean_absolute_error, r2_score.
-        - *Regression Models*: LinearRegression (baseline), ElasticNet (regularized linear model), RandomForestRegressor (tree ensemble), GradientBoostingRegressor (boosting ensemble). These ML models are applied using the engineered time series features.
-        - *TS Feature Engineering*: .shift() (lags), .rolling() (window features), date/time components (e.g., day of week, month).
-        - *Analysis/Stats Models*: statsmodels (tsa.seasonal_decompose, graphics.tsaplots.plot_acf/plot_pacf). Concepts of statistical models like ARIMA/Exponential Smoothing as alternatives/comparisons to ML approaches. Prophet for automated forecasting.
-        - *Advanced Topics*: Vector Autoregression for multivariate time series, Dynamic Time Warping for sequence similarity, State Space Models and Kalman Filters for hidden state estimation.
+        - *Core ML/Eval*: Time-based train_test_split (e.g., TimeSeriesSplit), mean_squared_error, mean_absolute_error, r2_score
+        - *Regression Models*: LinearRegression (baseline), ElasticNet (regularized linear model), RandomForestRegressor (tree ensemble), GradientBoostingRegressor (boosting ensemble)
+        - *TS Feature Engineering*: .shift() (lags), .rolling() (window features), date/time components (e.g., day of week, month)
+        - *Statistical Models*: 
+            - ARIMA/SARIMA for univariate forecasting
+            - Vector Autoregression (VAR) for multivariate time series
+            - State Space Models and Kalman Filters for hidden state estimation
+        - *Advanced Topics*: 
+            - Survival Analysis (Cox Regression, Kaplan-Meier)
+            - Dynamic Time Warping for sequence similarity
+            - Generalized Additive Models for non-linear relationships
     - **Dataset:** Focus on demonstrating techniques applicable across different time-series structures:
         - *Panel Data / Repeated Measures (Fixed Interval)*: E.g., Monthly sales data across multiple stores, quarterly patient metrics for a cohort (where time intervals are regular). Requires careful handling of splits to respect both time and entity.
         - *Single/Multiple Time Series (Irregular Interval)*: E.g., Patient vital signs recorded during hospital visits (times are irregular), specific event occurrences over time. Feature engineering often relies on time differences and aggregation over periods.

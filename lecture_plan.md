@@ -1,0 +1,115 @@
+1. ✅ **Dev Environment Setup & Python Fundamentals**
+    - *Covered:* Tools (Python, Jupyter, Git, Conda/Venv), basic Python review.
+2. ✅ **Handling Larger-than-Memory Data with Polars**
+    - *Covered:* Lazy evaluation, efficient processing (CSVs/Parquet), core Polars API.
+3. ✅ **SQL for Data Analysis**
+    - *Covered:* Core concepts (SELECT, FROM, WHERE, GROUP BY, JOINs), window functions, maybe CTEs. Connecting Python to DBs. (Dataset: Health-related).
+4. **Regression Concepts & Time-Series Forecasting (+ FE & ML Regressors):**
+    - **Focus:** Supervised Learning intro, Regression task, Time-based splits, Regression evaluation, TS specifics & FE, Statistical & ML models.
+    - **Libraries:** `scikit-learn`, `statsmodels`, `pandas`/`polars`, optional `prophet`
+    - **Methods:**
+        - *Core ML/Eval*: Time-based train_test_split (e.g., TimeSeriesSplit), mean_squared_error, mean_absolute_error, r2_score.
+        - *Regression Models*: LinearRegression (baseline), ElasticNet (regularized linear model), RandomForestRegressor (tree ensemble), GradientBoostingRegressor (boosting ensemble). These ML models are applied using the engineered time series features.
+        - *TS Feature Engineering*: .shift() (lags), .rolling() (window features), date/time components (e.g., day of week, month).
+        - *Analysis/Stats Models*: statsmodels (tsa.seasonal_decompose, graphics.tsaplots.plot_acf/plot_pacf). Concepts of statistical models like ARIMA/Exponential Smoothing as alternatives/comparisons to ML approaches. Prophet for automated forecasting.
+        - *Advanced Topics*: Vector Autoregression for multivariate time series, Dynamic Time Warping for sequence similarity, State Space Models and Kalman Filters for hidden state estimation.
+    - **Dataset:** Focus on demonstrating techniques applicable across different time-series structures:
+        - *Panel Data / Repeated Measures (Fixed Interval)*: E.g., Monthly sales data across multiple stores, quarterly patient metrics for a cohort (where time intervals are regular). Requires careful handling of splits to respect both time and entity.
+        - *Single/Multiple Time Series (Irregular Interval)*: E.g., Patient vital signs recorded during hospital visits (times are irregular), specific event occurrences over time. Feature engineering often relies on time differences and aggregation over periods.
+        - *Dense/High-Frequency Data*: E.g., Sensor readings (temperature, vibration) sampled every second, minute-by-minute stock prices, potentially simplified ECG/pulse data. Often involves downsampling or sophisticated rolling features.
+5. **Introduction to ML & Classification (+ FE, Model Selection & Tuning):**
+    - **Focus:** Classification task, Workflow, Basic models, FE, Evaluation, Model Selection & Hyperparameter Tuning.
+    - **Libraries:** `scikit-learn`, `xgboost`, `imbalanced-learn`
+    - **Methods:**
+        - *Data Management*: Random `train_test_split`, `StandardScaler`, `OneHotEncoder`, handling imbalanced data with SMOTE
+        - *Model Selection*: `LogisticRegression`, `KNeighborsClassifier`, `DecisionTreeClassifier`, `RandomForestClassifier`, `XGBClassifier`
+        - *Evaluation*: Accuracy/Precision/Recall/F1/AUC/Confusion Matrix, `cross_val_score`, `StratifiedKFold`
+        - *Hyperparameter Tuning*: `GridSearchCV`, `RandomizedSearchCV`
+        - *Feature Engineering*: Automated feature selection (`SelectKBest`, `RFE`), feature importance analysis
+        - *Explainability*: Feature weights, SHAP values, eli5 for model interpretation
+    - **Dataset:** Classification task on health data, addressing real-world challenges like class imbalance and missing values.
+    - **Key Concepts:**
+        - Understanding bias-variance tradeoff
+        - Handling dataset shift and concept drift
+        - Addressing Simpson's paradox in healthcare data
+        - Strategies for troublesome classes and edge cases
+6. **Neural Network Flavors & Applications (Hands-on Examples) + Coding Interview Snippets:**
+    - **Focus:** Building basic NNs (MLP, CNN, RNN/LSTM) using PyTorch. Conceptual understanding.
+    - **Libraries:** `torch`, `torch.nn`, `torch.optim`, `torch.utils.data`, `torchvision`
+    - **Methods:**
+        - *Architecture*: Define layers (`Linear`, `Conv2d`, `LSTM`), activation functions (`ReLU`), loss functions
+        - *Training*: Optimizers (`Adam`), `Dataset`/`DataLoader`, backpropagation
+        - *Regularization*: Dropout, batch normalization, early stopping
+        - *Monitoring*: TensorBoard for visualization, gradient tracking
+        - *Deployment*: Model saving/loading, inference optimization
+    - **Dataset:**
+        - Tabular data for MLPs
+        - MNIST/CIFAR for CNNs
+        - Time series for RNNs/LSTMs
+    - **Key Concepts:**
+        - Biological inspiration and artificial neurons
+        - Network depth and connectedness
+        - Activation functions and their properties
+        - Loss functions and optimization
+        - Regularization and preventing overfitting
+7. **Deep Learning: Using LLM APIs & Transformers:**
+    - **Focus:** Practical NLP via APIs and Hugging Face. Local LLM option.
+    - **Libraries:** `transformers`, `openai`, `anthropic`, `cohere`, `requests`, `dotenv`, optional `ollama`
+    - **Methods:**
+        - *Core Concepts*: Tokenization, attention mechanisms, embeddings
+        - *Model Usage*: `pipeline`, `AutoTokenizer`, `AutoModelForSequenceClassification`
+        - *API Integration*: REST APIs, async calls, rate limiting
+        - *Fine-tuning*: Transfer learning, prompt engineering
+        - *Best Practices*: Context management, prompt design patterns
+    - **Dataset:** Medical text data, clinical notes, research papers
+    - **Key Concepts:**
+        - Transformer architecture and attention mechanisms
+        - Token limits and context windows
+        - Prompt engineering strategies
+        - Ethical considerations and bias
+        - Handling medical terminology and PHI
+8. **Computer Vision: Identifying and Tracking (PyTorch Focus) + Coding Interview Snippets:**
+    - **Focus:** CNNs for images (PyTorch). Classification, Detection concepts, Tracking overview.
+    - **Libraries:** `torch`, `torchvision`, `PIL`, `opencv-python`
+    - **Methods:**
+        - *Image Processing*: Loading, transforming, augmenting images
+        - *Model Architecture*: Pre-trained models, transfer learning, fine-tuning
+        - *Tasks*: Classification, object detection, segmentation
+        - *Advanced*: Feature visualization, attention maps
+    - **Dataset:** Medical imaging data (X-rays, MRIs, microscopy)
+    - **Key Concepts:**
+        - CNN architectures (ResNet, U-Net, YOLO)
+        - Transfer learning strategies
+        - Data augmentation techniques
+        - Medical image preprocessing
+        - Model interpretability for healthcare
+9. **Data Visualization & Communication (Interactive Focus & Deep Dive):**
+    - **Focus:** Principles, Storytelling. Deep dive: `matplotlib`/`seaborn`. Interactive: `altair`. Alternative: `plotnine`.
+    - **Libraries:** `matplotlib.pyplot`, `seaborn`, `altair`, `plotnine`, `plotly`, `streamlit`, `dash`
+    - **Methods:**
+        - *Static Visualization*: Statistical plots, custom visualizations
+        - *Interactive Plots*: Web-based dashboards, notebooks
+        - *Advanced Techniques*: Animations, 3D plots, geographic visualization
+        - *Best Practices*: Color theory, accessibility, data-ink ratio
+    - **Dataset:** Revisit course datasets, focusing on effective communication of results
+    - **Key Concepts:**
+        - Grammar of graphics
+        - Perceptual principles
+        - Storytelling with data
+        - Interactive visualization
+        - Dashboard design
+10. **Experimentation & Research Design (A/B Testing + Advanced Techniques):**
+    - **Focus:** Causal inference, A/B testing design, analysis. Variance reduction (CUPED), GLMs for analysis, multiple comparisons.
+    - **Libraries:** `scipy.stats`, `statsmodels`, `pandas`, `numpy`
+    - **Methods:**
+        - *Basic Tests*: `ttest_ind`, `proportions_ztest`, power analysis
+        - *Advanced Methods*: CUPED variance reduction, sequential testing
+        - *GLM Analysis*: Model specification, family selection, interpretation
+        - *Multiple Testing*: Bonferroni, Benjamini-Hochberg, Multi-Armed Bandits
+    - **Dataset:** Clinical trial data, A/B test results
+    - **Key Concepts:**
+        - Experimental design principles
+        - Power analysis and sample size
+        - Covariate adjustment
+        - Multiple comparison problems
+        - Bayesian vs. Frequentist approaches

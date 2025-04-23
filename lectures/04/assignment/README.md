@@ -4,7 +4,27 @@
 
 In this assignment, you will apply the time series analysis techniques learned in class to real-world health data from the Wearable Device Dataset from Induced Stress and Exercise Sessions. This dataset contains physiological signals (Electrodermal Activity, Blood Volume Pulse, Heart Rate, Temperature) from healthy volunteers collected during structured acute stress induction and aerobic/anaerobic exercise sessions using the Empatica E4 wearable device.
 
-Dataset link: https://physionet.org/content/wearable-stress-affect/1.0.0/
+Dataset link: https://physionet.org/content/wearable-exam-stress/1.0.0/
+
+### Methods
+
+Subjects were required to wear the FDA-approved Empatica E4 wristband while they take their midterm (Exam 1 and 2) and final exams. The E4 recorded skin conductance, heart rate, body temperature and movement (accelerometer). 
+
+Each E4 device has a tag number. On coming to the exam, each participant picked up an E4 device and wrote their name on the document corresponding to the E4 device they selected. After data collection the participants returned their E4 wristbands to the study team. Finally, the course instructor provided the other members of the study team with the grades corresponding to the device numbers.
+
+### Data Description
+
+The data contains **electrodermal activity**, **heart rate**, **blood volume pulse**, **skin surface temperature**, **inter beat interval** and **accelerometer data** recorded during **three exam sessions**(midterm 1, midterm 2 and final) as well as their corresponding grades. All the data are the direct output of the Empatica E4 device and processing has been carried out. The duration of the midterm exam are 1.5 hrs and for final exam the durations is three hours. Some useful notes on the dataset is provided below,
+
+- StudentGrades.txt contains the grades for each student 
+- The Data.zip file contains folders for each participants named as S1, S2, etc.
+- Under each of the folders corresponding to each participants, there are three folders 'Final', 'Midterm 1', and 'Midterm 2', corresponding to three exams.
+- Each of the folders contains csv files: 'ACC.csv', 'BVP.csv', 'EDA.csv', 'HR.csv', 'IBI.csv', 'tags.csv', 'TEMP.csv', and 'info.txt'.
+- 'info.txt' contains detailed information of each of these files.
+- All the unix time stamps are date shifted for de-identification but not time shifted. The date shift have been carried out such a way that it does not change the status of the day light saving settings (CT/CDT) of a day.
+- All exam starts at 9:00 AM (CT or CDT depending on the date corresponding to the unix time stamp). Mid terms are 1.5 hr long and final is 3 hr long.
+- Sampling frequency of the arrays are provided in 'info.txt'.
+- The dataset contains two female and eight male participants, however the gender is not mentioned for the purpose of de-identification.
 
 ## Learning Objectives
 

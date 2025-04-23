@@ -74,7 +74,7 @@ plugins:
       formats:
         pdf:
           enabled: true
-          concurrency: 4
+          concurrency: 1
           # Remove unrecognized options
           explicit: true
 

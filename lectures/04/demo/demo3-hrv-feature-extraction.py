@@ -20,7 +20,7 @@ plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_palette('husl')
 
 # Define the path to the dataset
-data_dir = 'lectures/04/demo/rr-interval-time-series-from-healthy-subjects-1.0.0'
+data_dir = 'rr-interval-time-series-from-healthy-subjects-1.0.0'
 
 # Load patient information
 patient_info = pd.read_csv(f'{data_dir}/patient-info.csv')

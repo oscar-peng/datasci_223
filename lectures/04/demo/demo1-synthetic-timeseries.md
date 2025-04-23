@@ -1,19 +1,16 @@
-# %% [markdown]
-# # Demo 1: Exploring Temporal Patterns with Synthetic Healthcare Data
-#
-# This notebook guides you through generating and analyzing synthetic healthcare time series data. Each section is annotated with context and speaking notes for health data science beginners.
-# <!---
-# This notebook is designed for health data science master's students who are new to Python and time series analysis. Each section builds on the previous, with code, visualizations, and explanations. Look for HTML comments for extra context and common pitfalls.
-# --->
+# Demo 1: Exploring Temporal Patterns with Synthetic Healthcare Data
 
-# %% [markdown]
-# ## 1. Setup: Import Libraries and Configure Environment
-#
-# <!---
-# Importing libraries is the first step in any data science workflow. Here, we use pandas and numpy for data manipulation, matplotlib and seaborn for plotting, and statsmodels/lifelines for time series and survival analysis. Setting a random seed ensures reproducibility.
-# --->
+This markdown file is structured for conversion to a Jupyter notebook using Jupytext. Each code cell is marked with triple backticks and `python`, and markdown cells are written as plain text between code cells.
 
-# %%
+---
+
+## 1. Setup: Import Libraries and Configure Environment
+
+
+This section introduces the core Python libraries for data science and time series analysis. Students should recognize these as the "toolkit" for most health data science projects. Setting a random seed ensures reproducibility, which is critical for scientific work.
+
+
+```python
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,15 +28,17 @@ sns.set_palette('husl')
 os.makedirs('data', exist_ok=True)
 os.makedirs('data/synthetic', exist_ok=True)
 np.random.seed(42)
+```
 
-# %% [markdown]
-# ## 2. Generate Regular Time Series: Daily Blood Pressure Measurements
-#
-# <!---
-# This section simulates a year of daily blood pressure readings, including trend, seasonality, weekly patterns, and noise. These are common features in real health data.
-# --->
+---
 
-# %%
+## 2. Generate Regular Time Series: Daily Blood Pressure Measurements
+
+
+This section simulates a year of daily blood pressure readings, including trend, seasonality, weekly patterns, and noise. These are common features in real health data. Students should see how synthetic data can be used to practice analysis before working with sensitive or messy real data.
+
+
+```python
 start_date = datetime(2023, 1, 1)
 end_date = datetime(2023, 12, 31)
 dates = pd.date_range(start=start_date, end=end_date, freq='D')
@@ -62,15 +61,17 @@ bp_data = pd.DataFrame({
 })
 bp_data.to_csv('data/synthetic/daily_blood_pressure.csv', index=False)
 print("Generated daily blood pressure data with shape:", bp_data.shape)
+```
 
-# %% [markdown]
-# ### Visualize Blood Pressure Time Series
-#
-# <!---
-# Visualizing the data helps spot trends, seasonality, and outliers. Line plots are the most common way to view time series.
-# --->
+---
 
-# %%
+### Visualize Blood Pressure Time Series
+
+
+Visualizing the data helps spot trends, seasonality, and outliers. Line plots are the most common way to view time series. Encourage students to always plot their data before analysis.
+
+
+```python
 plt.figure(figsize=(12, 6))
 plt.plot(bp_data['date'], bp_data['systolic_bp'], 'b-', label='Systolic')
 plt.plot(bp_data['date'], bp_data['diastolic_bp'], 'r-', label='Diastolic')
@@ -80,15 +81,17 @@ plt.ylabel('Blood Pressure (mmHg)')
 plt.legend()
 plt.grid(True)
 plt.show()
+```
 
-# %% [markdown]
-# ### Decompose Time Series: Trend, Seasonality, Residuals
-#
-# <!---
-# Decomposition separates a time series into trend, seasonal, and residual components. This is useful for understanding underlying patterns and for forecasting.
-# --->
+---
 
-# %%
+### Decompose Time Series: Trend, Seasonality, Residuals
+
+
+Decomposition separates a time series into trend, seasonal, and residual components. This is useful for understanding underlying patterns and for forecasting. Students should learn to interpret each component and recognize when decomposition is helpful.
+
+
+```python
 systolic_series = bp_data.set_index('date')['systolic_bp']
 decomposition = seasonal_decompose(systolic_series, model='additive', period=30)
 plt.figure(figsize=(12, 10))
@@ -110,15 +113,17 @@ plt.title('Residuals')
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ### Weekly and Monthly Pattern Analysis
-#
-# <!---
-# This section explores how blood pressure varies by day of week and month, which is important for understanding periodic effects in health data. Boxplots are used to visualize distributions across categories.
-# --->
+---
 
-# %%
+### Weekly and Monthly Pattern Analysis
+
+
+This section explores how blood pressure varies by day of week and month, which is important for understanding periodic effects in health data. Boxplots are used to visualize distributions across categories. Students should consider how these patterns might affect clinical interpretation or model building.
+
+
+```python
 bp_data['day_of_week'] = bp_data['date'].dt.day_name()
 day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 plt.figure(figsize=(10, 6))
@@ -129,7 +134,6 @@ plt.ylabel('Systolic Blood Pressure (mmHg)')
 plt.grid(True, axis='y')
 plt.show()
 
-# %%
 bp_data['month'] = bp_data['date'].dt.month_name()
 month_order = ['January', 'February', 'March', 'April', 'May', 'June',
                'July', 'August', 'September', 'October', 'November', 'December']

@@ -203,27 +203,15 @@ This example demonstrates several key concepts:
     - Deep learning for time series
     - **Demo Break**: Comparing different forecasting approaches
 
-> ### Time is an illusion. Lunchtime doubly so.
-> — Douglas Adams
+4. **Dense Data in Healthcare**
+    - What is dense data?
+    - Preprocessing and signal processing (e.g., ECG, accelerometer)
+    - Feature extraction and visualization
+    - **Demo Break**: Dense data preprocessing
 
-## References and Resources 📚
-
-### Time Series Analysis
-- [Python for Time Series Analysis](https://www.statsmodels.org/stable/tsa.html) - Statsmodels documentation
-- [Time Series Forecasting](https://otexts.com/fpp3/) - Forecasting: Principles and Practice
-- [Practical Time Series Analysis](https://www.oreilly.com/library/view/practical-time-series/9781492041641/) - O'Reilly book
-- [Healthcare Time Series Analysis](https://www.nature.com/articles/s41746-020-00376-2) - Nature Digital Medicine
-
-### Machine Learning for Time Series
-- [Scikit-learn Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) - Linear regression
-- [Feature Engineering for Time Series](https://www.featuretools.com/) - Automated feature engineering
-- [Deep Learning for Time Series](https://www.tensorflow.org/tutorials/structured_data/time_series) - TensorFlow guide
-- [Time Series Cross-Validation](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html) - Scikit-learn
-
-### Health Data Applications
-- [Clinical Time Series Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6823538/) - NCBI review
-- [Vital Signs Monitoring](https://physionet.org/content/challenge-2019/1.0.0/) - PhysioNet Challenge
-- [Disease Progression Modeling](https://www.nature.com/articles/s41598-020-78321-2) - Scientific Reports
+5. **Related Approaches: Survival Analysis**
+    - Kaplan-Meier and Cox proportional hazards
+    - When to use survival analysis vs. time series
 
 ## 1. Time Series Fundamentals 🕰️
 
@@ -302,14 +290,6 @@ See: [`demo1-time-patterns`](./demo/demo1-time-patterns.ipynb)
 
 ## 2. Regression for Time Series 📊
 
-<!---
-Regression is a fundamental building block for time series analysis:
-- Start with simple linear relationships before moving to complex models
-- Important to understand assumptions and limitations
-- Feature engineering often more important than model complexity
-- Cross-validation must respect temporal order
---->
-
 ### 2.1 Linear Regression Refresher
 
 Linear regression models the relationship between predictors (X) and a target (y) as a linear combination:
@@ -356,14 +336,6 @@ for feature, coef in zip(patient_data.columns, model.coef_):
     print(f"{feature}: {coef:.2f}")
 print(f"Intercept: {model.intercept_:.2f}")
 ```
-
-<!---
-Key points about linear regression:
-1. Interpretable coefficients show feature importance
-2. Assumes linear relationship between features and target
-3. Sensitive to outliers and scale of features
-4. Good baseline model for comparison
---->
 
 ### 2.2 Feature Engineering for Temporal Data
 
@@ -420,14 +392,6 @@ def create_rolling_features(df, target_col, windows=[3, 6, 12, 24]):
     return df
 ```
 
-<!---
-Feature engineering tips:
-1. Consider domain knowledge when creating features
-2. Watch out for data leakage in rolling/lagged features
-3. Handle missing values created by lags/windows
-4. Use cross-validation to validate feature importance
---->
-
 ### 2.3 Model Selection and Evaluation
 
 Time series models require special consideration for evaluation:
@@ -482,27 +446,11 @@ tscv = TimeSeriesSplit(n_splits=5, test_size=24*7)  # One week test size
    r2 = r2_score(y_true, y_pred)
    ```
 
-<!---
-Key points about evaluation:
-1. Choose metrics based on business context
-2. Consider multiple metrics for robust evaluation
-3. Always validate on unseen future data
-4. Be careful with percentage errors when values near zero
---->
-
 ## DEMO BREAK: Building Predictive Models with Health Metrics
 
 See: [`demo2-predictive-models`](./demo/demo2-predictive-models.ipynb)
 
 ## 3. Advanced Time Series Methods 🚀
-
-<!---
-Advanced methods build on regression fundamentals:
-- ARIMA models capture autoregressive and moving average patterns
-- Machine learning models can handle non-linear relationships
-- Deep learning excels with large, complex datasets
-- Each approach has its strengths and ideal use cases
---->
 
 ### 3.1 ARIMA and Seasonal Models
 
@@ -547,14 +495,6 @@ plt.show()
 print(results.summary())
 ```
 
-<!---
-ARIMA key points:
-1. Good for regular patterns with clear seasonality
-2. Requires stationary data (constant mean/variance)
-3. Parameter selection (p,d,q) crucial for performance
-4. Works best with evenly spaced observations
---->
-
 #### Seasonal Decomposition
 
 Understanding components of a time series:
@@ -583,192 +523,82 @@ plt.tight_layout()
 plt.show()
 ```
 
-### 3.2 Machine Learning Approaches
-
-Modern ML methods offer flexible modeling approaches:
-
-#### Random Forest for Time Series
-
-```python
-from sklearn.ensemble import RandomForestRegressor
-
-def create_features_target(data, lookback=5):
-    """Create features and target for ML model."""
-    features, target = [], []
-    for i in range(len(data) - lookback):
-        features.append(data[i:i+lookback])
-        target.append(data[i+lookback])
-    return np.array(features), np.array(target)
-
-# Prepare data
-X, y = create_features_target(temperature, lookback=24)
-
-# Split data
-train_size = int(len(X) * 0.8)
-X_train, X_test = X[:train_size], X[train_size:]
-y_train, y_test = y[:train_size], y[train_size:]
-
-# Train Random Forest
-rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
-
-# Make predictions
-rf_pred = rf_model.predict(X_test)
-
-# Feature importance
-importance = pd.DataFrame({
-    'feature': [f'lag_{i+1}' for i in range(24)],
-    'importance': rf_model.feature_importances_
-}).sort_values('importance', ascending=False)
-
-print("Top 5 most important lags:")
-print(importance.head())
-```
-
-#### XGBoost with Time Features
-
-```python
-import xgboost as xgb
-
-def create_advanced_features(data, timestamp_index):
-    """Create advanced features for XGBoost."""
-    features = pd.DataFrame(index=timestamp_index)
-    
-    # Time features
-    features['hour'] = timestamp_index.hour
-    features['day_of_week'] = timestamp_index.dayofweek
-    features['month'] = timestamp_index.month
-    
-    # Lag features
-    for lag in [1, 2, 3, 6, 12, 24]:
-        features[f'lag_{lag}'] = data.shift(lag)
-    
-    # Rolling features
-    for window in [3, 6, 12, 24]:
-        features[f'rolling_mean_{window}'] = data.rolling(window).mean()
-        features[f'rolling_std_{window}'] = data.rolling(window).std()
-    
-    return features.dropna()
-
-# Prepare features
-features_df = create_advanced_features(pd.Series(temperature), hours)
-X = features_df.values
-y = temperature[len(temperature)-len(features_df):]
-
-# Train XGBoost
-xgb_model = xgb.XGBRegressor(
-    objective='reg:squarederror',
-    n_estimators=100,
-    learning_rate=0.1
-)
-xgb_model.fit(X_train, y_train)
-```
-
-### 3.3 Deep Learning for Time Series
-
-Neural networks excel at complex temporal patterns:
-
-#### LSTM for Vital Signs
-
-```python
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-from sklearn.preprocessing import MinMaxScaler
-
-def prepare_sequences(data, seq_length):
-    """Prepare sequences for LSTM."""
-    X, y = [], []
-    for i in range(len(data) - seq_length):
-        X.append(data[i:(i + seq_length)])
-        y.append(data[i + seq_length])
-    return np.array(X), np.array(y)
-
-# Scale data
-scaler = MinMaxScaler()
-scaled_temp = scaler.fit_transform(temperature.reshape(-1, 1))
-
-# Create sequences
-seq_length = 24
-X, y = prepare_sequences(scaled_temp, seq_length)
-
-# Build LSTM model
-model = Sequential([
-    LSTM(50, activation='relu', input_shape=(seq_length, 1), return_sequences=True),
-    Dropout(0.2),
-    LSTM(30, activation='relu'),
-    Dropout(0.2),
-    Dense(1)
-])
-
-model.compile(optimizer='adam', loss='mse')
-
-# Train model
-history = model.fit(
-    X_train, y_train,
-    epochs=50,
-    batch_size=32,
-    validation_split=0.2,
-    verbose=1
-)
-
-# Plot training history
-plt.figure(figsize=(10, 6))
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.title('Model Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
-plt.show()
-```
-
-<!---
-Deep learning considerations:
-1. Requires more data than traditional methods
-2. GPU acceleration often beneficial
-3. Hyperparameter tuning crucial
-4. Risk of overfitting with small datasets
---->
-
-### 3.4 Choosing the Right Approach
-
-![XKCD Machine Learning](media/machine_learning.png)
-*Source: [XKCD 1838](https://xkcd.com/1838/) - Machine Learning: Like regular learning, but with more arguing about algorithms*
-
-<!---
-This comic reminds us that:
-- More complex isn't always better
-- Different methods have different tradeoffs
-- The goal is solving the problem, not using the fanciest algorithm
-- Sometimes simple models work best
---->
-
-Selection criteria for time series methods:
-
-1. **Data Characteristics**
-   - Amount of data available
-   - Sampling frequency
-   - Missing values
-   - Multiple variables
-
-2. **Problem Requirements**
-   - Forecast horizon
-   - Update frequency
-   - Interpretability needs
-   - Computational constraints
-
-3. **Method Comparison**
-
-| Method | Strengths | Weaknesses | Best For |
-|--------|-----------|------------|-----------|
-| ARIMA | Interpretable, handles seasonality | Requires stationarity, single variable | Regular patterns, clear seasonality |
-| Random Forest | Handles non-linearity, feature importance | Memory intensive, black box | Multiple variables, complex patterns |
-| XGBoost | High performance, handles missing values | Complex tuning, black box | Large datasets, competitions |
-| LSTM | Learns long-term dependencies | Requires lots of data, slow training | Sequential data, complex patterns |
-
 ## DEMO BREAK: Comparing Different Forecasting Approaches
 
 See: [`demo3-forecasting-comparison`](./demo/demo3-forecasting-comparison.ipynb)
+
+## 4. Dense Data in Healthcare
+
+### What is Dense Data?
+
+Dense data refers to high-frequency time series, such as ECG, accelerometer, or audio signals, where preprocessing and feature extraction are critical.
+
+### Preprocessing and Signal Processing
+
+- Example: Bandpass filtering for ECG (see code above)
+- Discuss challenges: noise, high sampling rates, storage, and computation
+
+### Feature Extraction and Visualization
+
+- Rolling statistics, spectrograms, and trend analysis
+
+## DEMO BREAK: Dense Data Preprocessing
+
+See: [`demo3-dense-data`](./demo/demo3-dense-data.ipynb)
+
+## 5. Related Approaches: Survival Analysis
+
+> **Q:** When would you use survival analysis instead of time series forecasting?
+
+- Briefly introduce Kaplan-Meier and Cox proportional hazards models
+- Explain how survival analysis complements time series, especially for censored or event-driven outcomes
+
+```python
+# Example: Kaplan-Meier curve
+from lifelines import KaplanMeierFitter
+import pandas as pd
+
+# Simulated survival data
+data = pd.DataFrame({
+    'time': [5, 6, 6, 2.5, 4, 4, 3, 2, 8, 7],
+    'event': [1, 0, 0, 1, 1, 1, 0, 1, 1, 0]
+})
+
+kmf = KaplanMeierFitter()
+kmf.fit(data['time'], event_observed=data['event'])
+kmf.plot_survival_function()
+plt.title('Kaplan-Meier Survival Curve')
+plt.xlabel('Time')
+plt.ylabel('Survival Probability')
+plt.show()
+```
+
+- Suggest how these methods are used for time-to-event data in healthcare
+
+## Future Topics
+
+- Advanced machine learning (e.g., XGBoost, LSTM) in a follow-up lecture or lab
+- More on dense data applications in a dedicated session if needed
+- Survival analysis for censored data
+
+## References and Resources 📚
+
+### Time Series Analysis
+- [Python for Time Series Analysis](https://www.statsmodels.org/stable/tsa.html) - Statsmodels documentation
+- [Time Series Forecasting](https://otexts.com/fpp3/) - Forecasting: Principles and Practice
+- [Practical Time Series Analysis](https://www.oreilly.com/library/view/practical-time-series/9781492041641/) - O'Reilly book
+- [Healthcare Time Series Analysis](https://www.nature.com/articles/s41746-020-00376-2) - Nature Digital Medicine
+
+### Machine Learning for Time Series
+- [Scikit-learn Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) - Linear regression
+- [Feature Engineering for Time Series](https://www.featuretools.com/) - Automated feature engineering
+- [Deep Learning for Time Series](https://www.tensorflow.org/tutorials/structured_data/time_series) - TensorFlow guide
+- [Time Series Cross-Validation](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html) - Scikit-learn
+
+### Health Data Applications
+- [Clinical Time Series Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6823538/) - NCBI review
+- [Vital Signs Monitoring](https://physionet.org/content/challenge-2019/1.0.0/) - PhysioNet Challenge
+- [Disease Progression Modeling](https://www.nature.com/articles/s41598-020-78321-2) - Scientific Reports
 
 ## Exercise: Predicting Hospital Admissions 🏥
 
@@ -1004,4 +834,4 @@ Key points about dense data:
 4. Use proper error handling and validation
 5. Document code with type hints and docstrings
 6. Use object-oriented programming for complex analyses
----> 
+--->

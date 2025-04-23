@@ -13,7 +13,7 @@ This lecture covers regression and time series analysis in the context of health
 - Focus on practical applications and common pitfalls
 --->
 
-> "The best thing about the future is that it comes one data point at a time." 
+> "The best thing about the future is that it comes one data point at a time."
 > — Abraham Lincoln (if he was a data scientist)
 
 ![XKCD Extrapolating](media/extrapolating.png)
@@ -36,6 +36,29 @@ Time series data in healthcare is like a Netflix series - it's all about the pat
 - Anomalies are the plot twists you need to catch
 --->
 
+> **Discussion**: What kinds of time series data have you encountered in healthcare or your studies?
+
+## Types of Time Series in Health Data
+
+Time series in health data science come in three main flavors:
+
+| Type                | Example                        | Key Challenge         | Typical Method         |
+|---------------------|-------------------------------|-----------------------|-----------------------|
+| **Regular-interval (Panel)**    | Hourly vitals, daily labs for multiple patients | Missing data          | ARIMA, regression, panel models |
+| **Irregular-interval**  | Lab results, medication events, symptom diaries | Resampling needed     | Interpolation, imputation |
+| **Dense/Continuous**    | ECG, accelerometer, heart rate from wearables | Storage, noise        | Signal processing, feature extraction |
+
+```mermaid
+flowchart TD
+    A[Regular-Interval (Panel)] -->|e.g. hourly vitals| B[Evenly spaced time points]
+    C[Irregular-Interval] -->|e.g. lab results| D[Uneven time points]
+    E[Dense Data] -->|e.g. ECG, accelerometer, heart rate| F[High-frequency, continuous]
+```
+
+<!---
+This table and diagram help students distinguish between the main types of time series they will encounter in health data. Each type has unique challenges and requires different analysis strategies.
+--->
+
 ### The Three Laws of Time Series 🤖
 
 1. **A time series may not harm a patient, or through inaction, allow a patient to come to harm**
@@ -55,132 +78,180 @@ Time series data in healthcare is like a Netflix series - it's all about the pat
 
 > **Check**: What's your favorite example of "garbage in, garbage out" with time series data?
 
-### Dense Data: When Time Gets Intense 🏃‍♀️
+## Panel Data (Regular-Interval Repeated Measures)
+
+Panel data consists of repeated measurements for multiple subjects at regular time intervals (e.g., daily heart rate for several patients). This structure is common in clinical trials, cohort studies, and EHRs.
+
+**Visual:**
+![Panel Data Example](media/panel_data_example.png)
+*(If not present, generate with Altair/Matplotlib: grid with patients as rows, time as columns, colored cells for measurements.)*
+
+**Example: Working with Real Panel Data**
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from urllib.request import urlretrieve
+
+# Download a sample of the MMASH dataset
+url = "https://physionet.org/files/mmash/1.0.0/sample_data.csv"
+local_file = "mmash_sample.csv"
+urlretrieve(url, local_file)
+
+# Load the data
+df = pd.read_csv(local_file, parse_dates=['timestamp'])
+
+# Extract data for 3 subjects
+subjects = df['subject_id'].unique()[:3]
+df_subset = df[df['subject_id'].isin(subjects)]
+
+# Pivot for visualization
+pivot = df_subset.pivot(index='subject_id', columns='timestamp', values='heart_rate')
+
+# Visualize
+plt.figure(figsize=(10, 4))
+plt.imshow(pivot, aspect='auto', cmap='viridis')
+plt.colorbar(label='Heart Rate')
+plt.xticks(ticks=range(0, len(pivot.columns), 5), 
+           labels=pivot.columns[::5].strftime('%H:%M'), rotation=45)
+plt.yticks(ticks=range(len(subjects)), labels=subjects)
+plt.title('Panel Data: Heart Rate for 3 Subjects')
+plt.tight_layout()
+plt.show()
+```
 
 <!---
-Dense time series are like trying to drink from a fire hose:
-- ECG data comes in at 250+ samples per second
-- Activity trackers generate thousands of readings per minute
-- Audio recordings can be 44,100 samples per second
-Key challenges:
-- Storage and processing requirements
-- Signal-to-noise ratio
-- Feature extraction from raw signals
-- Real-time analysis needs
+Panel data allows for both within-subject and between-subject analysis. In health, this is useful for tracking patient progress and comparing treatment effects. Common methods include mixed-effects models and repeated measures ANOVA.
 --->
 
-#### Example: Processing Dense ECG Data
+## Irregular-Interval Data
 
-```python
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from scipy import signal
+Irregular-interval data occurs when measurements are taken at uneven time points, such as lab results, medication events, or symptom diaries. This is common in real-world health data, where not all events are scheduled.
 
-# Generate synthetic ECG-like data (250 Hz sampling rate)
-t = np.linspace(0, 10, 2500)  # 10 seconds of data
-ecg = np.zeros_like(t)
+**Visual:**
+![Irregular Data Example](media/irregular_data_example.png)
+*(If not present, generate with Altair/Matplotlib: scatter plot with time on x-axis, dots at irregular intervals.)*
 
-# Create QRS complexes
-for i in range(10):  # 10 heartbeats
-    t_beat = t - i
-    qrs = 2 * signal.gaussian(len(t), std=25) * np.exp(-((t_beat - 1) ** 2) / 0.01)
-    ecg += qrs
-
-# Add noise
-ecg += np.random.normal(0, 0.1, len(t))
-
-# Plot raw vs filtered
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 6))
-ax1.plot(t, ecg)
-ax1.set_title('Raw ECG Signal')
-
-# Apply bandpass filter
-fs = 250  # sampling frequency
-w1 = 5 / (fs/2)  # 5 Hz high-pass
-w2 = 50 / (fs/2)  # 50 Hz low-pass
-b, a = signal.butter(4, [w1, w2], btype='band')
-ecg_filtered = signal.filtfilt(b, a, ecg)
-
-ax2.plot(t, ecg_filtered)
-ax2.set_title('Filtered ECG Signal')
-plt.tight_layout()
-plt.show()
-```
-
-### Types of Healthcare Time Series
-
-1. **Patient Monitoring Data**
-   - Vital signs (heart rate, blood pressure, temperature)
-   - Continuous glucose monitoring
-   - ECG/EEG recordings
-   
-2. **Clinical Measurements**
-   - Lab test results over time
-   - Medication responses
-   - Disease progression markers
-
-3. **Healthcare Operations**
-   - Hospital admissions
-   - Resource utilization
-   - Staff scheduling needs
-
-### Common Questions in Healthcare Time Series
-
-> **Check**: What kinds of time series data have you encountered in your work?
-
-1. **Prediction Questions**
-   - Will this patient develop complications?
-   - When should we schedule follow-up tests?
-   - How many beds will we need next month?
-
-2. **Pattern Questions**
-   - Is this vital sign pattern normal?
-   - Has the treatment changed the trend?
-   - Are there seasonal effects in disease occurrence?
-
-3. **Relationship Questions**
-   - Do medication changes affect symptoms?
-   - How do different measurements relate over time?
-   - What leads to increased hospital admissions?
-
-### Example: Patient Monitoring System
+**Example: Handling Irregular Lab Test Data**
 
 ```python
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Load continuous monitoring data
-monitoring_data = pd.DataFrame({
-    'timestamp': pd.date_range(start='2024-01-01', periods=1440, freq='T'),
-    'heart_rate': np.random.normal(75, 5, 1440),  # One day of minute-by-minute data
-    'blood_pressure_systolic': np.random.normal(120, 10, 1440),
-    'temperature': np.random.normal(37, 0.3, 1440)
+# Create sample irregular lab test data
+np.random.seed(42)
+dates = pd.date_range('2024-01-01', periods=20)
+# Make the sampling irregular by randomly selecting dates
+irregular_dates = np.sort(np.random.choice(dates, size=10, replace=False))
+glucose = 100 + 15 * np.random.randn(10)  # Blood glucose values
+
+# Create DataFrame
+df = pd.DataFrame({
+    'date': irregular_dates,
+    'glucose': glucose
 })
 
-# Add circadian rhythm effect
-time_of_day = pd.to_datetime(monitoring_data['timestamp']).dt.hour
-monitoring_data['heart_rate'] += 10 * np.sin(2 * np.pi * time_of_day / 24)
+# Plot original irregular data
+plt.figure(figsize=(10, 6))
+plt.subplot(2, 1, 1)
+plt.scatter(df['date'], df['glucose'], color='blue', label='Original Measurements')
+plt.title('Irregular Blood Glucose Measurements')
+plt.ylabel('Glucose (mg/dL)')
+plt.legend()
 
-# Plot the data
-fig, axes = plt.subplots(3, 1, figsize=(12, 8))
-fig.suptitle('24-Hour Patient Monitoring Data')
+# Resample to regular daily intervals using interpolation
+df_regular = df.set_index('date').resample('D').mean().interpolate(method='time')
 
-monitoring_data.plot(x='timestamp', y='heart_rate', ax=axes[0], title='Heart Rate')
-monitoring_data.plot(x='timestamp', y='blood_pressure_systolic', ax=axes[1], title='Blood Pressure')
-monitoring_data.plot(x='timestamp', y='temperature', ax=axes[2], title='Temperature')
-
+# Plot resampled data
+plt.subplot(2, 1, 2)
+plt.plot(df_regular.index, df_regular['glucose'], 'r-', label='Daily Interpolated')
+plt.scatter(df['date'], df['glucose'], color='blue', label='Original Measurements')
+plt.title('Resampled to Regular Daily Intervals')
+plt.ylabel('Glucose (mg/dL)')
+plt.legend()
 plt.tight_layout()
 plt.show()
+
+print(f"Original data points: {len(df)}")
+print(f"After resampling: {len(df_regular)}")
 ```
 
 <!---
-This example demonstrates several key concepts:
-1. High-frequency healthcare data collection
-2. Natural patterns in physiological measurements
-3. Multiple related time series
-4. Visualization of temporal patterns
+Irregular-interval data requires careful handling. Common strategies include resampling to regular intervals (with interpolation or imputation) or using models that can handle irregularity directly. Always visualize before and after resampling to check for artifacts.
+--->
+
+## Dense Data: When Time Gets Intense 🏃‍♀️
+
+Dense (high-frequency) data is collected at very short intervals—sometimes hundreds or thousands of times per second. Examples include ECG, accelerometer, and heart rate data from wearables. These datasets are rich but require special handling.
+
+**Visual:**
+![Dense Data Example](media/dense_data_example.png)
+*(If not present, generate with Altair/Matplotlib: continuous line plot with many points.)*
+
+### The Dense Data Pipeline
+
+```mermaid
+flowchart LR
+    A[Raw Sensor Data] --> B[Preprocessing (Filtering, Cleaning)]
+    B --> C[Feature Extraction (Rolling Mean, Peaks, Variability)]
+    C --> D[Modeling (Prediction, Classification)]
+```
+
+<!---
+Dense data requires a pipeline approach: raw data is first cleaned and filtered, then features are extracted (e.g., rolling mean, heart rate variability), and finally models are applied. This is especially important for physiological signals like heart rate or ECG.
+--->
+
+**Example: Processing Real Heart Rate Data from Meditation**
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from urllib.request import urlretrieve
+
+# Download heart rate data from meditation dataset
+url = "https://physionet.org/files/meditation/1.0.0/data/s001.txt"
+local_file = "meditation_s001.txt"
+urlretrieve(url, local_file)
+
+# Load the data (adjust column names based on actual format)
+# Note: This is a simplified example - check actual data format
+df = pd.read_csv(local_file, sep='\t', header=None, 
+                names=['time', 'heart_rate'])
+
+# Convert time to datetime if needed
+df['time'] = pd.to_datetime(df['time'], unit='s')
+
+# Preprocessing: rolling mean (30-second window)
+window_size = 30  # Adjust based on sampling rate
+df['hr_rolling'] = df['heart_rate'].rolling(window=window_size).mean()
+
+# Feature extraction: heart rate variability (std over 1-min window)
+hrv_window = 60  # Adjust based on sampling rate
+df['hrv'] = df['heart_rate'].rolling(window=hrv_window).std()
+
+# Plot
+plt.figure(figsize=(12, 6))
+plt.plot(df['time'], df['heart_rate'], alpha=0.3, label='Raw HR')
+plt.plot(df['time'], df['hr_rolling'], color='red', label='Rolling Mean')
+plt.xlabel('Time')
+plt.ylabel('Heart Rate')
+plt.title('Heart Rate During Meditation: Raw and Smoothed')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Display basic statistics
+print(f"Data points: {len(df)}")
+print(f"Time range: {df['time'].min()} to {df['time'].max()}")
+print(f"Heart rate range: {df['heart_rate'].min():.1f} to {df['heart_rate'].max():.1f}")
+print(f"Mean heart rate: {df['heart_rate'].mean():.1f}")
+```
+
+<!---
+This example shows how to work with real meditation heart rate data from PhysioNet. We download the data, preprocess it with a rolling mean to smooth out noise, and extract heart rate variability as a feature. This approach is common in health monitoring applications.
 --->
 
 ## Table of Contents
@@ -189,29 +260,23 @@ This example demonstrates several key concepts:
     - Key concepts and components
     - Challenges in time series analysis
     - Applications in health data science
-    - **Demo Break**: Exploring temporal patterns in health data
+    - **Demo Break**: Exploring heart rate patterns during meditation
 
 2. **Regression for Time Series**
     - Linear regression refresher
     - Feature engineering for temporal data
     - Model selection and evaluation
-    - **Demo Break**: Building predictive models with health metrics
+    - **Demo Break**: Building predictive models with sleep monitoring data
 
-3. **Advanced Time Series Methods**
-    - ARIMA and seasonal models
-    - Machine learning approaches
-    - Deep learning for time series
-    - **Demo Break**: Comparing different forecasting approaches
+3. **Practical Applications**
+    - Dense physiological data handling
+    - Case studies in healthcare
+    - Implementation considerations
+    - **Demo Break**: Advanced analysis of sleep and activity data
 
-4. **Dense Data in Healthcare**
-    - What is dense data?
-    - Preprocessing and signal processing (e.g., ECG, accelerometer)
-    - Feature extraction and visualization
-    - **Demo Break**: Dense data preprocessing
-
-5. **Related Approaches: Survival Analysis**
-    - Kaplan-Meier and Cox proportional hazards
-    - When to use survival analysis vs. time series
+> ### Time is an illusion. Lunchtime doubly so
+>
+> — Douglas Adams
 
 ## 1. Time Series Fundamentals 🕰️
 
@@ -223,20 +288,38 @@ Time series data is characterized by sequential measurements over intervals. Und
 - **Seasonality**: Regular variations tied to time intervals
 - **Noise**: Random fluctuations that obscure patterns
 
+**Example: Decomposing Heart Rate Data**
+
 ```python
-# Example: Decomposing a time series
+# Example: Decomposing a real heart rate time series
 from statsmodels.tsa.seasonal import seasonal_decompose
 import pandas as pd
+from urllib.request import urlretrieve
 
-# Load patient temperature readings
-temps = pd.read_csv("patient_temps.csv", parse_dates=["timestamp"])
-temps = temps.set_index("timestamp")
+# Download sample data from MMASH dataset
+url = "https://physionet.org/files/mmash/1.0.0/sample_hr.csv"
+local_file = "sample_hr.csv"
+urlretrieve(url, local_file)
+
+# Load heart rate data
+hr_data = pd.read_csv(local_file, parse_dates=['timestamp'])
+hr_data = hr_data.set_index('timestamp')
+
+# Ensure regular intervals (resample if needed)
+hr_hourly = hr_data['heart_rate'].resample('H').mean().interpolate()
 
 # Decompose the series
-decomposition = seasonal_decompose(temps["temperature"], period=24)  # 24 hours
+decomposition = seasonal_decompose(hr_hourly, period=24)  # 24 hours for daily pattern
 
 # Plot components
 decomposition.plot()
+plt.tight_layout()
+plt.show()
+
+# Explain components
+print("Trend: The long-term progression of heart rate")
+print("Seasonal: The daily pattern of heart rate (higher during day, lower at night)")
+print("Residual: Unexplained variations after accounting for trend and seasonality")
 ```
 
 ### 1.2 Challenges in Time Series Analysis
@@ -263,30 +346,57 @@ Time series analysis is fundamental in healthcare:
 - **Resource Planning**: Predicting hospital admissions and resource needs
 - **Treatment Response**: Analyzing how patients respond to interventions
 
-#### Example: Vital Signs Monitoring
+**Example: Feature Engineering for Vital Signs**
 
 ```python
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-# Load vital signs data
-vitals = pd.read_csv("patient_vitals.csv", parse_dates=["timestamp"])
+# Create sample vital signs data
+dates = pd.date_range('2024-01-01', periods=48, freq='H')
+np.random.seed(42)
+vitals = pd.DataFrame({
+    'timestamp': dates,
+    'heart_rate': 70 + 10*np.sin(2*np.pi*dates.hour/24) + np.random.normal(0, 3, len(dates)),
+    'temperature': 37 + 0.3*np.sin(2*np.pi*dates.hour/24) + np.random.normal(0, 0.1, len(dates)),
+    'blood_pressure': 120 + 5*np.sin(2*np.pi*dates.hour/24) + np.random.normal(0, 2, len(dates))
+})
 
 # Create features from time components
-vitals["hour"] = vitals["timestamp"].dt.hour
-vitals["day_of_week"] = vitals["timestamp"].dt.dayofweek
+vitals['hour'] = vitals['timestamp'].dt.hour
+vitals['day_of_week'] = vitals['timestamp'].dt.dayofweek
+vitals['is_weekend'] = vitals['day_of_week'].isin([5, 6]).astype(int)
+
+# Create lagged features
+vitals['heart_rate_lag1'] = vitals['heart_rate'].shift(1)
+vitals['heart_rate_lag2'] = vitals['heart_rate'].shift(2)
+
+# Create rolling features
+vitals['hr_rolling_mean_3h'] = vitals['heart_rate'].rolling(window=3).mean()
+vitals['hr_rolling_std_3h'] = vitals['heart_rate'].rolling(window=3).std()
 
 # Scale numerical features
 scaler = StandardScaler()
-vitals[["heart_rate", "blood_pressure", "temperature"]] = scaler.fit_transform(
-    vitals[["heart_rate", "blood_pressure", "temperature"]]
+vitals[['heart_rate', 'temperature', 'blood_pressure']] = scaler.fit_transform(
+    vitals[['heart_rate', 'temperature', 'blood_pressure']]
 )
+
+# Display the engineered features
+print(vitals[['timestamp', 'heart_rate', 'hour', 'is_weekend', 
+             'heart_rate_lag1', 'hr_rolling_mean_3h']].head(10))
 ```
 
-## DEMO BREAK: Exploring Temporal Patterns in Health Data
+## DEMO BREAK: Exploring Heart Rate Patterns During Meditation
 
-See: [`demo1-time-patterns`](./demo/demo1-time-patterns.ipynb)
+In this demo, we'll explore real heart rate data from the Heart Rate Oscillations during Meditation dataset on PhysioNet. You'll learn how to:
+
+- Load and visualize real physiological time series data
+- Identify patterns in heart rate during different meditation techniques
+- Perform basic statistical tests on time series data
+- Handle missing values and irregularities in real-world data
+
+See: [`demo1-heart-rate-meditation`](./demo/demo1-heart-rate-meditation.ipynb)
 
 ## 2. Regression for Time Series 📊
 
@@ -297,44 +407,62 @@ Linear regression models the relationship between predictors (X) and a target (y
 y = β₀ + β₁X₁ + β₂X₂ + ... + βₙXₙ + ε
 
 Where:
+
 - β₀ is the intercept
 - βᵢ are coefficients
 - Xᵢ are features
 - ε is the error term
 
-#### Example: Predicting Patient Recovery Time
+**Example: Predicting Sleep Quality from Activity Data**
 
 ```python
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from urllib.request import urlretrieve
 
-# Sample patient data
-np.random.seed(42)
-n_patients = 100
+# Download sample data from MMASH dataset
+url = "https://physionet.org/files/mmash/1.0.0/sample_sleep.csv"
+local_file = "sample_sleep.csv"
+urlretrieve(url, local_file)
 
-patient_data = pd.DataFrame({
-    'age': np.random.normal(60, 10, n_patients),
-    'severity_score': np.random.uniform(1, 10, n_patients),
-    'previous_conditions': np.random.randint(0, 5, n_patients)
-})
+# Load sleep and activity data
+sleep_data = pd.read_csv(local_file)
 
-# Generate recovery time with some noise
-recovery_time = (
-    0.5 * patient_data['age'] + 
-    2.0 * patient_data['severity_score'] + 
-    1.5 * patient_data['previous_conditions'] +
-    np.random.normal(0, 5, n_patients)
-)
+# Prepare data for modeling
+X = sleep_data[['daily_activity', 'evening_hr']]  # Features
+y = sleep_data['sleep_quality']  # Target
 
 # Fit linear regression
 model = LinearRegression()
-model.fit(patient_data, recovery_time)
+model.fit(X, y)
 
+# Print coefficients
 print("Coefficients:")
-for feature, coef in zip(patient_data.columns, model.coef_):
+for feature, coef in zip(X.columns, model.coef_):
     print(f"{feature}: {coef:.2f}")
 print(f"Intercept: {model.intercept_:.2f}")
+
+# Visualize relationship
+plt.figure(figsize=(10, 6))
+plt.scatter(sleep_data['daily_activity'], sleep_data['sleep_quality'], 
+            alpha=0.7, label='Actual data')
+
+# Create prediction line for visualization
+x_range = np.linspace(sleep_data['daily_activity'].min(), 
+                      sleep_data['daily_activity'].max(), 100)
+# Hold evening_hr constant at its mean for visualization
+evening_hr_mean = sleep_data['evening_hr'].mean()
+X_pred = np.column_stack([x_range, np.ones(100) * evening_hr_mean])
+y_pred = model.predict(X_pred)
+
+plt.plot(x_range, y_pred, 'r-', label='Regression line')
+plt.xlabel('Daily Activity Level')
+plt.ylabel('Sleep Quality')
+plt.title('Relationship Between Activity and Sleep Quality')
+plt.legend()
+plt.show()
 ```
 
 ### 2.2 Feature Engineering for Temporal Data
@@ -399,6 +527,7 @@ Time series models require special consideration for evaluation:
 #### Cross-Validation Strategies
 
 1. **Traditional CV (Wrong!)**
+
 ```python
 # ❌ Don't do this - mixes future and past
 from sklearn.model_selection import KFold
@@ -406,6 +535,7 @@ cv = KFold(n_splits=5, shuffle=True)
 ```
 
 2. **Time Series CV (Correct!)**
+
 ```python
 # ✅ Do this - respects temporal order
 from sklearn.model_selection import TimeSeriesSplit
@@ -419,6 +549,7 @@ tscv = TimeSeriesSplit(n_splits=5, test_size=24*7)  # One week test size
 1. **Scale-Dependent Metrics**
    - Mean Absolute Error (MAE)
    - Root Mean Square Error (RMSE)
+
    ```python
    from sklearn.metrics import mean_absolute_error, mean_squared_error
    
@@ -429,6 +560,7 @@ tscv = TimeSeriesSplit(n_splits=5, test_size=24*7)  # One week test size
 2. **Percentage Errors**
    - Mean Absolute Percentage Error (MAPE)
    - Symmetric MAPE (sMAPE)
+
    ```python
    def mape(y_true, y_pred):
        return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
@@ -440,398 +572,243 @@ tscv = TimeSeriesSplit(n_splits=5, test_size=24*7)  # One week test size
 3. **Scale-Independent Metrics**
    - R-squared (R²)
    - Adjusted R-squared
+
    ```python
    from sklearn.metrics import r2_score
    
    r2 = r2_score(y_true, y_pred)
    ```
 
-## DEMO BREAK: Building Predictive Models with Health Metrics
+## DEMO BREAK: Building Predictive Models with Sleep Monitoring Data
 
-See: [`demo2-predictive-models`](./demo/demo2-predictive-models.ipynb)
+In this demo, we'll use the Multilevel Monitoring of Activity and Sleep dataset to build predictive models for sleep quality. You'll learn how to:
 
-## 3. Advanced Time Series Methods 🚀
+- Work with multivariate health time series data
+- Engineer features from temporal health data
+- Build and evaluate regression models
+- Compare different cohorts and conditions
 
-### 3.1 ARIMA and Seasonal Models
+See: [`demo2-sleep-monitoring`](./demo/demo2-sleep-monitoring.ipynb)
 
-ARIMA (AutoRegressive Integrated Moving Average) combines three components:
+## 3. Practical Applications 🚀
 
-1. **AR (p)**: Autoregression - using past values
-2. **I (d)**: Integration - differencing to make stationary
-3. **MA (q)**: Moving Average - using past errors
+### 3.1 Time Series Forecasting Methods
 
-#### Example: Modeling Patient Temperature
+There are several approaches to forecasting time series data in healthcare:
+
+1. **Simple Methods**: Moving averages and exponential smoothing
+2. **Statistical Models**: ARIMA (AutoRegressive Integrated Moving Average)
+3. **Machine Learning**: Random Forests, XGBoost, and neural networks
+
+For this course, we'll focus on simple methods and briefly introduce ARIMA.
+
+#### ARIMA in a Nutshell
+
+ARIMA models combine three components:
+
+- **AR**: Using past values to predict future ones
+- **I**: Making the data stationary through differencing
+- **MA**: Using past prediction errors
 
 ```python
+# Example: Simple ARIMA for body temperature forecasting
 from statsmodels.tsa.arima.model import ARIMA
-import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from urllib.request import urlretrieve
 
-# Generate hourly temperature data with daily pattern
-np.random.seed(42)
-hours = pd.date_range(start='2024-01-01', periods=24*30, freq='H')
-temp_base = 37.0
-daily_pattern = 0.3 * np.sin(2 * np.pi * hours.hour / 24)
-noise = np.random.normal(0, 0.1, len(hours))
-temperature = temp_base + daily_pattern + noise
+# Download sample temperature data
+url = "https://physionet.org/files/mmash/1.0.0/sample_temp.csv"
+local_file = "sample_temp.csv"
+urlretrieve(url, local_file)
 
-# Fit ARIMA model
-model = ARIMA(temperature, order=(24,1,1))  # p=24 for daily seasonality
+# Load temperature data
+temp_data = pd.read_csv(local_file, parse_dates=['timestamp'])
+temp_data = temp_data.set_index('timestamp')
+
+# Fit a simple ARIMA model
+model = ARIMA(temp_data['temperature'], order=(1,0,0))  # Simple AR(1) model
 results = model.fit()
 
-# Make predictions
-forecast = results.forecast(steps=24)  # Predict next 24 hours
+# Forecast next 6 hours
+forecast = results.forecast(steps=6)
 
 # Plot results
-plt.figure(figsize=(12, 6))
-plt.plot(hours, temperature, label='Actual')
-plt.plot(pd.date_range(start=hours[-1], periods=25, freq='H')[1:],
-         forecast, label='Forecast', linestyle='--')
-plt.title('Patient Temperature: Actual vs Forecast')
+plt.figure(figsize=(10, 6))
+plt.plot(temp_data.index, temp_data['temperature'], label='Historical Data')
+forecast_index = pd.date_range(start=temp_data.index[-1], periods=7, freq=temp_data.index.freq)[1:]
+plt.plot(forecast_index, forecast, 'r--', label='Forecast')
+plt.title('Temperature Forecast with ARIMA')
+plt.xlabel('Time')
+plt.ylabel('Temperature (°C)')
 plt.legend()
 plt.show()
 
-# Print model summary
-print(results.summary())
+print("Next 6 hours temperature forecast:", forecast.values)
 ```
 
-#### Seasonal Decomposition
+For more advanced ARIMA modeling, see the references at the end of this lecture.
 
-Understanding components of a time series:
+### 3.2 Case Studies in Healthcare
 
-```python
-from statsmodels.tsa.seasonal import seasonal_decompose
+Time series analysis has numerous applications in healthcare:
 
-# Decompose the temperature series
-decomposition = seasonal_decompose(
-    temperature,
-    period=24,  # 24 hours for daily pattern
-    extrapolate_trend='freq'
-)
+1. **Patient Monitoring**
+   - Detecting anomalies in vital signs
+   - Predicting clinical deterioration
+   - Personalizing alarm thresholds
 
-# Plot components
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 10))
-decomposition.observed.plot(ax=ax1)
-ax1.set_title('Original Data')
-decomposition.trend.plot(ax=ax2)
-ax2.set_title('Trend')
-decomposition.seasonal.plot(ax=ax3)
-ax3.set_title('Seasonal')
-decomposition.resid.plot(ax=ax4)
-ax4.set_title('Residual')
-plt.tight_layout()
-plt.show()
-```
+2. **Disease Progression**
+   - Modeling chronic disease trajectories
+   - Identifying patterns in symptom severity
+   - Predicting disease flares
 
-## DEMO BREAK: Comparing Different Forecasting Approaches
+3. **Resource Planning**
+   - Forecasting hospital admissions
+   - Predicting equipment and medication needs
+   - Staff scheduling optimization
 
-See: [`demo3-forecasting-comparison`](./demo/demo3-forecasting-comparison.ipynb)
+### 3.3 Implementation Considerations
 
-## 4. Dense Data in Healthcare
+When implementing time series analysis in healthcare:
 
-### What is Dense Data?
+1. **Data Quality**
+   - Handle missing values appropriately
+   - Account for measurement errors
+   - Document preprocessing steps
 
-Dense data refers to high-frequency time series, such as ECG, accelerometer, or audio signals, where preprocessing and feature extraction are critical.
+2. **Computational Efficiency**
+   - Use appropriate data structures for time series
+   - Consider downsampling for dense data
+   - Implement incremental learning for streaming data
 
-### Preprocessing and Signal Processing
+3. **Interpretability**
+   - Ensure models can be explained to clinicians
+   - Visualize predictions and uncertainty
+   - Connect statistical results to clinical meaning
 
-- Example: Bandpass filtering for ECG (see code above)
-- Discuss challenges: noise, high sampling rates, storage, and computation
+## DEMO BREAK: Advanced Analysis of Sleep and Activity Data
 
-### Feature Extraction and Visualization
+In this demo, we'll continue working with the Multilevel Monitoring of Activity and Sleep dataset to perform advanced analysis of dense physiological signals. You'll learn how to:
 
-- Rolling statistics, spectrograms, and trend analysis
+- Process and analyze dense accelerometer data
+- Apply signal processing techniques to remove noise
+- Extract meaningful features from raw sensor data
+- Connect activity patterns to health outcomes
 
-## DEMO BREAK: Dense Data Preprocessing
+See: [`demo3-advanced-analysis`](./demo/demo3-advanced-analysis.ipynb)
 
-See: [`demo3-dense-data`](./demo/demo3-dense-data.ipynb)
-
-## 5. Related Approaches: Survival Analysis
+## 4. Related Approaches: Survival Analysis
 
 > **Q:** When would you use survival analysis instead of time series forecasting?
 
-- Briefly introduce Kaplan-Meier and Cox proportional hazards models
-- Explain how survival analysis complements time series, especially for censored or event-driven outcomes
+Survival analysis is a related approach that focuses on time-to-event data, such as:
+
+- Time until disease recurrence
+- Duration of hospital stay
+- Time until treatment response
+
+Unlike traditional time series analysis, survival analysis handles:
+
+- Censored data (when the event hasn't occurred yet)
+- Competing risks (multiple possible outcomes)
+- Time-varying covariates
+
+**Example: Kaplan-Meier Survival Curve**
 
 ```python
 # Example: Kaplan-Meier curve
 from lifelines import KaplanMeierFitter
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Simulated survival data
+np.random.seed(42)
+n_patients = 50
 data = pd.DataFrame({
-    'time': [5, 6, 6, 2.5, 4, 4, 3, 2, 8, 7],
-    'event': [1, 0, 0, 1, 1, 1, 0, 1, 1, 0]
+    'time': np.random.exponential(scale=10, size=n_patients),  # Time to event
+    'event': np.random.binomial(n=1, p=0.7, size=n_patients),  # 1=event occurred, 0=censored
+    'group': np.random.choice(['A', 'B'], size=n_patients)     # Treatment group
 })
 
+# Fit Kaplan-Meier model
 kmf = KaplanMeierFitter()
 kmf.fit(data['time'], event_observed=data['event'])
+
+# Plot survival curve
+plt.figure(figsize=(10, 6))
 kmf.plot_survival_function()
-plt.title('Kaplan-Meier Survival Curve')
+
+# Compare treatment groups
+kmf_A = KaplanMeierFitter()
+kmf_B = KaplanMeierFitter()
+mask_A = data['group'] == 'A'
+mask_B = data['group'] == 'B'
+kmf_A.fit(data.loc[mask_A, 'time'], event_observed=data.loc[mask_A, 'event'], label='Group A')
+kmf_B.fit(data.loc[mask_B, 'time'], event_observed=data.loc[mask_B, 'event'], label='Group B')
+kmf_A.plot_survival_function()
+kmf_B.plot_survival_function()
+
+plt.title('Kaplan-Meier Survival Curves by Treatment Group')
 plt.xlabel('Time')
 plt.ylabel('Survival Probability')
 plt.show()
 ```
 
-- Suggest how these methods are used for time-to-event data in healthcare
+## Homework Assignment
 
-## Future Topics
+For this week's assignment, you'll apply the concepts from this lecture to real-world health data from the Wearable Device Dataset from Induced Stress and Exercise Sessions.
 
-- Advanced machine learning (e.g., XGBoost, LSTM) in a follow-up lecture or lab
-- More on dense data applications in a dedicated session if needed
-- Survival analysis for censored data
+### Dataset
+
+The dataset contains physiological signals (Electrodermal Activity, Blood Volume Pulse, Heart Rate, Temperature) from 36 healthy volunteers collected during structured acute stress induction and aerobic/anaerobic exercise sessions using the Empatica E4 wearable device.
+
+Dataset link: <https://physionet.org/content/wearable-stress-affect/1.0.0/>
+
+### Assignment Structure
+
+1. **Part 1: Data Exploration and Preprocessing (30%)**
+   - Load and explore the Wearable Stress/Exercise dataset
+   - Visualize temporal patterns in physiological signals during stress vs. exercise
+   - Handle missing values and irregularities in wearable device data
+   - Perform basic statistical analysis comparing different conditions
+
+2. **Part 2: Time Series Modeling (40%)**
+   - Extract features from physiological time series data
+   - Build regression models to predict stress levels from physiological signals
+   - Compare different modeling approaches for stress detection
+   - Evaluate model performance using appropriate time series metrics
+
+3. **Part 3: Advanced Analysis (30%)**
+   - Apply signal processing techniques to the wearable sensor data
+   - Extract meaningful features from dense physiological signals
+   - Identify patterns that differentiate stress from exercise responses
+   - Create an interactive visualization comparing conditions
 
 ## References and Resources 📚
 
 ### Time Series Analysis
+
 - [Python for Time Series Analysis](https://www.statsmodels.org/stable/tsa.html) - Statsmodels documentation
 - [Time Series Forecasting](https://otexts.com/fpp3/) - Forecasting: Principles and Practice
 - [Practical Time Series Analysis](https://www.oreilly.com/library/view/practical-time-series/9781492041641/) - O'Reilly book
 - [Healthcare Time Series Analysis](https://www.nature.com/articles/s41746-020-00376-2) - Nature Digital Medicine
 
 ### Machine Learning for Time Series
+
 - [Scikit-learn Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) - Linear regression
 - [Feature Engineering for Time Series](https://www.featuretools.com/) - Automated feature engineering
 - [Deep Learning for Time Series](https://www.tensorflow.org/tutorials/structured_data/time_series) - TensorFlow guide
 - [Time Series Cross-Validation](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html) - Scikit-learn
 
 ### Health Data Applications
+
 - [Clinical Time Series Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6823538/) - NCBI review
 - [Vital Signs Monitoring](https://physionet.org/content/challenge-2019/1.0.0/) - PhysioNet Challenge
 - [Disease Progression Modeling](https://www.nature.com/articles/s41598-020-78321-2) - Scientific Reports
 
-## Exercise: Predicting Hospital Admissions 🏥
+### PhysioNet Datasets Used in This Lecture
 
-### Objective
-Build a model to predict daily hospital admissions using historical data and relevant features.
-
-### Data
-- Daily admission counts
-- Weather data
-- Holiday information
-- Special events
-
-### Tasks
-1. Load and prepare the data
-2. Create temporal features
-3. Train multiple models
-4. Compare and evaluate results
-5. Make future predictions
-
-### Bonus
-- Add confidence intervals to predictions
-- Incorporate external factors
-- Optimize model parameters
-
-## It came from the Internet
-
-> [!info] Forecasting at Scale  
-> How we produce reliable forecasts for hundreds of millions of time series at Facebook.  
-> [https://research.facebook.com/blog/2017/2/prophet-forecasting-at-scale/](https://research.facebook.com/blog/2017/2/prophet-forecasting-at-scale/)  
-
-> [!info] Time Series Analysis in Python  
-> A comprehensive guide to Time Series analysis in Python  
-> [https://www.machinelearningplus.com/time-series/time-series-analysis-python/](https://www.machinelearningplus.com/time-series/time-series-analysis-python/)  
-
-> [!info] Neural Prophet  
-> Neural Network based Time-Series model, inspired by Facebook Prophet and AR-Net  
-> [https://neuralprophet.com/](https://neuralprophet.com/) 
-
-### Dense Data Deep Dive 🏊‍♂️
-
-<!---
-Dense time series are the Olympic swimmers of data - they generate a lot of waves:
-- Sampling rates can be overwhelming (like trying to count individual raindrops)
-- Signal processing is crucial (finding the melody in the noise)
-- Storage and computation need careful planning (or your computer will have a bad time)
---->
-
-#### 1. Motion Analysis
-
-```python
-import pandas as pd
-import numpy as np
-from scipy import signal
-import matplotlib.pyplot as plt
-
-# Decorator for timing function execution
-def timer(func):
-    """Time the execution of a function"""
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        print(f"{func.__name__} took {end - start:.2f} seconds")
-        return result
-    return wrapper
-
-@timer
-def process_motion_data(data, window_size=50):
-    """Process accelerometer data with vectorized operations"""
-    # Calculate magnitude using numpy operations
-    magnitude = np.sqrt(np.sum(data**2, axis=1))
-    
-    # Efficient rolling calculations
-    rolling_mean = pd.Series(magnitude).rolling(window_size).mean()
-    rolling_std = pd.Series(magnitude).rolling(window_size).std()
-    
-    return magnitude, rolling_mean, rolling_std
-
-# Generate synthetic accelerometer data (100 Hz for 60 seconds)
-t = np.linspace(0, 60, 6000)
-acc_data = np.column_stack([
-    2 * np.sin(2 * np.pi * 0.5 * t),  # x-axis
-    3 * np.cos(2 * np.pi * 0.3 * t),  # y-axis
-    np.sin(2 * np.pi * 0.7 * t)       # z-axis
-]) + np.random.normal(0, 0.1, (len(t), 3))
-
-# Process data
-magnitude, rolling_mean, rolling_std = process_motion_data(acc_data)
-
-# Plot results using subplots
-fig, axes = plt.subplots(2, 1, figsize=(12, 8))
-axes[0].plot(t, acc_data)
-axes[0].set_title('Raw Accelerometer Data')
-axes[0].legend(['X', 'Y', 'Z'])
-
-axes[1].plot(t, magnitude, 'k', alpha=0.3, label='Magnitude')
-axes[1].plot(t, rolling_mean, 'r', label='Rolling Mean')
-axes[1].fill_between(t, 
-                    rolling_mean - 2*rolling_std,
-                    rolling_mean + 2*rolling_std,
-                    alpha=0.2, color='r')
-axes[1].set_title('Processed Motion Data')
-axes[1].legend()
-
-plt.tight_layout()
-plt.show()
-```
-
-#### 2. Audio Analysis
-
-```python
-from scipy.io import wavfile
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import signal
-
-# List comprehension for efficient spectrogram calculation
-def calculate_spectrograms(audio_data, fs, window_sizes=[256, 512, 1024]):
-    return [signal.spectrogram(audio_data, fs, nperseg=size) 
-            for size in window_sizes]
-
-# Context manager for handling audio files
-class AudioFile:
-    def __init__(self, filename):
-        self.filename = filename
-        
-    def __enter__(self):
-        self.fs, self.data = wavfile.read(self.filename)
-        return self.fs, self.data
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # Clean up if needed
-        pass
-
-# Example usage
-with AudioFile('breath_sound.wav') as (fs, audio_data):
-    # Calculate spectrograms at different resolutions
-    specs = calculate_spectrograms(audio_data, fs)
-    
-    # Plot spectrograms
-    fig, axes = plt.subplots(len(specs), 1, figsize=(12, 12))
-    for (f, t, Sxx), ax, size in zip(specs, axes, [256, 512, 1024]):
-        ax.pcolormesh(t, f, 10 * np.log10(Sxx))
-        ax.set_title(f'Spectrogram (window size: {size})')
-        ax.set_ylabel('Frequency [Hz]')
-    
-    axes[-1].set_xlabel('Time [sec]')
-    plt.tight_layout()
-    plt.show()
-```
-
-#### 3. Continuous Glucose Monitoring
-
-```python
-# Type hints for better code documentation
-from typing import Tuple, List, Optional
-import numpy as np
-import pandas as pd
-from dataclasses import dataclass
-
-@dataclass
-class GlucoseReading:
-    """Data class for glucose readings"""
-    timestamp: pd.Timestamp
-    value: float
-    is_valid: bool = True
-    
-    def __post_init__(self):
-        """Validate reading after initialization"""
-        if not (40 <= self.value <= 400):
-            self.is_valid = False
-
-class GlucoseMonitor:
-    """Class for processing continuous glucose monitoring data"""
-    def __init__(self, readings: List[GlucoseReading]):
-        self.readings = readings
-        self.df = self._create_dataframe()
-    
-    def _create_dataframe(self) -> pd.DataFrame:
-        """Convert readings to DataFrame with error handling"""
-        try:
-            df = pd.DataFrame([
-                {'timestamp': r.timestamp, 'value': r.value, 'is_valid': r.is_valid}
-                for r in self.readings
-            ])
-            df.set_index('timestamp', inplace=True)
-            return df
-        except Exception as e:
-            print(f"Error creating DataFrame: {e}")
-            return pd.DataFrame()
-    
-    def analyze_trends(self, window_size: str = '30min') -> Tuple[pd.Series, pd.Series]:
-        """Calculate trends with proper error handling"""
-        if self.df.empty:
-            raise ValueError("No valid data available")
-            
-        try:
-            valid_data = self.df[self.df['is_valid']]['value']
-            trend = valid_data.rolling(window_size).mean()
-            variability = valid_data.rolling(window_size).std()
-            return trend, variability
-        except Exception as e:
-            print(f"Error calculating trends: {e}")
-            return pd.Series(), pd.Series()
-
-# Example usage
-timestamps = pd.date_range(start='2024-01-01', periods=288, freq='5min')
-values = 120 + 20 * np.sin(2 * np.pi * np.arange(288) / 288) + np.random.normal(0, 5, 288)
-readings = [GlucoseReading(ts, val) for ts, val in zip(timestamps, values)]
-
-monitor = GlucoseMonitor(readings)
-trend, variability = monitor.analyze_trends()
-
-# Plotting with error bars
-plt.figure(figsize=(12, 6))
-plt.plot(trend.index, trend, 'b-', label='Trend')
-plt.fill_between(trend.index, 
-                trend - 2*variability,
-                trend + 2*variability,
-                alpha=0.2, color='b')
-plt.title('Continuous Glucose Monitoring')
-plt.ylabel('Glucose Level (mg/dL)')
-plt.legend()
-plt.grid(True)
-plt.show()
-```
-
-<!---
-Key points about dense data:
-1. Use appropriate data structures (NumPy for numerical, Pandas for time series)
-2. Vectorize operations when possible
-3. Consider memory usage with large datasets
-4. Use proper error handling and validation
-5. Document code with type hints and docstrings
-6. Use object-oriented programming for complex analyses
---->
+- [Heart Rate Oscillations during Meditation](https://physionet.org/content/meditation/1.0.0/)
+- [Multilevel Monitoring of Activity and Sleep in Healthy People](https://physionet.org/content/mmash/1.0.0/)
+- [Wearable Device Dataset from Induced Stress and Exercise Sessions](https://physionet.org/content/wearable-stress-affect/1.0.0/)

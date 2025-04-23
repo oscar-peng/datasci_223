@@ -35,7 +35,7 @@ The data science and open scholarship team also has help desk hours and consulta
 
 ## SQL Resources
 - [SQL For Web Nerds](https://philip.greenspun.com/sql/) - A concise introduction to SQL concepts by Philip Greenspun.
- - [SQLZoo](https://sqlzoo.net/) - Interactive SQL tutorials with live editors and exercises.
+- [SQLZoo](https://sqlzoo.net/) - Interactive SQL tutorials with live editors and exercises.
 
 ## Development Tools
 - [Jetbrains' Learn PyCharm](https://www.jetbrains.com/pycharm/learn/) - PyCharm IDE tutorials
@@ -109,3 +109,24 @@ Python: library-specific
 ## Jupyter Notebook Resources
 - [Jupyter Documentation](https://jupyter.org/documentation) - Official documentation for Jupyter notebooks
 - [Dataquest Jupyter Tutorial](https://www.dataquest.io/blog/jupyter-notebook-tutorial/) - Beginner-friendly tutorial
+
+---
+
+### Time Series & Health Data Science References (*new)
+
+#### Time Series Analysis
+- [Python for Time Series Analysis](https://www.statsmodels.org/stable/tsa.html) - Statsmodels documentation *
+- [Time Series Forecasting](https://otexts.com/fpp3/) - Forecasting: Principles and Practice *
+- [Practical Time Series Analysis](https://www.oreilly.com/library/view/practical-time-series/9781492041641/) - O'Reilly book *
+- [Healthcare Time Series Analysis](https://www.nature.com/articles/s41746-020-00376-2) - Nature Digital Medicine *
+
+#### Machine Learning for Time Series
+- [Scikit-learn Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) - Linear regression *
+- [Feature Engineering for Time Series](https://www.featuretools.com/) - Automated feature engineering *
+- [Deep Learning for Time Series](https://www.tensorflow.org/tutorials/structured_data/time_series) - TensorFlow guide *
+- [Time Series Cross-Validation](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html) - Scikit-learn *
+
+#### Health Data Applications
+- [Clinical Time Series Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6823538/) - NCBI review *
+- [Vital Signs Monitoring](https://physionet.org/content/challenge-2019/1.0.0/) - PhysioNet Challenge *
+- [Disease Progression Modeling](https://www.nature.com/articles/s41598-020-78321-2) - Scientific Reports *

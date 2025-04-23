@@ -477,16 +477,6 @@ kmf.fit(durations=df['duration'], event_observed=df['event'])
 kmf.plot_survival_function()
 ```
 
-<!---
-##### Applications in Healthcare
-
-- **Treatment Effectiveness**: Comparing survival curves between treatment and control groups
-- **Disease Progression**: Analyzing time to disease recurrence or progression
-- **Patient Risk Stratification**: Identifying factors that influence survival time
-- **Hospital Readmission**: Studying time until patient readmission
-- **Medical Device Reliability**: Assessing time until device failure
---->
-
 ### DEMO BREAK: Exploring Heart Rate Patterns During Meditation
 
 See: [`demo1-synthetic-timeseries`](demo/demo1-synthetic-timeseries.ipynb)
@@ -547,78 +537,213 @@ log_series = np.log1p(series)  # log(1+x) to handle zeros
 
 ### Understanding ARIMA Components
 
-**Conceptual**: ARIMA (AutoRegressive Integrated Moving Average) is a popular forecasting model that combines three components:
-
-#### AR (AutoRegressive)
-
-- Current value depends on past values
-- Order p: Number of lag observations included in the model
-- Captures the correlation between an observation and a number of lagged observations
-
-#### I (Integrated)
-
-- Differencing to make the series stationary
-- Order d: Number of times the data have been differenced
-- Removes trend and seasonality
-
-#### MA (Moving Average)
-
-- Current value depends on past forecast errors
-- Order q: Size of the moving average window
-- Captures the correlation between an observation and a residual error from a moving average model
-
-**Reference**:
-- `statsmodels.tsa.arima.model.ARIMA`: ARIMA model implementation
-
-```python
-# Example of ARIMA model
-from statsmodels.tsa.arima.model import ARIMA
-model = ARIMA(series, order=(p, d, q))  # p, d, q are the ARIMA parameters
-model_fit = model.fit()
-```
-
-### Model Selection and Evaluation
-
-**Conceptual**: Selecting the right ARIMA model involves finding the appropriate values for p, d, and q parameters. This can be done through a combination of visual inspection, statistical tests, and information criteria.
-
-#### Identifying Parameters
-
-- d: Determined by stationarity tests and differencing
-- p: Examine Partial Autocorrelation Function (PACF)
-- q: Examine Autocorrelation Function (ACF)
-
-#### Information Criteria
-
-- AIC (Akaike Information Criterion)
-- BIC (Bayesian Information Criterion)
-- Lower values indicate better models
-
-#### Evaluation Metrics
-
-- MAE (Mean Absolute Error)
-- RMSE (Root Mean Squared Error)
-- MAPE (Mean Absolute Percentage Error)
-
-**Reference**:
-- `statsmodels.tsa.stattools.acf`: Autocorrelation function
-- `statsmodels.tsa.stattools.pacf`: Partial autocorrelation function
-
-```python
-# Example of model evaluation
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-predictions = model_fit.forecast(steps=len(test))
-mae = mean_absolute_error(test, predictions)
-rmse = np.sqrt(mean_squared_error(test, predictions))
-```
-
 <!---
-### Healthcare Applications
-
-- **Patient flow forecasting**: Predict hospital admissions, ED visits
-- **Disease progression**: Model biomarker changes over time
-- **Resource planning**: Anticipate staffing needs, medication demand
-- **Epidemic modeling**: Forecast case numbers for outbreak management
+ARIMA models are like a recipe with three main ingredients (p, d, q). Each ingredient plays a specific role in capturing different types of patterns in your time series. This section breaks down each component and shows how they work together.
 --->
+
+#### AR (AutoRegressive) Component
+
+**Conceptual**: The AR component (p) captures the relationship between an observation and its previous values. It's like saying "today's value depends on the last few days' values."
+
+Key points:
+- Order p: Number of lag observations to include
+- Higher p: More complex relationships with past values
+- Too high p: Risk of overfitting
+
+**Reference**:
+```python
+# Simple AR(1) process simulation
+def simulate_ar1(n_points=1000, phi=0.7):
+    """Simulate AR(1) process: y[t] = phi*y[t-1] + e[t]"""
+    e = np.random.normal(0, 1, n_points)
+    y = np.zeros(n_points)
+    for t in range(1, n_points):
+        y[t] = phi * y[t-1] + e[t]
+    return y
+```
+
+#### I (Integrated) Component
+
+**Conceptual**: The I component (d) handles non-stationarity through differencing. It's like "leveling the playing field" by removing trends and seasonality.
+
+Types of differencing:
+1. First difference (d=1): Remove trend
+   - y'[t] = y[t] - y[t-1]
+2. Second difference (d=2): Remove quadratic trend
+   - y''[t] = (y[t] - y[t-1]) - (y[t-1] - y[t-2])
+3. Seasonal difference: Remove seasonal patterns
+   - y'[t] = y[t] - y[t-s], where s is seasonal period
+
+**Reference**:
+```python
+def difference_series(series, d=1):
+    """Apply d-th order differencing"""
+    return pd.Series(series).diff(d).dropna()
+
+def inverse_difference(diff_series, original_first_value, d=1):
+    """Reverse differencing transformation"""
+    series = diff_series.copy()
+    for _ in range(d):
+        series = series.cumsum() + original_first_value
+    return series
+```
+
+#### MA (Moving Average) Component
+
+**Conceptual**: The MA component (q) uses past forecast errors to improve current predictions. It's like "learning from your mistakes."
+
+Key points:
+- Order q: Number of past errors to consider
+- Captures short-term adjustments
+- Useful for handling irregular fluctuations
+
+**Reference**:
+```python
+# Simple MA(1) process simulation
+def simulate_ma1(n_points=1000, theta=0.5):
+    """Simulate MA(1) process: y[t] = e[t] + theta*e[t-1]"""
+    e = np.random.normal(0, 1, n_points)
+    y = np.zeros(n_points)
+    for t in range(1, n_points):
+        y[t] = e[t] + theta * e[t-1]
+    return y
+```
+
+### Practical ARIMA Implementation
+
+#### Step 1: Check Stationarity
+
+**Conceptual**: Before applying ARIMA, check if your data is stationary. Non-stationary data needs differencing.
+
+**Reference**:
+```python
+def check_stationarity(series):
+    """Check stationarity using Augmented Dickey-Fuller test"""
+    result = adfuller(series)
+    print(f'ADF Statistic: {result[0]:.3f}')
+    print(f'p-value: {result[1]:.3f}')
+    print('Critical values:')
+    for key, value in result[4].items():
+        print(f'\t{key}: {value:.3f}')
+    return result[1] < 0.05
+```
+
+#### Step 2: Parameter Selection
+
+**Conceptual**: Choosing p, d, q parameters is crucial for model performance. Use these guidelines:
+
+1. Choose d:
+   - d=0 if already stationary
+   - d=1 for most non-stationary series
+   - d=2 rarely needed
+
+2. Choose p:
+   - Examine PACF plot
+   - Count significant lags
+   - Usually p ≤ 3
+
+3. Choose q:
+   - Examine ACF plot
+   - Count significant lags
+   - Usually q ≤ 3
+
+**Reference**:
+```python
+def suggest_pdq(series):
+    """Suggest ARIMA parameters based on data characteristics"""
+    # Check stationarity
+    d = 0
+    while not check_stationarity(series):
+        series = difference_series(series)
+        d += 1
+        if d >= 2:
+            break
+    
+    # Get ACF and PACF values
+    acf_values = acf(series, nlags=10)
+    pacf_values = pacf(series, nlags=10)
+    
+    # Suggest p and q based on significant lags
+    p = sum(np.abs(pacf_values[1:]) > 1.96/np.sqrt(len(series)))
+    q = sum(np.abs(acf_values[1:]) > 1.96/np.sqrt(len(series)))
+    
+    return min(p, 3), d, min(q, 3)
+```
+
+#### Step 3: Model Fitting and Diagnostics
+
+**Conceptual**: After selecting parameters, fit the model and check its performance.
+
+**Reference**:
+```python
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+def fit_and_evaluate_arima(train, test, order=(1,1,1)):
+    """Fit ARIMA model and evaluate performance"""
+    # Fit model
+    model = ARIMA(train, order=order)
+    model_fit = model.fit()
+    
+    # Make predictions
+    predictions = model_fit.forecast(steps=len(test))
+    
+    # Calculate metrics
+    mae = mean_absolute_error(test, predictions)
+    rmse = np.sqrt(mean_squared_error(test, predictions))
+    
+    # Model diagnostics
+    residuals = model_fit.resid
+    
+    return {
+        'model': model_fit,
+        'predictions': predictions,
+        'mae': mae,
+        'rmse': rmse,
+        'aic': model_fit.aic,
+        'bic': model_fit.bic,
+        'residuals': residuals
+    }
+```
+
+#### Step 4: Model Validation
+
+**Conceptual**: Validate your model using these checks:
+
+1. Residual Analysis:
+   - Should be normally distributed
+   - Should show no autocorrelation
+   - Should have constant variance
+
+2. Cross-Validation:
+   - Use rolling forecasts
+   - Compare multiple parameter sets
+   - Check prediction intervals
+
+**Reference**:
+```python
+def validate_arima_model(model_results):
+    """Perform model validation checks"""
+    residuals = model_results['residuals']
+    
+    # Normality test
+    _, norm_p_value = stats.normaltest(residuals)
+    
+    # Autocorrelation in residuals
+    residual_acf = acf(residuals, nlags=10)
+    
+    # Heteroscedasticity check
+    _, hetero_p_value = stats.levene(
+        residuals[:len(residuals)//2], 
+        residuals[len(residuals)//2:]
+    )
+    
+    return {
+        'normality_p_value': norm_p_value,
+        'residual_acf': residual_acf,
+        'heteroscedasticity_p_value': hetero_p_value
+    }
+```
 
 ### DEMO BREAK: Sleep Quality Prediction
 
@@ -906,6 +1031,201 @@ def extract_features(signal, sampling_rate):
 ### DEMO BREAK: Advanced Sensor Data Analysis
 
 See: [`demo3-hrv-feature-extraction`](demo/demo3-hrv-feature-extraction.ipynb)
+
+### Signal Preprocessing Techniques 🔧
+
+<!---
+Before analyzing physiological signals, we often need to clean and prepare the data. This section covers essential preprocessing steps that help ensure reliable analysis results.
+--->
+
+#### Outlier and Artifact Removal
+
+**Conceptual**: Physiological signals often contain outliers and artifacts that can distort analysis results. Common sources include:
+- Movement artifacts
+- Equipment malfunctions
+- Ectopic beats (in ECG/RR data)
+- Environmental interference
+
+**Reference**:
+```python
+def remove_outliers(signal, n_std=3):
+    """Remove values more than n standard deviations from mean"""
+    mean = np.mean(signal)
+    std = np.std(signal)
+    return signal[(signal > mean - n_std*std) & 
+                 (signal < mean + n_std*std)]
+```
+
+#### Interpolation Methods
+
+**Conceptual**: Many analysis techniques require evenly sampled data, but physiological signals (like RR intervals) are often irregularly sampled.
+
+Common interpolation methods:
+- Linear interpolation
+- Cubic spline interpolation
+- Polynomial interpolation
+
+**Reference**:
+```python
+from scipy.interpolate import interp1d
+
+# Create evenly sampled time points
+time = np.cumsum(rr_intervals)
+uniform_time = np.linspace(time[0], time[-1], desired_length)
+
+# Interpolate signal
+interp_func = interp1d(time, signal, kind='linear')
+uniform_signal = interp_func(uniform_time)
+```
+
+### Advanced Signal Processing 📊
+
+<!---
+Signal processing techniques help extract meaningful information from complex physiological signals. These methods reveal patterns and features that aren't visible in the raw data.
+--->
+
+#### Filtering Techniques
+
+##### Butterworth Filters
+
+**Conceptual**: Butterworth filters provide smooth frequency response with minimal ripples. Common types:
+- Lowpass: Remove high frequencies
+- Highpass: Remove low frequencies
+- Bandpass: Keep specific frequency range
+- Bandstop: Remove specific frequency range
+
+**Reference**:
+```python
+from scipy.signal import butter, filtfilt
+
+def butter_bandpass(lowcut, highcut, fs, order=4):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def apply_bandpass(data, lowcut, highcut, fs, order=4):
+    b, a = butter_bandpass(lowcut, highcut, fs, order)
+    return filtfilt(b, a, data)
+```
+
+#### Frequency Analysis Methods
+
+##### Fast Fourier Transform (FFT)
+
+**Conceptual**: FFT decomposes a signal into its frequency components, revealing periodic patterns.
+
+Key concepts:
+- Frequency spectrum
+- Power spectral density
+- Nyquist frequency
+- Spectral leakage
+
+**Reference**:
+```python
+from scipy.fft import fft, fftfreq
+
+# Compute FFT
+yf = fft(signal)
+xf = fftfreq(len(signal), 1/sampling_rate)
+
+# Power spectrum
+power_spectrum = np.abs(yf)**2
+```
+
+##### Frequency Bands in HRV Analysis
+
+**Conceptual**: Heart Rate Variability (HRV) analysis often focuses on specific frequency bands:
+
+- VLF (Very Low Frequency): 0.003-0.04 Hz
+  - Long-term regulation mechanisms
+  - Thermoregulation
+  
+- LF (Low Frequency): 0.04-0.15 Hz
+  - Sympathetic and parasympathetic activity
+  - Baroreceptor activity
+  
+- HF (High Frequency): 0.15-0.4 Hz
+  - Parasympathetic activity
+  - Respiratory sinus arrhythmia
+
+**Reference**:
+```python
+def get_frequency_band_power(power_spectrum, freqs, band):
+    """Calculate power in specific frequency band"""
+    mask = (freqs >= band[0]) & (freqs <= band[1])
+    return np.sum(power_spectrum[mask])
+```
+
+### Feature Engineering for Time Series 🛠️
+
+<!---
+Feature engineering transforms raw time series data into meaningful metrics that can be used for classification, prediction, or clinical interpretation.
+--->
+
+#### Statistical Features
+
+**Conceptual**: Basic statistical measures that capture different aspects of the signal:
+
+- Central tendency: mean, median, mode
+- Dispersion: standard deviation, variance, IQR
+- Shape: skewness, kurtosis
+- Extremes: min, max, range
+
+**Reference**:
+```python
+def extract_statistical_features(signal):
+    return {
+        'mean': np.mean(signal),
+        'std': np.std(signal),
+        'skew': stats.skew(signal),
+        'kurtosis': stats.kurtosis(signal),
+        'iqr': np.percentile(signal, 75) - 
+               np.percentile(signal, 25)
+    }
+```
+
+#### Rolling Window Features
+
+**Conceptual**: Features calculated over sliding windows capture local patterns:
+
+- Rolling mean
+- Rolling standard deviation
+- Rolling entropy
+- Rolling correlation
+
+**Reference**:
+```python
+def rolling_features(signal, window_size):
+    return {
+        'rolling_mean': pd.Series(signal).rolling(window_size).mean(),
+        'rolling_std': pd.Series(signal).rolling(window_size).std()
+    }
+```
+
+#### Frequency Domain Features
+
+**Conceptual**: Features derived from frequency analysis:
+
+- Band powers (VLF, LF, HF)
+- Peak frequencies
+- Spectral entropy
+- Power ratios (LF/HF)
+
+**Reference**:
+```python
+def frequency_domain_features(power_spectrum, freqs):
+    vlf = get_frequency_band_power(power_spectrum, freqs, (0.003, 0.04))
+    lf = get_frequency_band_power(power_spectrum, freqs, (0.04, 0.15))
+    hf = get_frequency_band_power(power_spectrum, freqs, (0.15, 0.4))
+    return {
+        'vlf_power': vlf,
+        'lf_power': lf,
+        'hf_power': hf,
+        'lf_hf_ratio': lf/hf if hf > 0 else 0
+    }
+```
 
 ## Summary and Key Takeaways
 

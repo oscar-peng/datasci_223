@@ -2,7 +2,6 @@
 
 This markdown file is structured for conversion to a Jupyter notebook using Jupytext. Each code cell is marked with triple backticks and `python`, and markdown cells are written as plain text between code cells.
 
----
 
 ## 1. Setup: Import Libraries and Configure Environment
 
@@ -30,7 +29,6 @@ os.makedirs('data/synthetic', exist_ok=True)
 np.random.seed(42)
 ```
 
----
 
 ## 2. Generate Regular Time Series: Daily Blood Pressure Measurements
 
@@ -63,7 +61,6 @@ bp_data.to_csv('data/synthetic/daily_blood_pressure.csv', index=False)
 print("Generated daily blood pressure data with shape:", bp_data.shape)
 ```
 
----
 
 ### Visualize Blood Pressure Time Series
 
@@ -83,7 +80,6 @@ plt.grid(True)
 plt.show()
 ```
 
----
 
 ### Decompose Time Series: Trend, Seasonality, Residuals
 
@@ -115,7 +111,6 @@ plt.tight_layout()
 plt.show()
 ```
 
----
 
 ### Weekly and Monthly Pattern Analysis
 

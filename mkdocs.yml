@@ -74,7 +74,7 @@ plugins:
       formats:
         pdf:
           enabled: true
-          concurrency: 4
+          concurrency: 1
           # Remove unrecognized options
           explicit: true
 
@@ -88,10 +88,12 @@ nav:
       - '01. `git init`': 01/lecture_01.md
       - '02. bugs, ducks, and data': 02/lecture_02.md
       - '03. `JOIN` the `DISTINCT` with SQL': 03/lecture_03.md
+      - "04. Time Keeps on Slippin' Into the Forecast": 04/lecture_04.md
   - Exercises:
     - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
     - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
     - '03. `JOIN` the `DISTINCT` with SQL': https://classroom.github.com/a/hXtQfWAB
+    - "04. It's about time": https://classroom.github.com/a/Nt5jaJsY
 
 extra:
   social:

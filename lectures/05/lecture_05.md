@@ -369,3 +369,344 @@ Additional topics that could be added to this section include:
 ## 🏋️ LIVE DEMO!
 
 [demo/02_sensor_classification.md](demo/02_sensor_classification.md)
+### Time Series Features: Quick Review
+
+Time series features are essential for extracting meaningful patterns from data collected over time—think heart rate, glucose, or step counts. These features help models capture trends, variability, and periodicity that are often critical in health data.
+
+#### Reference Card & Example: pandas Time Series Methods
+
+- **Functions:**
+  - `rolling(window, min_periods)`: Create a rolling window object
+  - `mean()`, `std()`, `min()`, `max()`: Calculate statistics over the window
+  - `autocorr(lag)`: Compute autocorrelation for a given lag
+  - `diff()`: Compute difference between consecutive values (trend)
+- **Purpose:** Calculate statistics and transformations over moving windows or the whole series
+- **Key Parameters:**
+  - `window`: Number of periods to include in each calculation
+  - `min_periods`: Minimum observations in window required to have a value
+  - `lag`: Number of periods to shift for autocorrelation
+
+```python
+import pandas as pd
+
+# Simulated heart rate data
+df = pd.DataFrame({'hr': [70, 72, 75, 73, 71, 74, 76]})
+
+# Rolling statistics (window size 3)
+df['hr_rolling_mean'] = df['hr'].rolling(window=3, min_periods=1).mean()
+df['hr_rolling_std'] = df['hr'].rolling(window=3, min_periods=1).std()
+df['hr_rolling_min'] = df['hr'].rolling(window=3, min_periods=1).min()
+df['hr_rolling_max'] = df['hr'].rolling(window=3, min_periods=1).max()
+
+# Autocorrelation (lag 1)
+df['hr_autocorr'] = df['hr'].rolling(window=3, min_periods=1).apply(lambda x: x.autocorr(lag=1) if len(x) > 1 else None)
+
+# Trend (difference)
+df['hr_trend'] = df['hr'].diff()
+
+print(df)
+```
+<!---
+This code demonstrates how to extract several key time series features using pandas: rolling mean, standard deviation, min, max, autocorrelation, and trend (difference). These features are commonly used in health data to summarize variability, detect trends, and identify repeating patterns. Beginners often overlook autocorrelation and trend, but these can be especially useful for physiological signals.
+--->
+---
+
+## 🚀 Automated Feature Engineering
+
+Automated feature engineering is the process of using algorithms or libraries to automatically create new features from your existing data—without having to manually invent each one. Instead of hand-coding every transformation, automated tools systematically combine, aggregate, and transform your raw variables to generate a much larger set of potentially useful features.
+
+- **Why automate?**
+  - Saves time and reduces manual effort, especially with large or complex datasets.
+  - Can discover subtle or non-obvious patterns by combining features in ways a human might not think of.
+  - Especially powerful for relational data (multiple linked tables) and time series, where relationships and trends can be hard to spot.
+
+- **How does it work?**
+  - Automated feature engineering tools apply a set of mathematical operations (like sum, mean, count, difference, ratio, etc.) to your data, often stacking these operations across different columns or tables.
+  - For example, you might automatically generate features like "average blood pressure per patient," "number of visits in the last month," or "maximum heart rate difference between visits."
+
+<!---
+Automated feature engineering is like having a robot assistant that tries out hundreds of possible feature combinations for you, but it still requires human oversight to ensure the features make sense and are clinically meaningful. In health data, interpretability and domain knowledge are still essential—automated tools can suggest, but not judge, what is useful.
+--->
+
+### 🛠️ Featuretools Library: Automated Feature Synthesis
+
+**Featuretools** is a Python library that automates the creation of new features from your data, especially when you have multiple related tables (like patients, visits, and labs). Its core innovation is **deep feature synthesis (DFS)**, which systematically combines and stacks simple operations—like sum, mean, count, difference, and ratios—across different variables and tables to generate complex, multi-level features.
+
+- **What is Deep Feature Synthesis (DFS)?**
+  - DFS works by chaining together basic operations (called "primitives") to create new features. For example, it might:
+    - Aggregate: Compute the mean, sum, or count of lab results for each patient.
+    - Transform: Calculate the difference between a patient's max and min blood pressure.
+    - Combine: Stack these operations, such as "mean of the difference in lab values per visit per patient."
+  - DFS explores many possible combinations, including across relationships (e.g., "number of visits in last 30 days" or "average glucose per visit per patient").
+
+- **Why is this useful in health data?**
+  - Health records are often spread across multiple tables (patients, visits, labs, medications).
+  - DFS can automatically create features that summarize a patient's history, recent trends, or event counts—without you having to write custom code for each one.
+  - This approach can reveal subtle patterns and relationships that manual feature engineering might miss.
+
+<!---
+Featuretools and DFS are especially powerful for electronic health record (EHR) data, where you have many related tables and want to quickly generate a rich set of features for modeling. Beginners may find the terminology ("entityset", "deep feature synthesis") intimidating, but the core idea is to automate the repetitive parts of feature creation by systematically combining variables and operations.
+--->
+
+### ⏪ Time Series Features (Review)
+
+Time series features—like rolling averages, variability, and autocorrelation—are essential for health data (think: heart rate, glucose, or step counts over time).  
+**Review:** See [Lecture 4](../04/lecture_04.md) for a deep dive on extracting and using time series features in health data.
+
+<!---
+This section reminds students that time series feature extraction was covered in detail previously. It's important to connect new content to prior learning, reinforcing the idea that feature engineering is a cumulative skill.
+--->
+
+---
+
+### 🛠️ Featuretools Library: Automated Feature Synthesis
+
+**Featuretools** is a Python library for automated feature engineering, especially useful for relational and time series data.
+
+#### Reference Card
+
+- **Function:** `featuretools.dfs`
+- **Purpose:** Automatically creates features from raw data tables
+- **Key Parameters:**
+  - `entityset`: collection of dataframes and relationships
+  - `target_dataframe_name`: name of the dataframe to create features for
+  - `agg_primitives`: list of aggregation functions (e.g., "mean", "sum")
+  - `trans_primitives`: list of transformation functions (e.g., "month", "weekday")
+
+<!---
+Featuretools uses "deep feature synthesis" to automatically generate features by stacking simple operations (like sum, mean, count) across related tables. This is especially helpful in health data with multiple linked tables (e.g., patients, visits, labs). Beginners may find the terminology confusing—"entityset" just means a collection of related tables.
+--->
+
+#### Example: Simple Featuretools usage
+
+```python
+import featuretools as ft
+import pandas as pd
+
+# Example: patients and visits
+patients = pd.DataFrame({'patient_id': [1, 2], 'age': [65, 70]})
+visits = pd.DataFrame({'visit_id': [1, 2, 3], 'patient_id': [1, 1, 2], 'bp': [120, 130, 125]})
+
+es = ft.EntitySet(id='health')
+es = es.add_dataframe(dataframe_name='patients', dataframe=patients, index='patient_id')
+es = es.add_dataframe(dataframe_name='visits', dataframe=visits, index='visit_id')
+es = es.add_relationship('patients', 'patient_id', 'visits', 'patient_id')
+
+feature_matrix, feature_defs = ft.dfs(entityset=es, target_dataframe_name='patients')
+print(feature_matrix)
+```
+<!---
+This code shows how to use Featuretools to automatically generate features for each patient, such as the mean blood pressure across visits. The "entityset" links the tables, and "dfs" (deep feature synthesis) does the heavy lifting.
+--->
+
+---
+
+### 🩺 Domain-Specific Feature Derivations
+
+Sometimes, the best features come from domain knowledge—knowing what matters in health data.
+
+- **Examples:**
+  - Calculating BMI from height and weight
+  - Deriving heart rate variability from RR intervals
+  - Creating a "polypharmacy" flag for patients on multiple medications
+
+#### Example: Creating a BMI feature
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({'weight_kg': [70, 80], 'height_m': [1.75, 1.80]})
+df['BMI'] = df['weight_kg'] / (df['height_m'] ** 2)
+print(df)
+```
+<!---
+Domain-specific features often have clinical meaning, making models more interpretable and relevant. Beginners sometimes overlook these, focusing only on what automated tools provide. Always ask: "What would a clinician want to know?"
+--->
+
+---
+## Model Interpretation with Tree-Based Models
+
+Understanding **why** a model makes its predictions is crucial in health data science—especially when decisions impact patient care. Tree-based models (like Random Forests and XGBoost) can be interpreted using specialized tools that reveal which features drive predictions.
+
+<!---
+Interpretability is a key concern in health data science. Clinicians and stakeholders need to trust and understand model outputs. Tree-based models are more interpretable than deep neural networks, but still benefit from tools that make their decision process transparent. This section introduces SHAP and eli5, two popular Python libraries for model interpretation.
+--->
+
+### SHAP Values for Feature Importance
+
+**SHAP** (SHapley Additive exPlanations) assigns each feature an importance value for a particular prediction, based on cooperative game theory.
+
+#### Reference Card
+
+- **Function:** `shap.TreeExplainer`, `shap.summary_plot`
+- **Purpose:** Quantify and visualize feature contributions to model predictions
+- **Key Parameters:**
+  - `model`: trained tree-based model (e.g., RandomForest, XGBoost)
+  - `data`: data to explain (e.g., validation set)
+  - `plot_type`: "bar", "dot", etc. (for summary_plot)
+
+<!---
+SHAP values are based on Shapley values from game theory, which fairly distribute "credit" for a prediction among features. SHAP can be used with many model types, but is especially efficient for tree-based models. Beginners may find the plots overwhelming at first—focus on the top features and their direction (positive/negative impact).
+--->
+
+#### Example: SHAP with RandomForest
+
+```python
+import shap
+import xgboost as xgb
+import pandas as pd
+
+# Train a simple model (example)
+X = pd.DataFrame({'age': [50, 60], 'bp': [120, 140]})
+y = [0, 1]
+model = xgb.XGBClassifier().fit(X, y)
+
+# Explain predictions
+explainer = shap.TreeExplainer(model)
+shap_values = explainer.shap_values(X)
+
+# Visualize feature importance
+shap.summary_plot(shap_values, X, plot_type="bar")
+```
+<!---
+This code shows how to use SHAP to interpret an XGBoost model. The summary plot displays which features are most influential across all predictions. In health data, this can highlight risk factors or key clinical variables.
+--->
+
+### eli5 for Model Inspection
+
+**eli5** is a Python library that helps demystify machine learning models by showing feature weights and decision paths.
+
+#### Reference Card
+
+- **Function:** `eli5.show_weights`, `eli5.explain_prediction`
+- **Purpose:** Display feature importances and explain individual predictions
+- **Key Parameters:**
+  - `estimator`: trained model
+  - `feature_names`: list of feature names (optional)
+  - `top`: number of features to display
+
+<!---
+eli5 is especially useful for linear and tree-based models. It can show which features push a prediction up or down, and can even display the decision path for a single prediction. Beginners sometimes forget to install the package (`pip install eli5`).
+--->
+
+#### Example: eli5 with RandomForest
+
+```python
+import eli5
+from sklearn.ensemble import RandomForestClassifier
+
+X = [[1, 2], [3, 4], [5, 6]]
+y = [0, 1, 0]
+model = RandomForestClassifier().fit(X, y)
+
+# Show feature importances
+eli5.show_weights(model, feature_names=['feature1', 'feature2'])
+```
+<!---
+This code demonstrates how to use eli5 to display feature importances for a RandomForest model. The output helps you see which features are most influential in the model's decisions.
+--->
+
+### Interpreting Feature Interactions
+
+Tree-based models can capture interactions between features (e.g., age and blood pressure together may be more predictive than either alone). Tools like SHAP can help visualize these interactions.
+
+#### Example: SHAP dependence plot
+
+```python
+# Continuing from previous SHAP example
+shap.dependence_plot('age', shap_values, X)
+```
+<!---
+A dependence plot shows how the SHAP value for one feature changes as its value changes, possibly depending on another feature. This can reveal interactions, such as risk increasing only when both age and blood pressure are high.
+--->
+## Practical Data Preparation
+
+Preparing your data is just as important as choosing the right model. Good data prep can make or break your results—especially with real-world health data, which is often messy, imbalanced, and full of categorical variables.
+
+<!---
+This section introduces practical tools for preparing data for machine learning. Many students underestimate the importance of data prep, but it's often where the most meaningful improvements in model performance come from. The focus here is on categorical encoding and handling imbalanced classes, two common challenges in health datasets.
+--->
+
+### OneHotEncoder for Categorical Variables
+
+Many machine learning models require all input features to be numeric. **One-hot encoding** transforms categorical variables (like "smoker" or "blood type") into a set of binary columns.
+
+#### Reference Card
+
+- **Function:** `sklearn.preprocessing.OneHotEncoder`
+- **Purpose:** Convert categorical variables into binary indicator columns
+- **Key Parameters:**
+  - `sparse`: If False, returns a dense array (easier for beginners)
+  - `handle_unknown`: How to handle unseen categories ("ignore" is safest)
+
+<!---
+One-hot encoding is essential for models that can't handle text or categories directly. Beginners often forget to set `sparse=False`, which makes the output easier to work with in pandas. Also, using `handle_unknown="ignore"` prevents errors when new categories appear in test data.
+--->
+
+#### Example: OneHotEncoder
+
+```python
+from sklearn.preprocessing import OneHotEncoder
+import pandas as pd
+
+df = pd.DataFrame({'smoker': ['yes', 'no', 'no', 'yes']})
+encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+encoded = encoder.fit_transform(df[['smoker']])
+print(encoded)
+```
+<!---
+This code shows how to use OneHotEncoder to convert a "smoker" column into binary columns. The result is a NumPy array, but you can convert it back to a DataFrame for easier analysis.
+--->
+
+### Handling Imbalanced Data with SMOTE
+
+In health data, one class (like "disease present") is often much rarer than the other. **SMOTE** (Synthetic Minority Over-sampling Technique) creates synthetic examples of the minority class to balance the dataset.
+
+#### Reference Card
+
+- **Function:** `imblearn.over_sampling.SMOTE`
+- **Purpose:** Generate synthetic samples for the minority class
+- **Key Parameters:**
+  - `sampling_strategy`: Proportion of minority to majority class
+  - `random_state`: For reproducibility
+
+<!---
+Imbalanced data can cause models to ignore the minority class, leading to poor sensitivity/recall. SMOTE is a popular way to address this, but be careful: synthetic data can sometimes introduce artifacts. Always check your results!
+--->
+
+#### Example: SMOTE
+
+```python
+from imblearn.over_sampling import SMOTE
+import numpy as np
+
+X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+y = np.array([0, 0, 0, 1])  # Class 1 is rare
+smote = SMOTE(random_state=42)
+X_res, y_res = smote.fit_resample(X, y)
+print(X_res)
+print(y_res)
+```
+<!---
+This code demonstrates how to use SMOTE to balance a dataset. After resampling, both classes will have equal representation. This is especially useful for rare disease prediction.
+--->
+
+### When and How to Combine Techniques
+
+Often, you'll need to use several data prep techniques together: encoding, scaling, balancing, and more. The order matters!
+
+- **Typical order:**
+  1. Encode categorical variables
+  2. Scale/normalize features (if needed)
+  3. Balance classes (SMOTE, etc.)
+  4. Split into train/test sets
+
+- **Why?**
+    - The order of these steps helps prevent "data leakage"—where information from outside the training set accidentally influences the model, leading to overly optimistic results.
+    - Encoding and scaling must be done before balancing, because SMOTE and similar methods require numeric input and work best when features are on similar scales.
+    - Balancing (like SMOTE) should only be applied to the training set, not the whole dataset, to avoid leaking information from the test set into the model.
+    - Splitting into train/test sets before balancing ensures that your model is evaluated on truly unseen data, giving a realistic measure of performance.
+
+<!---
+Combining techniques is common in real-world projects. Beginners sometimes apply SMOTE before splitting data, which can cause data leakage. Always split your data first, then apply SMOTE only to the training set. Data leakage is a subtle but critical mistake: if you balance or scale using the whole dataset, your model may "see" information from the test set during training, leading to misleadingly high accuracy. Always keep your test set isolated until final evaluation.
+--->

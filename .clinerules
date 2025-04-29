@@ -9,7 +9,7 @@
 
 ### 1. Format & Structure
 
-- **Markdown Format:** Create slides in long-form Markdown or, if requested, in marp markdown slide format (separated by `---`).
+- **Markdown Format:** Create lectures in long-form Markdown or, only if requested, in marp markdown slide format (separated by `---`).
 - **Speaking Notes:** Include detailed talking points in multi-line HTML comments <!--- ... ---> with specific explanations. The talking points should be supplemental content/context to each sub-sub-heading (###), written to be helpful to students reading the lecture notes on their own. It should _NOT_ be instructions to the lecturer;e.g., "speak about X" or "mention relationship to Y".
 - **Progressive Learning:** Structure content to build knowledge incrementally
 - **Visual Organization:** Use consistent heading levels, bullet points, and white space

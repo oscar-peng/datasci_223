@@ -1,3 +1,33 @@
+## 🤖 Accelerate Your Models with GPUs
+
+The models you'll build in this course—especially deep learning models—can require significant computational power, which might make them run slowly on your laptop. **Don't panic!** There are free cloud services you can use to leverage GPU-based computing:
+
+- [**Google Colab**](https://colab.research.google.com) – Easiest to use with excellent GitHub integration, but completely public (okay for today, but **NEVER USE COLAB WITH SENSITIVE/PHI DATA**)
+- [**Paperspace**](https://www.paperspace.com) – (my weapon of choice) provides customizable private virtual computing with GPUs, but that customization comes at the cost of added complexity. Easy-ish to use, but not as easy as Colab
+- **UCSF's Wynton** – File a ticket with IT to get access
+
+### Example speed-up
+
+From training the "Which animal is this" in the "Hands-on practice" section below
+
+```Shell
+## 2018 Macbook Pro
+Epoch 1/25
+63/63 [==============================] - 1177s 18s/step - loss: 0.7522 - accuracy: 0.5904 - val_loss: 0.8942 - val_accuracy: 0.4998
+
+## Google Colab GPU
+Epoch 1/25
+63/63 [==============================] - 150s 2s/step - loss: 0.7323 - accuracy: 0.6080 - val_loss: 0.9307 - val_accuracy: 0.4998
+
+## Paperspace RTX-5000
+Epoch 1/25
+63/63 [==============================] - 64s 989ms/step - loss: 0.7348 - accuracy: 0.5988 - val_loss: 0.8696 - val_accuracy: 0.4998
+```
+
+<!---
+GPU acceleration is a game-changer for deep learning and large models. Beginners often don't realize how much faster training can be with the right hardware. It's important to know your options for cloud-based resources, but always be mindful of data privacy and institutional policies when using external services.
+--->
+
 ## 🎛️Model tuning (teaser)
 
 Fixing poor-performing models can take many forms
@@ -108,7 +138,6 @@ We want to be rigorous when training multiple models and choosing a winner so, l
 - **Logging and monitoring**: Log key metrics and monitor them during training, either through log files, print statements, or tools like TensorBoard for real-time visualization
 - **Document :all_the_things:**: Clear documentation, including hyper-parameters and model architecture, are the only way to make your models reproducible and to collaboratively troubleshoot.
 - **Cross-Validation**: Cross-validation (train/test on random subsets) is important for obtaining a robust estimate of model performance, particularly with limited data.
-
 
 
 ### Which animal is this?

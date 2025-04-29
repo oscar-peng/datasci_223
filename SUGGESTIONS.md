@@ -1,8 +1,8 @@
 # Content Updates for Lecture 5
 
-1. Add New Sections:
+1. ✅ Add New Sections:
    - Automated feature engineering
-     - Time series features
+     - Time series features (review)
      - Feature tools library
      - Domain-specific derivations
    - Model interpretation with tree-based models
@@ -26,7 +26,7 @@
      - Model interpretation with eli5
      - (Optional) Additional feature engineering
 
-3. Move to Neural Networks Lecture (if not moved already):
+3. ✅ Move to Neural Networks Lecture (if not moved already):
    - Image classification demo (animals)
    - EMNIST classification
    - StandardScaler and normalization

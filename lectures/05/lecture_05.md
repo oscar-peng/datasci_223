@@ -19,9 +19,11 @@ pdf: true
 <!The preamble provides some context and resources for students interested in data science interviews and real-world health data sources. These links are useful for exploring how classification is used in practice and for preparing for technical interviews.
 --->
 
-1. Example analytical technical interview - [Analytics Technical Interview](Analytics%20Technical%20Interview.md)
-2. Example interview take-home - [https://github.com/christopherseaman/five_twelve](https://github.com/christopherseaman/five_twelve)
-3. Data sources available on Physionet (some require registration) - [https://physionet.org/about/database/](https://physionet.org/about/database/)
+1. [_The Urgency of Interpretability_ by Dario Amodei](https://www.darioamodei.com/post/the-urgency-of-interpretability)
+2. [HuggingFace's _Daily Papers_ by AK](https://huggingface.co/papers)
+3. Example analytical technical interview - [Analytics Technical Interview](Analytics%20Technical%20Interview.md)
+4. Example interview take-home - [https://github.com/christopherseaman/five_twelve](https://github.com/christopherseaman/five_twelve)
+5. Data sources available on Physionet (some require credentialed access) - [https://physionet.org/about/database/](https://physionet.org/about/database/)
 
 ## `git merge` conflicts
 

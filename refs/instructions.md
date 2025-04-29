@@ -18,8 +18,7 @@
 
 - **Conceptual Foundations:** Explain how things work in accessible terms
 - **Reference Material:** Include function definitions, syntax rules, and common parameters
-- **Practical Examples:** Provide executable code samples with health data applications
-- **Health Relevance:** Connect Python concepts to health data scenarios whenever possible
+- **Practical Examples:** Provide executable code samples, demos should have health data applications
 
 ### 3. Teaching Approach
 

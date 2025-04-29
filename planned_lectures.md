@@ -1,10 +1,10 @@
-1. ✅ **Dev Environment Setup & Python Fundamentals**
+1. ✅ **Dev Environment Setup & Python Fundamentals** 
     - *Covered:* Tools (Python, Jupyter, Git, Conda/Venv), basic Python review.
 2. ✅ **Handling Larger-than-Memory Data with Polars**
     - *Covered:* Lazy evaluation, efficient processing (CSVs/Parquet), core Polars API.
-3. ✅ **SQL for Data Analysis**
+3. ✅ **SQL for Data Analysis** 
     - *Covered:* Core concepts (SELECT, FROM, WHERE, GROUP BY, JOINs), window functions, maybe CTEs. Connecting Python to DBs. (Dataset: Health-related).
-4. **Regression Concepts & Time-Series Forecasting (+ FE & ML Regressors):**
+4. ✅ **Regression Concepts & Time-Series Forecasting (+ FE & ML Regressors):**
     - **Focus:** Supervised Learning intro, Regression task, Time-based splits, Regression evaluation, TS specifics & FE, Statistical & ML models.
     - **Libraries:** `scikit-learn`, `statsmodels`, `lifelines`
     - **Methods:**
@@ -89,7 +89,7 @@
         - Data augmentation techniques
         - Medical image preprocessing
         - Model interpretability for healthcare
-9. **Data Visualization & Communication (Interactive Focus & Deep Dive):**
+9.  **Data Visualization & Communication (Interactive Focus & Deep Dive):**
     - **Focus:** Principles, Storytelling. Deep dive: `matplotlib`/`seaborn`. Interactive: `altair`. Alternative: `plotnine`.
     - **Libraries:** `matplotlib.pyplot`, `seaborn`, `altair`, `plotnine`, `plotly`, `streamlit`, `dash`
     - **Methods:**
@@ -119,3 +119,5 @@
         - Covariate adjustment
         - Multiple comparison problems
         - Bayesian vs. Frequentist approaches
+
+??. Walkthrough end-to-end lifecycle of a data science project

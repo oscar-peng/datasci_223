@@ -5,3 +5,8 @@ data/
 animals/
 models/
 checkpoints/
+site/
+html/
+datasci_217/
+*.zip
+tmp/

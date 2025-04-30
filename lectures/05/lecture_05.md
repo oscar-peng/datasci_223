@@ -610,8 +610,6 @@ model = xgb.XGBClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-```
-
 <!---
 This code fits an XGBoost classifier. XGBoost is a highly efficient and flexible implementation of gradient boosting, often achieving state-of-the-art results on tabular data. It builds trees sequentially, each correcting the errors of the previous ones. Key advantages include built-in regularization (gamma, lambda, alpha) and handling of missing values. Beginners often need to install the `xgboost` library separately (`pip install xgboost`) and should focus on tuning `n_estimators`, `learning_rate`, and `max_depth`.
 --->
@@ -701,8 +699,6 @@ model = keras.Sequential([
 ])
 model.compile(optimizer='adam', loss='binary_crossentropy')
 # model.fit(X_train, y_train, epochs=10)  # Uncomment to train
-```
-
 ```
 
 <!---

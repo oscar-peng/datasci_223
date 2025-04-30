@@ -131,7 +131,7 @@ display(y_test.value_counts(normalize=True))
 
 Machine learning models need numerical input. We convert the 'Region' column into numerical format using `OneHotEncoder`.
 1. Identify categorical columns.
-2. Initialize `OneHotEncoder`. `handle_unknown='ignore'` tells it to create all-zero columns if it encounters a region in the test set that wasn't in the training set. `sparse=False` makes the output a dense numpy array.
+2. Initialize `OneHotEncoder`. `handle_unknown='ignore'` tells it to create all-zero columns if it encounters a region in the test set that wasn't in the training set. `sparse_output=False` makes the output a dense numpy array.
 3. **Fit** the encoder *only* on the **training data** (`X_train`) to learn the categories.
 4. **Transform** both the **training data** (`X_train`) and the **test data** (`X_test`) using the *fitted* encoder.
 5. Create new DataFrames with the encoded features, dropping the original categorical column.
@@ -142,7 +142,7 @@ categorical_cols = ['Region']
 numerical_cols = [col for col in X_train.columns if col not in categorical_cols]
 
 # Initialize OneHotEncoder
-encoder = OneHotEncoder(handle_unknown='ignore', sparse=False)
+encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
 
 # Fit encoder ONLY on training data
 encoder.fit(X_train[categorical_cols])
@@ -289,7 +289,7 @@ plt.show()
 
 ## 8. Model Interpretation with eli5
 
-eli5 helps explain the model's decisions. `eli5.show_weights` displays the features ranked by their importance (using permutation importance or impurity-based importance for tree models). This helps identify which factors (original continuous features or encoded regions) the model found most predictive.
+eli5 helps explain the model's decisions. `eli5.explain_weights` displays the features ranked by their importance (using permutation importance or impurity-based importance for tree models). This helps identify which factors (original continuous features or encoded regions) the model found most predictive.
 
 We pass the trained model (`rf_smote`) and the final feature names.
 
@@ -298,17 +298,16 @@ display("\n--- eli5 Feature Importances ---")
 
 # Show feature importances calculated by eli5
 # For RandomForest, eli5 typically uses feature impurity by default.
-explanation = eli5.show_weights(rf_smote, feature_names=final_feature_names, top=15)
+explanation = eli5.explain_weights(rf_smote, feature_names=final_feature_names, top=15)
+
+# Format as HTML with custom styling for black text
+from eli5.formatters import format_as_html
+from IPython.display import HTML
+
+html_explanation = format_as_html(explanation)
+styled_html = f'<div style="color: black !important;">{html_explanation}</div>'
 display("Displaying top 15 feature importances:")
-
-# Display the explanation object (works well in Jupyter/IPython)
-from IPython.display import display
-display(explanation)
-
-# If not in Jupyter, you might need to parse the explanation object or use eli5.formatters
-# import eli5
-# formatted_explanation = eli5.formatters.format_as_text(explanation)
-# display(formatted_explanation)
+display(HTML(styled_html))
 ```
 
 ## 9. Interpretation & Conclusion

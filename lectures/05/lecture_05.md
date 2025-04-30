@@ -779,18 +779,6 @@ Automated feature engineering is the process of using algorithms or libraries to
 <!Featuretools and DFS are especially powerful for electronic health record (EHR) data, where you have many related tables and want to quickly generate a rich set of features for modeling. Beginners may find the terminology ("entityset", "deep feature synthesis") intimidating, but the core idea is to automate the repetitive parts of feature creation by systematically combining variables and operations.
 --->
 
-### ⏪ Time Series Features (Review)
-
-Time series features—like rolling averages, variability, and autocorrelation—are essential for health data (think: heart rate, glucose, or step counts over time).  
-**Review:** See [Lecture 4](../04/lecture_04.md) for a deep dive on extracting and using time series features in health data.
-
-<!This section reminds students that time series feature extraction was covered in detail previously. It's important to connect new content to prior learning, reinforcing the idea that feature engineering is a cumulative skill.
---->
-
-### 🛠️ Featuretools Library: Automated Feature Synthesis
-
-**Featuretools** is a Python library for automated feature engineering, especially useful for relational and time series data.
-
 #### Reference Card
 
 - **Function:** `featuretools.dfs`

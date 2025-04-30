@@ -10,6 +10,17 @@ We will:
 5. Evaluate the model, focusing on metrics sensitive to imbalance (Recall, F1-score, AUC).
 6. Use **eli5** to interpret the model's feature importances.
 
+## 0. Setup: Install Required Packages 📦
+
+<!---
+Make sure all required packages are installed before running the notebook.
+The --quiet flag reduces output noise during installation.
+--->
+
+```python
+%pip install -r requirements.txt --quiet
+```
+
 ## 1. Setup: Import Libraries
 
 We import necessary libraries:
@@ -71,15 +82,15 @@ df['Region'] = np.random.choice(regions, size=df.shape[0], p=[0.3, 0.2, 0.25, 0.
 
 df['RareDisease'] = y # Target variable
 
-print("Dataset Shape:", df.shape)
-print("\nClass distribution (RareDisease):")
+display("Dataset Shape:", df.shape)
+display("\nClass distribution (RareDisease):")
 target_counts = df['RareDisease'].value_counts()
-print(target_counts)
-print(target_counts / len(df)) # Print proportions
-print("\nCategorical feature distribution (Region):")
-print(df['Region'].value_counts())
-print("\nFirst 5 rows:")
-print(df.head())
+display(target_counts)
+display(target_counts / len(df)) # Print proportions
+display("\nCategorical feature distribution (Region):")
+display(df['Region'].value_counts())
+display("\nFirst 5 rows:")
+display(df.head())
 
 # Visualize the imbalance using counts
 plt.figure(figsize=(6, 4))
@@ -108,19 +119,19 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y # Essential for imbalanced data!
 )
 
-print("Original Training set shape:", X_train.shape)
-print("Original Testing set shape:", X_test.shape)
-print("\nTraining set class distribution:")
-print(y_train.value_counts(normalize=True))
-print("\nTesting set class distribution:")
-print(y_test.value_counts(normalize=True))
+display("Original Training set shape:", X_train.shape)
+display("Original Testing set shape:", X_test.shape)
+display("\nTraining set class distribution:")
+display(y_train.value_counts(normalize=True))
+display("\nTesting set class distribution:")
+display(y_test.value_counts(normalize=True))
 ```
 
 ## 4. Preprocessing: One-Hot Encode Categorical Feature
 
 Machine learning models need numerical input. We convert the 'Region' column into numerical format using `OneHotEncoder`.
 1. Identify categorical columns.
-2. Initialize `OneHotEncoder`. `handle_unknown='ignore'` tells it to create all-zero columns if it encounters a region in the test set that wasn't in the training set. `sparse=False` makes the output a dense numpy array.
+2. Initialize `OneHotEncoder`. `handle_unknown='ignore'` tells it to create all-zero columns if it encounters a region in the test set that wasn't in the training set. `sparse_output=False` makes the output a dense numpy array.
 3. **Fit** the encoder *only* on the **training data** (`X_train`) to learn the categories.
 4. **Transform** both the **training data** (`X_train`) and the **test data** (`X_test`) using the *fitted* encoder.
 5. Create new DataFrames with the encoded features, dropping the original categorical column.
@@ -131,7 +142,7 @@ categorical_cols = ['Region']
 numerical_cols = [col for col in X_train.columns if col not in categorical_cols]
 
 # Initialize OneHotEncoder
-encoder = OneHotEncoder(handle_unknown='ignore', sparse=False)
+encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
 
 # Fit encoder ONLY on training data
 encoder.fit(X_train[categorical_cols])
@@ -154,10 +165,10 @@ X_test_processed = pd.concat([X_test[numerical_cols], X_test_encoded], axis=1)
 # Store final feature names
 final_feature_names = list(X_train_processed.columns)
 
-print("Processed Training features shape:", X_train_processed.shape)
-print("Processed Testing features shape:", X_test_processed.shape)
-print("\nFirst 5 rows of processed training data:")
-print(X_train_processed.head())
+display("Processed Training features shape:", X_train_processed.shape)
+display("Processed Testing features shape:", X_test_processed.shape)
+display("\nFirst 5 rows of processed training data:")
+display(X_train_processed.head())
 ```
 
 ## 5. Handle Imbalance with SMOTE (on Training Data Only!)
@@ -177,20 +188,20 @@ plt.ylabel(X_train_processed.columns[1])
 plt.legend(title='RareDisease', labels=['No (0)', 'Yes (1)'])
 plt.show()
 
-print("\nOriginal training distribution (counts):")
-print(y_train.value_counts())
+display("\nOriginal training distribution (counts):")
+display(y_train.value_counts())
 
 # Initialize SMOTE
 smote = SMOTE(random_state=42)
 
 # Apply SMOTE ONLY to the training data
-print("\nApplying SMOTE to training data...")
+display("\nApplying SMOTE to training data...")
 X_train_resampled, y_train_resampled = smote.fit_resample(X_train_processed, y_train)
-print("SMOTE application complete.")
+display("SMOTE application complete.")
 
-print("\nResampled training distribution (counts):")
-print(y_train_resampled.value_counts()) # Should be equal counts
-print("\nResampled training features shape:", X_train_resampled.shape)
+display("\nResampled training distribution (counts):")
+display(y_train_resampled.value_counts()) # Should be equal counts
+display("\nResampled training features shape:", X_train_resampled.shape)
 
 # Visualize the resampled training data distribution
 plt.figure(figsize=(8, 6))
@@ -212,9 +223,9 @@ rf_smote = RandomForestClassifier(n_estimators=150, random_state=42, class_weigh
 # Using class_weight='balanced' as an additional measure, though SMOTE is primary
 
 # Train on the RESAMPLED training data
-print("Training RandomForest on SMOTE-resampled data...")
+display("Training RandomForest on SMOTE-resampled data...")
 rf_smote.fit(X_train_resampled, y_train_resampled)
-print("Model training complete.")
+display("Model training complete.")
 ```
 
 ## 7. Evaluate the Model (on Original Test Set)
@@ -232,16 +243,16 @@ y_pred_smote = rf_smote.predict(X_test_processed)
 y_pred_proba_smote = rf_smote.predict_proba(X_test_processed)[:, 1] # Probabilities for AUC/ROC
 
 # --- Evaluation ---
-print("\n--- Evaluation on Original Test Set (Model trained on SMOTE data) ---")
+display("\n--- Evaluation on Original Test Set (Model trained on SMOTE data) ---")
 
 # Accuracy
 accuracy_smote = accuracy_score(y_test, y_pred_smote)
-print(f"Accuracy: {accuracy_smote:.4f}") # Note: Accuracy might not be the best metric here!
+display(f"Accuracy: {accuracy_smote:.4f}") # Note: Accuracy might not be the best metric here!
 
 # Confusion Matrix
 cm_smote = confusion_matrix(y_test, y_pred_smote)
-print("\nConfusion Matrix:")
-# print(cm_smote)
+display("\nConfusion Matrix:")
+# display(cm_smote)
 
 plt.figure(figsize=(6, 4))
 sns.heatmap(cm_smote, annot=True, fmt='d', cmap='Greens',
@@ -255,12 +266,12 @@ plt.show()
 
 # Classification Report - Focus on Recall for class 1!
 report_smote = classification_report(y_test, y_pred_smote, target_names=['No Disease (0)', 'Rare Disease (1)'])
-print("\nClassification Report:")
-print(report_smote)
+display("\nClassification Report:")
+display(report_smote)
 
 # AUC
 auc_smote = roc_auc_score(y_test, y_pred_proba_smote)
-print(f"\nAUC: {auc_smote:.4f}")
+display(f"\nAUC: {auc_smote:.4f}")
 
 # ROC Curve
 fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba_smote)
@@ -278,26 +289,25 @@ plt.show()
 
 ## 8. Model Interpretation with eli5
 
-eli5 helps explain the model's decisions. `eli5.show_weights` displays the features ranked by their importance (using permutation importance or impurity-based importance for tree models). This helps identify which factors (original continuous features or encoded regions) the model found most predictive.
+eli5 helps explain the model's decisions. `eli5.explain_weights` displays the features ranked by their importance (using permutation importance or impurity-based importance for tree models). This helps identify which factors (original continuous features or encoded regions) the model found most predictive.
 
 We pass the trained model (`rf_smote`) and the final feature names.
 
 ```python
-print("\n--- eli5 Feature Importances ---")
+display("\n--- eli5 Feature Importances ---")
 
 # Show feature importances calculated by eli5
 # For RandomForest, eli5 typically uses feature impurity by default.
-explanation = eli5.show_weights(rf_smote, feature_names=final_feature_names, top=15)
-print("Displaying top 15 feature importances:")
+explanation = eli5.explain_weights(rf_smote, feature_names=final_feature_names, top=15)
 
-# Display the explanation object (works well in Jupyter/IPython)
-from IPython.display import display
-display(explanation)
+# Format as HTML with custom styling for black text
+from eli5.formatters import format_as_html
+from IPython.display import HTML
 
-# If not in Jupyter, you might need to parse the explanation object or use eli5.formatters
-# import eli5
-# formatted_explanation = eli5.formatters.format_as_text(explanation)
-# print(formatted_explanation)
+html_explanation = format_as_html(explanation)
+styled_html = f'<div style="color: black !important;">{html_explanation}</div>'
+display("Displaying top 15 feature importances:")
+display(HTML(styled_html))
 ```
 
 ## 9. Interpretation & Conclusion

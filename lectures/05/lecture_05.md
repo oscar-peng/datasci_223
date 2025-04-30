@@ -5,7 +5,8 @@ pdf: true
 
 # Classification: Putting a label on things
 
-<!This lecture introduces classification, a core concept in machine learning where the goal is to assign labels (like "disease" or "no disease") to data points. We'll cover the main types of classification models, how to evaluate them, and practical tips for working with real health data. The focus is on making these ideas accessible for beginners, with lots of examples and hands-on demos.
+<!---
+This lecture introduces classification, a core concept in machine learning where the goal is to assign labels (like "disease" or "no disease") to data points. We'll cover the main types of classification models, how to evaluate them, and practical tips for working with real health data. The focus is on making these ideas accessible for beginners, with lots of examples and hands-on demos.
 --->
 
 - Quick example
@@ -16,7 +17,8 @@ pdf: true
 
 ## Preamble
 
-<!The preamble provides some context and resources for students interested in data science interviews and real-world health data sources. These links are useful for exploring how classification is used in practice and for preparing for technical interviews.
+<!---
+The preamble provides some context and resources for students interested in data science interviews and real-world health data sources. These links are useful for exploring how classification is used in practice and for preparing for technical interviews.
 --->
 
 1. [_The Urgency of Interpretability_ by Dario Amodei (Anthropic founder/CEO) on his blog](https://www.darioamodei.com/post/the-urgency-of-interpretability)
@@ -28,7 +30,8 @@ pdf: true
 
 ## `git merge` conflicts
 
-<!Understanding git merge conflicts is important for collaborating on code, especially in data science projects where multiple people may be working on the same files. Beginners often find merge conflicts intimidating, but they're just a way for git to ask you to clarify which changes to keep.
+<!---
+Understanding git merge conflicts is important for collaborating on code, especially in data science projects where multiple people may be working on the same files. Beginners often find merge conflicts intimidating, but they're just a way for git to ask you to clarify which changes to keep.
 --->
 
 1. Working in branches for each exercise
@@ -58,7 +61,8 @@ The building blocks of ML are algorithms for **regression** and **classification
 
 ### **Classification methods**
 
-<!This section introduces the most common classification algorithms. Each has its strengths and weaknesses, and the best choice depends on your data and problem. Beginners often think "fancier" models are always better, but simple models like logistic regression can be very effective and are easier to interpret.
+<!---
+This section introduces the most common classification algorithms. Each has its strengths and weaknesses, and the best choice depends on your data and problem. Beginners often think "fancier" models are always better, but simple models like logistic regression can be very effective and are easier to interpret.
 --->
 
 **Conceptual Overview:**
@@ -83,7 +87,8 @@ model = LogisticRegression().fit(X, y)
 print(model.predict([[2, 2]]))  # Predicts class label
 ```
 
-<!This code shows how to fit a logistic regression model using scikit-learn. Beginners sometimes forget to import the right class or to fit the model before predicting.
+<!---
+This code shows how to fit a logistic regression model using scikit-learn. Beginners sometimes forget to import the right class or to fit the model before predicting.
 --->
 
 - Some links to dive deeper:
@@ -99,7 +104,8 @@ print(model.predict([[2, 2]]))  # Predicts class label
 - What is the difference between regression and classification?
 - Name two classification algorithms and a scenario where each might be useful in health data.
 
-<!Answers:
+<!---
+Answers:
 - Regression predicts continuous values (e.g., blood pressure), classification predicts discrete categories (e.g., disease/no disease).
 - Logistic regression for predicting diabetes (yes/no); Random Forest for classifying cancer types.
 --->
@@ -110,27 +116,40 @@ print(model.predict([[2, 2]]))  # Predicts class label
 
 There are many more classification approaches than data scientists, so choosing the best one for your application can be daunting. Thankfully, all of them output predicted classes for each data point. We can use this similarity to define objective performance criteria based on how often the predicted class matches the underlying truth.
 
-<!Evaluating classification models is about more than just "accuracy." This section introduces key metrics like precision, recall, and F1 score, which help you understand different aspects of model performance. The confusion matrix is a classic tool for visualizing how well your model is doing on each class.
+<!---
+Evaluating classification models is about more than just "accuracy." This section introduces key metrics like precision, recall, and F1 score, which help you understand different aspects of model performance. The confusion matrix is a classic tool for visualizing how well your model is doing on each class.
 --->
 
 **Conceptual Overview:**
 Model evaluation metrics help us understand how well our classifier is performing. In health data, it's especially important to know not just how often the model is right, but _how_ it gets things wrong (e.g., missing a disease vs. a false alarm).
 
-**Reference Card: Common Evaluation Metrics**
+- **Precision** (Positive Predictive Value) = $\frac{TP}{TP + FP}$
 
-- **Precision (Positive Predictive Value):** $\frac{TP}{TP + FP}$
-  How many predicted positives are actually positive?
-- **Recall (Sensitivity, True Positive Rate):** $\frac{TP}{TP+FN}$
-  How many actual positives did we catch?
-- **Accuracy:** $\frac{TP+TN}{TP+FP+FN+TN}$
-  Overall, how often is the model correct?
-- **F1 score:** $2 \times \frac{Recall * Precision}{Recall + Precision}$
-  Harmonic mean of precision and recall.
-- **Specificity (True Negative Rate):** $\frac{TN}{TN + FP}$
-  How well does the model identify negatives?
-- **Miss Rate (False Negative Rate):** $\frac{FN}{TP + FN}$
-  How often does the model miss positives?
-- **ROC Curve & AUC:** Plots true positive vs. false positive rates at different thresholds.
+    > _How well it performs when it predicts positive_
+
+- **Recall** (Sensitivity, True Positive Rate) = $\frac{TP}{TP+FN}$
+
+    > _How well it performs among actual positives_
+
+- **Accuracy** = **$\frac{(TP+TN)}{(TP+FP+FN+TN)}$**
+
+    > _How well it performs among all known classes_
+
+- **F1 score** = $2 \times \frac{Recall * Precision}{Recall + Precision}$
+
+    > _Balanced score for overall model performance_
+
+- **Specificity** (Selectivity, True Negative Rate) = $\frac{TN}{TN + FP}$
+
+    > _Similar to_ **Recall**, _how well it performs among actual negatives_
+
+- **Miss Rate** (False Negative Rate) = $\frac{FN}{TP + FN}$
+
+    > _Proportion of positives that were incorrectly classified, good measure when missing a positive has a high cost_
+
+- **Receiver-Operator Curve (ROC Curve) and Area Under the Curve (AUC)**
+
+    > _Plot the True Positive vs. False Positive rates, which provides a scale-invariant measure of performance. A random model on balanced class data will have a score of 0.5, while a perfect model will always have a score of 1_
 
 **Reference Card: `confusion_matrix`**
 
@@ -195,19 +214,18 @@ I get in trouble with the data science police if I don't include something about
 
 ### ROC curve
 
-<!ROC curves are a visual way to see how well your classifier separates the classes at different thresholds. In health data, this is especially useful for understanding trade-offs between catching all cases (sensitivity) and avoiding false alarms (specificity). Beginners sometimes confuse TPR and FPR, or think a single threshold is "best"—but the ROC curve shows performance across all possible thresholds.
+<!---
+ROC curves are a visual way to see how well your classifier separates the classes at different thresholds. In health data, this is especially useful for understanding trade-offs between catching all cases (sensitivity) and avoiding false alarms (specificity). Beginners sometimes confuse TPR and FPR, or think a single threshold is "best"—but the ROC curve shows performance across all possible thresholds.
 --->
 
 **Conceptual Overview:**
 An **ROC curve** (Receiver Operating Characteristic curve) shows how a classifier's performance changes as you vary the threshold for predicting "positive." It plots:
 
 - **True Positive Rate (TPR)** (a.k.a. recall): How many actual positives did we catch?
+    - **TPR (Recall):** $TPR = TP / (TP + FN)$
 - **False Positive Rate (FPR):** How many actual negatives did we incorrectly call positive?
+    - **FPR:** $FPR = FP / (FP + TN)$
 
-**Reference Card:**
-
-- **TPR (Recall):** $TPR = TP / (TP + FN)$
-- **FPR:** $FPR = FP / (FP + TN)$
 
 **Reference Card: `roc_curve`**
 
@@ -237,7 +255,7 @@ This function calculates the False Positive Rate (FPR), True Positive Rate (TPR)
 
 An ROC curve plots TPR vs. FPR at different classification thresholds. Lowering the classification threshold classifies more items as positive, thus increasing both False Positives and True Positives. The following figure shows a typical ROC curve.
 
-[![ROC Curve](https://developers.google.com/static/machine-learning/crash-course/images/ROCCurve.svg)](https://developers.google.com/static/machine-learning/crash-course/images/ROCCurve.svg)
+![ROC Curve](https://developers.google.com/static/machine-learning/crash-course/images/ROCCurve.svg)
 
 **Figure 4. TP vs. FP rate at different classification thresholds.**
 
@@ -245,13 +263,14 @@ To compute the points in an ROC curve, we could evaluate a logistic regression m
 
 ### AUC/AUROC: Area Under the ROC Curve
 
-<!AUC (Area Under the Curve) is a single-number summary of the ROC curve. It tells you, on average, how well your model separates the classes across all possible thresholds. In health data, a higher AUC means your model is better at distinguishing between, say, "disease" and "no disease"—regardless of where you set the cutoff. Beginners sometimes think AUC is always the best metric, but it's not perfect for every situation.
+<!---
+AUC (Area Under the Curve) is a single-number summary of the ROC curve. It tells you, on average, how well your model separates the classes across all possible thresholds. In health data, a higher AUC means your model is better at distinguishing between, say, "disease" and "no disease"—regardless of where you set the cutoff. Beginners sometimes think AUC is always the best metric, but it's not perfect for every situation.
 --->
 
 **Conceptual Overview:**
-AUC measures the _overall_ ability of a classifier to rank positive cases higher than negative ones. An AUC of 1.0 means perfect separation; 0.5 means the model is no better than random guessing.
+While the ROC curve visualizes the trade-off between TPR and FPR across different thresholds, the **AUC (Area Under the Curve)** provides a single number summarizing this performance. It measures the _overall_ ability of a classifier to rank positive cases higher than negative ones across all thresholds. An AUC of 1.0 represents a perfect classifier (covering the entire area), while 0.5 means the model is no better than random guessing (following the diagonal line).
 
-**Reference Card:**
+**Reference Card: AUC/AUROC**
 
 - **AUC/AUROC (Area Under the ROC Curve):** Probability that a randomly chosen positive is ranked above a randomly chosen negative.
 - **Range:** 0 (worst) to 1 (best); 0.5 = random.
@@ -267,6 +286,19 @@ AUC measures the _overall_ ability of a classifier to rank positive cases higher
   - `max_fpr`: (Optional, default=None) If not `None`, the standardized partial AUC over the range [0, max_fpr] is returned.
 
 **Example:**
+![AUC](https://developers.google.com/static/machine-learning/crash-course/images/AUC.svg)
+
+**Figure 5. AUC (Area under the ROC Curve).**
+
+AUC provides an aggregate measure of performance across all possible classification thresholds. One way of interpreting AUC is as the probability that the model ranks a random positive example more highly than a random negative example. For example, given the following examples, which are arranged from left to right in ascending order of logistic regression predictions:
+
+![AUC Predictions](https://developers.google.com/static/machine-learning/crash-course/images/AUCPredictionsRanked.svg)
+
+**Figure 6. Predictions ranked in ascending order of logistic regression score.**
+
+AUC represents the probability that a random positive (green) example is positioned to the right of a random negative (red) example.
+
+AUC ranges in value from 0 to 1. A model whose predictions are 100% wrong has an AUC of 0.0; one whose predictions are 100% correct has an AUC of 1.0.
 
 ```python
 from sklearn.metrics import roc_auc_score
@@ -280,13 +312,13 @@ print(f"AUC Score: {auc_score}")  # Output: AUC Score: 0.75
 This function calculates the AUC, a single metric summarizing the ROC curve. It represents the probability that the classifier ranks a random positive instance higher than a random negative one. Like `roc_curve`, it requires probability scores, not class predictions. Beginners might forget this and get incorrect results. An AUC of 0.5 suggests random performance, while 1.0 is perfect. It's a common metric but doesn't capture everything (e.g., performance at specific thresholds or calibration).
 --->
 
-[![AUC](https://developers.google.com/static/machine-learning/crash-course/images/AUC.svg)](https://developers.google.com/static/machine-learning/crash-course/images/AUC.svg)
+![AUC](https://developers.google.com/static/machine-learning/crash-course/images/AUC.svg)
 
 **Figure 5. AUC (Area under the ROC Curve).**
 
 AUC provides an aggregate measure of performance across all possible classification thresholds. One way of interpreting AUC is as the probability that the model ranks a random positive example more highly than a random negative example. For example, given the following examples, which are arranged from left to right in ascending order of logistic regression predictions:
 
-[![AUC Predictions](https://developers.google.com/static/machine-learning/crash-course/images/AUCPredictionsRanked.svg)](https://developers.google.com/static/machine-learning/crash-course/images/AUCPredictionsRanked.svg)
+![AUC Predictions](https://developers.google.com/static/machine-learning/crash-course/images/AUCPredictionsRanked.svg)
 
 **Figure 6. Predictions ranked in ascending order of logistic regression score.**
 
@@ -311,7 +343,8 @@ However, both these reasons come with caveats, which may limit the usefulness of
 - What does an AUC of 0.5 mean? What about 1.0?
 - Why might AUC not be the best metric for every health data problem?
 
-<!Answers:
+<!---
+Answers:
 - AUC of 0.5 means the model is no better than random guessing; 1.0 means perfect separation of classes.
 - AUC doesn't account for class imbalance or the cost of different types of errors; sometimes you care more about recall or precision.
 --->
@@ -325,7 +358,8 @@ See: [demo/01_diabetes_prediction.md](demo/01_diabetes_prediction.md)
 
 There are two(-ish) overarching categories of classification algorithms: **supervised** and **unsupervised**. There are many possible approaches in each category, and some that work well in both (deep learning, for example).
 
-<!This section introduces the two main types of machine learning: supervised (learning from labeled data) and unsupervised (finding patterns in unlabeled data). Beginners often confuse these, but the key is whether you know the "right answer" for each example. Semi-supervised learning is a hybrid, useful in health data where labels are expensive.
+<!---
+This section introduces the two main types of machine learning: supervised (learning from labeled data) and unsupervised (finding patterns in unlabeled data). Beginners often confuse these, but the key is whether you know the "right answer" for each example. Semi-supervised learning is a hybrid, useful in health data where labels are expensive.
 --->
 
 **Conceptual Overview:**
@@ -344,7 +378,8 @@ There are two(-ish) overarching categories of classification algorithms: **super
 
 ### Supervised models
 
-<!Supervised models are the workhorses of health data science. The key idea is to split your data into "train" and "test" sets, so you can see how well your model generalizes to new, unseen data. Beginners sometimes accidentally test on the training set, leading to over-optimistic results.
+<!---
+Supervised models are the workhorses of health data science. The key idea is to split your data into "train" and "test" sets, so you can see how well your model generalizes to new, unseen data. Beginners sometimes accidentally test on the training set, leading to over-optimistic results.
 --->
 
 To fairly evaluate each model, we must **test** its performance on different data than it was **train**ed on. So we split our dataset into two partitions: **test** and **train**:
@@ -399,7 +434,8 @@ This is a crucial first step in supervised learning to prevent overfitting and e
 - What is the difference between supervised and unsupervised learning?
 - Why do we split data into train and test sets?
 
-<!Answers:
+<!---
+Answers:
 - Supervised learning uses labeled data (with known outcomes); unsupervised learning finds patterns in unlabeled data.
 - To evaluate how well the model generalizes to new, unseen data and avoid overfitting.
 --->
@@ -408,7 +444,8 @@ This is a crucial first step in supervised learning to prevent overfitting and e
 
 #### Logistic regression
 
-<!Logistic regression is a classic, beginner-friendly model for binary classification. It outputs probabilities using a sigmoid curve, making it easy to interpret. In health data, it's often used for risk prediction (e.g., probability of disease).
+<!---
+Logistic regression is a classic, beginner-friendly model for binary classification. It outputs probabilities using a sigmoid curve, making it easy to interpret. In health data, it's often used for risk prediction (e.g., probability of disease).
 --->
 
 Logistic regression works similarly to linear regression but uses a sigmoid curve that squeezes our straight line into an S-curve.
@@ -451,7 +488,8 @@ Additionally, it uses **log loss** in place of our usual mean-squared error cost
 
 #### Random forest
 
-<!Random forests are powerful and robust for tabular health data. They combine many decision trees, each trained on a random subset of the data, and vote on the final prediction. Beginners sometimes think more trees always means better results, but too many can slow things down.
+<!---
+Random forests are powerful and robust for tabular health data. They combine many decision trees, each trained on a random subset of the data, and vote on the final prediction. Beginners sometimes think more trees always means better results, but too many can slow things down.
 --->
 
 Each of the steps can be tweaked, but the general flow goes:
@@ -470,6 +508,54 @@ Each of the steps can be tweaked, but the general flow goes:
   - `min_samples_split`: (Optional, default=2) The minimum number of samples required to split an internal node.
   - `min_samples_leaf`: (Optional, default=1) The minimum number of samples required to be at a leaf node.
   - `max_features`: (Optional, default='sqrt') The number of features to consider when looking for the best split.
+## Boosted trees and gradient boosting
+
+<!--- Boosted trees combine many weak models (shallow trees) into a strong one by focusing each new tree on the mistakes of the previous ones. This is like a relay race where each runner tries to make up for the last runner's lost time. In health data, boosting can help capture subtle patterns, but can also overfit if not tuned carefully.
+---&gt;
+
+&gt; [!info] A Visual Guide to Gradient Boosted Trees
+&gt; An intuitive visual guide and video explaining GBT and the MNIST database
+&gt; [https://towardsdatascience.com/a-visual-guide-to-gradient-boosted-trees-8d9ed578b33](https://towardsdatascience.com/a-visual-guide-to-gradient-boosted-trees-8d9ed578b33)
+
+&gt; [!info] Introduction to Boosted Trees — xgboost 2.0.3 documentation
+&gt; XGBoost stands for "Extreme Gradient Boosting", where the term "Gradient Boosting" originates from the paper Greedy Function Approximation: A Gradient Boosting Machine, by Friedman.
+&gt; [https://xgboost.readthedocs.io/en/stable/tutorials/model.html](https://xgboost.readthedocs.io/en/stable/tutorials/model.html)
+
+- **Boosting** - sequentially choosing models by minimizing errors from previous models while increasing the influence of high-performing models; i.e., each model tries to improve where the last was wrong
+- **Gradient boosting** - a stagewise additive algorithm sequentially adding trees to improve performance measured by a **loss function** until some threshold is met. It's a greedy algorithm prone to overfitting but often proves useful when focused on poor-performing areas
+
+### Gradient Boosting Explained
+
+Gradient Boosting is an iterative machine learning algorithm that is used to improve the accuracy of a model over time. Gradient Boosting works by building decision trees one at a time, where each subsequent tree is built to correct the errors of the previous tree.
+
+**How Gradient Boosting Works (Step-by-Step):**
+1. **Start with a simple model:** Build an initial decision tree on the training data.
+2. **Calculate errors:** Compare the predictions of the tree to the actual values and calculate the errors (residuals).
+3. **Build a new tree for the errors:** Train a new decision tree to predict the errors made by the previous tree, not the original target.
+4. **Update predictions:** Add the new tree’s predictions to the previous predictions to get improved results.
+5. **Repeat:** Continue building new trees, each time focusing on the remaining errors, until you reach a set number of trees or the model stops improving.
+6. **Combine all trees:** The final prediction is a combination (sum) of all the trees’ outputs.
+7. **Minimize loss:** The process uses gradient descent to minimize a loss function, making the model better at each step.
+8. **Result:** The final model is highly accurate and can handle complex patterns, but care must be taken to avoid overfitting.
+
+<!---
+This list is based on the visual you provided and matches the standard explanation of gradient boosting. Each step builds on the previous, focusing on correcting errors, and the final model is the sum of all the trees.
+---&gt;
+
+![XGBoost diagram](media/xgboost.png)
+
+- [XGBoost vs Random Forest](https://medium.com/geekculture/xgboost-versus-random-forest-898e42870f30) (geek culture)
+- [Interpretable machine learning with XGBoost](https://towardsdatascience.com/interpretable-machine-learning-with-xgboost-9ec80d148d27) (towardsdatascience)
+
+**🧠 Comprehension Checkpoint:**
+
+- What is the main difference between random forest and XGBoost?
+- Why might boosting lead to overfitting if not tuned carefully?
+
+<!--- Answers:
+- Random forest builds many trees independently and averages their results; XGBoost builds trees sequentially, each one correcting the errors of the previous.
+- Boosting can overfit if too many trees are added or if the model is too complex, especially on noisy data.
+---&gt;
   - `random_state`: (Optional, default=None) Controls both the randomness of the bootstrapping of the samples used when building trees and the sampling of the features to consider when looking for the best split at each node.
 
 **Example:**
@@ -497,7 +583,8 @@ This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which i
 
 #### XGBoost
 
-<!XGBoost is a high-performance, flexible tree-based model that often wins data science competitions. It's especially good for tabular data and can handle missing values. Beginners sometimes forget to install the xgboost package or use the right data format.
+<!---
+XGBoost is a high-performance, flexible tree-based model that often wins data science competitions. It's especially good for tabular data and can handle missing values. Beginners sometimes forget to install the xgboost package or use the right data format.
 --->
 
 XGBoost stands for **Extreme Gradient Boosting**. Like other tree algorithms, XGBoost considers each instance with a series of `if` statements, resulting in a leaf with associated class assignment scores. Where XGBoost differs is that it uses gradient boosting to focus on weak-performing areas of the previous tree.
@@ -533,7 +620,8 @@ This code fits an XGBoost classifier. XGBoost is a highly efficient and flexible
 
 ## Boosted trees and gradient boosting
 
-<!Boosted trees combine many weak models (shallow trees) into a strong one by focusing each new tree on the mistakes of the previous ones. This is like a relay race where each runner tries to make up for the last runner's lost time. In health data, boosting can help capture subtle patterns, but can also overfit if not tuned carefully.
+<!---
+Boosted trees combine many weak models (shallow trees) into a strong one by focusing each new tree on the mistakes of the previous ones. This is like a relay race where each runner tries to make up for the last runner's lost time. In health data, boosting can help capture subtle patterns, but can also overfit if not tuned carefully.
 --->
 
 > [!info] A Visual Guide to Gradient Boosted Trees
@@ -575,18 +663,22 @@ This list is based on the visual you provided and matches the standard explanati
 - What is the main difference between random forest and XGBoost?
 - Why might boosting lead to overfitting if not tuned carefully?
 
-<!Answers:
+<!---
+Answers:
 - Random forest builds many trees independently and averages their results; XGBoost builds trees sequentially, each one correcting the errors of the previous.
 - Boosting can overfit if too many trees are added or if the model is too complex, especially on noisy data.
 --->
 
 ### Deep learning
 
-<!Deep learning uses artificial neural networks with many layers to learn complex patterns. It's behind much of the recent progress in AI, from image recognition to language models. In health data, deep learning is powerful for images and signals, but requires lots of data and compute. Beginners often think deep learning is always better, but simpler models are often best for small tabular datasets.
+<!---
+Deep learning uses artificial neural networks with many layers to learn complex patterns. It's behind much of the recent progress in AI, from image recognition to language models. In health data, deep learning is powerful for images and signals, but requires lots of data and compute. Beginners often think deep learning is always better, but simpler models are often best for small tabular datasets.
 --->
 
 **Conceptual Overview:**
 Deep learning is a type of machine learning that uses networks of "neurons" (like a simplified brain) to learn from data. These models can learn very complex patterns, especially in images, text, and signals.
+
+An example from TensorFlow Keras:
 
 **Reference Card: Keras Sequential Model**
 
@@ -645,13 +737,14 @@ These models have performed well in a variety of tasks such as image recognition
 
 ### Unsupervised models
 
-<!Unsupervised models find patterns in data without using labels. They're great for exploring new datasets, finding groups (clusters), or reducing the number of features. Beginners sometimes expect unsupervised models to "predict" something, but their main job is to reveal structure or simplify data.
+<!---
+Unsupervised models find patterns in data without using labels. They're great for exploring new datasets, finding groups (clusters), or reducing the number of features. Beginners sometimes expect unsupervised models to "predict" something, but their main job is to reveal structure or simplify data.
 --->
 
 **Conceptual Overview:**
 Unsupervised learning is about discovering hidden patterns or groupings in data when you don't know the "right answer" for each example.
 
-**Reference Card:**
+**Reference Card: Unsupervised Learning Methods**
 
 - **Clustering:** Group similar data points (e.g., K-means, hierarchical)
 - **Association:** Find rules about how variables relate (e.g., Apriori)
@@ -705,26 +798,11 @@ Links to learn more:
 
 - Unsupervised Learning: Algorithms and Examples ([altexsoft](https://www.altexsoft.com/blog/unsupervised-machine-learning/))
 
-**🧠 Comprehension Checkpoint:**
-
-- What is the main difference between supervised and unsupervised learning?
-- Name one real-world health data scenario where clustering could be useful.
-
-<!Answers:
-- Supervised learning uses labeled data; unsupervised learning finds patterns in unlabeled data.
-- Clustering could be used to group patients by similar symptoms or lab results to discover subtypes of a disease.
---->
-
-### 🧪 LIVE DEMO 2: Sensor Classification with Derived Features
-
-A hands-on demo of feature engineering from time series sensor data, comparing RandomForest and XGBoost, and interpreting results with SHAP.
-See: [demo/02_sensor_classification.md](demo/02_sensor_classification.md)
-
-![what the hell is this](media/what_the_hell_is_this.jpg)
 
 ## 📉 How models fail
 
-<!This section explores common ways machine learning models can go wrong. Understanding these failure modes is crucial for building robust models in health data science. Beginners often think a high accuracy means a good model, but issues like bad labels, overfitting, or data shifts can lead to misleading results.
+<!---
+This section explores common ways machine learning models can go wrong. Understanding these failure modes is crucial for building robust models in health data science. Beginners often think a high accuracy means a good model, but issues like bad labels, overfitting, or data shifts can lead to misleading results.
 --->
 
 **Conceptual Overview:**
@@ -738,7 +816,8 @@ Even the best models can fail if the data is messy, the problem is hard, or the 
 
 ### Labeling
 
-<!Labeling problems are especially common in health data, where human error or ambiguity can creep in. If your labels are wrong, your model will learn the wrong thing—no matter how fancy the algorithm.
+<!---
+Labeling problems are especially common in health data, where human error or ambiguity can creep in. If your labels are wrong, your model will learn the wrong thing—no matter how fancy the algorithm.
 --->
 
 Oh, labeling…
@@ -751,7 +830,8 @@ Labeling issues can arise when the data is not labeled correctly or consistently
 
 ### Fit
 
-<!Underfitting means your model is too simple to capture the patterns; overfitting means it memorizes the training data but fails on new data. Beginners often think more features or more complex models are always better, but that's not true!
+<!---
+Underfitting means your model is too simple to capture the patterns; overfitting means it memorizes the training data but fails on new data. Beginners often think more features or more complex models are always better, but that's not true!
 --->
 
 A model may fail to fit the data in one of two ways: under-fitting or over-fitting:
@@ -763,7 +843,8 @@ A model may fail to fit the data in one of two ways: under-fitting or over-fitti
 
 ### **Dataset Shift**
 
-<!Dataset shift is when the data your model sees in the real world is different from what it saw during training. This is a big problem in health data, where populations, measurement devices, or clinical practices can change over time.
+<!---
+Dataset shift is when the data your model sees in the real world is different from what it saw during training. This is a big problem in health data, where populations, measurement devices, or clinical practices can change over time.
 --->
 
 Dataset shift occurs when the distribution of the data changes between the training and test sets. Dataset shift can be divided into three types:
@@ -776,7 +857,8 @@ See: [https://d2l.ai/chapter_linear-classification/environment-and-distribution-
 
 ### Simpson's Paradox
 
-<!Simpson's paradox is a classic statistical gotcha: a trend that appears in groups disappears or reverses when you combine the groups. In health data, this can happen if you don't account for confounders like age or sex.
+<!---
+Simpson's paradox is a classic statistical gotcha: a trend that appears in groups disappears or reverses when you combine the groups. In health data, this can happen if you don't account for confounders like age or sex.
 --->
 
 **Simpson's paradox** occurs when a trend appears in several different groups of data, but disappears or reverses when these groups are combined. It is a common problem in statistics and machine learning that can occur when there are confounding variables that affect the relationship between the independent and dependent variables.
@@ -785,7 +867,8 @@ See: [https://d2l.ai/chapter_linear-classification/environment-and-distribution-
 
 ### Troublesome classes
 
-<!Some classes are just hard to classify—maybe they're rare, noisy, or overlap with others. In health data, this often happens with rare diseases or subtypes. It's important to identify and address these to avoid misleading results.
+<!---
+Some classes are just hard to classify—maybe they're rare, noisy, or overlap with others. In health data, this often happens with rare diseases or subtypes. It's important to identify and address these to avoid misleading results.
 --->
 
 Certain classes or categories in a dataset may be more difficult to classify accurately than others. This can be due to imbalanced class distribution, noisy data, or other factors. Identifying and addressing troublesome classes is an important step in building effective classification models.
@@ -806,58 +889,11 @@ Additional topics that could be added to this section include:
 - Give an example of how dataset shift could affect a health prediction model.
 - Why is it important to check for labeling errors in your data?
 
-<!Answers:
+<!---
+Answers:
 - Overfitting is when a model learns the training data too well, including noise, and performs poorly on new data.
 - If a model is trained on data from one hospital but used in another with different patient populations, predictions may be inaccurate.
 - Labeling errors can mislead the model during training, resulting in poor or biased predictions.
---->
-
-## 🏋️ LIVE DEMO
-
-[demo/02_sensor_classification.md](demo/02_sensor_classification.md)
-
-### Time Series Features: Quick Review
-
-Time series features are essential for extracting meaningful patterns from data collected over time—think heart rate, glucose, or step counts. These features help models capture trends, variability, and periodicity that are often critical in health data.
-
-**Reference Card: Pandas Time Series Feature Extraction**
-
-- **Functions:**
-    - `Series.rolling(window)`: Provides rolling window calculations.
-    - `.mean()`, `.std()`, `.min()`, `.max()`, `.sum()`: Aggregation functions applied to rolling windows.
-    - `Series.diff(periods=1)`: Computes the difference between elements (captures trend).
-    - `Series.autocorr(lag=1)`: Computes autocorrelation at a given lag (captures seasonality/periodicity). Often used within `.rolling().apply()`.
-- **Purpose:** Extract features summarizing trends, variability, and periodicity from time series data.
-- **Key Parameters:**
-    - `rolling(window)`: (Required) Size of the moving window (integer number of observations).
-    - `rolling(min_periods)`: (Optional, default=None) Minimum number of observations in window required to have a value (otherwise result is NA). Defaults to `window`.
-    - `diff(periods)`: (Optional, default=1) Periods to shift for calculating difference.
-    - `autocorr(lag)`: (Optional, default=1) Number of lags to apply autocorrelation calculation.
-
-**Example:**
-
-```python
-import pandas as pd
-
-# Simulated heart rate data
-s = pd.Series([70, 72, 75, 73, 71, 74, 76], name='hr')
-
-# Rolling mean over 3 periods
-rolling_mean = s.rolling(window=3, min_periods=1).mean()
-
-# Difference (trend)
-trend = s.diff()
-
-# Autocorrelation (lag 1) within a rolling window
-rolling_autocorr = s.rolling(window=3, min_periods=2).apply(lambda x: x.autocorr(lag=1))
-
-print("Rolling Mean:\n", rolling_mean)
-print("\nTrend:\n", trend)
-print("\nRolling Autocorr (Lag 1):\n", rolling_autocorr)
-```
-
-<!---
-This example shows common pandas operations for time series feature engineering. `rolling()` creates windows, and aggregations like `.mean()` or `.std()` summarize them. `.diff()` captures change over time (trend). `.autocorr()` measures how correlated a series is with lagged versions of itself, often useful for physiological signals. Beginners might struggle with handling the NA values produced at the start of rolling calculations or choosing the right window size. These features transform a sequence into static values usable by standard ML models.
 --->
 
 ## 🚀 Automated Feature Engineering
@@ -873,7 +909,8 @@ Automated feature engineering is the process of using algorithms or libraries to
     - Automated feature engineering tools apply a set of mathematical operations (like sum, mean, count, difference, ratio, etc.) to your data, often stacking these operations across different columns or tables.
     - For example, you might automatically generate features like "average blood pressure per patient," "number of visits in the last month," or "maximum heart rate difference between visits."
 
-<!Automated feature engineering is like having a robot assistant that tries out hundreds of possible feature combinations for you, but it still requires human oversight to ensure the features make sense and are clinically meaningful. In health data, interpretability and domain knowledge are still essential—automated tools can suggest, but not judge, what is useful.
+<!---
+Automated feature engineering is like having a robot assistant that tries out hundreds of possible feature combinations for you, but it still requires human oversight to ensure the features make sense and are clinically meaningful. In health data, interpretability and domain knowledge are still essential—automated tools can suggest, but not judge, what is useful.
 --->
 
 ### 🛠️ Featuretools Library: Automated Feature Synthesis
@@ -892,20 +929,9 @@ Automated feature engineering is the process of using algorithms or libraries to
     - DFS can automatically create features that summarize a patient's history, recent trends, or event counts—without you having to write custom code for each one.
     - This approach can reveal subtle patterns and relationships that manual feature engineering might miss.
 
-<!Featuretools and DFS are especially powerful for electronic health record (EHR) data, where you have many related tables and want to quickly generate a rich set of features for modeling. Beginners may find the terminology ("entityset", "deep feature synthesis") intimidating, but the core idea is to automate the repetitive parts of feature creation by systematically combining variables and operations.
+<!---
+Featuretools and DFS are especially powerful for electronic health record (EHR) data, where you have many related tables and want to quickly generate a rich set of features for modeling. Beginners may find the terminology ("entityset", "deep feature synthesis") intimidating, but the core idea is to automate the repetitive parts of feature creation by systematically combining variables and operations.
 --->
-
-### ⏪ Time Series Features (Review)
-
-Time series features—like rolling averages, variability, and autocorrelation—are essential for health data (think: heart rate, glucose, or step counts over time).  
-**Review:** See [Lecture 4](../04/lecture_04.md) for a deep dive on extracting and using time series features in health data.
-
-<!This section reminds students that time series feature extraction was covered in detail previously. It's important to connect new content to prior learning, reinforcing the idea that feature engineering is a cumulative skill.
---->
-
-### 🛠️ Featuretools Library: Automated Feature Synthesis
-
-**Featuretools** is a Python library for automated feature engineering, especially useful for relational and time series data.
 
 **Reference Card: `featuretools.dfs`**
 
@@ -963,14 +989,16 @@ df['BMI'] = df['weight_kg'] / (df['height_m'] ** 2)
 print(df)
 ```
 
-<!Domain-specific features often have clinical meaning, making models more interpretable and relevant. Beginners sometimes overlook these, focusing only on what automated tools provide. Always ask: "What would a clinician want to know?"
+<!---
+Domain-specific features often have clinical meaning, making models more interpretable and relevant. Beginners sometimes overlook these, focusing only on what automated tools provide. Always ask: "What would a clinician want to know?"
 --->
 
 ## Model Interpretation with Tree-Based Models
 
 Understanding **why** a model makes its predictions is crucial in health data science—especially when decisions impact patient care. Tree-based models (like Random Forests and XGBoost) can be interpreted using specialized tools that reveal which features drive predictions.
 
-<!Interpretability is a key concern in health data science. Clinicians and stakeholders need to trust and understand model outputs. Tree-based models are more interpretable than deep neural networks, but still benefit from tools that make their decision process transparent. This section introduces SHAP and eli5, two popular Python libraries for model interpretation.
+<!---
+Interpretability is a key concern in health data science. Clinicians and stakeholders need to trust and understand model outputs. Tree-based models are more interpretable than deep neural networks, but still benefit from tools that make their decision process transparent. This section introduces SHAP and eli5, two popular Python libraries for model interpretation.
 --->
 
 ### SHAP Values for Feature Importance
@@ -1004,16 +1032,17 @@ model = xgb.XGBClassifier().fit(X, y)
 # Explain predictions
 explainer = shap.TreeExplainer(model)
 shap_values = explainer.shap_values(X)
+```
 
 # Visualize feature importance
-shap.summary_plot(shap_values, X, plot_type="bar")
-```
 
-```
+![what the hell is this](media/what_the_hell_is_this.jpg)
+shap.summary_plot(shap_values, X, plot_type="bar")
 
 <!---
 This code calculates and visualizes SHAP values for an XGBoost model. `TreeExplainer` is optimized for tree models. `shap_values` gives the contribution of each feature to each prediction. `summary_plot` (with `plot_type="bar"`) shows the mean absolute SHAP value per feature, indicating overall importance. SHAP provides theoretically sound, consistent feature attributions, crucial for understanding model behavior in high-stakes domains like healthcare. Beginners might initially find the concept of Shapley values abstract, but the plots provide intuitive insights into feature impact. Remember to install the `shap` library (`pip install shap`).
 --->
+
 ![SHAP summary plot example](media/oyster_shap.png)
 *Example SHAP summary plot: Each dot shows a feature's impact on a prediction. Color indicates feature value (red=high, blue=low).*
 
@@ -1048,9 +1077,7 @@ model = RandomForestClassifier().fit(X, y)
 # Show feature importances
 eli5.show_weights(model, feature_names=['feature1', 'feature2'])
 ```
-
-```
-
+ 
 <!---
 This code uses `eli5` (Explain Like I'm 5) to show feature importances for a RandomForestClassifier. `eli5.show_weights` provides a simple table ranking features by their contribution (using mean decrease in impurity for forests). It's a quick way to get a global sense of feature importance. Beginners find `eli5` quite accessible due to its straightforward output. Remember to install it (`pip install eli5`) and provide `feature_names` for better readability. While less theoretically grounded than SHAP for complex interactions, it's great for a first look.
 --->
@@ -1076,14 +1103,21 @@ Tree-based models can capture interactions between features (e.g., age and blood
 shap.dependence_plot('age', shap_values, X)
 ```
 
-<!A dependence plot shows how the SHAP value for one feature changes as its value changes, possibly depending on another feature. This can reveal interactions, such as risk increasing only when both age and blood pressure are high.
+<!---
+A dependence plot shows how the SHAP value for one feature changes as its value changes, possibly depending on another feature. This can reveal interactions, such as risk increasing only when both age and blood pressure are high.
 --->
+
+### 🧪 LIVE DEMO 2: Classification with Derived Features
+
+A hands-on demo of feature engineering from time series sensor data, comparing RandomForest and XGBoost, and interpreting results with eli5 and SHAP.
+See: [demo/02_basic_classification.md](demo/02_basic_classification.md)
 
 ## Practical Data Preparation
 
 Preparing your data is just as important as choosing the right model. Good data prep can make or break your results—especially with real-world health data, which is often messy, imbalanced, and full of categorical variables.
 
-<!This section introduces practical tools for preparing data for machine learning. Many students underestimate the importance of data prep, but it's often where the most meaningful improvements in model performance come from. The focus here is on categorical encoding and handling imbalanced classes, two common challenges in health datasets.
+<!---
+This section introduces practical tools for preparing data for machine learning. Many students underestimate the importance of data prep, but it's often where the most meaningful improvements in model performance come from. The focus here is on categorical encoding and handling imbalanced classes, two common challenges in health datasets.
 --->
 
 ### OneHotEncoder for Categorical Variables
@@ -1167,24 +1201,29 @@ This code applies SMOTE to handle class imbalance, a common issue in health data
 
 ### When and How to Combine Techniques
 
-Often, you'll need to use several data prep techniques together: encoding, scaling, balancing, and more. The order matters!
+Often, you'll need to use several data prep techniques together: splitting, encoding, scaling, balancing, and more. The order is crucial to prevent data leakage and ensure reliable model evaluation!
 
-- **Typical order:**
-  1. Encode categorical variables
-  2. Scale/normalize features (if needed)
-  3. Balance classes (SMOTE, etc.)
-  4. Split into train/test sets
+- **Recommended Order (to prevent data leakage):**
+  1. **Split into train/test sets:** This is the **most critical first step**. Isolate your test set completely. Consider using *stratified sampling* (`stratify=y` in `train_test_split`) to ensure both train and test sets have similar proportions of each class, especially important with imbalanced data.
+  2. **Encode categorical variables:** Fit the encoder *only* on the training data, then transform both the training and test data.
+  3. **Scale/normalize features (if needed):** Fit the scaler *only* on the training data, then transform both the training and test data.
+  4. **Balance classes (Optional, e.g., SMOTE):** Apply balancing techniques *only* to the **training set**. *Never* apply balancing to the test set, as this would leak information and give an unrealistic performance estimate.
 
-- **Why?**
-    - The order of these steps helps prevent "data leakage"—where information from outside the training set accidentally influences the model, leading to overly optimistic results.
-    - Encoding and scaling must be done before balancing, because SMOTE and similar methods require numeric input and work best when features are on similar scales.
-    - Balancing (like SMOTE) should only be applied to the training set, not the whole dataset, to avoid leaking information from the test set into the model.
-    - Splitting into train/test sets before balancing ensures that your model is evaluated on truly unseen data, giving a realistic measure of performance.
+- **Why this order?**
+    - **Splitting first** prevents any information from the test set influencing preprocessing steps (like scaling parameters or SMOTE neighbors) applied to the training set. This avoids "data leakage" and ensures your evaluation reflects real-world performance on unseen data.
+    - Fitting encoders and scalers *only* on the training data simulates the real-world scenario where you only have access to historical (training) data to prepare your model.
+    - Balancing *only* the training set prevents the model from being evaluated on synthetic data and ensures the test set reflects the original class distribution (or the expected real-world distribution).
+
+- **If Not Balancing:** If you choose not to balance the training data (e.g., due to concerns about introducing noise with synthetic data), it's crucial to use evaluation metrics that account for imbalance. Don't rely solely on accuracy. Instead, focus on:
+    - **Confusion Matrix:** To see performance per class (TP, TN, FP, FN).
+    - **Precision, Recall, F1-score:** Especially the F1-score, which balances precision and recall. Consider these metrics for the minority class specifically.
+    - **ROC AUC:** While useful, remember it can be misleadingly high on imbalanced data. Consider Precision-Recall AUC as an alternative.
 
 ### 🧪 LIVE DEMO 3: Imbalanced Classification & Model Interpretation
 
 A hands-on demo for handling imbalanced classes, categorical feature encoding, SMOTE, and model interpretation with eli5.
 See: [demo/03_imbalanced_classification.md](demo/03_imbalanced_classification.md)
 
-<!Combining techniques is common in real-world projects. Beginners sometimes apply SMOTE before splitting data, which can cause data leakage. Always split your data first, then apply SMOTE only to the training set. Data leakage is a subtle but critical mistake: if you balance or scale using the whole dataset, your model may "see" information from the test set during training, leading to misleadingly high accuracy. Always keep your test set isolated until final evaluation.
+<!---
+Combining techniques is common in real-world projects. Beginners sometimes apply SMOTE before splitting data, which can cause data leakage. Always split your data first, then apply SMOTE only to the training set. Data leakage is a subtle but critical mistake: if you balance or scale using the whole dataset, your model may "see" information from the test set during training, leading to misleadingly high accuracy. Always keep your test set isolated until final evaluation.
 --->

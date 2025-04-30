@@ -8,7 +8,7 @@ We will:
 3. Apply **SMOTE** (Synthetic Minority Over-sampling Technique) to balance the *training* data.
 4. Train a classifier (RandomForest) on the balanced training data.
 5. Evaluate the model, focusing on metrics sensitive to imbalance (Recall, F1-score, AUC).
-6. Use **eli5** to interpret the model's feature importances.
+6. Use **eli5** and **SHAP** to interpret the model's feature importances.
 
 ## 0. Setup: Install Required Packages 📦
 

@@ -107,17 +107,18 @@ plt.show()
 X = df.drop('DiabetesRisk', axis=1)
 y = df['DiabetesRisk']
 
-# Split into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, 
-                                                    random_state=42)
-
-# Scale features
+# Scale features first (following the recommended order)
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+X_scaled = scaler.fit_transform(X)
+X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
 
-print("Training set shape:", X_train.shape)
-print("Test set shape:", X_test.shape)
+# Then split into train and test sets
+X_train_scaled, X_test_scaled, y_train, y_test = train_test_split(
+    X_scaled_df, y, test_size=0.2, random_state=42
+)
+
+print("Training set shape:", X_train_scaled.shape)
+print("Test set shape:", X_test_scaled.shape)
 ```
 
 ## 3. Train and Compare Models 🤖

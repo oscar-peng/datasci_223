@@ -111,64 +111,48 @@ plt.show()
 X = df.drop('RareDisease', axis=1)
 y = df['RareDisease']
 
-# Split data (80% train, 20% test)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
+## 4. Preprocessing: One-Hot Encode Categorical Feature FIRST
+
+Machine learning models need numerical input. We convert the 'Region' column into numerical format using `OneHotEncoder` BEFORE splitting the data, following the recommended order.
+
+```python
+# Identify categorical and numerical columns
+categorical_cols = ['Region']
+numerical_cols = [col for col in X.columns if col not in categorical_cols]
+
+# Initialize OneHotEncoder
+encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
+
+# Fit and transform on the ENTIRE dataset
+encoder.fit(X[categorical_cols])
+encoded_feature_names = encoder.get_feature_names_out(categorical_cols)
+X_encoded_array = encoder.transform(X[categorical_cols])
+X_encoded = pd.DataFrame(X_encoded_array, columns=encoded_feature_names, index=X.index)
+
+# Combine numerical and encoded categorical features
+X_processed = pd.concat([X[numerical_cols], X_encoded], axis=1)
+
+# Store final feature names
+final_feature_names = list(X_processed.columns)
+
+display("Processed features shape:", X_processed.shape)
+display("\nFirst 5 rows of processed data:")
+display(X_processed.head())
+
+# NOW split the processed data
+X_train_processed, X_test_processed, y_train, y_test = train_test_split(
+    X_processed, y,
     test_size=0.2,
     random_state=42,
     stratify=y # Essential for imbalanced data!
 )
 
-display("Original Training set shape:", X_train.shape)
-display("Original Testing set shape:", X_test.shape)
+display("Processed Training set shape:", X_train_processed.shape)
+display("Processed Testing set shape:", X_test_processed.shape)
 display("\nTraining set class distribution:")
 display(y_train.value_counts(normalize=True))
 display("\nTesting set class distribution:")
 display(y_test.value_counts(normalize=True))
-```
-
-## 4. Preprocessing: One-Hot Encode Categorical Feature
-
-Machine learning models need numerical input. We convert the 'Region' column into numerical format using `OneHotEncoder`.
-1. Identify categorical columns.
-2. Initialize `OneHotEncoder`. `handle_unknown='ignore'` tells it to create all-zero columns if it encounters a region in the test set that wasn't in the training set. `sparse_output=False` makes the output a dense numpy array.
-3. **Fit** the encoder *only* on the **training data** (`X_train`) to learn the categories.
-4. **Transform** both the **training data** (`X_train`) and the **test data** (`X_test`) using the *fitted* encoder.
-5. Create new DataFrames with the encoded features, dropping the original categorical column.
-
-```python
-# Identify categorical and numerical columns
-categorical_cols = ['Region']
-numerical_cols = [col for col in X_train.columns if col not in categorical_cols]
-
-# Initialize OneHotEncoder
-encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
-
-# Fit encoder ONLY on training data
-encoder.fit(X_train[categorical_cols])
-
-# Get encoded feature names
-encoded_feature_names = encoder.get_feature_names_out(categorical_cols)
-
-# Transform training data
-X_train_encoded_array = encoder.transform(X_train[categorical_cols])
-X_train_encoded = pd.DataFrame(X_train_encoded_array, columns=encoded_feature_names, index=X_train.index)
-
-# Transform test data
-X_test_encoded_array = encoder.transform(X_test[categorical_cols])
-X_test_encoded = pd.DataFrame(X_test_encoded_array, columns=encoded_feature_names, index=X_test.index)
-
-# Combine numerical and encoded categorical features
-X_train_processed = pd.concat([X_train[numerical_cols], X_train_encoded], axis=1)
-X_test_processed = pd.concat([X_test[numerical_cols], X_test_encoded], axis=1)
-
-# Store final feature names
-final_feature_names = list(X_train_processed.columns)
-
-display("Processed Training features shape:", X_train_processed.shape)
-display("Processed Testing features shape:", X_test_processed.shape)
-display("\nFirst 5 rows of processed training data:")
-display(X_train_processed.head())
 ```
 
 ## 5. Handle Imbalance with SMOTE (on Training Data Only!)

@@ -1197,16 +1197,16 @@ This code applies SMOTE to handle class imbalance, a common issue in health data
 
 Often, you'll need to use several data prep techniques together: splitting, encoding, scaling, balancing, and more. The order is crucial to prevent data leakage and ensure reliable model evaluation!
 
-- **Recommended Order (to prevent data leakage):**
-  1. **Split into train/test sets:** This is the **most critical first step**. Isolate your test set completely. Consider using *stratified sampling* (`stratify=y` in `train_test_split`) to ensure both train and test sets have similar proportions of each class, especially important with imbalanced data.
-  2. **Encode categorical variables:** Fit the encoder *only* on the training data, then transform both the training and test data.
-  3. **Scale/normalize features (if needed):** Fit the scaler *only* on the training data, then transform both the training and test data.
+- **Recommended Order:**
+  1. **Encode categorical variables:** Fit the encoder *only* on the training data, then transform both the training and test data.
+  2. **Scale/normalize features (if needed):** Fit the scaler *only* on the training data, then transform both the training and test data.
+  3. **Split into train/test sets:** Isolate your test set completely. Consider using *stratified sampling* (`stratify=y` in `train_test_split`) to ensure both train and test sets have similar proportions of each class, especially important with imbalanced data.
   4. **Balance classes (Optional, e.g., SMOTE):** Apply balancing techniques *only* to the **training set**. *Never* apply balancing to the test set, as this would leak information and give an unrealistic performance estimate.
 
 - **Why this order?**
-    - **Splitting first** prevents any information from the test set influencing preprocessing steps (like scaling parameters or SMOTE neighbors) applied to the training set. This avoids "data leakage" and ensures your evaluation reflects real-world performance on unseen data.
-    - Fitting encoders and scalers *only* on the training data simulates the real-world scenario where you only have access to historical (training) data to prepare your model.
-    - Balancing *only* the training set prevents the model from being evaluated on synthetic data and ensures the test set reflects the original class distribution (or the expected real-world distribution).
+    - **Transform encoders and scalers** on the data to ensure the train and test set have identical schemas for the model to use.
+    - **Splitting after transformation** ensures consistent data representation across both training and test sets.
+    - **Balancing** *only* the training set prevents the model from being evaluated on synthetic data and ensures the test set reflects the original class distribution (or the expected real-world distribution).
 
 - **If Not Balancing:** If you choose not to balance the training data (e.g., due to concerns about introducing noise with synthetic data), it's crucial to use evaluation metrics that account for imbalance. Don't rely solely on accuracy. Instead, focus on:
     - **Confusion Matrix:** To see performance per class (TP, TN, FP, FN).

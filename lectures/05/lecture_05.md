@@ -471,8 +471,6 @@ model = LogisticRegression().fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-```
-
 <!---
 This code fits a logistic regression model and predicts a class. Logistic Regression is a fundamental linear classifier, often a good baseline. It models the probability of the default class using the logistic (sigmoid) function. Beginners sometimes forget that `C` controls the *inverse* of regularization strength (smaller C = stronger regularization) or struggle choosing the right `solver`. For health data, its interpretability (coefficients relate to odds ratios) is a major advantage. Remember to scale features before fitting!
 --->

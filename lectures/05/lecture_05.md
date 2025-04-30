@@ -132,16 +132,31 @@ Model evaluation metrics help us understand how well our classifier is performin
   How often does the model miss positives?
 - **ROC Curve & AUC:** Plots true positive vs. false positive rates at different thresholds.
 
-**Minimal Example: Confusion Matrix in Python**
+**Reference Card: `confusion_matrix`**
+
+- **Function:** `sklearn.metrics.confusion_matrix()`
+- **Purpose:** Compute confusion matrix to evaluate classification accuracy.
+- **Key Parameters:**
+  - `y_true`: (Required) Ground truth (correct) target values.
+  - `y_pred`: (Required) Estimated targets as returned by a classifier.
+  - `labels`: (Optional, default=None) List of labels to index the matrix. If `None`, labels that appear at least once in `y_true` or `y_pred` are used in sorted order.
+  - `normalize`: (Optional, default=None) Normalizes confusion matrix over the true (rows), predicted (columns) conditions or all the population. Can be 'true', 'pred', 'all', or None.
+
+**Example:**
 
 ```python
 from sklearn.metrics import confusion_matrix
-y_true = [1, 0, 1, 1, 0]
-y_pred = [1, 0, 0, 1, 1]
-print(confusion_matrix(y_true, y_pred))
+y_true = [1, 0, 1, 1, 0] # Actual labels
+y_pred = [1, 0, 0, 1, 1] # Predicted labels
+cm = confusion_matrix(y_true, y_pred)
+print(cm)
+# Output interpretation (for binary case):
+# [[TN, FP],
+#  [FN, TP]]
 ```
 
-<!This code shows how to compute a confusion matrix using scikit-learn. Beginners sometimes mix up the order of true and predicted labels, or forget to interpret the matrix correctly (rows = actual, columns = predicted).
+<!---
+This function calculates the confusion matrix. The output array shows True Negatives (TN), False Positives (FP), False Negatives (FN), and True Positives (TP). It's fundamental for calculating other metrics like precision and recall. Beginners often mix up the order of `y_true` and `y_pred` or misinterpret the matrix layout (rows are actual, columns are predicted by default). In health data, understanding FN (missing a disease) vs FP (false alarm) is critical.
 --->
 
 I get in trouble with the data science police if I don't include something about confusion matrices:
@@ -194,18 +209,30 @@ An **ROC curve** (Receiver Operating Characteristic curve) shows how a classifie
 - **TPR (Recall):** $TPR = TP / (TP + FN)$
 - **FPR:** $FPR = FP / (FP + TN)$
 
-**Minimal Example: Plotting an ROC Curve in Python**
+**Reference Card: `roc_curve`**
+
+- **Function:** `sklearn.metrics.roc_curve()`
+- **Purpose:** Compute Receiver operating characteristic (ROC) curve points.
+- **Key Parameters:**
+  - `y_true`: (Required) True binary labels.
+  - `y_score`: (Required) Target scores, can either be probability estimates of the positive class or confidence values.
+  - `pos_label`: (Optional, default=1) The label of the positive class.
+  - `drop_intermediate`: (Optional, default=True) Whether to drop some suboptimal thresholds which would not appear on a plotted ROC curve.
+
+**Example:**
 
 ```python
 from sklearn.metrics import roc_curve
-y_true = [0, 0, 1, 1]
-y_scores = [0.1, 0.4, 0.35, 0.8]
+y_true = [0, 0, 1, 1]        # Actual labels
+y_scores = [0.1, 0.4, 0.35, 0.8] # Model scores/probabilities for class 1
 fpr, tpr, thresholds = roc_curve(y_true, y_scores)
-print(fpr)
-print(tpr)
+print("FPR:", fpr)
+print("TPR:", tpr)
+# Typically, you'd plot fpr vs tpr using matplotlib
 ```
 
-<!This code shows how to compute the points for an ROC curve using scikit-learn. Beginners sometimes try to use predicted class labels instead of scores/probabilities—ROC curves require the model's probability outputs.
+<!---
+This function calculates the False Positive Rate (FPR), True Positive Rate (TPR), and corresponding thresholds needed to plot an ROC curve. It's essential for visualizing the trade-off between sensitivity and specificity. Beginners often mistakenly provide predicted class labels (`predict()`) instead of probability scores (`predict_proba()[:, 1]`) for `y_score`. Remember, the ROC curve evaluates the model's ranking ability across different decision thresholds.
 --->
 
 An ROC curve plots TPR vs. FPR at different classification thresholds. Lowering the classification threshold classifies more items as positive, thus increasing both False Positives and True Positives. The following figure shows a typical ROC curve.
@@ -229,16 +256,28 @@ AUC measures the _overall_ ability of a classifier to rank positive cases higher
 - **AUC/AUROC (Area Under the ROC Curve):** Probability that a randomly chosen positive is ranked above a randomly chosen negative.
 - **Range:** 0 (worst) to 1 (best); 0.5 = random.
 
-**Minimal Example: Compute AUC in Python**
+**Reference Card: `roc_auc_score`**
+
+- **Function:** `sklearn.metrics.roc_auc_score()`
+- **Purpose:** Compute Area Under the Receiver Operating Characteristic Curve (AUC) from prediction scores.
+- **Key Parameters:**
+  - `y_true`: (Required) True binary labels.
+  - `y_score`: (Required) Target scores, can either be probability estimates of the positive class or confidence values.
+  - `average`: (Optional, default='macro') Determines the type of averaging performed on the data for multiclass problems.
+  - `max_fpr`: (Optional, default=None) If not `None`, the standardized partial AUC over the range [0, max_fpr] is returned.
+
+**Example:**
 
 ```python
 from sklearn.metrics import roc_auc_score
-y_true = [0, 0, 1, 1]
-y_scores = [0.1, 0.4, 0.35, 0.8]
-print(roc_auc_score(y_true, y_scores))  # Output: 0.75
+y_true = [0, 0, 1, 1]        # Actual labels
+y_scores = [0.1, 0.4, 0.35, 0.8] # Model scores/probabilities for class 1
+auc_score = roc_auc_score(y_true, y_scores)
+print(f"AUC Score: {auc_score}")  # Output: AUC Score: 0.75
 ```
 
-<!This code shows how to compute the AUC using scikit-learn. Beginners sometimes try to use predicted class labels instead of scores—AUC needs probability scores or decision function outputs.
+<!---
+This function calculates the AUC, a single metric summarizing the ROC curve. It represents the probability that the classifier ranks a random positive instance higher than a random negative one. Like `roc_curve`, it requires probability scores, not class predictions. Beginners might forget this and get incorrect results. An AUC of 0.5 suggests random performance, while 1.0 is perfect. It's a common metric but doesn't capture everything (e.g., performance at specific thresholds or calibration).
 --->
 
 [![AUC](https://developers.google.com/static/machine-learning/crash-course/images/AUC.svg)](https://developers.google.com/static/machine-learning/crash-course/images/AUC.svg)
@@ -295,7 +334,7 @@ There are two(-ish) overarching categories of classification algorithms: **super
 - **Unsupervised learning:** The model tries to find structure in data without labels. E.g., grouping patients by similar symptoms.
 - **Semi-supervised:** Some data is labeled, some isn't—common in medical imaging. Includes "reinforcement learning" where the classifier may train itself
 
-**Reference Card:**
+**Reference Card: Supervised vs. Unsupervised Learning**
 
 - **Supervised:** Needs labeled data (X, y)
 - **Unsupervised:** Only needs features (X)
@@ -324,17 +363,35 @@ Let's look at a few tools that you should get a lot of use out of:
 
     _Deep Learning models may also be used in unsupervised settings_
 
-**Minimal Example: Train/Test Split in Python**
+**Reference Card: `train_test_split`**
+
+- **Function:** `sklearn.model_selection.train_test_split()`
+- **Purpose:** Split arrays or matrices into random train and test subsets.
+- **Key Parameters:**
+  - `*arrays`: (Required) Sequence of indexables with same length / shape[0]. Allowed inputs are lists, numpy arrays, scipy-sparse matrices or pandas dataframes.
+  - `test_size`: (Optional, default=0.25) If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples.
+  - `train_size`: (Optional, default=None) If float/int, represents the proportion/absolute number for the train split. If `None`, it's set to the complement of `test_size`.
+  - `random_state`: (Optional, default=None) Controls the shuffling applied to the data before applying the split. Pass an int for reproducible output across multiple function calls.
+  - `shuffle`: (Optional, default=True) Whether or not to shuffle the data before splitting.
+  - `stratify`: (Optional, default=None) If not None, data is split in a stratified fashion, using this as the class labels. Essential for imbalanced classification tasks.
+
+**Example:**
 
 ```python
 from sklearn.model_selection import train_test_split
-X = [[1, 2], [2, 3], [3, 4], [4, 5]]
-y = [0, 1, 0, 1]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
-print(X_train, y_train)
+import numpy as np
+X = np.array([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]])
+y = np.array([0, 1, 0, 1, 0, 1])
+# Split data: 70% train, 30% test, stratified by y, reproducible
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)
+print("X_train shape:", X_train.shape)
+print("X_test shape:", X_test.shape)
 ```
 
-<!This code shows how to split data into training and test sets using scikit-learn. Beginners sometimes forget to shuffle or accidentally use the test set for training.
+<!---
+This is a crucial first step in supervised learning to prevent overfitting and evaluate model generalization. Always split your data *before* doing any feature scaling or resampling (like SMOTE) that learns from the data, applying those steps only to the training set. Beginners often forget to set `random_state` for reproducibility or neglect `stratify` for imbalanced datasets, which can lead to misleading evaluation results if the test set doesn't reflect the true class distribution.
 --->
 
 **🧠 Comprehension Checkpoint:**
@@ -356,13 +413,18 @@ print(X_train, y_train)
 
 Logistic regression works similarly to linear regression but uses a sigmoid curve that squeezes our straight line into an S-curve.
 
-**Reference Card:**
+**Reference Card: `LogisticRegression`**
 
-- **Function:** `sklearn.linear_model.LogisticRegression`
-- **Purpose:** Predict binary outcomes (0/1)
-- **Key Parameters:** `penalty`, `C`, `solver`
+- **Function:** `sklearn.linear_model.LogisticRegression()`
+- **Purpose:** Linear model for classification (binary or multinomial).
+- **Key Parameters:**
+  - `penalty`: (Optional, default='l2') Specify the norm used in the penalization ('l1', 'l2', 'elasticnet', 'none').
+  - `C`: (Optional, default=1.0) Inverse of regularization strength; must be a positive float. Smaller values specify stronger regularization.
+  - `solver`: (Optional, default='lbfgs') Algorithm to use in the optimization problem. Common choices: 'liblinear' (good for small datasets), 'lbfgs', 'sag', 'saga' (faster for large ones).
+  - `max_iter`: (Optional, default=100) Maximum number of iterations taken for the solvers to converge.
+  - `random_state`: (Optional, default=None) Used when `solver` == ‘sag’, ‘saga’ or ‘liblinear’ to shuffle the data.
 
-**Minimal Example:**
+**Example:**
 
 ```python
 from sklearn.linear_model import LogisticRegression
@@ -372,7 +434,10 @@ model = LogisticRegression().fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-<!This code fits a logistic regression model and predicts a class. Beginners sometimes forget to use 2D arrays for X or to call .fit() before .predict().
+```
+
+<!---
+This code fits a logistic regression model and predicts a class. Logistic Regression is a fundamental linear classifier, often a good baseline. It models the probability of the default class using the logistic (sigmoid) function. Beginners sometimes forget that `C` controls the *inverse* of regularization strength (smaller C = stronger regularization) or struggle choosing the right `solver`. For health data, its interpretability (coefficients relate to odds ratios) is a major advantage. Remember to scale features before fitting!
 --->
 
 ![Linear vs logistic regression](media/lin_vs_log.png)
@@ -395,13 +460,19 @@ Each of the steps can be tweaked, but the general flow goes:
 2. **Grow trees** - individual decision trees are constructed by choosing the best features and cutpoints to separate the classes
 3. **Classify** - instances are run through all trees and assigned a class by majority vote
 
-**Reference Card:**
+**Reference Card: `RandomForestClassifier`**
 
-- **Function:** `sklearn.ensemble.RandomForestClassifier`
+- **Function:** `sklearn.ensemble.RandomForestClassifier()`
 - **Purpose:** Ensemble of decision trees for classification
-- **Key Parameters:** `n_estimators`, `max_depth`, `random_state`
+- **Key Parameters:** 
+  - `n_estimators`: (Optional, default=100) The number of trees in the forest.
+  - `max_depth`: (Optional, default=None) The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples.
+  - `min_samples_split`: (Optional, default=2) The minimum number of samples required to split an internal node.
+  - `min_samples_leaf`: (Optional, default=1) The minimum number of samples required to be at a leaf node.
+  - `max_features`: (Optional, default='sqrt') The number of features to consider when looking for the best split.
+  - `random_state`: (Optional, default=None) Controls both the randomness of the bootstrapping of the samples used when building trees and the sampling of the features to consider when looking for the best split at each node.
 
-**Minimal Example:**
+**Example:**
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
@@ -411,9 +482,17 @@ model = RandomForestClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-<!This code fits a random forest and predicts a class. Beginners sometimes forget to set a random seed for reproducibility or to check feature importances.
+<!---
+This code fits a random forest and predicts a class. Random Forests are powerful ensembles that reduce overfitting compared to single decision trees by averaging predictions from many trees built on random subsets of data and features. Beginners sometimes forget to set `random_state` for reproducibility or neglect tuning hyperparameters like `n_estimators` and `max_depth`. Feature importances (`model.feature_importances_`) are useful for interpretation in health contexts.
 --->
 
+<!---
+This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which is the core idea behind Random Forests.
+1.  **Original Dataset:** We start with our full dataset (imagine a spreadsheet of patient data).
+2.  **Bootstrap Samples:** We create multiple new datasets by sampling *with replacement* from the original. This means some patients might appear multiple times in a sample, while others might be left out. Each sample is roughly the same size as the original. Think of it like drawing names from a hat, putting the name back each time.
+3.  **Train Models:** We train a separate decision tree on each of these bootstrap samples. Because each tree sees slightly different data, they will learn slightly different patterns.
+4.  **Aggregate Predictions:** For a new patient, we run their data through *all* the trees. For classification, each tree "votes" for a class, and the class with the most votes wins. For regression, we average the predictions. This ensemble approach makes the final prediction more robust and less prone to overfitting than a single decision tree. It's the wisdom of the crowd, but for trees!
+--->
 ![Bagging diagram](media/bagging.png)
 
 #### XGBoost
@@ -423,13 +502,20 @@ print(model.predict([[2, 2]]))
 
 XGBoost stands for **Extreme Gradient Boosting**. Like other tree algorithms, XGBoost considers each instance with a series of `if` statements, resulting in a leaf with associated class assignment scores. Where XGBoost differs is that it uses gradient boosting to focus on weak-performing areas of the previous tree.
 
-**XGBoost Reference Card:**
+**Reference Card: `XGBClassifier`**
 
-- **Function:** `xgboost.XGBClassifier`
-- **Purpose:** Gradient-boosted decision trees for classification
-- **Key Parameters:** `n_estimators`, `learning_rate`, `max_depth`, `random_state`
+- **Function:** `xgboost.XGBClassifier()`
+- **Purpose:** Implementation of the gradient boosting algorithm for classification.
+- **Key Parameters:**
+  - `n_estimators`: (Optional, default=100) Number of gradient boosted trees. Equivalent to number of boosting rounds.
+  - `learning_rate`: (Optional, default=0.3) Boosting learning rate (xgb's "eta"). Step size shrinkage used in update to prevents overfitting.
+  - `max_depth`: (Optional, default=6) Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
+  - `subsample`: (Optional, default=1.0) Subsample ratio of the training instance. Setting it to 0.5 means that XGBoost would randomly sample half of the training data prior to growing trees.
+  - `colsample_bytree`: (Optional, default=1.0) Subsample ratio of columns when constructing each tree.
+  - `gamma`: (Optional, default=0) Minimum loss reduction required to make a further partition on a leaf node of the tree.
+  - `random_state`: (Optional, default=None) Random number seed.
 
-**Minimal Example:**
+**Example:**
 
 ```python
 import xgboost as xgb
@@ -439,7 +525,10 @@ model = xgb.XGBClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-<!This code fits an XGBoost classifier and predicts a class. Beginners sometimes forget to install xgboost (`pip install xgboost`) or use the right data shape.
+```
+
+<!---
+This code fits an XGBoost classifier. XGBoost is a highly efficient and flexible implementation of gradient boosting, often achieving state-of-the-art results on tabular data. It builds trees sequentially, each correcting the errors of the previous ones. Key advantages include built-in regularization (gamma, lambda, alpha) and handling of missing values. Beginners often need to install the `xgboost` library separately (`pip install xgboost`) and should focus on tuning `n_estimators`, `learning_rate`, and `max_depth`.
 --->
 
 ## Boosted trees and gradient boosting
@@ -499,12 +588,19 @@ This list is based on the visual you provided and matches the standard explanati
 **Conceptual Overview:**
 Deep learning is a type of machine learning that uses networks of "neurons" (like a simplified brain) to learn from data. These models can learn very complex patterns, especially in images, text, and signals.
 
-**Reference Card:**
+**Reference Card: Keras Sequential Model**
 
-- **Frameworks:** Keras, PyTorch, TensorFlow, JAX
-- **Key Concepts:** Layers, activation functions, backpropagation, epochs, batch size
+- **Function:** `tensorflow.keras.Sequential()` / `tensorflow.keras.layers.Dense()` / `model.compile()`
+- **Purpose:** Build, configure, and prepare a linear stack of neural network layers for training.
+- **Key Parameters:**
+  - `layers.Dense(units)`: (Required) Number of neurons in the layer.
+  - `layers.Dense(activation)`: (Optional) Activation function ('relu', 'sigmoid', 'softmax', etc.).
+  - `layers.Dense(input_shape)`: (Required for first layer) Shape of the input data (tuple).
+  - `model.compile(optimizer)`: (Required) Optimizer algorithm ('adam', 'sgd', etc.).
+  - `model.compile(loss)`: (Required) Loss function ('binary_crossentropy', 'categorical_crossentropy', 'mse', etc.).
+  - `model.compile(metrics)`: (Optional) List of metrics to evaluate during training (e.g., ['accuracy']).
 
-**Minimal Example: Keras Neural Network**
+**Example:**
 
 ```python
 from tensorflow import keras
@@ -517,7 +613,10 @@ model.compile(optimizer='adam', loss='binary_crossentropy')
 # model.fit(X_train, y_train, epochs=10)  # Uncomment to train
 ```
 
-<!This code defines a simple neural network for binary classification using Keras. Beginners sometimes forget to set the input shape or to compile the model before training.
+```
+
+<!---
+This code defines a simple two-layer neural network using Keras (often used via TensorFlow). The `Sequential` model is a linear stack of layers. `Dense` layers are fully connected. `relu` is a common activation for hidden layers, `sigmoid` for binary classification output. `compile` configures the model for training with an optimizer and loss function. Beginners often struggle with choosing the right architecture (layers, units), activation functions, loss function, and optimizer. Deep learning requires significant data and computational resources compared to tree-based models.
 --->
 
 **Deep learning** is a subfield of machine learning that uses artificial neural networks with multiple layers to learn complex patterns from data. These models use back-propagation to adjust the weights in each layer during training, allowing them to model very large and complex datasets.
@@ -558,16 +657,30 @@ Unsupervised learning is about discovering hidden patterns or groupings in data 
 - **Association:** Find rules about how variables relate (e.g., Apriori)
 - **Dimensionality reduction:** Reduce number of features (e.g., PCA, t-SNE)
 
-**Minimal Example: K-means Clustering in Python**
+**Reference Card: `KMeans`**
+
+- **Function:** `sklearn.cluster.KMeans()`
+- **Purpose:** Find groups (clusters) of similar data points in unlabeled data.
+- **Key Parameters:**
+  - `n_clusters`: (Required) The number of clusters to form as well as the number of centroids to generate.
+  - `init`: (Optional, default='k-means++') Method for initialization ('k-means++', 'random'). 'k-means++' selects initial cluster centers in a smart way to speed up convergence.
+  - `n_init`: (Optional, default=10) Number of time the k-means algorithm will be run with different centroid seeds. The final results will be the best output of n_init consecutive runs in terms of inertia.
+  - `max_iter`: (Optional, default=300) Maximum number of iterations of the k-means algorithm for a single run.
+  - `random_state`: (Optional, default=None) Determines random number generation for centroid initialization. Use an int to make the randomness deterministic.
+
+**Example:**
 
 ```python
 from sklearn.cluster import KMeans
-X = [[1, 2], [1, 4], [10, 2], [10, 4]]
-kmeans = KMeans(n_clusters=2).fit(X)
-print(kmeans.labels_)  # Cluster assignments
+import numpy as np
+X = np.array([[1, 2], [1.5, 1.8], [5, 8], [8, 8], [1, 0.6], [9, 11]])
+kmeans = KMeans(n_clusters=2, random_state=42, n_init='auto').fit(X)
+print("Cluster labels:", kmeans.labels_)
+print("Cluster centers:", kmeans.cluster_centers_)
 ```
 
-<!This code clusters four points into two groups. Beginners sometimes forget to scale features or to interpret what the clusters mean in context.
+<!---
+This code performs K-means clustering to group data points into a specified number of clusters (`n_clusters`). It's an unsupervised algorithm, meaning it doesn't use labels (`y`). K-means works by iteratively assigning points to the nearest cluster center (centroid) and then updating the centroid position. Beginners often forget to scale features before applying K-means (as it's distance-based) or struggle with choosing the optimal `n_clusters` (often requiring methods like the elbow plot or silhouette score). `n_init='auto'` is recommended in recent scikit-learn versions.
 --->
 
 - **Clustering**: grouping points based on similarities/differences; e.g., proximity and separability of data, market segmentation, image compression
@@ -707,41 +820,44 @@ Additional topics that could be added to this section include:
 
 Time series features are essential for extracting meaningful patterns from data collected over time—think heart rate, glucose, or step counts. These features help models capture trends, variability, and periodicity that are often critical in health data.
 
-#### Reference Card & Example: pandas Time Series Methods
+**Reference Card: Pandas Time Series Feature Extraction**
 
 - **Functions:**
-    - `rolling(window, min_periods)`: Create a rolling window object
-    - `mean()`, `std()`, `min()`, `max()`: Calculate statistics over the window
-    - `autocorr(lag)`: Compute autocorrelation for a given lag
-    - `diff()`: Compute difference between consecutive values (trend)
-- **Purpose:** Calculate statistics and transformations over moving windows or the whole series
+    - `Series.rolling(window)`: Provides rolling window calculations.
+    - `.mean()`, `.std()`, `.min()`, `.max()`, `.sum()`: Aggregation functions applied to rolling windows.
+    - `Series.diff(periods=1)`: Computes the difference between elements (captures trend).
+    - `Series.autocorr(lag=1)`: Computes autocorrelation at a given lag (captures seasonality/periodicity). Often used within `.rolling().apply()`.
+- **Purpose:** Extract features summarizing trends, variability, and periodicity from time series data.
 - **Key Parameters:**
-    - `window`: Number of periods to include in each calculation
-    - `min_periods`: Minimum observations in window required to have a value
-    - `lag`: Number of periods to shift for autocorrelation
+    - `rolling(window)`: (Required) Size of the moving window (integer number of observations).
+    - `rolling(min_periods)`: (Optional, default=None) Minimum number of observations in window required to have a value (otherwise result is NA). Defaults to `window`.
+    - `diff(periods)`: (Optional, default=1) Periods to shift for calculating difference.
+    - `autocorr(lag)`: (Optional, default=1) Number of lags to apply autocorrelation calculation.
+
+**Example:**
 
 ```python
 import pandas as pd
 
 # Simulated heart rate data
-df = pd.DataFrame({'hr': [70, 72, 75, 73, 71, 74, 76]})
+s = pd.Series([70, 72, 75, 73, 71, 74, 76], name='hr')
 
-# Rolling statistics (window size 3)
-df['hr_rolling_mean'] = df['hr'].rolling(window=3, min_periods=1).mean()
-df['hr_rolling_std'] = df['hr'].rolling(window=3, min_periods=1).std()
-df['hr_rolling_min'] = df['hr'].rolling(window=3, min_periods=1).min()
-df['hr_rolling_max'] = df['hr'].rolling(window=3, min_periods=1).max()
+# Rolling mean over 3 periods
+rolling_mean = s.rolling(window=3, min_periods=1).mean()
 
-# Autocorrelation (lag 1)
-df['hr_autocorr'] = df['hr'].rolling(window=3, min_periods=1).apply(lambda x: x.autocorr(lag=1) if len(x) > 1 else None)
+# Difference (trend)
+trend = s.diff()
 
-# Trend (difference)
-df['hr_trend'] = df['hr'].diff()
+# Autocorrelation (lag 1) within a rolling window
+rolling_autocorr = s.rolling(window=3, min_periods=2).apply(lambda x: x.autocorr(lag=1))
 
-print(df)
+print("Rolling Mean:\n", rolling_mean)
+print("\nTrend:\n", trend)
+print("\nRolling Autocorr (Lag 1):\n", rolling_autocorr)
 ```
 
-<!This code demonstrates how to extract several key time series features using pandas: rolling mean, standard deviation, min, max, autocorrelation, and trend (difference). These features are commonly used in health data to summarize variability, detect trends, and identify repeating patterns. Beginners often overlook autocorrelation and trend, but these can be especially useful for physiological signals.
+<!---
+This example shows common pandas operations for time series feature engineering. `rolling()` creates windows, and aggregations like `.mean()` or `.std()` summarize them. `.diff()` captures change over time (trend). `.autocorr()` measures how correlated a series is with lagged versions of itself, often useful for physiological signals. Beginners might struggle with handling the NA values produced at the start of rolling calculations or choosing the right window size. These features transform a sequence into static values usable by standard ML models.
 --->
 
 ## 🚀 Automated Feature Engineering
@@ -791,20 +907,19 @@ Time series features—like rolling averages, variability, and autocorrelation�
 
 **Featuretools** is a Python library for automated feature engineering, especially useful for relational and time series data.
 
-#### Reference Card
+**Reference Card: `featuretools.dfs`**
 
-- **Function:** `featuretools.dfs`
-- **Purpose:** Automatically creates features from raw data tables
+- **Function:** `featuretools.dfs()` (Deep Feature Synthesis)
+- **Purpose:** Automatically generate features from relational datasets organized in an EntitySet.
 - **Key Parameters:**
-    - `entityset`: collection of dataframes and relationships
-    - `target_dataframe_name`: name of the dataframe to create features for
-    - `agg_primitives`: list of aggregation functions (e.g., "mean", "sum")
-    - `trans_primitives`: list of transformation functions (e.g., "month", "weekday")
+  - `entityset`: (Required) A Featuretools EntitySet object containing dataframes and their relationships.
+  - `target_dataframe_name`: (Required) The name of the dataframe for which to build features.
+  - `agg_primitives`: (Optional) List of aggregation primitives (e.g., 'mean', 'sum', 'count', 'std') to apply across relationships.
+  - `trans_primitives`: (Optional) List of transformation primitives (e.g., 'month', 'weekday', 'diff', 'percentile') to apply to single columns.
+  - `max_depth`: (Optional, default=2) Maximum depth of features to create (how many primitives to stack).
+  - `features_only`: (Optional, default=False) If True, return only the list of feature definitions instead of computing the feature matrix.
 
-<!Featuretools uses "deep feature synthesis" to automatically generate features by stacking simple operations (like sum, mean, count) across related tables. This is especially helpful in health data with multiple linked tables (e.g., patients, visits, labs). Beginners may find the terminology confusing—"entityset" just means a collection of related tables.
---->
-
-#### Example: Simple Featuretools usage
+**Example:**
 
 ```python
 import featuretools as ft
@@ -823,7 +938,10 @@ feature_matrix, feature_defs = ft.dfs(entityset=es, target_dataframe_name='patie
 print(feature_matrix)
 ```
 
-<!This code shows how to use Featuretools to automatically generate features for each patient, such as the mean blood pressure across visits. The "entityset" links the tables, and "dfs" (deep feature synthesis) does the heavy lifting.
+```
+
+<!---
+This code demonstrates Deep Feature Synthesis (DFS) using Featuretools. First, an `EntitySet` is created to define the tables (`patients`, `visits`) and their relationship. Then, `ft.dfs` automatically generates features for the `target_dataframe_name` ('patients') by applying aggregation primitives (like MEAN, COUNT of visits' 'bp') and transformation primitives. This automates the creation of potentially hundreds of features, saving significant effort, especially with complex relational health data. Beginners might find setting up the EntitySet relationships the trickiest part.
 --->
 
 ### 🩺 Domain-Specific Feature Derivations
@@ -859,19 +977,19 @@ Understanding **why** a model makes its predictions is crucial in health data sc
 
 **SHAP** (SHapley Additive exPlanations) assigns each feature an importance value for a particular prediction, based on cooperative game theory.
 
-#### Reference Card
+**Reference Card: `shap.TreeExplainer` & `shap.summary_plot`**
 
-- **Function:** `shap.TreeExplainer`, `shap.summary_plot`
-- **Purpose:** Quantify and visualize feature contributions to model predictions
+- **Function:** `shap.TreeExplainer(model)`, `shap.summary_plot(shap_values, features)`
+- **Purpose:** Explain the output of tree-based models (like XGBoost, RandomForest) using SHAP values. `summary_plot` visualizes global feature importance.
 - **Key Parameters:**
-    - `model`: trained tree-based model (e.g., RandomForest, XGBoost)
-    - `data`: data to explain (e.g., validation set)
-    - `plot_type`: "bar", "dot", etc. (for summary_plot)
+  - `TreeExplainer(model)`: (Required) The tree-based model object to explain.
+  - `TreeExplainer(data)`: (Optional) A background dataset used for conditioning (often the training data).
+  - `explainer.shap_values(X)`: (Required) The data instances (e.g., test set) for which to compute SHAP values.
+  - `summary_plot(shap_values)`: (Required) The computed SHAP values.
+  - `summary_plot(features)`: (Required) The feature data corresponding to `shap_values`.
+  - `summary_plot(plot_type)`: (Optional, default="dot") Type of plot ('dot', 'bar', 'violin').
 
-<!SHAP values are based on Shapley values from game theory, which fairly distribute "credit" for a prediction among features. SHAP can be used with many model types, but is especially efficient for tree-based models. Beginners may find the plots overwhelming at first—focus on the top features and their direction (positive/negative impact).
---->
-
-#### Example: SHAP with RandomForest
+**Example:**
 
 ```python
 import shap
@@ -891,7 +1009,10 @@ shap_values = explainer.shap_values(X)
 shap.summary_plot(shap_values, X, plot_type="bar")
 ```
 
-<!This code shows how to use SHAP to interpret an XGBoost model. The summary plot displays which features are most influential across all predictions. In health data, this can highlight risk factors or key clinical variables.
+```
+
+<!---
+This code calculates and visualizes SHAP values for an XGBoost model. `TreeExplainer` is optimized for tree models. `shap_values` gives the contribution of each feature to each prediction. `summary_plot` (with `plot_type="bar"`) shows the mean absolute SHAP value per feature, indicating overall importance. SHAP provides theoretically sound, consistent feature attributions, crucial for understanding model behavior in high-stakes domains like healthcare. Beginners might initially find the concept of Shapley values abstract, but the plots provide intuitive insights into feature impact. Remember to install the `shap` library (`pip install shap`).
 --->
 ![SHAP summary plot example](media/oyster_shap.png)
 *Example SHAP summary plot: Each dot shows a feature's impact on a prediction. Color indicates feature value (red=high, blue=low).*
@@ -904,19 +1025,17 @@ shap.summary_plot(shap_values, X, plot_type="bar")
 
 **eli5** is a Python library that helps demystify machine learning models by showing feature weights and decision paths.
 
-#### Reference Card
+**Reference Card: `eli5.show_weights`**
 
-- **Function:** `eli5.show_weights`, `eli5.explain_prediction`
-- **Purpose:** Display feature importances and explain individual predictions
+- **Function:** `eli5.show_weights()`
+- **Purpose:** Explain weights and feature importances of black-box or white-box estimators.
 - **Key Parameters:**
-    - `estimator`: trained model
-    - `feature_names`: list of feature names (optional)
-    - `top`: number of features to display
+  - `estimator`: (Required) Trained scikit-learn compatible estimator object.
+  - `feature_names`: (Optional) List of feature names corresponding to the columns in the input data.
+  - `top`: (Optional, default=None) Number of top features to show. If None, show all features.
+  - `target_names`: (Optional) Names for the target variable classes.
 
-<!eli5 is especially useful for linear and tree-based models. It can show which features push a prediction up or down, and can even display the decision path for a single prediction. Beginners sometimes forget to install the package (`pip install eli5`).
---->
-
-#### Example: eli5 with RandomForest
+**Example:**
 
 ```python
 import eli5
@@ -930,7 +1049,10 @@ model = RandomForestClassifier().fit(X, y)
 eli5.show_weights(model, feature_names=['feature1', 'feature2'])
 ```
 
-<!This code demonstrates how to use eli5 to display feature importances for a RandomForest model. The output helps you see which features are most influential in the model's decisions.
+```
+
+<!---
+This code uses `eli5` (Explain Like I'm 5) to show feature importances for a RandomForestClassifier. `eli5.show_weights` provides a simple table ranking features by their contribution (using mean decrease in impurity for forests). It's a quick way to get a global sense of feature importance. Beginners find `eli5` quite accessible due to its straightforward output. Remember to install it (`pip install eli5`) and provide `feature_names` for better readability. While less theoretically grounded than SHAP for complex interactions, it's great for a first look.
 --->
 
 ![eli5 feature weights](media/eli5_explain_weights.png)
@@ -968,18 +1090,17 @@ Preparing your data is just as important as choosing the right model. Good data 
 
 Many machine learning models require all input features to be numeric. **One-hot encoding** transforms categorical variables (like "smoker" or "blood type") into a set of binary columns.
 
-#### OneHotEncoder Reference Card
+**Reference Card: `OneHotEncoder`**
 
-- **Function:** `sklearn.preprocessing.OneHotEncoder`
-- **Purpose:** Convert categorical variables into binary indicator columns
+- **Function:** `sklearn.preprocessing.OneHotEncoder()`
+- **Purpose:** Encode categorical features as a one-hot numeric array.
 - **Key Parameters:**
-    - `sparse`: If False, returns a dense array (easier for beginners)
-    - `handle_unknown`: How to handle unseen categories ("ignore" is safest)
+  - `categories`: (Optional, default='auto') Categories per feature. 'auto' determines categories automatically from the training data.
+  - `drop`: (Optional, default=None) Specifies a category to drop for each feature ('first', 'if_binary', or an array). Helps avoid multicollinearity.
+  - `sparse_output`: (Optional, default=True) Will return sparse matrix if set True else will return an array. Changed from `sparse` in newer versions.
+  - `handle_unknown`: (Optional, default='error') Whether to raise an error or ignore if an unknown categorical feature is present during transform ('error', 'ignore', 'infrequent_if_exist').
 
-<!One-hot encoding is essential for models that can't handle text or categories directly. Beginners often forget to set `sparse=False`, which makes the output easier to work with in pandas. Also, using `handle_unknown="ignore"` prevents errors when new categories appear in test data.
---->
-
-#### Example: OneHotEncoder
+**Example:**
 
 ```python
 from sklearn.preprocessing import OneHotEncoder
@@ -991,7 +1112,10 @@ encoded = encoder.fit_transform(df[['smoker']])
 print(encoded)
 ```
 
-<!This code shows how to use OneHotEncoder to convert a "smoker" column into binary columns. The result is a NumPy array, but you can convert it back to a DataFrame for easier analysis.
+```
+
+<!---
+This code uses `OneHotEncoder` to transform a categorical feature ('smoker') into numerical format suitable for most ML algorithms. Each category becomes a new binary column (0 or 1). Setting `sparse_output=False` (or `sparse=False` in older sklearn) returns a dense NumPy array, often easier for beginners. `handle_unknown='ignore'` is crucial for real-world data where the test set might contain categories not seen during training. Remember to fit the encoder *only* on the training data and then transform both train and test sets.
 --->
 
 ![onehotencoder](media/onehotencoder.png)
@@ -1002,32 +1126,41 @@ In health data, one class (like "disease present") is often much rarer than the 
 
 ![smote](media/smote.png)
 
-#### SMOTE Reference Card
+**Reference Card: `SMOTE`**
 
-- **Function:** `imblearn.over_sampling.SMOTE`
-- **Purpose:** Generate synthetic samples for the minority class
+- **Function:** `imblearn.over_sampling.SMOTE()` (Synthetic Minority Over-sampling Technique)
+- **Purpose:** Address class imbalance by oversampling the minority class(es) by creating synthetic samples.
 - **Key Parameters:**
-    - `sampling_strategy`: Proportion of minority to majority class
-    - `random_state`: For reproducibility
+  - `sampling_strategy`: (Optional, default='auto') Specifies the target class distribution after resampling. 'auto' resamples all minority classes to match the majority class count. Can be a float (ratio relative to majority) or a dict `{class_label: count}`.
+  - `k_neighbors`: (Optional, int, default=5) Number of nearest neighbors in the minority class used as a basis for generating synthetic samples.
+  - `random_state`: (Optional, int, default=None) Controls the randomization of the algorithm for reproducible results.
 
-<!Imbalanced data can cause models to ignore the minority class, leading to poor sensitivity/recall. SMOTE is a popular way to address this, but be careful: synthetic data can sometimes introduce artifacts. Always check your results!
---->
-
-#### Example: SMOTE
+**Example:**
 
 ```python
 from imblearn.over_sampling import SMOTE
+from sklearn.datasets import make_classification
 import numpy as np
+import collections # To display class counts
 
-X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-y = np.array([0, 0, 0, 1])  # Class 1 is rare
+# Create a sample imbalanced dataset (e.g., 90 class 0, 10 class 1)
+X, y = make_classification(n_samples=100, n_features=2, n_informative=2,
+                           n_redundant=0, n_repeated=0, n_classes=2,
+                           n_clusters_per_class=1, weights=[0.9, 0.1],
+                           class_sep=0.8, random_state=42)
+
+print("Original dataset shape %s" % collections.Counter(y))
+
+# Apply SMOTE
 smote = SMOTE(random_state=42)
-X_res, y_res = smote.fit_resample(X, y)
-print(X_res)
-print(y_res)
+X_resampled, y_resampled = smote.fit_resample(X, y)
+
+print("Resampled dataset shape %s" % collections.Counter(y_resampled))
+# print("Resampled X shape:", X_resampled.shape) # Uncomment to see shape
 ```
 
-<!This code demonstrates how to use SMOTE to balance a dataset. After resampling, both classes will have equal representation. This is especially useful for rare disease prediction.
+<!---
+This code applies SMOTE to handle class imbalance, a common issue in health data (e.g., rare diseases). SMOTE generates *synthetic* minority samples by interpolating between existing minority samples and their nearest neighbors, rather than just duplicating them. This helps prevent overfitting while balancing the dataset for training. **Crucially**, apply SMOTE *only* to the training data *after* splitting, never to the test set, to avoid data leakage and get a realistic performance evaluation. Beginners often make this mistake. Remember `pip install imbalanced-learn`.
 --->
 
 ![imbalance](media/imbalanced_classes.jpg)

@@ -1,3 +1,8 @@
+---
+lecture_number: 05
+pdf: true
+---
+
 # Case Study: Decline in `product_event`
 
 > There is a decline in the number of daily users engaging with <VALUABLE_FEATURE> for the mobile app. How would you go about investigating this issue?

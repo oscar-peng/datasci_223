@@ -89,11 +89,13 @@ nav:
       - '02. bugs, ducks, and data': 02/lecture_02.md
       - '03. `JOIN` the `DISTINCT` with SQL': 03/lecture_03.md
       - "04. Time Keeps on Slippin' Into the Forecast": 04/lecture_04.md
+      - '05. Putting a label on it': 05/lecture_05.md
   - Exercises:
     - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
     - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
     - '03. `JOIN` the `DISTINCT` with SQL': https://classroom.github.com/a/hXtQfWAB
     - "04. It's about time": https://classroom.github.com/a/Nt5jaJsY
+    - '05. Putting a label on it': https://classroom.github.com/a/i99LRj_R
 
 extra:
   social:

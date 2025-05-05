@@ -13,12 +13,11 @@ pdf: true
 1. No more homework! [[Project]
 
     > Fun example: 20 Questions bot [https://github.com/earthtojake/20q](https://github.com/earthtojake/20q)
-    
+
 2. Tips for using the shell (terminal, command line)
-    
+
     ![media/ShellIntro.pdf]
   
-
 ## **Neural networks overview**
 
 ![media/70wnk5kfr5hc1.jpeg]
@@ -116,7 +115,7 @@ The research team went out and took 100 photographs of tanks hiding behind trees
 
 ![media/Untitled 5.png|Untitled 5.png]
 
-#### Success!
+#### Success
 
 The huge neural network was fed each photo one at a time and asked if there was a tank hiding behind the trees. Of-course at the beginning its answers were completely random since the network didn't know what was going on or what it was supposed to do. But each time it was fed a photo and it generated an answer, the scientists told it if it was right or wrong. If it was wrong it would randomly change the weightings in its network until it gave the correct answer.
 
@@ -136,55 +135,7 @@ The Pentagon was very pleased with this, but a little bit suspicious, they wante
 
 #### Demo Break 1: Animal Identifier
 <!---
-This demo introduces students to a hands-on exercise where they train a neural network to classify animals. The training set includes cats and dogs, but the model is tested on pandas, demonstrating the limitations of the model's understanding.
---->
-
-**Task:** Train a simple neural network using Keras or PyTorch to classify images of cats and dogs. Then, test the model on images of pandas.
-
-**Expected Outcome:** The model will likely classify pandas as either cats or dogs, highlighting the importance of diverse training data.
-
-```python
-## Example code for Demo Break 1
-from keras.models import Sequential
-from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
-
-## Define a simple CNN model
-model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
-    MaxPooling2D((2, 2)),
-    Flatten(),
-    Dense(64, activation='relu'),
-    Dense(2, activation='softmax')  # Output layer for cat/dog classification
-])
-
-## Compile and train the model
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-model.fit(x_train, y_train, epochs=10)
-
-## Test on pandas images
-predictions = model.predict(x_test_pandas)
-print(predictions)
-```
-<!---
-This example demonstrates how to build and train a simple CNN for image classification. Students should observe how the model performs on unseen data (pandas images).
---->
-<!---
-This demo introduces students to various applications of neural networks, including image recognition and natural language processing.
---->
-
-#### Demo Break 1: Exploring Neural Network Applications
-<!---
-This demo introduces students to various applications of neural networks, including image recognition and natural language processing.
---->
-
-#### Demo Break 1: Image Classification using CNNs
-<!---
-This demo introduces students to applying CNNs for image classification tasks. It provides hands-on experience with building and training a simple CNN model.
---->
-
-#### Demo Break 1: Image Classification using CNNs
-<!---
-This demo introduces students to applying CNNs for image classification tasks. It provides hands-on experience with building and training a simple CNN model.
+    - [Which animal is this?](https://github.com/christopherseaman/datasci_223/blob/main/exercises/4-classification/practice_1-which_animal.ipynb): A practical exercise in applying CNNs to a multi-class classification problem.
 --->
 
 Neural networks have revolutionized the field of machine learning, providing the backbone for a myriad of applications:
@@ -228,19 +179,21 @@ While activation functions introduce non-linearity, their concept is somewhat an
 The concept of activation functions in neural networks bears a resemblance to logistic regression in several ways:
 
 - **Weighted Sum Inputs:** Both neural networks and logistic regression models compute a weighted sum of the input features. In neural networks, this sum is then passed through an activation function.
-- **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval $y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$﻿
+- **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval $y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$
 
 ### Introducing: ReLU
+
 **Reference Card: `ReLU`**
 
 - **Function:** $f(x) = \max(0,x)$
 - **Purpose:** Introduces non-linearity by replacing negative values with zero, allowing the network to learn complex patterns.
 - **Key Characteristics:**
-  - Computationally efficient
-  - Helps mitigate the vanishing gradient problem
-  - Leads to sparse activations
+    - Computationally efficient
+    - Helps mitigate the vanishing gradient problem
+    - Leads to sparse activations
 
 **Minimal Example:**
+
 ```python
 import numpy as np
 
@@ -261,7 +214,7 @@ The **Rectified Linear Unit (ReLU)** has become one of the most widely used acti
 
 ![media/relu.png]
 
-#### Advantages of ReLU:
+#### Advantages of ReLU
 
 Its popularity stems from its simplicity and efficiency, offering several advantages:
 
@@ -281,6 +234,15 @@ Typically, the initial layer of a neural network assigns individual neurons to s
 !!! important "Note"
     Consider the neurons as a finite resource: data preparation can spare capacity that would otherwise be used to approximate these preprocessing steps  
 
+### Input Shape Importance
+<!---
+Neural networks require inputs to have consistent dimensions. This section discusses the importance of preprocessing data to meet this requirement.
+--->
+
+- **Consistent Dimensions:** Neural networks require a fixed size of input; thus, it's crucial to preprocess the data to ensure consistent dimensions. For images, this might involve cropping or padding to achieve uniform dimensions. For text or sequences, this could mean padding shorter sequences or truncating longer ones to a fixed length.
+- **Batch Size:** The choice of batch size can affect both the speed and stability of the training process. Larger batches provide a more accurate estimate of the gradient, but they require more memory and might lead to slower convergence.
+
+
 ### Data cleaning & transformation
 <!---
 Proper data cleaning and transformation are essential steps in preparing inputs for neural networks. These processes help in improving the quality of the data and making it more suitable for modeling.
@@ -290,57 +252,6 @@ Proper data cleaning and transformation are essential steps in preparing inputs 
 - **Standardization:** This involves transforming the data to have a mean of zero and a standard deviation of one. Standardization ensures that the feature distribution is centered around 0, with a standard deviation that scales the distribution. This is particularly useful for inputs to activation functions that are sensitive to magnitude, such as sigmoid or tanh.
 - **Handling Missing Values:** Missing data can significantly impact the performance of neural networks. Techniques such as imputation (filling missing values with the mean, median, or mode), or using a model to predict missing values, can be employed to address this issue.
 
-### Input Shape Importance
-<!---
-Neural networks require inputs to have consistent dimensions. This section discusses the importance of preprocessing data to meet this requirement.
---->
-
-- **Consistent Dimensions:** Neural networks require a fixed size of input; thus, it's crucial to preprocess the data to ensure consistent dimensions. For images, this might involve cropping or padding to achieve uniform dimensions. For text or sequences, this could mean padding shorter sequences or truncating longer ones to a fixed length.
-- **Batch Size:** The choice of batch size can affect both the speed and stability of the training process. Larger batches provide a more accurate estimate of the gradient, but they require more memory and might lead to slower convergence.
-
-### Feature Engineering
-
-#### Demo Break 2: Feature Engineering
-<!---
-This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
---->
-
-**Task:** Normalize a sample dataset using StandardScaler from Scikit-learn. Then, explore the impact of normalization on model performance.
-
-```python
-## Example code for Demo Break 2
-from sklearn.preprocessing import StandardScaler
-import numpy as np
-
-## Example data
-data = np.array([[1, 2], [3, 4]])
-
-## Standardizing data
-scaler = StandardScaler()
-standardized_data = scaler.fit_transform(data)
-print(standardized_data)
-```
-<!---
-This example demonstrates how to standardize data using Scikit-learn's StandardScaler. Students should understand the importance of scaling data for neural network training.
---->
-<!---
-This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
---->
-<!---
-This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
---->
-
-#### Demo Break 2: Feature Engineering for Neural Networks
-<!---
-This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
---->
-<!---
-This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
---->
-<!---
-Feature engineering involves selecting, encoding, and constructing features to improve model performance. It's a critical step in the machine learning pipeline.
---->
-
 **Reference Card: Data Normalization**
 
 - **Function:** Scaling input features to a similar scale
@@ -348,6 +259,7 @@ Feature engineering involves selecting, encoding, and constructing features to i
 - **Common Techniques:** Min-Max Scaling, Standardization
 
 **Minimal Example:**
+
 ```python
 from sklearn.preprocessing import StandardScaler
 import numpy as np
@@ -402,6 +314,7 @@ Cost functions guide the optimization process during neural network training. Ch
 - **Weaknesses:** Can lead to numerical instability if not implemented carefully
 
 **Minimal Example:**
+
 ```python
 import torch
 import torch.nn.functional as F
@@ -549,12 +462,14 @@ Saving models and training checkpoints is crucial for preserving progress, enabl
 --->
 
 #### Why Save Models?
+
 - Preserve training progress
 - Enable model reuse
 - Facilitate transfer learning
 - Share models with others
 
 #### Saving in Keras
+
 ```python
 ## Save the entire model
 model.save('my_model.keras')
@@ -572,6 +487,7 @@ model.fit(x_train, y_train, callbacks=[checkpoint_callback])
 ```
 
 #### Saving in PyTorch
+
 ```python
 ## Save the entire model
 torch.save(model.state_dict(), 'model.pth')
@@ -593,6 +509,7 @@ epoch = checkpoint['epoch']
 ```
 
 #### Best Practices
+
 - Save both model architecture and weights
 - Use version control for model files
 - Document model versions and training parameters
@@ -627,11 +544,15 @@ for epoch in range(num_epochs):
 ```
 
 #### Key Features
+
 - Real-time monitoring of training metrics
 - Visualization of model architecture
 - Histogram of weights and biases
 - Projector for high-dimensional data visualization
 - Profiler for performance analysis
+
+
+#### Demo Break 2
 
 ## **Model Architecture**
 
@@ -661,10 +582,11 @@ The connectedness of a neural network significantly impacts its performance and 
 - **Function:** Allows gradients to flow directly through the network by skipping one or more layers
 - **Purpose:** Mitigates vanishing gradient problem, enabling training of very deep networks
 - **Key Characteristics:**
-  - Improves gradient flow
-  - Enables deeper network training
+    - Improves gradient flow
+    - Enables deeper network training
 
 **Minimal Example:**
+
 ```python
 import torch
 import torch.nn as nn
@@ -725,9 +647,8 @@ RNNs are designed to handle sequential data, where the order of the data points 
 
 - **Sequence Processing:** Unlike feedforward neural networks, RNNs have loops in them, allowing information to persist. This architecture makes them ideal for tasks where context from previous inputs is crucial, such as in language modeling or time series prediction.
 - **Long Short-Term Memory (LSTM) and Gated Recurrent Units (GRU):** Variants of RNNs designed to solve the vanishing gradient problem associated with standard RNNs. LSTMs and GRUs introduce gates that regulate the flow of information, allowing the network to retain or forget information over long sequences effectively.
-    
+
 ![media/rnn.png]
-    
 
 ![media/LSTMvsGRU.png]
 
@@ -782,7 +703,6 @@ The left and center figures represent different layers / attention heads. The ri
 - **Diffusion Models** gradually add noise to data until it becomes indistinguishable from random noise and then learn to reverse this noising process to generate data. While they don't use a latent space in the traditional sense, the intermediate noisy states during the reverse process can be viewed as a form of high-dimensional latent representation.
 - **Large Language Models** #FIXME
 
-
 ## **Neural Networks in Practice**
 
 ### Areas of Active Research
@@ -822,11 +742,12 @@ To navigate the challenges and leverage the strengths of neural networks, practi
 **Reference Card: Building Custom Neural Networks**
 
 - **Key Parameters:**
-  - `input_size`: Dimensionality of the input data
-  - `hidden_size`: Size of the hidden layers (modifiable parameter)
-  - `num_classes`: Number of distinct categories in the classification task
+    - `input_size`: Dimensionality of the input data
+    - `hidden_size`: Size of the hidden layers (modifiable parameter)
+    - `num_classes`: Number of distinct categories in the classification task
 
 **Best Practices:**
+
 - Start with a simple architecture and gradually add complexity.
 - Choose appropriate activation functions for hidden layers.
 - Use a suitable loss function and optimizer based on the task.
@@ -855,6 +776,7 @@ Building a neural network layer by layer is a fundamental skill in deep learning
 - #FIXME: more custom layers
 
 **Minimal Example:**
+
 ```python
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Reshape
@@ -929,7 +851,6 @@ class SimpleNN(nn.Module):
         x = self.fc2(x)
         return x
 ```
-
 
 **Loss Function and Optimizer Setup:**
 Choose a suitable loss function and optimizer.
@@ -1068,142 +989,31 @@ model.fit(x_train, y_train, epochs=10, batch_size=32)
 
 This foundation serves as a starting point for constructing neural networks in both PyTorch and Keras. As you progress to more complex tasks, consider adding more layers, employing different types of layers (like `Conv2D` for image-related tasks), or adjusting parameters and hyperparameters to refine your model's performance.
 
-### Examples with Code
+## Demo Break 3: Building a Neural Network from Scratch (MNIST)
 
-#### Demo Break 3: Building a Simple Neural Network
-<!---
-This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
---->
-
-**Task:** Build a simple neural network using Keras or PyTorch to classify handwritten digits (MNIST dataset). Train the model and evaluate its performance.
-
-```python
-## Example code for Demo Break 3
-from keras.models import Sequential
-from keras.layers import Dense, Flatten
-
-## Define a simple neural network model
-model = Sequential([
-    Flatten(input_shape=(28, 28)),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')
-])
-
-## Compile and train the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(x_train, y_train, epochs=10)
-
-## Evaluate the model
-test_loss, test_acc = model.evaluate(x_test, y_test)
-print(f'Test accuracy: {test_acc:.2f}')
-```
-<!---
-This example demonstrates how to build, train, and evaluate a simple neural network for handwritten digit classification. Students should understand the process of building and training a neural network.
---->
-
-#### Demo Break 3: Building a Simple Neural Network
-<!---
-This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
---->
-
-**Task:** Build a simple neural network using Keras or PyTorch to classify handwritten digits (MNIST dataset). Train the model and evaluate its performance.
-
-```python
-## Example code for Demo Break 3
-from keras.models import Sequential
-from keras.layers import Dense, Flatten
-
-## Define a simple neural network model
-model = Sequential([
-    Flatten(input_shape=(28, 28)),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')
-])
-
-## Compile and train the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(x_train, y_train, epochs=10)
-
-## Evaluate the model
-test_loss, test_acc = model.evaluate(x_test, y_test)
-print(f'Test accuracy: {test_acc:.2f}')
-```
-<!---
-This example demonstrates how to build, train, and evaluate a simple neural network for handwritten digit classification. Students should understand the process of building and training a neural network.
---->
-
-#### Demo Break 3: Building a Simple Neural Network
-<!---
-This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
---->
-
-**Task:** Build a simple neural network using Keras or PyTorch to classify handwritten digits (MNIST dataset). Train the model and evaluate its performance.
-
-```python
-## Example code for Demo Break 3
-from keras.models import Sequential
-from keras.layers import Dense, Flatten
-
-## Define a simple neural network model
-model = Sequential([
-    Flatten(input_shape=(28, 28)),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')
-])
-
-## Compile and train the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(x_train, y_train, epochs=10)
-
-## Evaluate the model
-test_loss, test_acc = model.evaluate(x_test, y_test)
-print(f'Test accuracy: {test_acc:.2f}')
-```
-<!---
-This example demonstrates how to build, train, and evaluate a simple neural network for handwritten digit classification. Students should understand the process of building and training a neural network.
---->
-
-#### Practical Exercises
-
-1. **Exercise 1:** Build a CNN in PyTorch for EMNIST classification.
-2. **Exercise 2:** Implement a custom ReLU function.
-3. **Exercise 3:** Train a transformer on a small text dataset using Hugging Face.
-
-<!---
-These exercises provide hands-on experience with implementing key concepts learned in this lecture. Students should attempt to complete these exercises to reinforce their understanding.
---->
-
-#### Demo Break 3: Building a Simple Neural Network
-<!---
-This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
---->
-<!---
-This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
---->
+## Examples with code
 
 Practical implementations of neural network models provide valuable insights and hands-on experience:
 
 - **CNNs:** Implementations of ResNet and XCeption in Keras for image classification tasks, demonstrating the effectiveness of deep convolutional architectures.
-    - [Which animal is this?](https://github.com/christopherseaman/datasci_223/blob/main/exercises/4-classification/practice_1-which_animal.ipynb): A practical exercise in applying CNNs to a multi-class classification problem.
 - **Hybrid Models:** Demonstrating the combination of CNNs and RNNs in Keras for tasks that require understanding both spatial and temporal data.
     - [https://github.com/ankangd/HybridCovidLUS](https://github.com/ankangd/HybridCovidLUS): An example of a hybrid model applied to medical imaging for COVID-19 analysis.
 - **GPT from Scratch:** Building a simplified version of the GPT model in PyTorch, offering insights into the workings of transformer models.
-    - [https://github.com/karpathy/nanoGPT](https://github.com/karpathy/nanoGPT): Accompanied by a [full walkthrough video](https://www.youtube.com/watch?v=kCc8FmEb1nY), this implementation demystifies the GPT architecture.
-- **Multi-Model Systems:** Exploring the interaction between different models, such as in GANs, where a generative model is pitted against a discriminative model to produce high-quality synthetic data.
     - [https://github.com/tezansahu/PyTorch-GANs](https://github.com/tezansahu/PyTorch-GANs): A beginner-friendly implementation showing how to train a GAN on the MNIST dataset to generate digit images.
+- **Multi-Model Systems:** Exploring the interaction between different models, such as in GANs, where a generative model is pitted against a discriminative model to produce high-quality synthetic data.
 
 ## It came from the internet
 
-### Recent datasci papers from NEJM:
+### Recent datasci papers from NEJM
 
 - [**How Censoring Works**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2300205?emp=marcom&utm_source=nejmglist&utm_medium=email&utm_campaign=evengage23)
 - [**Large Language Models**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2300128?emp=marcom)
 - [**The Problem of Multiple Comparisons**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2200171?emp=marcom&utm_source=nejmglist&utm_medium=email&utm_campaign=evengage23)
 - [**Bayesian Way**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2300090?emp=marcom&utm_source=nejmglist&utm_medium=email&utm_campaign=evengage23)
 
-### More broadly:
+### More broadly
 
-https://github.com/TheEconomist/the-economist-war-fire-model
+<https://github.com/TheEconomist/the-economist-war-fire-model>
 
 > [!info] Gemma: Introducing new state-of-the-art open models  
 > Gemma is a family of lightweight, state-of-the art open models built from the same research and technology used to create the Gemini models.  

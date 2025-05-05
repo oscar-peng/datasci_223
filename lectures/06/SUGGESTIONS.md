@@ -33,14 +33,14 @@
 
 ---
 
-## 6. **Transformer Architecture Deep Dive** (next lecture)
+## 6. **Transformer Architecture Deep Dive** (NOTE: next lecture, DO NOT ADD)
 
 **Improvement**: Add a simplified diagram of the transformer encoder-decoder structure with attention heads.  
 **Content Outline**:  
 
 - Label key components: Input Embeddings → Positional Encoding → Multi-Head Attention → Feed-Forward → Output.  
 
-## 8. **Ethics & Hallucination Case Study** (next lecture)
+## 8. **Ethics & Hallucination Case Study** (NOTE: next lecture, DO NOT ADD)
 
 **Improvement**: Add a real-world example of LLM hallucination (e.g., fake legal citations) and mitigation strategies.  
 **Content Outline**:  

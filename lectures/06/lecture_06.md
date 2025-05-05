@@ -20,10 +20,16 @@
 ![[70wnk5kfr5hc1.jpeg]]
 
 ## Biological inspiration
+<!---
+Biological neural networks are complex systems that inspire artificial neural networks. Let's break down the key components and their functions to understand how they work.
+--->
 
 ![[Notion/Getting into Data Science/Applied Data Science with Python/Neural Networks- If I only had a brain/Untitled.png|Untitled.png]]
 
 A **neuron** has:
+<!---
+A biological neuron is the basic building block of the nervous system. It processes and transmits information through electrical and chemical signals.
+--->
 
 - Branching input (dendrites)
 - Branching output (the axon)
@@ -36,6 +42,9 @@ Axon connects to dendrites via synapses
 - Synapses may be excitatory or inhibitory
 
 ### _Pigeons as art experts_ (Watanabe _et al._ 1995)
+<!---
+This experiment demonstrates the ability of biological neural networks to learn and generalize complex patterns, such as artistic styles. It shows that with proper training, even non-human biological systems can develop impressive pattern recognition capabilities.
+--->
 
 Experiment:
 
@@ -72,6 +81,21 @@ Neural networks draw inspiration from the biological neural networks that consti
 
 ## Famous application: tank or not-a-tank
 
+<!---
+This case study illustrates the importance of data quality and diversity in training neural networks. The model's failure to generalize highlights the issue of overfitting to specific characteristics in the training data.
+--->
+
+![[Notion/Getting into Data Science/Applied Data Science with Python/Neural Networks- If I had a brain/Untitled 4.png|Untitled 4.png]]
+![[Notion/Getting into Data Science/Applied Data Science with Python/Neural Networks- If I had a brain/Untitled 5.png|Untitled 5.png]]
+
+### Data Bias and Overfitting
+
+The research team took 100 photos of tanks hiding behind trees and 100 photos of trees without tanks. However, all tank photos were taken on sunny days, while tree-only photos were taken on cloudy days. The neural network learned to distinguish between sunny and cloudy conditions rather than the presence or absence of tanks.
+
+![[tank_vs_not_tank_bias.png]]
+
+**Lesson Learned:** Data bias can lead to unexpected model behavior. Ensuring diverse and representative training data is crucial.
+
 In the 1980s, the Pentagon wanted to harness computer technology to make their tanks harder to attack.
 
 The preliminary plan was to fit each tank with a digital camera hooked up to a computer. The computer would continually scan the environment outside for possible threats - such as an enemy tank hiding behind a tree - and alert the tank crew to anything suspicious.
@@ -102,6 +126,59 @@ The Pentagon was very pleased with this, but a little bit suspicious, they wante
 
 ## Applications in Machine Learning
 
+### Demo Break 1: Animal Identifier
+<!---
+This demo introduces students to a hands-on exercise where they train a neural network to classify animals. The training set includes cats and dogs, but the model is tested on pandas, demonstrating the limitations of the model's understanding.
+--->
+
+**Task:** Train a simple neural network using Keras or PyTorch to classify images of cats and dogs. Then, test the model on images of pandas.
+
+**Expected Outcome:** The model will likely classify pandas as either cats or dogs, highlighting the importance of diverse training data.
+
+```python
+# Example code for Demo Break 1
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
+
+# Define a simple CNN model
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
+    MaxPooling2D((2, 2)),
+    Flatten(),
+    Dense(64, activation='relu'),
+    Dense(2, activation='softmax')  # Output layer for cat/dog classification
+])
+
+# Compile and train the model
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(x_train, y_train, epochs=10)
+
+# Test on pandas images
+predictions = model.predict(x_test_pandas)
+print(predictions)
+```
+<!---
+This example demonstrates how to build and train a simple CNN for image classification. Students should observe how the model performs on unseen data (pandas images).
+--->
+<!---
+This demo introduces students to various applications of neural networks, including image recognition and natural language processing.
+--->
+
+### Demo Break 1: Exploring Neural Network Applications
+<!---
+This demo introduces students to various applications of neural networks, including image recognition and natural language processing.
+--->
+
+### Demo Break 1: Image Classification using CNNs
+<!---
+This demo introduces students to applying CNNs for image classification tasks. It provides hands-on experience with building and training a simple CNN model.
+--->
+
+### Demo Break 1: Image Classification using CNNs
+<!---
+This demo introduces students to applying CNNs for image classification tasks. It provides hands-on experience with building and training a simple CNN model.
+--->
+
 Neural networks have revolutionized the field of machine learning, providing the backbone for a myriad of applications:
 
 - **Image Recognition:** ANNs, particularly Convolutional Neural Networks (CNNs), have become instrumental in image analysis, powering applications from facial recognition systems to medical imaging diagnostics.
@@ -124,12 +201,51 @@ In essence, activation functions enable neural networks to solve non-linear prob
 
 ## Similarity to Logistic Regression
 
+## Comparison of Activation Functions
+
+| Function | Pros | Cons | Use Cases |
+|---------|------|------|-----------|
+| ReLU    | Computationally efficient, mitigates vanishing gradients | Dying ReLU problem | Deep networks, hidden layers |
+| Sigmoid | Outputs probability between 0 and 1 | Vanishing gradients, not zero-centered | Binary classification output layer |
+| Tanh | Zero-centered, stronger gradients than sigmoid | Vanishing gradients | Hidden layers, when zero-centering is beneficial |
+| Leaky ReLU | Mitigates dying ReLU problem | Non-zero gradient for negative inputs can lead to increased computational cost | Variants of ReLU, when dying ReLU is a concern |
+
+<!---
+This table provides a comparison of common activation functions used in neural networks. Understanding their pros and cons helps in choosing the appropriate function for different layers and tasks.
+--->
+<!---
+While activation functions introduce non-linearity, their concept is somewhat analogous to logistic regression in how they process inputs. Understanding this similarity can help beginners grasp the basics of how activation functions work in neural networks.
+--->
+
 The concept of activation functions in neural networks bears a resemblance to logistic regression in several ways:
 
 - **Weighted Sum Inputs:** Both neural networks and logistic regression models compute a weighted sum of the input features. In neural networks, this sum is then passed through an activation function.
 - **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval $y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$﻿
 
 ## Introducing: ReLU
+**Reference Card: `ReLU`**
+
+- **Function:** $f(x) = \max(0,x)$
+- **Purpose:** Introduces non-linearity by replacing negative values with zero, allowing the network to learn complex patterns.
+- **Key Characteristics:**
+  - Computationally efficient
+  - Helps mitigate the vanishing gradient problem
+  - Leads to sparse activations
+
+**Minimal Example:**
+```python
+import numpy as np
+
+# Example input
+x = np.array([-1, 0, 1])
+
+# Applying ReLU
+relu_output = np.maximum(0, x)
+print(relu_output)  # Output: [0 0 1]
+```
+<!---
+This example demonstrates how ReLU works by applying it to a simple array. Beginners should note how ReLU affects different input values and consider its implications for neural network training.
+--->
 
 The **Rectified Linear Unit (ReLU)** has become one of the most widely used activation functions in neural networks, especially in deep learning architectures. ReLU is defined as $f(x) = \max(0,x)$﻿, effectively replacing all negative values in the activation map with zero.
 
@@ -158,17 +274,87 @@ Typically, the initial layer of a neural network assigns individual neurons to s
 > Consider the neurons as a finite resource: data preparation can spare capacity that would otherwise be used to approximate these preprocessing steps  
 
 ## Data cleaning & transformation
+<!---
+Proper data cleaning and transformation are essential steps in preparing inputs for neural networks. These processes help in improving the quality of the data and making it more suitable for modeling.
+--->
 
 - **Normalization:** Scaling input features so they are on a similar scale can prevent certain features from dominating due to their scale. Normalization adjusts the data to fall within a smaller, specified range, such as -1 to 1 or 0 to 1.
 - **Standardization:** This involves transforming the data to have a mean of zero and a standard deviation of one. Standardization ensures that the feature distribution is centered around 0, with a standard deviation that scales the distribution. This is particularly useful for inputs to activation functions that are sensitive to magnitude, such as sigmoid or tanh.
 - **Handling Missing Values:** Missing data can significantly impact the performance of neural networks. Techniques such as imputation (filling missing values with the mean, median, or mode), or using a model to predict missing values, can be employed to address this issue.
 
 ## Input Shape Importance
+<!---
+Neural networks require inputs to have consistent dimensions. This section discusses the importance of preprocessing data to meet this requirement.
+--->
 
 - **Consistent Dimensions:** Neural networks require a fixed size of input; thus, it's crucial to preprocess the data to ensure consistent dimensions. For images, this might involve cropping or padding to achieve uniform dimensions. For text or sequences, this could mean padding shorter sequences or truncating longer ones to a fixed length.
 - **Batch Size:** The choice of batch size can affect both the speed and stability of the training process. Larger batches provide a more accurate estimate of the gradient, but they require more memory and might lead to slower convergence.
 
 ## Feature Engineering
+
+### Demo Break 2: Feature Engineering
+<!---
+This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
+--->
+
+**Task:** Normalize a sample dataset using StandardScaler from Scikit-learn. Then, explore the impact of normalization on model performance.
+
+```python
+# Example code for Demo Break 2
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+# Example data
+data = np.array([[1, 2], [3, 4]])
+
+# Standardizing data
+scaler = StandardScaler()
+standardized_data = scaler.fit_transform(data)
+print(standardized_data)
+```
+<!---
+This example demonstrates how to standardize data using Scikit-learn's StandardScaler. Students should understand the importance of scaling data for neural network training.
+--->
+<!---
+This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
+--->
+<!---
+This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
+--->
+
+### Demo Break 2: Feature Engineering for Neural Networks
+<!---
+This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
+--->
+<!---
+This demo focuses on practical feature engineering techniques for neural networks, including normalization and encoding categorical variables.
+--->
+<!---
+Feature engineering involves selecting, encoding, and constructing features to improve model performance. It's a critical step in the machine learning pipeline.
+--->
+
+**Reference Card: Data Normalization**
+
+- **Function:** Scaling input features to a similar scale
+- **Purpose:** Prevents feature dominance due to scale differences
+- **Common Techniques:** Min-Max Scaling, Standardization
+
+**Minimal Example:**
+```python
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+# Example data
+data = np.array([[1, 2], [3, 4]])
+
+# Standardizing data
+scaler = StandardScaler()
+standardized_data = scaler.fit_transform(data)
+print(standardized_data)
+```
+<!---
+This example demonstrates how to standardize data using Scikit-learn's StandardScaler. Beginners should understand the importance of scaling data for neural network training.
+--->
 
 - **Feature Selection:** Identifying and selecting the most informative features can reduce the dimensionality of the data and improve model performance. Techniques such as correlation analysis, principal component analysis (PCA), or model-based selection can be used to identify the most relevant features.
 - **Feature Encoding:** Proper encoding of categorical variables is crucial. Techniques like one-hot encoding or embedding layers for deep learning models can transform categorical variables into a format that neural networks can work with effectively.
@@ -180,16 +366,49 @@ Typically, the initial layer of a neural network assigns individual neurons to s
 Training neural networks involves adjusting the weights and biases of the network to minimize the difference between the predicted output and the actual output. This process is guided by several key components and techniques:
 
 ## Backpropagation
+<!---
+Backpropagation is a critical component of neural network training. It allows the network to learn from its mistakes by distributing the error back through the layers.
+--->
 
 **Backpropagation** is the cornerstone of neural network training, allowing the adjustment of weights in the network based on the error rate obtained in the previous epoch (i.e., iteration). It effectively distributes the error back through the network layers, providing insight into the responsibility of each weight towards the error.
 
 ![[backpropagation.png]]
 
 ## Gradient descent
+<!---
+Gradient descent is an optimization algorithm that minimizes the cost function by adjusting the network's weights. It's a fundamental concept in training neural networks.
+--->
 
 **Gradient descent** is the optimization algorithm used to minimize the cost function, which represents the difference between the network's predicted output and the actual output. By calculating the gradient of the cost function, gradient descent adjusts the weights in the direction that most reduces the cost.
 
 ## Cost Functions
+<!---
+Cost functions guide the optimization process during neural network training. Choosing the right cost function is crucial for achieving good model performance.
+--->
+
+**Reference Card: Cross-Entropy Loss**
+
+- **Function:** Measures the difference between predicted probabilities and actual labels
+- **Purpose:** Suitable for classification tasks
+- **Strengths:** Ideal for models outputting probabilities
+- **Weaknesses:** Can lead to numerical instability if not implemented carefully
+
+**Minimal Example:**
+```python
+import torch
+import torch.nn.functional as F
+
+# Example predictions and actual labels
+predictions = torch.tensor([[0.7, 0.3], [0.4, 0.6]])
+labels = torch.tensor([0, 1])
+
+# Calculating Cross-Entropy Loss
+loss = F.cross_entropy(predictions, labels)
+print(loss)
+```
+<!---
+This example demonstrates how to calculate Cross-Entropy Loss using PyTorch. Beginners should understand its application in classification tasks and the importance of proper implementation.
+--->
 
 In neural network training, selecting an appropriate cost function is crucial as it guides the optimization process.
 
@@ -322,6 +541,9 @@ The architecture of a neural network is a critical factor that defines its abili
 ## Network Depth & Connectedness
 
 ### Shallow vs. Deep
+<!---
+Understanding the difference between shallow and deep networks is crucial for designing effective neural network architectures. Shallow networks are suitable for simple problems, while deep networks are better suited for complex tasks.
+--->
 
 - **Shallow Networks:** Typically consist of a few layers, including input and output layers, and perhaps one or two hidden layers. Shallow networks are suited for simpler problems where the relationship between the input and output is not overly complex.
 - **Deep Networks:** Contain many layers, sometimes hundreds or thousands, enabling them to learn features at multiple levels of abstraction. Deep networks are more suited for complex problems like image recognition, where higher-level features (like shapes) are built from lower-level features (like edges and corners).
@@ -331,6 +553,40 @@ The architecture of a neural network is a critical factor that defines its abili
 - Deep networks can be more challenging to train due to issues like vanishing and exploding gradients. Advanced techniques like residual connections (ResNets), batch normalization, and advanced optimizers have been developed to address these challenges, allowing for successful training of deep networks.
 
 ### Connectedness: Dense vs. Sparse
+<!---
+The connectedness of a neural network significantly impacts its performance and efficiency. Fully connected layers are powerful but can be computationally expensive, while sparse connectivity can reduce demands and prevent overfitting.
+--->
+
+**Reference Card: Residual Connections**
+
+- **Function:** Allows gradients to flow directly through the network by skipping one or more layers
+- **Purpose:** Mitigates vanishing gradient problem, enabling training of very deep networks
+- **Key Characteristics:**
+  - Improves gradient flow
+  - Enables deeper network training
+
+**Minimal Example:**
+```python
+import torch
+import torch.nn as nn
+
+class ResidualBlock(nn.Module):
+    def __init__(self):
+        super(ResidualBlock, self).__init__()
+        self.fc1 = nn.Linear(128, 128)
+        self.fc2 = nn.Linear(128, 128)
+
+    def forward(self, x):
+        residual = x
+        out = torch.relu(self.fc1(x))
+        out = self.fc2(out)
+        out += residual  # Residual connection
+        out = torch.relu(out)
+        return out
+```
+<!---
+This example demonstrates a simple residual block using PyTorch. Beginners should understand how residual connections help in training deep networks.
+--->
 
 The connectedness of a neural network refers to how neurons within layers are linked to each other and to neurons in adjacent layers. This structure significantly influences the network's capacity to capture patterns and relationships in the data.
 
@@ -585,6 +841,170 @@ To navigate the challenges and leverage the strengths of neural networks, practi
 
 ## Implementing a custom model
 
+**Reference Card: Building Custom Neural Networks**
+
+- **Key Parameters:**
+  - `input_size`: Dimensionality of the input data
+  - `hidden_size`: Size of the hidden layers (modifiable parameter)
+  - `num_classes`: Number of distinct categories in the classification task
+
+**Best Practices:**
+- Start with a simple architecture and gradually add complexity.
+- Choose appropriate activation functions for hidden layers.
+- Use a suitable loss function and optimizer based on the task.
+
+By following these guidelines and understanding the key parameters, students can effectively build and train custom neural networks for various tasks.
+
+Building a neural network layer by layer is a fundamental skill in deep learning. Let's walk through the process step-by-step for a simple classification task using the EMNIST dataset.
+
+1. **Define the Input Layer:** The input layer is defined by the shape of the input data. For EMNIST, each image is 28x28 pixels.
+
+2. **Reshape the Input:** Often, the input data needs to be reshaped to fit the expected input format of the neural network layers.
+
+3. **Flatten the Input:** For fully connected layers, the input needs to be flattened into a 1D vector.
+
+4. **Add Hidden Layers:** Dense layers with appropriate activation functions are added to learn complex patterns.
+
+5. **Output Layer:** The final layer is a dense layer with a softmax activation function for classification tasks, where the number of neurons equals the number of classes.
+
+### In Keras
+
+**Reference Card: Keras Layers for Custom Neural Networks**
+
+- **`Reshape` Layer:** Reshapes the input to a specified shape.
+- **`Flatten` Layer:** Flattens the input to a 1D vector.
+- **`Dense` Layer:** A fully connected layer with a specified number of neurons and activation function.
+
+**Minimal Example:**
+```python
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Reshape
+
+model = Sequential([
+    Reshape((28, 28, 1), input_shape=(784,)),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(47, activation='softmax')
+])
+```
+<!---
+This example demonstrates how to use Keras layers to build a simple neural network for the EMNIST dataset.
+--->
+
+**Model Structure:**
+Begin by initializing a `Sequential` model in Keras, then sequentially add layers as described above:
+
+```python
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Reshape
+
+input_size = 784  # EMNIST images are 28x28 pixels
+hidden_size = 128  # Tunable parameter for the hidden layer
+num_classes = 47  # Number of classes in the EMNIST Balanced dataset
+
+model = Sequential([
+    Reshape((28, 28, 1), input_shape=(input_size,)),
+    Flatten(),
+    Dense(hidden_size, activation='relu'),
+    Dense(num_classes, activation='softmax')
+])
+```
+
+**Compiling and Training:**
+After defining the model, compile it with the chosen optimizer and loss function, and then train it using the `fit` method.
+
+```python
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+model.fit(x_train, y_train, batch_size=32, epochs=10)
+```
+
+### In PyTorch
+
+**Reference Card: PyTorch Layers and Functions for Custom Neural Networks**
+
+- **`nn.Linear` Layer:** A fully connected layer with a specified number of inputs and outputs.
+- **`nn.Module` Class:** Base class for all neural network modules.
+- **`torch.relu` Function:** Applies the ReLU activation function.
+- **`torch.softmax` Function:** Applies the softmax activation function.
+
+**Minimal Example:**
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SimpleNN(nn.Module):
+    def __init__(self):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(784, 128)
+        self.fc2 = nn.Linear(128, 47)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+```
+<!---
+This example demonstrates how to define a custom neural network using PyTorch.
+--->
+
+**Custom Model Definition:**
+In PyTorch, define a custom neural network by subclassing `nn.Module`. Initialize the layers in the constructor and specify the forward pass logic.
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SimpleNN(nn.Module):
+    def __init__(self, input_size=784, hidden_size=128, num_classes=47):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(input-section, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+```
+
+**Loss Function and Optimizer Setup:**
+Choose a suitable loss function and optimizer.
+
+```python
+model = SimpleNN(input_size=784, hidden_size=128, num_classes=47)
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+```
+
+### **Training the Models**
+
+For training, you'll require a dataset (e.g., EMNIST), a loss function, and an optimizer. Define the number of training epochs and the batch size.
+
+**PyTorch Training Loop:**
+In PyTorch, iterate over your dataset in batches, pass the inputs through the model, compute the loss, and update the model parameters.
+
+```python
+for epoch in range(num_epochs):
+    for inputs, targets in train_loader:
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = loss_fn(outputs, targets)
+        loss.backward()
+        optimizer.step()
+```
+
+**Keras Training:**
+In Keras, training is straightforward with the `fit` method.
+
+```python
+model.fit(x_train, y_train, epochs=10, batch_size=32)
+```
+
+By following these steps, students can gain hands-on experience in building and training neural networks layer by layer.
+
 When constructing a neural network for tasks like character recognition in the EMNIST dataset, it's essential to define key parameters that align with your specific problem. `**input_size**` corresponds to the dimensionality of your input data, `**hidden_size**` is a modifiable parameter that dictates the size of the hidden layers, and `**num_classes**` represents the total number of distinct categories in your classification task.
 
 ### In Keras
@@ -688,6 +1108,117 @@ model.fit(x_train, y_train, epochs=10, batch_size=32)
 This foundation serves as a starting point for constructing neural networks in both PyTorch and Keras. As you progress to more complex tasks, consider adding more layers, employing different types of layers (like `Conv2D` for image-related tasks), or adjusting parameters and hyperparameters to refine your model's performance.
 
 ## Examples with Code
+
+### Demo Break 3: Building a Simple Neural Network
+<!---
+This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
+--->
+
+**Task:** Build a simple neural network using Keras or PyTorch to classify handwritten digits (MNIST dataset). Train the model and evaluate its performance.
+
+```python
+# Example code for Demo Break 3
+from keras.models import Sequential
+from keras.layers import Dense, Flatten
+
+# Define a simple neural network model
+model = Sequential([
+    Flatten(input_shape=(28, 28)),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# Compile and train the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(x_train, y_train, epochs=10)
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print(f'Test accuracy: {test_acc:.2f}')
+```
+<!---
+This example demonstrates how to build, train, and evaluate a simple neural network for handwritten digit classification. Students should understand the process of building and training a neural network.
+--->
+
+### Demo Break 3: Building a Simple Neural Network
+<!---
+This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
+--->
+
+**Task:** Build a simple neural network using Keras or PyTorch to classify handwritten digits (MNIST dataset). Train the model and evaluate its performance.
+
+```python
+# Example code for Demo Break 3
+from keras.models import Sequential
+from keras.layers import Dense, Flatten
+
+# Define a simple neural network model
+model = Sequential([
+    Flatten(input_shape=(28, 28)),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# Compile and train the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(x_train, y_train, epochs=10)
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print(f'Test accuracy: {test_acc:.2f}')
+```
+<!---
+This example demonstrates how to build, train, and evaluate a simple neural network for handwritten digit classification. Students should understand the process of building and training a neural network.
+--->
+
+### Demo Break 3: Building a Simple Neural Network
+<!---
+This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
+--->
+
+**Task:** Build a simple neural network using Keras or PyTorch to classify handwritten digits (MNIST dataset). Train the model and evaluate its performance.
+
+```python
+# Example code for Demo Break 3
+from keras.models import Sequential
+from keras.layers import Dense, Flatten
+
+# Define a simple neural network model
+model = Sequential([
+    Flatten(input_shape=(28, 28)),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# Compile and train the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(x_train, y_train, epochs=10)
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print(f'Test accuracy: {test_acc:.2f}')
+```
+<!---
+This example demonstrates how to build, train, and evaluate a simple neural network for handwritten digit classification. Students should understand the process of building and training a neural network.
+--->
+
+### Practical Exercises
+
+1. **Exercise 1:** Build a CNN in PyTorch for EMNIST classification.
+2. **Exercise 2:** Implement a custom ReLU function.
+3. **Exercise 3:** Train a transformer on a small text dataset using Hugging Face.
+
+<!---
+These exercises provide hands-on experience with implementing key concepts learned in this lecture. Students should attempt to complete these exercises to reinforce their understanding.
+--->
+
+### Demo Break 3: Building a Simple Neural Network
+<!---
+This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
+--->
+<!---
+This final demo guides students through building, training, and evaluating a simple neural network using PyTorch or Keras.
+--->
 
 Practical implementations of neural network models provide valuable insights and hands-on experience:
 

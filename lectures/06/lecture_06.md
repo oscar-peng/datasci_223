@@ -741,117 +741,18 @@ For health data applications, common starting points include:
 This section provides a comprehensive overview of common neural network layers, their purposes, and when to use them. The star emoji (⭐) indicates layers that are particularly common in health data applications.
 --->
 
-<!---
-Table cell line break experiment:
-- \ (single backslash, pymdownx.tablenewline)
-- \\ (double backslash)
-- \n (literal)
-- <br> (HTML)
-- U+2028 (Unicode line separator)
-- Two spaces at end of line
-- List syntax
-- Semicolon/bullet/comma separation
-Check which render as multi-line in MkDocs Material.
---->
-
 | Layer Type | Purpose | When to Use | Framework Keywords |
 |------------|---------|-------------|-------------------|
-| **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output |
-Single backslash:
-- Final classification/regression layers\
-- Simple feedforward networks\
-- Tabular data processing
-
-Double backslash:
-- Final classification/regression layers\\
-- Simple feedforward networks\\
-- Tabular data processing
-
-Literal \n:
-- Final classification/regression layers\n
-- Simple feedforward networks\n
-- Tabular data processing
-
-HTML `<br>`:
-- Final classification/regression layers<br>
-- Simple feedforward networks<br>
-- Tabular data processing
-
-Unicode U+2028:
-- Final classification regression layers
-- Simple feedforward networks
-- Tabular data processing
-
-Two spaces at end:
-- Final classification/regression layers
-- Simple feedforward networks
-- Tabular data processing
-
-List syntax:
-- item 1
-- item 2
-- item 3
-
-Bullets:
-• Final classification/regression layers • Simple feedforward networks • Tabular data processing
-
-Semicolons:
-Final classification/regression layers; Simple feedforward networks; Tabular data processing
-
-Commas:
-Final classification/regression layers, Simple feedforward networks, Tabular data processing
-|
-`Dense` (Keras)\
-`nn.Linear` (PyTorch)<br>
-`Dense` (Keras)\\
-`nn.Linear` (PyTorch)<br>
-`Dense` (Keras)\n
-`nn.Linear` (PyTorch)<br>
-`Dense` (Keras)<br>`nn.Linear` (PyTorch)<br>
-`Dense` (Keras) `nn.Linear` (PyTorch)
-`Dense` (Keras)  `nn.Linear` (PyTorch)
-- Dense (Keras)
-- nn.Linear (PyTorch)
-• Dense (Keras) • nn.Linear (PyTorch)
-Dense (Keras); nn.Linear (PyTorch)
-Dense (Keras), nn.Linear (PyTorch)
-|
-| **Convolutional (Conv2D)** ⭐ | Applies learned filters to extract spatial features | - Image processing\
-- Medical imaging analysis\
-- Pattern recognition in 2D data | `Conv2D` (Keras)\
-`nn.Conv2d` (PyTorch) |
-| **LSTM** ⭐ | Processes sequential data with memory | - Time series analysis\
-- Clinical note processing\
-- Vital sign monitoring | `LSTM` (Keras)\
-`nn.LSTM` (PyTorch) |
-| **GRU** | Simplified version of LSTM | - When computational efficiency is important\
-- Shorter sequences\
-- Similar performance to LSTM in many cases | `GRU` (Keras)\
-`nn.GRU` (PyTorch) |
-| **Embedding** ⭐ | Maps discrete indices to dense vectors | - Text processing\
-- Categorical feature encoding\
-- Medical code representation | `Embedding` (Keras)\
-`nn.Embedding` (PyTorch) |
-| **Batch Normalization** ⭐ | Normalizes layer inputs | - Deep networks\
-- When training is unstable\
-- Before activation functions | `BatchNormalization` (Keras)\
-`nn.BatchNorm1d/2d` (PyTorch) |
-| **Dropout** ⭐ | Randomly zeros elements during training | - Preventing overfitting\
-- Regularization\
-- Large networks | `Dropout` (Keras)\
-`nn.Dropout` (PyTorch) |
-| **Max Pooling** | Reduces spatial dimensions | - After convolutional layers\
-- Downsampling features\
-- Translation invariance | `MaxPooling2D` (Keras)\
-`nn.MaxPool2d` (PyTorch) |
-| **Global Average Pooling** | Reduces to single value per channel | - Before final classification\
-- Reducing parameters\
-- Feature aggregation | `GlobalAveragePooling2D` (Keras)\
-`nn.AdaptiveAvgPool2d` (PyTorch) |
-| **Transformer** | Processes sequences with attention | - Long-range dependencies\
-- Parallel processing\
-- Complex sequence tasks | `Transformer` (Keras)\
-`nn.Transformer` (PyTorch) |
+| **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output | - Final classification/regression layers<br>- Simple feedforward networks<br>- Tabular data processing | `Dense` (Keras)<br>`nn.Linear` (PyTorch) |
+| **Convolutional (Conv2D)** ⭐ | Applies learned filters to extract spatial features | - Image processing<br>- Medical imaging analysis<br>- Pattern recognition in 2D data | `Conv2D` (Keras)<br>`nn.Conv2d` (PyTorch) |
+| **LSTM** ⭐ | Processes sequential data with memory | - Time series analysis<br>- Clinical note processing<br>- Vital sign monitoring | `LSTM` (Keras)<br>`nn.LSTM` (PyTorch) |
+| **GRU** | Simplified version of LSTM | - When computational efficiency is important<br>- Shorter sequences<br>- Similar performance to LSTM in many cases | `GRU` (Keras)<br>`nn.GRU` (PyTorch) |
+| **Embedding** ⭐ | Maps discrete indices to dense vectors | - Text processing<br>- Categorical feature encoding<br>- Medical code representation | `Embedding` (Keras)<br>`nn.Embedding` (PyTorch) |
+| **Batch Normalization** ⭐ | Normalizes layer inputs | - Deep networks<br>- When training is unstable<br>- Before activation functions | `BatchNormalization` (Keras)<br>`nn.BatchNorm1d/2d` (PyTorch) |
+| **Dropout** ⭐ | Randomly zeros elements during training | - Preventing overfitting<br>- Regularization<br>- Large networks | `Dropout` (Keras)<br>`nn.Dropout` (PyTorch) |
+| **Max Pooling** | Reduces spatial dimensions | - After convolutional layers<br>- Downsampling features<br>- Translation invariance | `MaxPooling2D` (Keras)<br>`nn.MaxPool2d` (PyTorch) |
+| **Global Average Pooling** | Reduces to single value per channel | - Before final classification<br>- Reducing parameters<br>- Feature aggregation | `GlobalAveragePooling2D` (Keras)<br>`nn.AdaptiveAvgPool2d` (PyTorch) |
+| **Transformer** | Processes sequences with attention | - Long-range dependencies<br>- Parallel processing<br>- Complex sequence tasks | `Transformer` (Keras)<br>`nn.Transformer` (PyTorch) |
 
 ### Building Custom Neural Networks
 

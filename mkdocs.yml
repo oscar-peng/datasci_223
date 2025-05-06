@@ -38,7 +38,7 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.tablenewline
+  - pymdownx.tablenewlines
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

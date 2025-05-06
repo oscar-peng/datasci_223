@@ -11,9 +11,7 @@ pdf: true
 ![](media/Screenshot_2024-02-14_at_8.32.21_PM.png)
 
 - Fun example: 20 Questions bot [https://github.com/earthtojake/20q](https://github.com/earthtojake/20q)
-- Tips for using the shell (terminal, command line)
-
-![](media/ShellIntro.pdf)
+- Tips for using the shell (terminal, command line) [ShellIntro.pdf](media/ShellIntro.pdf)
 
 ### Recent datasci papers from NEJM
 
@@ -45,7 +43,7 @@ pdf: true
 
 - _What are embeddings?,_ Vicki Boykis [available at the author's website](https://vickiboykis.com/what_are_embeddings/)
 
-![](media/LLM_survey.pdf)
+[LLM Survey](media/LLM_survey.pdf)
 
 ## **Neural networks overview**
 

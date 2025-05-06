@@ -8,25 +8,20 @@ pdf: true
 
 ## Before we begin - It came from the internet
 
-![](media/Screenshot_2024-02-14_at_8.32.21_PM.png)
+![dont' use git /s](media/Screenshot_2024-02-14_at_8.32.21_PM.png)
 
 - Fun example: 20 Questions bot [https://github.com/earthtojake/20q](https://github.com/earthtojake/20q)
 - Tips for using the shell (terminal, command line) [ShellIntro.pdf](media/ShellIntro.pdf)
+- [Sycophancy and LLM's with Sam Altman](https://www.theverge.com/tech/657409/chat-gpt-sycophantic-responses-gpt-4o-sam-altman)
+- We explore large-scale training of generative models on video data. [https://openai.com/research/video-generation-models-as-world-simulators](https://openai.com/research/video-generation-models-as-world-simulators)  
+- This blog is intended to be a place to share ideas and results that are too weird, incomplete, or off-topic to turn into an academic paper, but that I think may be important. [https://sohl-dickstein.github.io/2024/02/12/fractal.html](https://sohl-dickstein.github.io/2024/02/12/fractal.html)  
 
-### Recent datasci papers from NEJM
+### Recent-ish datasci papers from NEJM
 
 - [**How Censoring Works**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2300205?emp=marcom&utm_source=nejmglist&utm_medium=email&utm_campaign=evengage23)
 - [**Large Language Models**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2300128?emp=marcom)
 - [**The Problem of Multiple Comparisons**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2200171?emp=marcom&utm_source=nejmglist&utm_medium=email&utm_campaign=evengage23)
 - [**Bayesian Way**](https://evidence.nejm.org/doi/full/10.1056/EVIDstat2300090?emp=marcom&utm_source=nejmglist&utm_medium=email&utm_campaign=evengage23)
-
-### More broadly
-
-!!! info Video generation models as world simulators  
-    We explore large-scale training of generative models on video data. [https://openai.com/research/video-generation-models-as-world-simulators](https://openai.com/research/video-generation-models-as-world-simulators)  
-
-!!! info Neural network training makes beautiful fractals  
-    This blog is intended to be a place to share ideas and results that are too weird, incomplete, or off-topic to turn into an academic paper, but that I think may be important. [https://sohl-dickstein.github.io/2024/02/12/fractal.html](https://sohl-dickstein.github.io/2024/02/12/fractal.html)  
 
 ### Newsletters
 
@@ -47,14 +42,14 @@ pdf: true
 
 ## **Neural networks overview**
 
-![](media/70wnk5kfr5hc1.jpeg)
+![junior dev vs. NN](media/70wnk5kfr5hc1.jpeg)
 
 ### Biological inspiration
 <!---
 Biological neural networks are complex systems that inspire artificial neural networks. Let's break down the key components and their functions to understand how they work.
 --->
 
-![](media/Untitled.png)
+![biological neuron](media/Untitled.png)
 
 A **neuron** has:
 <!---
@@ -82,11 +77,11 @@ Experiment:
 - Present paintings of two different artists (e.g. Chagall / Van Gogh)
 - Reward for pecking when presented a particular artist (e.g. Van Gogh)
 
-![](media/Untitled 1.png)
+![pigeon in skinner box](media/Untitled 1.png)
 
-![](media/Untitled 2.png)
+![van gogh painting](media/Untitled 2.png)
 
-![](media/Untitled 3.png)
+![chagas painting](media/Untitled 3.png)
 
 Pigeons were able to discriminate between Van Gogh and Chagall with 95% accuracy (when presented with pictures they had been trained on). Discrimination still 85% successful for previously unseen paintings of the artists
 
@@ -103,11 +98,11 @@ Neural networks draw inspiration from the biological neural networks that consti
 
 **Artificial neurons:** Non-linear, parameterized function with restricted output range
 
-![](media/Screenshot_2024-02-26_at_1.02.39_PM.png)
+![simplified neuron](media/Screenshot_2024-02-26_at_1.02.39_PM.png)
 
-![](media/ann.png)
+![NN equation](media/ann.png)
 
-![](media/nn_overview.png)
+![basic neural net](media/nn_overview.png)
 
 ### Famous application: tank or not-a-tank
 
@@ -115,15 +110,9 @@ Neural networks draw inspiration from the biological neural networks that consti
 This case study illustrates the importance of data quality and diversity in training neural networks. The model's failure to generalize highlights the issue of overfitting to specific characteristics in the training data.
 --->
 
-![](media/Untitled 4.png)
-
-![](media/Untitled 5.png)
-
 #### Data Bias and Overfitting
 
 The research team took 100 photos of tanks hiding behind trees and 100 photos of trees without tanks. However, all tank photos were taken on sunny days, while tree-only photos were taken on cloudy days. The neural network learned to distinguish between sunny and cloudy conditions rather than the presence or absence of tanks.
-
-![](media/tank_vs_not_tank_bias.png)
 
 **Lesson Learned:** Data bias can lead to unexpected model behavior. Ensuring diverse and representative training data is crucial.
 
@@ -135,9 +124,9 @@ Computers are really good at doing repetitive tasks without taking a break, but 
 
 The research team went out and took 100 photographs of tanks hiding behind trees, and then took 100 photographs of trees - with no tanks. They took 50 photos from each group and put them in a vault for safe-keeping. They scanned the remaining 100 photos into their mainframe computer.
 
-![](media/Untitled 4.png|Untitled 4.png)
+![image of tank](media/Untitled 4.png)
 
-![](media/Untitled 5.png|Untitled 5.png)
+![image of not-a-tank](media/Untitled 5.png)
 
 !!! note "Historical Note"
     The tank detector example is apocryphal - there's no evidence it actually happened. However, it serves as a useful parable about data bias and overfitting. For more details, see [this analysis](https://gwern.net/tank).
@@ -177,7 +166,7 @@ One of the most profound aspects of neural networks is their ability to approxim
 
 The **layered composition** of neural networks, where each layer's output serves as the input to the next, allows these models to learn hierarchies of features. In the context of image recognition, for instance, initial layers might learn to recognize edges and basic textures, while deeper layers can identify more complex structures like shapes or specific objects. This hierarchical learning makes neural networks particularly adept at handling data with complex, hierarchical structures, such as images, sound, and text.
 
-![](media/approximation.png)
+![cat/dog classifier](media/approximation.png)
 
 ## **Activation functions**
 
@@ -239,7 +228,7 @@ The **Rectified Linear Unit (ReLU)** has become one of the most widely used acti
 
 **Note:** There are other common activation functions, including sigmoid, tanh, and Leaky ReLU
 
-![](media/relu.png)
+![ReLU graph](media/relu.png)
 
 #### Advantages of ReLU
 
@@ -278,7 +267,7 @@ Proper data cleaning and transformation are essential steps in preparing inputs 
 - **Standardization:** This involves transforming the data to have a mean of zero and a standard deviation of one. Standardization ensures that the feature distribution is centered around 0, with a standard deviation that scales the distribution. This is particularly useful for inputs to activation functions that are sensitive to magnitude, such as sigmoid or tanh.
 - **Handling Missing Values:** Missing data can significantly impact the performance of neural networks. Techniques such as imputation (filling missing values with the mean, median, or mode), or using a model to predict missing values, can be employed to address this issue.
 
-**Reference Card: Data Normalization**
+#### Reference Card: Data Normalization
 
 - **Function:** Scaling input features to a similar scale
 - **Purpose:** Prevents feature dominance due to scale differences
@@ -318,7 +307,7 @@ Backpropagation is a critical component of neural network training. It allows th
 
 **Backpropagation** is the cornerstone of neural network training, allowing the adjustment of weights in the network based on the error rate obtained in the previous epoch (i.e., iteration). It effectively distributes the error back through the network layers, providing insight into the responsibility of each weight towards the error.
 
-![](media/backpropagation.png)
+![backpropagation](media/backpropagation.png)
 
 ### Gradient descent
 <!---
@@ -426,18 +415,6 @@ Overfitting occurs when a model learns the training data too well, including its
 
 **Regularization methods** like L1 and L2 regularization, dropout, and early stopping add constraints to the network or its training process to prevent overfitting by discouraging overly complex models.
 
-### Monitoring the training process with TensorBoard
-
-In our examples we monitor training via text output, but more sophisticated tools exist to visualize the training process. One popular tool is **TensorBoard**, which can be useful when training large models using parallelization across multiple GPUs.
-
-Incorporating TensorBoard into the training process not only aids in model development and tuning but also enhances transparency and understanding of the model's learning dynamics, making it an invaluable tool in the neural network training toolkit.
-
-- **Real-time Monitoring:** TensorBoard provides a user-friendly interface to monitor the training process in real time, allowing for the visualization of metrics like loss and accuracy across epochs, which is crucial for understanding model performance and convergence.
-- **Hyperparameter Tuning:** It offers tools for hyperparameter tuning, enabling the comparison of model performance across different sets of hyperparameters, which is essential for optimizing model configurations.
-- **Model Architecture Visualization:** TensorBoard can visualize the neural network's architecture, offering insights into the model's structure and helping identify potential areas for improvement or optimization.
-- **Gradient and Weight Visualization:** It allows for the inspection of gradients and weights during training, helping to diagnose issues related to learning, such as vanishing or exploding gradients.
-- **Embedding Visualization:** TensorBoard provides functionalities to visualize high-dimensional data embeddings, which can be particularly useful for tasks involving complex data representations, such as NLP or image processing.
-
 ### Interpretability and Explainability
 
 Interpretability and explainability are crucial for understanding how machine learning models, especially neural networks, arrive at their predictions.
@@ -530,7 +507,7 @@ optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 epoch = checkpoint['epoch')
 ```
 
-#### Best Practices
+#### Best Practices: Saving Models
 
 - Save both model architecture and weights
 - Use version control for model files
@@ -542,9 +519,17 @@ epoch = checkpoint['epoch')
 
 In our examples we monitor training via text output, but more sophisticated tools exist to visualize the training process. One popular tool is **TensorBoard**, which can be useful when training large models using parallelization across multiple GPUs.
 
+Incorporating TensorBoard into the training process not only aids in model development and tuning but also enhances transparency and understanding of the model's learning dynamics, making it an invaluable tool in the neural network training toolkit.
+
+- **Real-time Monitoring:** TensorBoard provides a user-friendly interface to monitor the training process in real time, allowing for the visualization of metrics like loss and accuracy across epochs, which is crucial for understanding model performance and convergence.
+- **Hyperparameter Tuning:** It offers tools for hyperparameter tuning, enabling the comparison of model performance across different sets of hyperparameters, which is essential for optimizing model configurations.
+- **Model Architecture Visualization:** TensorBoard can visualize the neural network's architecture, offering insights into the model's structure and helping identify potential areas for improvement or optimization.
+- **Gradient and Weight Visualization:** It allows for the inspection of gradients and weights during training, helping to diagnose issues related to learning, such as vanishing or exploding gradients.
+- **Embedding Visualization:** TensorBoard provides functionalities to visualize high-dimensional data embeddings, which can be particularly useful for tasks involving complex data representations, such as NLP or image processing.
+
 #### TensorBoard Integration
 
-**Reference Card: TensorBoard Setup**
+##### Reference Card: TensorBoard Setup
 
 ```python
 ## Keras
@@ -598,7 +583,7 @@ Understanding the difference between shallow and deep networks is crucial for de
 The connectedness of a neural network significantly impacts its performance and efficiency. Fully connected layers are powerful but can be computationally expensive, while sparse connectivity can reduce demands and prevent overfitting.
 --->
 
-**Reference Card: Residual Connections**
+##### Reference Card: Residual Connections
 
 - **Function:** Allows gradients to flow directly through the network by skipping one or more layers
 - **Purpose:** Mitigates vanishing gradient problem, enabling training of very deep networks
@@ -669,11 +654,11 @@ RNNs are designed to handle sequential data, where the order of the data points 
 - **Sequence Processing:** Unlike feedforward neural networks, RNNs have loops in them, allowing information to persist. This architecture makes them ideal for tasks where context from previous inputs is crucial, such as in language modeling or time series prediction.
 - **Long Short-Term Memory (LSTM) and Gated Recurrent Units (GRU):** Variants of RNNs designed to solve the vanishing gradient problem associated with standard RNNs. LSTMs and GRUs introduce gates that regulate the flow of information, allowing the network to retain or forget information over long sequences effectively.
 
-![](media/rnn.png)
+![RNN](media/rnn.png)
 
-![](media/LSTMvsGRU.png)
+![LSTM vs GRU](media/LSTMvsGRU.png)
 
-![](media/lstmvsgru2.png)
+![LSTM vs GRU (again)](media/lstmvsgru2.png)
 
 #### Architectural Considerations
 
@@ -690,10 +675,10 @@ RNNs are designed to handle sequential data, where the order of the data points 
 - **Variational Autoencoders (VAEs)** are generative models similar to autoencoders that learn to encode data into a latent space and reconstruct it. However, VAEs introduce a probabilistic twist, modeling the latent space as a distribution, which allows for the generation of new data points by sampling from this space
 - **Diffusion Models** gradually add noise to data until it becomes indistinguishable from random noise and then learn to reverse this noising process to generate data. While they don't use a latent space in the traditional sense, the intermediate noisy states during the reverse process can be viewed as a form of high-dimensional latent representation.
 - **Large Language Models (LLMs)** are transformer-based models trained on massive text corpora to understand and generate human-like text. They excel at:
-  - **Contextual Understanding:** Capturing long-range dependencies in text through attention mechanisms
-  - **Few-shot Learning:** Adapting to new tasks with minimal examples by leveraging their broad training
-  - **Zero-shot Inference:** Performing tasks they weren't explicitly trained on through prompt engineering
-  - **Health Applications:** Clinical note analysis, medical literature summarization, patient communication, and medical question answering
+    - **Contextual Understanding:** Capturing long-range dependencies in text through attention mechanisms
+    - **Few-shot Learning:** Adapting to new tasks with minimal examples by leveraging their broad training
+    - **Zero-shot Inference:** Performing tasks they weren't explicitly trained on through prompt engineering
+    - **Health Applications:** Clinical note analysis, medical literature summarization, patient communication, and medical question answering
 
 ## **Neural Networks in Practice**
 
@@ -744,6 +729,7 @@ When building a neural network from scratch, you have several options:
 3. **Use Pre-built Models:** Adapt existing implementations from repositories like GitHub
 
 For health data applications, common starting points include:
+
 - **Medical Imaging:** CNNs with architectures inspired by ResNet or DenseNet
 - **Clinical Notes:** Transformer-based models or LSTMs
 - **Time Series Data:** LSTM or GRU networks
@@ -757,17 +743,46 @@ This section provides a comprehensive overview of common neural network layers, 
 
 | Layer Type | Purpose | When to Use | Framework Keywords |
 |------------|---------|-------------|-------------------|
-| **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output | - Final classification/regression layers<br>- Simple feedforward networks<br>- Tabular data processing | `Dense` (Keras)<br>`nn.Linear` (PyTorch) |
-| **Convolutional (Conv2D)** ⭐ | Applies learned filters to extract spatial features | - Image processing<br>- Medical imaging analysis<br>- Pattern recognition in 2D data | `Conv2D` (Keras)<br>`nn.Conv2d` (PyTorch) |
-| **LSTM** ⭐ | Processes sequential data with memory | - Time series analysis<br>- Clinical note processing<br>- Vital sign monitoring | `LSTM` (Keras)<br>`nn.LSTM` (PyTorch) |
-| **GRU** | Simplified version of LSTM | - When computational efficiency is important<br>- Shorter sequences<br>- Similar performance to LSTM in many cases | `GRU` (Keras)<br>`nn.GRU` (PyTorch) |
-| **Embedding** ⭐ | Maps discrete indices to dense vectors | - Text processing<br>- Categorical feature encoding<br>- Medical code representation | `Embedding` (Keras)<br>`nn.Embedding` (PyTorch) |
-| **Batch Normalization** ⭐ | Normalizes layer inputs | - Deep networks<br>- When training is unstable<br>- Before activation functions | `BatchNormalization` (Keras)<br>`nn.BatchNorm1d/2d` (PyTorch) |
-| **Dropout** ⭐ | Randomly zeros elements during training | - Preventing overfitting<br>- Regularization<br>- Large networks | `Dropout` (Keras)<br>`nn.Dropout` (PyTorch) |
-| **Max Pooling** | Reduces spatial dimensions | - After convolutional layers<br>- Downsampling features<br>- Translation invariance | `MaxPooling2D` (Keras)<br>`nn.MaxPool2d` (PyTorch) |
-| **Global Average Pooling** | Reduces to single value per channel | - Before final classification<br>- Reducing parameters<br>- Feature aggregation | `GlobalAveragePooling2D` (Keras)<br>`nn.AdaptiveAvgPool2d` (PyTorch) |
-| **Transformer** | Processes sequences with attention | - Long-range dependencies<br>- Parallel processing<br>- Complex sequence tasks | `Transformer` (Keras)<br>`nn.Transformer` (PyTorch) |
-
+| **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output | - Final classification/regression layers\
+- Simple feedforward networks\
+- Tabular data processing | `Dense` (Keras)\
+`nn.Linear` (PyTorch) |
+| **Convolutional (Conv2D)** ⭐ | Applies learned filters to extract spatial features | - Image processing\
+- Medical imaging analysis\
+- Pattern recognition in 2D data | `Conv2D` (Keras)\
+`nn.Conv2d` (PyTorch) |
+| **LSTM** ⭐ | Processes sequential data with memory | - Time series analysis\
+- Clinical note processing\
+- Vital sign monitoring | `LSTM` (Keras)\
+`nn.LSTM` (PyTorch) |
+| **GRU** | Simplified version of LSTM | - When computational efficiency is important\
+- Shorter sequences\
+- Similar performance to LSTM in many cases | `GRU` (Keras)\
+`nn.GRU` (PyTorch) |
+| **Embedding** ⭐ | Maps discrete indices to dense vectors | - Text processing\
+- Categorical feature encoding\
+- Medical code representation | `Embedding` (Keras)\
+`nn.Embedding` (PyTorch) |
+| **Batch Normalization** ⭐ | Normalizes layer inputs | - Deep networks\
+- When training is unstable\
+- Before activation functions | `BatchNormalization` (Keras)\
+`nn.BatchNorm1d/2d` (PyTorch) |
+| **Dropout** ⭐ | Randomly zeros elements during training | - Preventing overfitting\
+- Regularization\
+- Large networks | `Dropout` (Keras)\
+`nn.Dropout` (PyTorch) |
+| **Max Pooling** | Reduces spatial dimensions | - After convolutional layers\
+- Downsampling features\
+- Translation invariance | `MaxPooling2D` (Keras)\
+`nn.MaxPool2d` (PyTorch) |
+| **Global Average Pooling** | Reduces to single value per channel | - Before final classification\
+- Reducing parameters\
+- Feature aggregation | `GlobalAveragePooling2D` (Keras)\
+`nn.AdaptiveAvgPool2d` (PyTorch) |
+| **Transformer** | Processes sequences with attention | - Long-range dependencies\
+- Parallel processing\
+- Complex sequence tasks | `Transformer` (Keras)\
+`nn.Transformer` (PyTorch) |
 
 ### Building Custom Neural Networks
 
@@ -788,7 +803,7 @@ When constructing a neural network, several key parameters need to be defined:
 - **`hidden_size`:** A tunable parameter that determines the size of hidden layers
 - **`num_classes`:** The number of distinct categories in your classification task
 
-#### Best Practices
+#### Best Practices: Custom Neural Networks
 
 - Start with a simple architecture and gradually add complexity
 - Choose appropriate activation functions for hidden layers
@@ -798,7 +813,7 @@ When constructing a neural network, several key parameters need to be defined:
 
 #### Minimal Example in Keras:**
 
-**Reference Card: Keras Layers for Custom Neural Networks**
+##### Reference Card: Keras Layers for Custom Neural Networks
 
 - **Basic Layers:** `Dense`, `Flatten`, `Reshape`
 - **Convolutional:** `Conv2D`, `MaxPooling2D`, `GlobalAveragePooling2D`
@@ -806,7 +821,6 @@ When constructing a neural network, several key parameters need to be defined:
 - **Normalization:** `BatchNormalization`
 - **Regularization:** `Dropout`
 - **Embedding:** `Embedding`
-
 
 **Model Structure:**
 Begin by initializing a  
@@ -838,9 +852,9 @@ model.compile(optimizer='adam',
 model.fit(x_train, y_train, batch_size=32, epochs=10)
 ```
 
-#### Minimal Example in PyTorch:
+#### Minimal Example in PyTorch
 
-**Reference Card: PyTorch Layers and Functions for Custom Neural Networks**
+##### Reference Card: PyTorch Layers and Functions for Custom Neural Networks
 
 - **Basic Layers:** `nn.Linear`, `nn.Flatten`, `nn.Unflatten`
 - **Convolutional:** `nn.Conv2d`, `nn.MaxPool2d`, `nn.AdaptiveAvgPool2d`
@@ -850,7 +864,7 @@ model.fit(x_train, y_train, batch_size=32, epochs=10)
 - **Embedding:** `nn.Embedding`
 - **Activation Functions:** `torch.relu`, `torch.softmax`
 
-**Model Structure**
+##### Model Structure
 
 In PyTorch, define a custom neural network by subclassing  
 `nn.Module`. Initialize the layers in the constructor and specify the forward pass logic. A straightforward network might include a fully connected layer for the hidden layer and an output layer:
@@ -899,6 +913,7 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 ```
+
 **NOTE:** In this setup, PyTorch uses a for loop to walk through the epochs. It is possible that we could customize the training routine for different epochs with this structure.
 
 #### Training Considerations

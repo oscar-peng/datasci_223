@@ -135,5 +135,38 @@ Approaches include:
 
 
 - [https://github.com/karpathy/nanoGPT](https://github.com/karpathy/nanoGPT): Accompanied by a [full walkthrough video](https://www.youtube.com/watch?v=kCc8FmEb1nY), this implementation demystifies the GPT architecture.
-- 
-end cut --->
+
+
+
+### Transformers and Attention
+
+**Transformers** have redefined the landscape of neural network architectures, particularly in the field of Natural Language Processing (NLP) and beyond. By introducing a novel structure that leverages the power of attention mechanisms, transformers offer a significant departure from traditional recurrent models.
+
+The first appearance of transformers is in the paper [**Attention is All You Need**](https://arxiv.org/abs/1706.03762), published by researchers at Google.
+
+Transformers have rapidly become the architecture of choice for a wide range of NLP tasks, achieving state-of-the-art results in machine translation, text generation, sentiment analysis, and more. Their flexibility and efficiency have also inspired adaptations of the transformer architecture to other domains, such as computer vision and audio processing, marking a significant evolution in the field of deep learning.
+
+![media/tx_basic.png]
+
+![media/tx_moderate.png]
+
+![media/1_vrSX_Ku3EmGPyqF_E-2_Vg.png]
+
+#### Transformer Architecture
+
+- **Parallel Processing:** Unlike their recurrent predecessors, transformers process entire sequences simultaneously, which eliminates the sequential computation inherent in RNNs and LSTMs. This characteristic allows for substantial improvements in training efficiency and model scalability.
+- **Self-Attention:** At the heart of the transformer architecture is the self-attention mechanism, which computes the representation of a sequence by relating different positions of a single sequence. This mechanism enables the model to dynamically weigh the importance of each part of the input data, enhancing its ability to capture complex relationships within the data.
+- **Layered Structure:** Transformers are composed of stacked layers of self-attention and position-wise feedforward networks. Each layer in the transformer processes the entire input data in parallel, which contributes to the model's exceptional efficiency and effectiveness.
+
+#### Attention Mechanism
+
+The **attention** mechanism allows transformers to consider the entire context of the input sequence, or any subset of it, regardless of the distance between elements in the sequence. This global view is particularly advantageous for tasks that require understanding long-range dependencies, such as document summarization or question-answering.
+
+![media/attention.png]
+
+The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token _lazy_ selected
+
+![media/simple-pretty-gif.gif]
+
+- **Scaled Dot-Product Attention:** The most commonly used attention mechanism in transformers involves computing the dot product of the query with all keys, dividing each by the square root of the dimension of the keys, applying a softmax function to obtain the weights on the values. This approach efficiently captures the relevance of different parts of the input data to each other.
+- **Multi-Head Attention:** Transformers further extend the capabilities of the attention mechanism through the use of multi-head attention. This involves running multiple attention operations in parallel, with each "head" focusing on different parts of the input data. This diversity allows the model to attend to different aspects of the data, enhancing its representational power.

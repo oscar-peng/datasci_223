@@ -744,8 +744,8 @@ This section provides a comprehensive overview of common neural network layers, 
 | Layer Type | Purpose | When to Use | Framework Keywords |
 |------------|---------|-------------|-------------------|
 | **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output | - Final classification/regression layers\
-- Simple feedforward networks\
-- Tabular data processing | `Dense` (Keras)\
+- Simple feedforward networks \\\n
+- Tabular data processing | `Dense` (Keras) \\\n
 `nn.Linear` (PyTorch) |
 | **Convolutional (Conv2D)** ⭐ | Applies learned filters to extract spatial features | - Image processing\
 - Medical imaging analysis\

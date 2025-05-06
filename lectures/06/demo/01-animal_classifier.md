@@ -12,7 +12,7 @@ kernelspec:
   name: python3
 ---
 
-# Animal Classifier Demo: Understanding Dataset Limitations
+# Animal Classifier Demo
 
 ## Learning Objectives 🎯
 

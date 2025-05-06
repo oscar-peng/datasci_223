@@ -4,7 +4,7 @@ pdf: true
 ---
 
 
-# Neural Networks: If I Only Had a Brain
+# Neural Networks: If I Only Had a Brain [pdf](lecture_06.pdf)
 
 ## Before we begin - It came from the internet
 

@@ -741,12 +741,81 @@ For health data applications, common starting points include:
 This section provides a comprehensive overview of common neural network layers, their purposes, and when to use them. The star emoji (⭐) indicates layers that are particularly common in health data applications.
 --->
 
+<!---
+Table cell line break experiment:
+- \ (single backslash, pymdownx.tablenewline)
+- \\ (double backslash)
+- \n (literal)
+- <br> (HTML)
+- U+2028 (Unicode line separator)
+- Two spaces at end of line
+- List syntax
+- Semicolon/bullet/comma separation
+Check which render as multi-line in MkDocs Material.
+--->
+
 | Layer Type | Purpose | When to Use | Framework Keywords |
 |------------|---------|-------------|-------------------|
-| **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output | - Final classification/regression layers\
-- Simple feedforward networks \\\n
-- Tabular data processing | `Dense` (Keras) \\\n
-`nn.Linear` (PyTorch) |
+| **Dense/Linear** ⭐ | Fully connected layer that connects every input to every output |
+Single backslash:
+- Final classification/regression layers\
+- Simple feedforward networks\
+- Tabular data processing
+
+Double backslash:
+- Final classification/regression layers\\
+- Simple feedforward networks\\
+- Tabular data processing
+
+Literal \n:
+- Final classification/regression layers\n
+- Simple feedforward networks\n
+- Tabular data processing
+
+HTML `<br>`:
+- Final classification/regression layers<br>
+- Simple feedforward networks<br>
+- Tabular data processing
+
+Unicode U+2028:
+- Final classification regression layers
+- Simple feedforward networks
+- Tabular data processing
+
+Two spaces at end:
+- Final classification/regression layers
+- Simple feedforward networks
+- Tabular data processing
+
+List syntax:
+- item 1
+- item 2
+- item 3
+
+Bullets:
+• Final classification/regression layers • Simple feedforward networks • Tabular data processing
+
+Semicolons:
+Final classification/regression layers; Simple feedforward networks; Tabular data processing
+
+Commas:
+Final classification/regression layers, Simple feedforward networks, Tabular data processing
+|
+`Dense` (Keras)\
+`nn.Linear` (PyTorch)<br>
+`Dense` (Keras)\\
+`nn.Linear` (PyTorch)<br>
+`Dense` (Keras)\n
+`nn.Linear` (PyTorch)<br>
+`Dense` (Keras)<br>`nn.Linear` (PyTorch)<br>
+`Dense` (Keras) `nn.Linear` (PyTorch)
+`Dense` (Keras)  `nn.Linear` (PyTorch)
+- Dense (Keras)
+- nn.Linear (PyTorch)
+• Dense (Keras) • nn.Linear (PyTorch)
+Dense (Keras); nn.Linear (PyTorch)
+Dense (Keras), nn.Linear (PyTorch)
+|
 | **Convolutional (Conv2D)** ⭐ | Applies learned filters to extract spatial features | - Image processing\
 - Medical imaging analysis\
 - Pattern recognition in 2D data | `Conv2D` (Keras)\

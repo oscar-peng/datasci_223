@@ -330,8 +330,21 @@ if REBUILD:
   # keras.utils.plot_model(model, show_shapes=True)
 
 
+  # Callbacks are functions that are called at specific points during training
+  # They can be used to save models, stop training early, adjust learning rates, etc.
   callbacks = [
+      # ModelCheckpoint saves the model after each epoch
+      # This creates files like "checkpoints/save_at_1.keras", "checkpoints/save_at_2.keras", etc.
+      # Useful for:
+      # 1. Resuming training if it gets interrupted
+      # 2. Keeping a history of model weights throughout training
+      # 3. Analyzing how model weights change over time
       keras.callbacks.ModelCheckpoint("checkpoints/save_at_{epoch}.keras"),
+      
+      # Other common callbacks (not used here) include:
+      # - EarlyStopping: Stops training when a metric stops improving
+      # - ReduceLROnPlateau: Reduces learning rate when a metric plateaus
+      # - TensorBoard: Logs metrics for visualization
   ]
   model.compile(
       optimizer=keras.optimizers.Adam(1e-3),

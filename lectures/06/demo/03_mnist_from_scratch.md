@@ -411,12 +411,32 @@ if REBUILD or not os.path.exists(KERAS_MODEL_PATH):
     start_time = time.time()
     
     # Train model with callbacks
+    # Callbacks are functions that are executed at specific points during training
+    # They're particularly useful in healthcare ML for monitoring training, preventing overfitting,
+    # and ensuring we save the best model for clinical use
     callbacks = [
+        # ModelCheckpoint: Saves the model during training
+        # Parameters explained:
+        # - KERAS_MODEL_PATH: Where to save the model
+        # - save_best_only=True: Only save when the model improves
+        # - monitor='val_accuracy': Use validation accuracy to determine "best"
+        #
+        # In healthcare applications, this ensures we keep the most accurate model
+        # for patient data, which is critical for clinical decision support
         tf.keras.callbacks.ModelCheckpoint(
             KERAS_MODEL_PATH,
             save_best_only=True,
             monitor='val_accuracy'
         ),
+        
+        # EarlyStopping: Stops training when improvement stops
+        # Parameters explained:
+        # - monitor='val_accuracy': Watch validation accuracy
+        # - patience=3: Wait 3 epochs with no improvement before stopping
+        # - restore_best_weights=True: Revert to the best weights when stopped
+        #
+        # This prevents overfitting, which is crucial in healthcare where
+        # models must generalize well to new patient data
         tf.keras.callbacks.EarlyStopping(
             monitor='val_accuracy',
             patience=3,
@@ -631,17 +651,30 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 if REBUILD or not os.path.exists(RNN_MODEL_PATH):
     print("Training new RNN model...")
     start_time = time.time()
+    # Callbacks for the RNN model - similar to those used in the CNN model above
     callbacks = [
+        # ModelCheckpoint: Saves the best model during training
+        # For time series healthcare data like ECG signals, having the most accurate
+        # model is essential as misclassifications could lead to missed diagnoses
         tf.keras.callbacks.ModelCheckpoint(
             RNN_MODEL_PATH,
-            save_best_only=True,
-            monitor='val_accuracy'
+            save_best_only=True,  # Only save when the model improves
+            monitor='val_accuracy'  # Use validation accuracy as the metric
         ),
+        
+        # EarlyStopping: Prevents overfitting by stopping training when no improvement
+        # This is especially important for ECG data where the model needs to
+        # generalize across different patients with varying heart patterns
         tf.keras.callbacks.EarlyStopping(
-            monitor='val_accuracy',
-            patience=3,
-            restore_best_weights=True
+            monitor='val_accuracy',  # Watch validation accuracy
+            patience=3,  # Allow 3 epochs without improvement before stopping
+            restore_best_weights=True  # Use the weights from the best epoch
         )
+        
+        # Note: For clinical applications, we might also consider:
+        # - Adding a callback to log predictions for regulatory review
+        # - Using class weights to handle imbalanced heart conditions
+        # - Implementing custom metrics for specific clinical thresholds
     ]
     history = model.fit(
         X_train, y_train,

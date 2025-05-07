@@ -1032,6 +1032,92 @@ model.compile(optimizer='adam',
 model.fit(x_train, y_train, batch_size=32, epochs=10)
 ```
 
+
+##### Callbacks: Monitoring and Controlling Training
+
+<!---
+Callbacks are a powerful feature in deep learning frameworks that allow you to customize and extend the training process. They're particularly valuable in healthcare applications where model training can be time-consuming and resource-intensive, and where you need to carefully monitor model performance.
+--->
+
+##### Reference Card: Keras Callbacks
+
+- **Function:** Functions called at specific points during training
+- **Purpose:** Monitor, control, and customize the training process
+- **Key Callbacks:**
+  - `ModelCheckpoint`: Saves model weights during training
+  - `EarlyStopping`: Stops training when a metric stops improving
+  - `ReduceLROnPlateau`: Reduces learning rate when progress plateaus
+  - `TensorBoard`: Logs metrics for visualization
+  - `CSVLogger`: Saves training metrics to a CSV file
+
+**Minimal Example:**
+
+```python
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+
+# Save the best model based on validation accuracy
+checkpoint = ModelCheckpoint(
+    'best_model.keras',
+    monitor='val_accuracy',
+    save_best_only=True,
+    verbose=1
+)
+
+# Stop training if validation loss doesn't improve for 5 epochs
+early_stopping = EarlyStopping(
+    monitor='val_loss',
+    patience=5,
+    restore_best_weights=True,
+    verbose=1
+)
+
+# Use callbacks during training
+model.fit(
+    x_train, y_train,
+    validation_data=(x_val, y_val),
+    epochs=100,
+    callbacks=[checkpoint, early_stopping]
+)
+```
+
+<!---
+This example demonstrates how to use ModelCheckpoint to save the best model and EarlyStopping to prevent overfitting. Students often forget to use callbacks, which can lead to lost work if training crashes or models that overfit because training continued too long.
+--->
+
+##### Common Callbacks and Their Healthcare Applications
+
+| Callback | Purpose | Healthcare Application |
+|----------|---------|------------------------|
+| `ModelCheckpoint` | Saves model at specific intervals | Preserves progress during long training of medical imaging models |
+| `EarlyStopping` | Prevents overfitting by stopping training | Critical for clinical models where generalization is essential |
+| `ReduceLROnPlateau` | Adjusts learning rate during training | Helps fine-tune models for sensitive diagnostic tasks |
+| `TensorBoard` | Visualizes training metrics | Monitors complex biomedical model training |
+| `LambdaCallback` | Creates custom callbacks | Implements domain-specific monitoring for health metrics |
+| `CSVLogger` | Logs metrics to CSV file | Maintains audit trail for regulatory compliance |
+
+##### Best Practices for Callbacks in Healthcare ML
+
+1. **Always use ModelCheckpoint**
+   - Save models regularly to prevent loss of work
+   - Use `save_best_only=True` to keep only the best model
+   - Consider saving at different metrics (accuracy, precision, recall) for clinical applications
+
+2. **Implement Early Stopping**
+   - Use `patience` parameter to allow for temporary plateaus
+   - Set `restore_best_weights=True` to ensure optimal model
+   - Monitor metrics most relevant to clinical outcomes
+
+3. **Custom Callbacks for Healthcare**
+   - Create callbacks to calculate domain-specific metrics (e.g., AUROC for diagnostic models)
+   - Implement alert systems for problematic training patterns
+   - Log detailed information for model validation and regulatory requirements
+
+4. **Callback Combinations**
+   - Use multiple callbacks together for comprehensive training control
+   - Ensure callbacks don't conflict (e.g., different monitoring criteria)
+   - Consider the order of callback execution for complex scenarios
+
+
 #### Minimal Example in PyTorch
 
 ##### Reference Card: PyTorch Layers and Functions for Custom Neural Networks

@@ -245,8 +245,9 @@ While activation functions introduce non-linearity, their concept is somewhat an
 The concept of activation functions in neural networks bears a resemblance to logistic regression in several ways:
 
 - **Weighted Sum Inputs:** Both neural networks and logistic regression models compute a weighted sum of the input features. In neural networks, this sum is then passed through an activation function.
-- **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval $y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$
--
+- **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval 
+
+$$y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$$
 
 ![cat/dog classifier](media/approximation.png)
 

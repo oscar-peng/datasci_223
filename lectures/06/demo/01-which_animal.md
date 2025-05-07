@@ -30,11 +30,17 @@ Adapted from Google Keras code example [Image classification from scratch](https
  2. `pip install -r requirements.txt` 
 <!-- #endregion -->
 
-```python id="kvL3o1m-7M_r"
+```python
+import os
+
 # Install required packages
 %pip install -q numpy matplotlib tensorflow
+
 # If apple silicon install tensorflow-metal
-# %pip install -q tensorflow-macos tensorflow-metal
+if os.uname().machine == "arm64":
+    %pip install -q tensorflow-macos tensorflow-metal
+    pass
+
 %reset -f
 ```
 
@@ -89,13 +95,13 @@ import pickle
 %mkdir -p checkpoints
 
 # Constants
+REBUILD = False
 IMAGE_SIZE = (180, 180)
 BATCH_SIZE = 128
 NUM_CLASSES = 3
 ZIP_HASH = 'eedec42a8a363b8ff299a0f2d6eedadafc3af3e7'
 MODEL_PATH = 'models/animals.keras'
 HISTORY_PATH = MODEL_PATH + '.history.pkl'
-REBUILD = True
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # 2 for most warnings, 3 to suppress all warnings
 ```
 
@@ -106,7 +112,7 @@ All image datasets will be stored in the `3-image_classification/animals` folder
 
 ## Option 1 - download zip from data.badmath.org
 
-This is enabled in the next cell.
+This is enabled in the next cell, you do not have to do it manually.
 
 1. Download zip from data.badmath.org
 2. Unzip folder
@@ -346,13 +352,14 @@ def make_model(input_shape, num_classes):
 ```python colab={"base_uri": "https://localhost:8080/"} id="SAvpSK1_7M_x" outputId="465796d0-e7e5-4e91-9c31-01ef4dd1e735"
 # Train the model
 
+epochs = 25
+
 if REBUILD:
   model = make_model(input_shape=IMAGE_SIZE + (3,), num_classes=NUM_CLASSES)
 
   # Uncomment to show model summary plot
   # keras.utils.plot_model(model, show_shapes=True)
 
-  epochs = 25
 
   callbacks = [
       keras.callbacks.ModelCheckpoint("checkpoints/save_at_{epoch}.keras"),
@@ -438,7 +445,7 @@ predictions = model.predict(img_array)
 class_index = tf.argmax(predictions, axis=1)[0]
 score = float(predictions[0][class_index])
 
-print(f"This image is a {class_names[class_index]} with a probability of {100 * score:.2f}%.")
+print(f"This image is a {world_classes[class_index]} with a probability of {100 * score:.2f}%.")
 
 ```
 
@@ -461,17 +468,12 @@ for i, path in enumerate(sample_panda_paths):
     img_array = tf.expand_dims(img_array, 0)  # Create batch axis
     predictions = model.predict(img_array)
     score = predictions[0]
-    class_names = ['cat', 'dog']
     class_index = score.argmax()
-    class_name = class_names[class_index]
+    class_name = world_classes[class_index]
     prob = score[class_index]
     axs[i//3][i%3].imshow(img_array[0]/255.)
     axs[i//3][i%3].set_title(f"{class_name}: {prob:.2f}")
     axs[i//3][i%3].axis('off')
 
 plt.show()
-```
-
-```python
-
 ```

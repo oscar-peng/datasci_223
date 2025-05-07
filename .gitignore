@@ -10,3 +10,4 @@ html/
 datasci_217/
 *.zip
 tmp/
+logs/

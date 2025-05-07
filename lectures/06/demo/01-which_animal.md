@@ -31,8 +31,6 @@ Adapted from Google Keras code example [Image classification from scratch](https
 <!-- #endregion -->
 
 ```python
-import os
-
 # Install required packages
 %pip install -q numpy matplotlib tensorflow
 
@@ -42,35 +40,6 @@ if os.uname().machine == "arm64":
     pass
 
 %reset -f
-```
-
-```python
-# Optional check to see if TensorFlow is using the CPU, GPU, or Metal (MPS)
-# Note: Metal is an accelarator framework for Apple Silicon GPUs
-
-import tensorflow as tf
-
-print("TensorFlow version:", tf.__version__)
-print("Physical devices:", tf.config.list_physical_devices())
-
-# List logical devices and their types
-for device in tf.config.list_logical_devices():
-    print(device)
-
-# Check for Metal (MPS) support
-try:
-    from tensorflow.python.framework import test_util
-    if hasattr(test_util, "is_mps_enabled"):
-        print("MPS (Metal) enabled:", test_util.is_mps_enabled())
-except ImportError:
-    pass
-
-# Quick check for GPU device
-if any("GPU" in d.device_type or "MPS" in d.device_type for d in tf.config.list_logical_devices()):
-    print("✅ TensorFlow can use Apple Silicon GPU (Metal/MPS).")
-else:
-    print("⚠️  TensorFlow is using only CPU.")
-
 ```
 
 ```python id="vbLGPHWx7M_s"

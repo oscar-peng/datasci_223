@@ -652,13 +652,123 @@ CNNs are specialized for processing data with a known grid-like structure, exemp
 RNNs are designed to handle sequential data, where the order of the data points is significant.
 
 - **Sequence Processing:** Unlike feedforward neural networks, RNNs have loops in them, allowing information to persist. This architecture makes them ideal for tasks where context from previous inputs is crucial, such as in language modeling or time series prediction.
-- **Long Short-Term Memory (LSTM) and Gated Recurrent Units (GRU):** Variants of RNNs designed to solve the vanishing gradient problem associated with standard RNNs. LSTMs and GRUs introduce gates that regulate the flow of information, allowing the network to retain or forget information over long sequences effectively.
 
 ![RNN](media/rnn.png)
 
+#### Long Short-Term Memory (LSTM)
+
+LSTM is a specialized type of RNN designed to address the vanishing gradient problem and better capture long-term dependencies in sequential data.
+
+<!---
+LSTM networks are particularly powerful for healthcare applications because they can:
+1. Remember important information over long sequences (e.g., patient history)
+2. Forget irrelevant information (e.g., noise in vital signs)
+3. Learn complex temporal patterns (e.g., disease progression)
+--->
+
+##### LSTM Architecture
+
+The LSTM cell contains three gates that control information flow:
+
+1. **Input Gate:** Controls what new information enters the cell state
+   - Determines which values to update
+   - Uses sigmoid activation to output values between 0 and 1
+   - Example: Deciding which symptoms to remember in a patient's history
+
+2. **Forget Gate:** Controls what information to discard from the cell state
+   - Determines which information to throw away
+   - Uses sigmoid activation to output values between 0 and 1
+   - Example: Forgetting resolved symptoms while keeping active ones
+
+3. **Output Gate:** Controls what information to output from the cell state
+   - Determines which parts of the cell state to output
+   - Uses sigmoid activation to output values between 0 and 1
+   - Example: Deciding which information is relevant for the current prediction
+
 ![LSTM vs GRU](media/LSTMvsGRU.png)
 
-![LSTM vs GRU (again)](media/lstmvsgru2.png)
+<!---
+This diagram shows the key differences between LSTM and GRU architectures. LSTM has three gates (input, forget, output) while GRU has two gates (update and reset). The LSTM's additional gate gives it more control over information flow but makes it more complex.
+--->
+
+![LSTM vs GRU Detailed](media/lstmvsgru2.png)
+
+<!---
+This detailed comparison shows the internal structure of both LSTM and GRU cells. Note how LSTM maintains both a cell state and hidden state, while GRU combines these into a single state. This makes GRU simpler but potentially less powerful for very long sequences.
+--->
+
+##### LSTM in Healthcare Applications
+
+LSTMs excel in various healthcare scenarios:
+
+1. **Clinical Note Analysis:**
+   ```python
+   # Example LSTM for clinical note classification
+   model = Sequential([
+       Embedding(vocab_size, embedding_dim, input_length=max_length),
+       LSTM(128, return_sequences=True),
+       Dropout(0.3),
+       LSTM(64),
+       Dense(num_classes, activation='softmax')
+   ])
+   ```
+
+2. **Time Series Prediction:**
+   ```python
+   # Example LSTM for vital signs prediction
+   model = Sequential([
+       LSTM(64, input_shape=(time_steps, features)),
+       Dropout(0.2),
+       Dense(32, activation='relu'),
+       Dense(1)  # Predict next value
+   ])
+   ```
+
+3. **Patient Monitoring:**
+   ```python
+   # Example LSTM for patient state classification
+   model = Sequential([
+       LSTM(128, input_shape=(sequence_length, vital_signs)),
+       BatchNormalization(),
+       Dense(64, activation='relu'),
+       Dropout(0.3),
+       Dense(num_states, activation='softmax')
+   ])
+   ```
+
+##### Best Practices for LSTM in Healthcare
+
+1. **Data Preprocessing:**
+   - Normalize time series data
+   - Handle missing values appropriately
+   - Consider sequence length and padding
+
+2. **Model Architecture:**
+   - Start with a simple architecture
+   - Add layers gradually
+   - Use dropout for regularization
+   - Consider bidirectional LSTMs for better context
+
+3. **Training Considerations:**
+   - Use appropriate batch sizes
+   - Monitor for overfitting
+   - Consider using early stopping
+   - Validate on representative data
+
+4. **Common Challenges:**
+   - Long training times
+   - Memory requirements
+   - Hyperparameter tuning
+   - Interpretability
+
+##### LSTM vs. Other Sequence Models
+
+| Model Type | Strengths | Limitations | Best For |
+|------------|-----------|-------------|-----------|
+| LSTM | - Long-term dependencies<br>- Complex patterns<br>- Memory control | - Computationally expensive<br>- Longer training time | - Clinical notes<br>- Long sequences<br>- Complex temporal patterns |
+| Simple RNN | - Simple implementation<br>- Faster training | - Vanishing gradient<br>- Short-term memory | - Short sequences<br>- Simple patterns |
+| GRU | - Faster training<br>- Fewer parameters | - Less memory control<br>- Shorter memory | - Medium sequences<br>- Real-time applications |
+| Transformer | - Parallel processing<br>- Long-range dependencies | - Large data requirements<br>- Complex implementation | - Large datasets<br>- Parallel processing |
 
 #### Architectural Considerations
 

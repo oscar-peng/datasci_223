@@ -2,12 +2,12 @@
 
 ## Introduction
 
-In this part, you'll work with the MIT-BIH Arrhythmia Database to build a model for heartbeat classification. You can choose between implementing a simple neural network (as in Part 1) or an RNN/LSTM architecture (as covered in the lecture) for this time series classification task.
+In this part, you'll work with the MIT-BIH Arrhythmia Database to build a model for heartbeat classification using a simple neural network architecture. This will help you understand how to apply neural networks to time series data in healthcare.
 
 ## Learning Objectives
 
 - Load and preprocess ECG time series data
-- Implement either a simple neural network or RNN/LSTM for sequence classification
+- Implement a simple neural network for sequence classification
 - Train and evaluate the model
 - Interpret results in a clinical context
 
@@ -252,70 +252,25 @@ def create_simple_nn(input_shape):
     
     return model
 
-### Task 2.2: Create RNN/LSTM Model
-```python
-def create_rnn_model(input_shape):
+def verify_model_architecture(model):
     """
-    Create an RNN/LSTM model for ECG classification.
-    This implements the architecture covered in the lecture.
-    
-    Args:
-        input_shape: Shape of input data (window_size, channels)
-    
-    Returns:
-        Compiled Keras model
-    """
-    model = tf.keras.Sequential([
-        # LSTM layers
-        tf.keras.layers.LSTM(64, return_sequences=True, input_shape=input_shape),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.3),
-        
-        tf.keras.layers.LSTM(32),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.3),
-        
-        # Dense layers
-        tf.keras.layers.Dense(32, activation='relu'),
-        tf.keras.layers.Dropout(0.3),
-        tf.keras.layers.Dense(1, activation='sigmoid')  # Binary classification
-    ])
-    
-    # Compile model
-    model.compile(
-        optimizer='adam',
-        loss='binary_crossentropy',
-        metrics=['accuracy', tf.keras.metrics.AUC()]
-    )
-    
-    return model
-
-def verify_model_architecture(model, model_type='simple'):
-    """
-    Verify that the model architecture is correct.
+    Verify that the model architecture meets requirements.
     
     Args:
         model: Keras model
-        model_type: 'simple' or 'rnn'
     """
     model.summary()
     
     # Test model with sample input
-    if model_type == 'simple':
-        sample_input = tf.random.normal((1, 180, 2))  # window_size x channels
-    else:
-        sample_input = tf.random.normal((1, 180, 2))  # window_size x channels
-    
+    sample_input = tf.random.normal((1, 180, 2))  # window_size x channels
     sample_output = model(sample_input)
     print(f"\nSample output shape: {sample_output.shape}")
     
     # Verify architecture requirements
-    if model_type == 'simple':
-        assert any('dense' in layer.name for layer in model.layers), "Model must include dense layers"
-        assert any('dropout' in layer.name for layer in model.layers), "Model must include dropout"
-    else:
-        assert any('lstm' in layer.name for layer in model.layers), "Model must include LSTM layers"
-        assert any('batch_normalization' in layer.name for layer in model.layers), "Model must include batch normalization"
+    assert any('dense' in layer.name for layer in model.layers), "Model must include dense layers"
+    assert any('dropout' in layer.name for layer in model.layers), "Model must include dropout"
+    assert model.loss == 'binary_crossentropy', "Model must use binary crossentropy loss"
+    assert any('auc' in metric.name for metric in model.metrics), "Model must include AUC metric"
 ```
 
 ## 3. Training and Evaluation
@@ -494,15 +449,11 @@ if __name__ == "__main__":
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
     
     # 2. Create and verify model
-    model_type = 'simple'  # or 'rnn'
-    if model_type == 'simple':
-        model = create_simple_nn(input_shape=(180, 2))
-    else:
-        model = create_rnn_model(input_shape=(180, 2))
-    verify_model_architecture(model, model_type)
+    model = create_simple_nn(input_shape=(180, 2))
+    verify_model_architecture(model)
     
     # 3. Train and evaluate
-    model_name = f'ecg_classifier_{model_type}'
+    model_name = 'ecg_classifier'
     history = train_model(model, X_train, y_train, X_val, y_val, model_name)
     verify_training(history)
     
@@ -527,9 +478,9 @@ if __name__ == "__main__":
    - [ ] Verify window shapes and labels
 
 3. **Model Implementation**:
-   - [ ] Choose model type (simple or RNN)
-   - [ ] Implement model architecture
-   - [ ] Verify model output shape
+   - [ ] Create simple neural network
+   - [ ] Verify model architecture
+   - [ ] Test model output shape
 
 4. **Training**:
    - [ ] Train model with callbacks
@@ -549,12 +500,12 @@ if __name__ == "__main__":
    - F1-score > 0.70
 
 2. **Required Files**:
-   - `models/ecg_classifier_{model_type}.keras`
-   - `results/part_3/ecg_classifier_{model_type}_metrics.txt`
+   - `models/ecg_classifier.keras`
+   - `results/part_3/ecg_classifier_metrics.txt`
 
 3. **Metrics Format**:
    ```
-   model: ecg_classifier_{model_type}
+   model: ecg_classifier
    accuracy: float
    auc: float
    precision: float
@@ -565,15 +516,7 @@ if __name__ == "__main__":
    ```
 
 4. **Model Architecture**:
-   For Simple NN:
    - Must use at least 2 dense layers
-   - Must include dropout layers
-   - Must use binary crossentropy loss
-   - Must include AUC metric
-
-   For RNN/LSTM:
-   - Must use at least 1 LSTM layer
-   - Must include batch normalization
    - Must include dropout layers
    - Must use binary crossentropy loss
    - Must include AUC metric

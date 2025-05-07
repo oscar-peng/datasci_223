@@ -19,6 +19,8 @@ We'll start with image classification using the EMNIST dataset, then move to seq
 %pip install -q tensorflow torch numpy matplotlib tensorflow-datasets torchvision
 
 # If apple silicon install tensorflow-metal
+import os
+
 if os.uname().machine == "arm64":
     %pip install -q tensorflow-macos tensorflow-metal
     pass

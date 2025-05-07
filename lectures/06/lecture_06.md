@@ -150,6 +150,9 @@ The Pentagon was very pleased with this, but a little bit suspicious, they wante
 ### Applications in Machine Learning
 
 #### Demo Break 1: Animal Identifier
+
+![cat](media/cats_00016.jpg){: style="width:30%"} ![dog](media/dogs_00013.jpg){: style="width:30%"} ![panda](media/panda_00001.jpg){: style="width:30%"}
+
 <!---
     - [Which animal is this?](https://github.com/christopherseaman/datasci_223/blob/main/exercises/4-classification/practice_1-which_animal.ipynb): A practical exercise in applying CNNs to a multi-class classification problem.
 --->
@@ -166,7 +169,7 @@ One of the most profound aspects of neural networks is their ability to approxim
 
 The **layered composition** of neural networks, where each layer's output serves as the input to the next, allows these models to learn hierarchies of features. In the context of image recognition, for instance, initial layers might learn to recognize edges and basic textures, while deeper layers can identify more complex structures like shapes or specific objects. This hierarchical learning makes neural networks particularly adept at handling data with complex, hierarchical structures, such as images, sound, and text.
 
-![cat/dog classifier](media/approximation.png)
+![universal approximation](media/universal_approx.gif)
 
 ## **Activation functions**
 
@@ -196,6 +199,8 @@ The concept of activation functions in neural networks bears a resemblance to lo
 
 - **Weighted Sum Inputs:** Both neural networks and logistic regression models compute a weighted sum of the input features. In neural networks, this sum is then passed through an activation function.
 - **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval $y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$
+- 
+![cat/dog classifier](media/approximation.png)
 
 ### Introducing: ReLU
 
@@ -263,8 +268,51 @@ Neural networks require inputs to have consistent dimensions. This section discu
 Proper data cleaning and transformation are essential steps in preparing inputs for neural networks. These processes help in improving the quality of the data and making it more suitable for modeling.
 --->
 
-- **Normalization:** Scaling input features so they are on a similar scale can prevent certain features from dominating due to their scale. Normalization adjusts the data to fall within a smaller, specified range, such as -1 to 1 or 0 to 1.
-- **Standardization:** This involves transforming the data to have a mean of zero and a standard deviation of one. Standardization ensures that the feature distribution is centered around 0, with a standard deviation that scales the distribution. This is particularly useful for inputs to activation functions that are sensitive to magnitude, such as sigmoid or tanh.
+### Why Normalize and Standardize?
+
+1. **Improved Convergence:** Neural networks converge faster when the input data is normalized or standardized. This is because the gradients are more stable, leading to more efficient weight updates.
+2. **Avoiding Saturation:** Activation functions like sigmoid and tanh can saturate when inputs are too large, leading to vanishing gradients. Normalization and standardization help keep the inputs within a range where these functions are most effective.
+3. **Equal Contribution:** When features are on different scales, some features may dominate the learning process. Normalization and standardization ensure that all features contribute equally to the learning process.
+4. **Better Performance:** Models trained on normalized or standardized data often perform better because the training process is more stable and efficient.
+
+### Techniques
+
+1. **Normalization:** Scaling input features so they are on a similar scale can prevent certain features from dominating due to their scale. Normalization adjusts the data to fall within a smaller, specified range, such as -1 to 1 or 0 to 1.
+   ```python
+   from sklearn.preprocessing import MinMaxScaler
+   scaler = MinMaxScaler()
+   normalized_data = scaler.fit_transform(data)
+   ```
+
+2. **Standardization:** This involves transforming the data to have a mean of zero and a standard deviation of one. Standardization ensures that the feature distribution is centered around 0, with a standard deviation that scales the distribution. This is particularly useful for inputs to activation functions that are sensitive to magnitude, such as sigmoid or tanh.
+   ```python
+   from sklearn.preprocessing import StandardScaler
+   scaler = StandardScaler()
+   standardized_data = scaler.fit_transform(data)
+   ```
+
+### When to Use
+
+- **Normalization:** Use when the data does not follow a Gaussian distribution or when you want to scale the data to a specific range.
+- **Standardization:** Use when the data follows a Gaussian distribution or when the algorithm assumes that the data is centered around zero.
+
+### Practical Example
+
+Consider a dataset with features on different scales. Without normalization or standardization, the neural network might struggle to learn effectively.
+
+```python
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+# Example data
+data = np.array([[1, 200], [2, 300], [3, 400]])
+
+# Standardizing data
+scaler = StandardScaler()
+standardized_data = scaler.fit_transform(data)
+print(standardized_data)
+```
+
 - **Handling Missing Values:** Missing data can significantly impact the performance of neural networks. Techniques such as imputation (filling missing values with the mean, median, or mode), or using a model to predict missing values, can be employed to address this issue.
 
 #### Reference Card: Data Normalization

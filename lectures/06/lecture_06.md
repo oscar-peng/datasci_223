@@ -83,7 +83,7 @@ pdf: true
 
 ### Preparation for next week (LLMs)
 
-- _What are embeddings?,_ Vicki Boykis [available at the author's website](https://vickiboykis.com/what_are_embeddings/) or here in [pdf](media/LLM_survey.pdf)
+- _What are embeddings?,_ Vicki Boykis [available at the author's website](https://vickiboykis.com/what_are_embeddings/) or some heavier reading here in [pdf](media/LLM_survey.pdf)
 
 ## **Neural networks overview**
 

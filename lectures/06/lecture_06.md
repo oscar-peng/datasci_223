@@ -8,6 +8,7 @@ pdf: true
 
 ## Before we begin - It came from the internet
 
+<details><summary>Click to show</summary>
 ![dont' use git /s](media/Screenshot_2024-02-14_at_8.32.21_PM.png)
 
 - Fun example: 20 Questions bot [https://github.com/earthtojake/20q](https://github.com/earthtojake/20q)
@@ -33,6 +34,52 @@ pdf: true
 
 - [https://github.com/microsoft/RespireNet](https://github.com/microsoft/RespireNet) - A CNN-based model designed for COVID-19 severity prediction from lung ultrasound images, showcasing the application of neural networks in healthcare.
 - [https://github.com/ritchieng/the-incredible-pytorch](https://github.com/ritchieng/the-incredible-pytorch) - curated list of tutorials, projects, libraries, videos, papers, and books
+
+</details>
+
+## Neural Network References
+
+<details><summary>Click to show</summary>
+
+### Books
+
+#### Recommendations
+
+- _Python for Data Analysis_, McKinney - author's [website](https://wesmckinney.com/book/)
+- _Python Data Science Handbook,_ VanderPlas - author's [website](https://jakevdp.github.io/PythonDataScienceHandbook/)
+- _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/)
+- _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition)
+- _Python Machine Learning_, Raschka & Mirjalili - [author's website](https://sebastianraschka.com/books/)
+- _Dive into Deep Learning_ - authors' [website](https://d2l.ai)
+- _Understanding Deep Learning_ - author's [website](https://udlbook.github.io/udlbook/) (**WARNING:** intense math)
+
+#### [O'Reilly Library Access](https://www.oreilly.com/library-access/) (UCSF institutional access)
+
+- [Hands-on Machine Learning, Géron](https://learning.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) and companion [repository](https://github.com/ageron/handson-ml3)
+- [Machine Learning with PyTorch and Scikit-Learn, Raschka](https://learning.oreilly.com/library/view/machine-learning-with/9781801819312/)
+- [Deep Learning with PyTorch, Viehmann](https://learning.oreilly.com/library/view/deep-learning-with/9781617295263/)
+- [Machine Learning Design Patterns](https://learning.oreilly.com/library/view/machine-learning-design/9781098115777/), Lakshmanan, et al.
+
+### Tutorials
+
+- **[TensorFlow Tutorials](https://www.tensorflow.org/tutorials):** Official tutorials covering various aspects of TensorFlow, from basics to advanced techniques.
+- **[PyTorch Tutorials](https://pytorch.org/tutorials/):** Collection of tutorials for learning and implementing neural networks using PyTorch.
+- **[Keras Documentation](https://keras.io/):** Comprehensive guides and tutorials for building neural networks with Keras, a high-level neural networks API.
+- **[Stanford CS231n: Convolutional Neural Networks for Visual Recognition](http://cs231n.stanford.edu/)**
+- **[Coursera: Deep Learning Specialization (Andrew Ng)](https://www.coursera.org/specializations/deep-learning)**
+
+### Health Data Science & Deep Learning Applications
+
+- **Miotto, R., Wang, F., Wang, S., Jiang, X., & Dudley, J. T. (2018).** Deep learning for healthcare: review, opportunities and challenges. _Briefings in Bioinformatics_, 19(6), 1236-1246. [Link](https://academic.oup.com/bib/article/19/6/1236/2562734)
+- **Esteva, A., et al. (2017).** Dermatologist-level classification of skin cancer with deep neural networks. _Nature_, 542(7639), 115-118. [Link](https://www.nature.com/articles/nature21056)
+- **Rajpurkar, P., et al. (2017).** CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning. _arXiv preprint arXiv:1711.05225_. [Link](https://arxiv.org/abs/1711.05225)
+
+### Interpretability & Ethics
+
+- **Doshi-Velez, F., & Kim, B. (2017).** Towards a rigorous science of interpretable machine learning. _arXiv preprint arXiv:1702.08608_. [Link](https://arxiv.org/abs/1702.08608)
+- **Caruana, R., et al. (2015).** Intelligible models for healthcare: Predicting pneumonia risk and hospital 30-day readmission. _KDD 2015_. [Link](https://dl.acm.org/doi/10.1145/2783258.2788613)
+
+</details>
 
 ### Preparation for next week (LLMs)
 
@@ -151,7 +198,7 @@ The Pentagon was very pleased with this, but a little bit suspicious, they wante
 
 #### Demo Break 1: Animal Identifier
 
-![cat](media/cats_00016.jpg){: style="width:30%"} ![dog](media/dogs_00013.jpg){: style="width:30%"} ![panda](media/panda_00001.jpg){: style="width:30%"}
+![cat/dog/panda](media/cat_dog_panda.png)
 
 <!---
     - [Which animal is this?](https://github.com/christopherseaman/datasci_223/blob/main/exercises/4-classification/practice_1-which_animal.ipynb): A practical exercise in applying CNNs to a multi-class classification problem.
@@ -199,7 +246,8 @@ The concept of activation functions in neural networks bears a resemblance to lo
 
 - **Weighted Sum Inputs:** Both neural networks and logistic regression models compute a weighted sum of the input features. In neural networks, this sum is then passed through an activation function.
 - **Activation Output:** The activation function's output can be seen as a decision, similar to the logistic function in logistic regression, which maps the weighted sum (plus bias term) to a probability score indicating the likelihood of a particular class or outcome. In short, the output is always a score in the interval $y \in [0,1] = f(\{x_i\}) = \sum{w_i x_i} + b$
-- 
+-
+
 ![cat/dog classifier](media/approximation.png)
 
 ### Introducing: ReLU
@@ -278,6 +326,7 @@ Proper data cleaning and transformation are essential steps in preparing inputs 
 ### Techniques
 
 1. **Normalization:** Scaling input features so they are on a similar scale can prevent certain features from dominating due to their scale. Normalization adjusts the data to fall within a smaller, specified range, such as -1 to 1 or 0 to 1.
+
    ```python
    from sklearn.preprocessing import MinMaxScaler
    scaler = MinMaxScaler()
@@ -285,6 +334,7 @@ Proper data cleaning and transformation are essential steps in preparing inputs 
    ```
 
 2. **Standardization:** This involves transforming the data to have a mean of zero and a standard deviation of one. Standardization ensures that the feature distribution is centered around 0, with a standard deviation that scales the distribution. This is particularly useful for inputs to activation functions that are sensitive to magnitude, such as sigmoid or tanh.
+
    ```python
    from sklearn.preprocessing import StandardScaler
    scaler = StandardScaler()
@@ -750,6 +800,7 @@ This detailed comparison shows the internal structure of both LSTM and GRU cells
 LSTMs excel in various healthcare scenarios:
 
 1. **Clinical Note Analysis:**
+
    ```python
    # Example LSTM for clinical note classification
    model = Sequential([
@@ -762,6 +813,7 @@ LSTMs excel in various healthcare scenarios:
    ```
 
 2. **Time Series Prediction:**
+
    ```python
    # Example LSTM for vital signs prediction
    model = Sequential([
@@ -773,6 +825,7 @@ LSTMs excel in various healthcare scenarios:
    ```
 
 3. **Patient Monitoring:**
+
    ```python
    # Example LSTM for patient state classification
    model = Sequential([
@@ -1064,29 +1117,3 @@ Practical implementations of neural network models provide valuable insights and
 - **GPT from Scratch:** Building a simplified version of the GPT model in PyTorch, offering insights into the workings of transformer models.
     - [https://github.com/tezansahu/PyTorch-GANs](https://github.com/tezansahu/PyTorch-GANs): A beginner-friendly implementation showing how to train a GAN on the MNIST dataset to generate digit images.
 - **Multi-Model Systems:** Exploring the interaction between different models, such as in GANs, where a generative model is pitted against a discriminative model to produce high-quality synthetic data.
-
-## References
-
-### Books
-
-#### Recommendations
-
-- _Python for Data Analysis_, McKinney - author's [website](https://wesmckinney.com/book/)
-- _Python Data Science Handbook,_ VanderPlas - author's [website](https://jakevdp.github.io/PythonDataScienceHandbook/)
-- _PyTorch Tutorials_ - official [documentation](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html)
-- _TensorFlow Tutorials_ - official [documentation](https://www.tensorflow.org/tutorials)
-- _Dive into Deep Learning -_ authors' [website](https://d2l.ai)
-- _Understanding Deep Learning_ - author's [website](https://udlbook.github.io/udlbook/) (**WARNING:** intense math)
-
-#### [O'Reilly Library Access](https://www.oreilly.com/library-access/) (UCSF institutional access)
-
-- [Hands-on Machine Learning, Géron](https://learning.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) and companion [repository](https://github.com/ageron/handson-ml3)
-- [Machine Learning with PyTorch and Scikit-Learn, Rashka](https://learning.oreilly.com/library/view/machine-learning-with/9781801819312/)
-- [Deep Learning with PyTorch, Viehmann](https://learning.oreilly.com/library/view/deep-learning-with/9781617295263/)
-- [Machine Learning Design Patterns](https://learning.oreilly.com/library/view/machine-learning-design/9781098115777/), Lakshmanan, et al.
-
-### Tutorials
-
-- **[TensorFlow Tutorials](https://www.tensorflow.org/tutorials)****:** Official tutorials covering various aspects of TensorFlow, from basics to advanced techniques.
-- **[PyTorch Tutorials](https://pytorch.org/tutorials/)****:** Collection of tutorials for learning and implementing neural networks using PyTorch.
-- **[Keras Documentation](https://keras.io/)****:** Comprehensive guides and tutorials for building neural networks with Keras, a high-level neural networks API.

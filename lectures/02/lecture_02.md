@@ -39,7 +39,7 @@ This lecture covers three main topics for health data science students who are b
 - Students should be able to apply debugging skills to their own health data projects
 -->
 
-# Debugging and Big Data in Health Data Science 🐛💾🏥 [\[pdf\]](lecture_02.pdf)
+# Debugging and Big Data in Health Data Science 🐛💾🏥
 
 ## Outline
 

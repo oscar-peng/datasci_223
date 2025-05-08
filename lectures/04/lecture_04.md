@@ -3,7 +3,7 @@ lecture_number: 04
 pdf: true
 ---
 
-# Time Series & Regression: Predicting the Future 📈⌛ [\[pdf\]](lecture_04.pdf)
+# Time Series & Regression: Predicting the Future 📈⌛
 
 <!---
 This lecture covers time series analysis with a focus on healthcare applications. Key points to emphasize:

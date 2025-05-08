@@ -194,7 +194,7 @@ The Pentagon was very pleased with this, but a little bit suspicious, they wante
 ![cat/dog/panda](media/cat_dog_panda.png)
 
 <!---
-    - [Which animal is this?](https://github.com/christopherseaman/datasci_223/blob/main/exercises/4-classification/practice_1-which_animal.ipynb): A practical exercise in applying CNNs to a multi-class classification problem.
+    - [Which animal is this?](https://github.com/christopherseaman/datasci_223/blob/main/exercises/4-classification/practice_1-which_animal.md): A practical exercise in applying CNNs to a multi-class classification problem.
 --->
 
 Neural networks have revolutionized the field of machine learning, providing the backbone for a myriad of applications:

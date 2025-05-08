@@ -479,7 +479,7 @@ kmf.plot_survival_function()
 
 ### DEMO BREAK: Exploring Heart Rate Patterns During Meditation
 
-See: [`demo1-synthetic-timeseries`](demo/demo1-synthetic-timeseries.ipynb)
+See: [`demo1-synthetic-timeseries`](demo/demo1-synthetic-timeseries.md)
 
 ## 3. ARIMA Models
 
@@ -747,7 +747,7 @@ def validate_arima_model(model_results):
 
 ### DEMO BREAK: Sleep Quality Prediction
 
-See: [`demo2-hrv-forecasting`](demo/demo2-hrv-forecasting.ipynb)
+See: [`demo2-hrv-forecasting`](demo/demo2-hrv-forecasting.md)
 
 ## 4. Sensor Data Analysis
 
@@ -1030,7 +1030,7 @@ def extract_features(signal, sampling_rate):
 
 ### DEMO BREAK: Advanced Sensor Data Analysis
 
-See: [`demo3-hrv-feature-extraction`](demo/demo3-hrv-feature-extraction.ipynb)
+See: [`demo3-hrv-feature-extraction`](demo/demo3-hrv-feature-extraction.md)
 
 ### Signal Preprocessing Techniques 🔧
 

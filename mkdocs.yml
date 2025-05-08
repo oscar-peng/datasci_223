@@ -69,6 +69,11 @@ plugins:
   - callouts
   - exporter:
       enabled: true
+      buttons:
+        - title: Download as PDF
+          icon: material-file-download-outline
+          enabled: !!python/name:mkdocs_exporter.formats.pdf.buttons.download.enabled
+          attributes: !!python/name:mkdocs_exporter.formats.pdf.buttons.download.attributes
       formats:
         pdf:
           enabled: true

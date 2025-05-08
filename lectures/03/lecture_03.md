@@ -200,7 +200,7 @@ WITH (FORMAT csv, HEADER true);
 
 ## Live demo
 
-[Demo 1: Setup and Import](demo/01_setup_and_import.ipynb)
+[Demo 1: Setup and Import](demo/01_setup_and_import.md)
 
 ## 🤿 SQL Fundamentals
 
@@ -374,7 +374,7 @@ JOIN (
 
 ## Live demo
 
-[Demo 2: SQL Basics](demo/02_sql_basics.ipynb)
+[Demo 2: SQL Basics](demo/02_sql_basics.md)
 
 ## 🚨 Advanced SQL
 
@@ -514,7 +514,7 @@ REFRESH MATERIALIZED VIEW sales_summary;
 
 ## Live demo
 
-[Demo 3: Complex Queries](demo/03_complex_queries.ipynb)
+[Demo 3: Complex Queries](demo/03_complex_queries.md)
 
 ## 🔄 SQL with Python
 
@@ -579,4 +579,4 @@ df = pd.read_sql_query(sql_query, engine)
 
 ## Live demo
 
-[Demo 4: Python Integration](demo/04_python_integration.ipynb)
+[Demo 4: Python Integration](demo/04_python_integration.md)

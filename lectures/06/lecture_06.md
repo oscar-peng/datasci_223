@@ -6,9 +6,6 @@ pdf: true
 
 # Neural Networks: If I Only Had a Brain [pdf](lecture_06.pdf)
 
-<video controls>
-<source src="media/universal_approximation.mp4" type="video/mp4">
-</video>
 
 ## Before we begin - It came from the internet
 
@@ -211,6 +208,10 @@ Neural networks have revolutionized the field of machine learning, providing the
 One of the most profound aspects of neural networks is their ability to approximate virtually any complex function, a property known as the **Universal Approximation Theorem**. This theorem suggests that a feedforward network with a single hidden layer containing a finite number of neurons can approximate continuous functions on compact subsets of $\mathbb{R}^n$﻿, given appropriate activation functions.
 
 The **layered composition** of neural networks, where each layer's output serves as the input to the next, allows these models to learn hierarchies of features. In the context of image recognition, for instance, initial layers might learn to recognize edges and basic textures, while deeper layers can identify more complex structures like shapes or specific objects. This hierarchical learning makes neural networks particularly adept at handling data with complex, hierarchical structures, such as images, sound, and text.
+
+<video controls>
+<source src="media/universal_approximation.mp4" type="video/mp4">
+</video>
 
 ![universal approximation](media/universal_approx.gif)
 

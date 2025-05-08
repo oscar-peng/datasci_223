@@ -6,6 +6,10 @@ pdf: true
 
 # Neural Networks: If I Only Had a Brain [pdf](lecture_06.pdf)
 
+<video controls>
+<source src="media/universal_approximation.mp4" type="video/mp4">
+</video>
+
 ## Before we begin - It came from the internet
 
 <details><summary>Click to show</summary>

@@ -5,6 +5,9 @@ pdf: true
 
 # Time Series & Regression: Predicting the Future 📈⌛
 
+!!! bug "`pywt` PyWavelets"
+    The `pywt` is very difficult to use. Update the lecture and assignment to work around this issue by substituting with a different package.
+
 <!---
 This lecture covers time series analysis with a focus on healthcare applications. Key points to emphasize:
 - Time series data is everywhere in healthcare (vital signs, lab results, disease progression)

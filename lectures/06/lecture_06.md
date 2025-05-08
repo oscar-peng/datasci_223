@@ -12,7 +12,6 @@ pdf: true
 
 ## Before we begin - It came from the internet
 
-<details><summary>Click to show</summary>
 ![dont' use git /s](media/Screenshot_2024-02-14_at_8.32.21_PM.png)
 
 - Fun example: 20 Questions bot [https://github.com/earthtojake/20q](https://github.com/earthtojake/20q)
@@ -39,11 +38,8 @@ pdf: true
 - [https://github.com/microsoft/RespireNet](https://github.com/microsoft/RespireNet) - A CNN-based model designed for COVID-19 severity prediction from lung ultrasound images, showcasing the application of neural networks in healthcare.
 - [https://github.com/ritchieng/the-incredible-pytorch](https://github.com/ritchieng/the-incredible-pytorch) - curated list of tutorials, projects, libraries, videos, papers, and books
 
-</details>
 
 ## Neural Network References
-
-<details><summary>Click to show</summary>
 
 ### Books
 
@@ -82,8 +78,6 @@ pdf: true
 
 - **Doshi-Velez, F., & Kim, B. (2017).** Towards a rigorous science of interpretable machine learning. _arXiv preprint arXiv:1702.08608_. [Link](https://arxiv.org/abs/1702.08608)
 - **Caruana, R., et al. (2015).** Intelligible models for healthcare: Predicting pneumonia risk and hospital 30-day readmission. _KDD 2015_. [Link](https://dl.acm.org/doi/10.1145/2783258.2788613)
-
-</details>
 
 ### Preparation for next week (LLMs)
 

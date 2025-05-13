@@ -1,5 +1,56 @@
 
-<!--- #FIXME Cut and insert as start of lecture_07.md
+# Transformers: More than Meets the Eye
+
+## Outline
+
+## 
+
+## Systematic model selection
+
+1. **Preparation and Setup**
+    - **Parameter Definition:** Establish the number of splits or folds (K) for the validation process, decide on the repetitions for techniques like Repeated K-Fold or K-Split if needed, and outline the hyperparameter grid (C) for each candidate model. For models lacking hyperparameters, set C to an empty configuration.
+2. **Data Partitioning**
+    - **Validation Holdout (Optional):** Optionally reserve a subset of the data as a standalone validation set (V) to provide an unbiased final evaluation.
+3. **Model Evaluation**
+    - **K Splits/Folds Validation (Outer Loop):** Organize the data into K distinct splits or folds, using a consistent strategy to ensure each segment of data is used for validation once. This could involve stratified sampling to preserve class distributions in cases of imbalanced datasets.
+        - **Hyperparameter Optimization (Inner Loop):** Within each split or fold, perform hyperparameter tuning for models with configurable parameters. This can include nested validation within the training portion of each split or fold to determine the optimal settings.
+4. **Performance Aggregation**
+    - **Score Compilation:** Collect and average the performance scores across all K splits or folds to derive a comprehensive performance metric for each model configuration.
+5. **Model Selection**
+    - **Optimal Model Identification:** Evaluate the aggregated performance of each model to select the one that demonstrates the best balance of accuracy, precision, recall, F1 score, or other relevant metrics, considering the specific objectives and constraints of the study.
+6. **Final Model Training and Validation**
+    - **Comprehensive Training:** Use the entire dataset (excluding any validation holdout) to train the selected model with the identified optimal hyperparameters.
+    - **External Validation (Optional):** If a separate validation set was reserved or an external dataset is available, assess the finalized model against this data to gauge its performance and generalizability.
+7. **Documentation and Transparency**
+    - **In-depth Reporting:** Thoroughly document the selection process, including the rationale behind the choice of metrics, models, hyperparameters, and the comparative performance across different model configurations, to ensure clarity and reproducibility.
+
+### **Additional Considerations**
+
+- **Class Imbalances:** If applicable, ensure strategies to handle class imbalances (e.g., stratified sampling, class weights) are integrated into both the training and validation processes.
+- **Computational Efficiency:** Be mindful of the computational complexity, particularly with a large number of models, hyperparameters, and folds. Employ efficient search techniques and parallel processing where feasible.
+- **Domain Requirements:** Customize the model selection framework to align with the domain-specific needs and the nature of the data, ensuring the chosen approach is both relevant and practical.
+
+### Simple k-fold
+
+![simple k-fold](media/Untitled.png)
+
+
+### Random k-fold
+
+![random k-fold](media/Untitled 2.png)
+
+### Nested k-fold
+
+![Nested k-fold](media/Untitled 1.png)
+
+## Live Demo!
+
+Training splits for systematic model comparison
+
+## A Brief History of Transformers
+
+![Intro to Deep Learning](media/Intro_to_Deep_Learning_Transformers.pdf)
+
 ## Interlude: Latent Space
 
 The concept of latent space is particularly relevant in the context of autoencoders and generative models within neural network architectures. You can introduce latent space in a subsection under these topics, explaining its significance in learning compact, meaningful representations of data. Here's a suggestion on where and how to incorporate it:
@@ -42,78 +93,81 @@ Training an existing transformer-based model on new data is called **fine-tuning
 - **Efficiency:** By starting with a pre-trained model, researchers and practitioners can bypass the need for extensive computational resources required to train large models from scratch. Fine-tuning allows for the customization of these powerful models to specific needs while retaining the general knowledge they have already acquired.
 
 - Fine-tuning a GPT using PyTorch
+
+### **Step 1: Install Transformers and PyTorch**
+
+Ensure you have the `**transformers**` and `**torch**` libraries installed. You can install them using pip if you haven't already:
+
+```Shell
+pip install transformers torch
+```
+
+### **Step 2: Load a Pre-Trained Model and Tokenizer**
+
+First, import the necessary modules and load a pre-trained model along with its corresponding tokenizer. We'll use GPT-2 as an example.
+
+```Python
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
+
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+model = GPT2LMHeadModel.from_pretrained('gpt2')
+```
+
+### **Step 3: Prepare Your Dataset**
+
+Prepare your text data for training. This involves tokenizing your text corpus and creating a dataset that the model can process.
+
+```Python
+texts = ["Your text data", "More text data"]  # Replace with your text corpus
+inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+```
+
+### **Step 4: Fine-Tune the Model**
+
+Use the Hugging Face `**Trainer**` class or a custom training loop to fine-tune the model on your dataset. For simplicity, we'll use the `**Trainer**`.
+
+```Python
+from transformers import Trainer, TrainingArguments
+
+training_args = TrainingArguments(
+    output_dir="./results",           # Output directory
+    num_train_epochs=3,               # Total number of training epochs
+    per_device_train_batch_size=4,    # Batch size per device during training
+    per_device_eval_batch_size=4,     # Batch size for evaluation
+    warmup_steps=500,                 # Number of warmup steps for learning rate scheduler
+    weight_decay=0.01,                # Strength of weight decay
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=inputs,  # Assuming `inputs` is your processed dataset
+    # eval_dataset=eval_dataset,  # If you have a validation set
+)
+
+trainer.train()
+```
+
+### **Step 5: Save and Use the Fine-Tuned Model**
+
+After fine-tuning, save your model for future use and inference.
+
+```Python
+pythonCopy code
+trainer.save_model("./fine_tuned_model")
+
+# To use the model for generation:
+prompt = "Your prompt here"
+input_ids = tokenizer.encode(prompt, return_tensors="pt")
+generated_text_ids = model.generate(input_ids, max_length=100)
+generated_text = tokenizer.decode(generated_text_ids[0], skip_special_tokens=True)
+
+print(generated_text)
+```
     
-    ### **Step 1: Install Transformers and PyTorch**
-    
-    Ensure you have the `**transformers**` and `**torch**` libraries installed. You can install them using pip if you haven't already:
-    
-    ```Shell
-    pip install transformers torch
-    ```
-    
-    ### **Step 2: Load a Pre-Trained Model and Tokenizer**
-    
-    First, import the necessary modules and load a pre-trained model along with its corresponding tokenizer. We'll use GPT-2 as an example.
-    
-    ```Python
-    from transformers import GPT2Tokenizer, GPT2LMHeadModel
-    
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-    model = GPT2LMHeadModel.from_pretrained('gpt2')
-    ```
-    
-    ### **Step 3: Prepare Your Dataset**
-    
-    Prepare your text data for training. This involves tokenizing your text corpus and creating a dataset that the model can process.
-    
-    ```Python
-    texts = ["Your text data", "More text data"]  # Replace with your text corpus
-    inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
-    ```
-    
-    ### **Step 4: Fine-Tune the Model**
-    
-    Use the Hugging Face `**Trainer**` class or a custom training loop to fine-tune the model on your dataset. For simplicity, we'll use the `**Trainer**`.
-    
-    ```Python
-    from transformers import Trainer, TrainingArguments
-    
-    training_args = TrainingArguments(
-        output_dir="./results",           # Output directory
-        num_train_epochs=3,               # Total number of training epochs
-        per_device_train_batch_size=4,    # Batch size per device during training
-        per_device_eval_batch_size=4,     # Batch size for evaluation
-        warmup_steps=500,                 # Number of warmup steps for learning rate scheduler
-        weight_decay=0.01,                # Strength of weight decay
-    )
-    
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=inputs,  # Assuming `inputs` is your processed dataset
-        # eval_dataset=eval_dataset,  # If you have a validation set
-    )
-    
-    trainer.train()
-    ```
-    
-    ### **Step 5: Save and Use the Fine-Tuned Model**
-    
-    After fine-tuning, save your model for future use and inference.
-    
-    ```Python
-    pythonCopy code
-    trainer.save_model("./fine_tuned_model")
-    
-    # To use the model for generation:
-    prompt = "Your prompt here"
-    input_ids = tokenizer.encode(prompt, return_tensors="pt")
-    generated_text_ids = model.generate(input_ids, max_length=100)
-    generated_text = tokenizer.decode(generated_text_ids[0], skip_special_tokens=True)
-    
-    print(generated_text)
-    ```
-    
+## Live Demo!
+
+DIY GPT [nanoGPT](https://github.com/karpathy/nanoGPT)
 
 ### Prompt Engineering and One-Shot Learning
 
@@ -170,3 +224,43 @@ The left and center figures represent different layers / attention heads. The ri
 
 - **Scaled Dot-Product Attention:** The most commonly used attention mechanism in transformers involves computing the dot product of the query with all keys, dividing each by the square root of the dimension of the keys, applying a softmax function to obtain the weights on the values. This approach efficiently captures the relevance of different parts of the input data to each other.
 - **Multi-Head Attention:** Transformers further extend the capabilities of the attention mechanism through the use of multi-head attention. This involves running multiple attention operations in parallel, with each "head" focusing on different parts of the input data. This diversity allows the model to attend to different aspects of the data, enhancing its representational power.
+
+## Links
+
+- Attention Paper - [https://arxiv.org/abs/1409.0473](https://arxiv.org/abs/1409.0473)
+- Visual introduction to Attention - [https://erdem.pl/2021/05/introduction-to-attention-mechanism](https://erdem.pl/2021/05/introduction-to-attention-mechanism)
+- Transformers
+    - "Attention is all you need" paper [https://arxiv.org/abs/1706.03762](https://arxiv.org/abs/1706.03762)
+    - The Illustrated Transformer [https://jalammar.github.io/illustrated-transformer/](https://jalammar.github.io/illustrated-transformer/)
+- Multi head attention - [https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
+- DIT nanoGPT from scratch - [https://github.com/karpathy/nanoGPT/blob/master/train.py](https://github.com/karpathy/nanoGPT/blob/master/train.py)
+    - Karpathy's Neural Networks: Zero to Hero - [https://karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
+    - Let's build GPT: from scratch, in code, spelled out [https://www.youtube.com/watch?v=kCc8FmEb1nY](https://www.youtube.com/watch?v=kCc8FmEb1nY)
+- Reinforcement Learning with Human Feedback - [https://arxiv.org/abs/2203.02155](https://arxiv.org/abs/2203.02155)
+
+### LLMS
+
+List of open source LLMS
+
+- [https://github.com/eugeneyan/open-llms](https://github.com/eugeneyan/open-llms)
+- GPT (2018) [https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
+
+Knowledge Distillation
+
+- DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter [https://arxiv.org/pdf/1910.01108v4.pdf](https://arxiv.org/pdf/1910.01108v4.pdf)
+
+Health CARE & AI
+
+- UCSF Versa! [https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa)
+- [https://thymia.ai/](https://thymia.ai/)su
+- [https://www.suki.ai/](https://www.suki.ai/)
+- [https://www.riken.jp/en/research/labs/bdr/](https://www.riken.jp/en/research/labs/bdr/)
+- [https://sites.research.google/med-palm/](https://sites.research.google/med-palm/)
+
+
+Where to play around
+
+- [https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt](https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt)
+- [https://cloud.google.com/vertex-ai](https://cloud.google.com/vertex-ai)
+- [https://platform.openai.com/](https://platform.openai.com/)
+- [https://github.com/openai/evals](https://github.com/openai/evals)

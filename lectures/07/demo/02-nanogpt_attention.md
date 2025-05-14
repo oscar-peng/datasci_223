@@ -37,20 +37,22 @@ device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is
 print(f"Using device: {device}")
 
 # Training hyperparameters
+
+# Karpathy's miniature Shakespeare config (baby GPT, fast for laptops/MacBooks)
 config = {
-    'n_layer': 4,  # Reduced layers
-    'n_head': 4,   # Reduced heads
-    'n_embd': 256, # Reduced embedding
-    'dropout': 0.0,
+    'n_layer': 6,      # 6 layers
+    'n_head': 6,       # 6 attention heads
+    'n_embd': 384,     # 384 embedding size
+    'dropout': 0.2,    # regularization
     'bias': False,
-    'max_iters': 300,
-    'batch_size': 16,
-    'gradient_accumulation_steps': 15,
-    'block_size': 256,  # Smaller block size
-    'learning_rate': 6e-4,
+    'max_iters': 500,  # training iterations
+    'batch_size': 64,  # larger batch size for small model
+    'gradient_accumulation_steps': 1,
+    'block_size': 256, # context of up to 256 previous characters
+    'learning_rate': 1e-3, # higher learning rate for small model
     'weight_decay': 1e-1,
     'beta1': 0.9,
-    'beta2': 0.95,
+    'beta2': 0.99,     # higher beta2 for small batches
     'grad_clip': 1.0,
 }
 
@@ -66,7 +68,7 @@ model_config = GPTConfig(
 )
 
 # Check if we have a saved model
-checkpoint_path = os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'ckpt.pt')
+checkpoint_path = os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt')
 if os.path.exists(checkpoint_path):
     print("Loading saved model...")
     checkpoint = torch.load(checkpoint_path)
@@ -120,11 +122,7 @@ else:
             iter_time = current_time - last_time
             last_time = current_time
             progress = (iter_num + 1) / config['max_iters'] * 100
-            if device == 'mps':
-                gpu_percent = psutil.cpu_percent(interval=0.1)
-                print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}% | mpu {gpu_percent:.1f}%")
-            else:
-                print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}%")
+            print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}%")
     
     # Save the trained model
     checkpoint = {
@@ -148,14 +146,14 @@ checkpoint = {
     'iter_num': iter_num,
     'best_val_loss': loss.item(),
 }
-torch.save(checkpoint, os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'ckpt.pt'))
+torch.save(checkpoint, os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt'))
 ```
 
 ## Load Saved Model
 
 ```python
 # Load the saved model
-checkpoint = torch.load(os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'ckpt.pt'))
+checkpoint = torch.load(os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt'))
 model_config = GPTConfig(**checkpoint['model_args'])
 model = GPT(model_config)
 model.load_state_dict(checkpoint['model'])
@@ -165,86 +163,131 @@ model.eval()  # Set to evaluation mode for visualization
 
 ## Attention Visualization Setup
 
+Short or simple sentences often produce diagonal attention patterns, showing that each token mostly attends to itself or its immediate neighbors. By visualizing only a subset of the attention matrix for a short input, we can make the plot readable and see how the model distributes attention across tokens. This is especially useful for character-level models, where long inputs make the plot crowded.
+
 ```python
 def get_attention_patterns(model, x):
     """Extract attention patterns from the model without modifying its structure."""
     B, T = x.shape
     assert T <= model.config.block_size, f"Cannot forward sequence of length {T}, block size is only {model.config.block_size}"
-    
-    # forward the GPT model
+    # Forward the GPT model
     tok_emb = model.transformer.wte(x) # token embeddings of shape (b, t, n_embd)
     pos = torch.arange(0, T, dtype=torch.long, device=x.device).unsqueeze(0) # shape (1, t)
     pos_emb = model.transformer.wpe(pos) # position embeddings of shape (1, t, n_embd)
     x = model.transformer.drop(tok_emb + pos_emb)
-    
-    # Store attention weights
     attention_weights = []
-    
     # Forward through each block and capture attention
     for block in model.transformer.h:
-        # Get query, key, value projections
         qkv = block.attn.c_attn(block.ln_1(x))
         q, k, v = qkv.split(model.config.n_embd, dim=2)
-        
-        # Reshape for attention
         B, T, C = x.shape
         k = k.view(B, T, block.attn.n_head, C // block.attn.n_head).transpose(1, 2)
         q = q.view(B, T, block.attn.n_head, C // block.attn.n_head).transpose(1, 2)
         v = v.view(B, T, block.attn.n_head, C // block.attn.n_head).transpose(1, 2)
-        
-        # Compute attention scores
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        
-        # Apply causal mask if not using Flash Attention
         if not block.attn.flash:
             att = att.masked_fill(block.attn.bias[:,:,:T,:T] == 0, float('-inf'))
         else:
-            # Create causal mask for Flash Attention
             mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
             att = att.masked_fill(mask, float('-inf'))
-        
-        att = F.softmax(att, dim=-1)
-        
-        # Store attention weights
+        att = torch.nn.functional.softmax(att, dim=-1)
         attention_weights.append(att)
-        
-        # Continue with normal forward pass
         x = x + block.attn(block.ln_1(x))
         x = x + block.mlp(block.ln_2(x))
-    
     x = model.transformer.ln_f(x)
     logits = model.lm_head(x)
-    
     return logits, attention_weights
 
-def visualize_attention(text, model, layer_idx=0, head_idx=0):
-    """Visualize attention patterns for a given input text."""
-    # Tokenize input
-    chars = list(text)
+def visualize_attention_subset(text, model, layer_idx=0, head_idx=0, max_tokens=20):
+    """Visualize a subset of the attention pattern for readability."""
+    # Use only the first max_tokens characters
+    chars = list(text)[:max_tokens]
     x = torch.tensor([ord(c) for c in chars], dtype=torch.long).unsqueeze(0)
-    
-    # Move to device
     x = x.to(model.transformer.wte.weight.device)
-    
-    # Get attention weights
     with torch.no_grad():
         logits, attention_weights = get_attention_patterns(model, x)
-    
-    # Get attention for specified layer and head
     attn = attention_weights[layer_idx][0, head_idx]
-    
-    # Create attention heatmap
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(6, 5))
     plt.imshow(attn.cpu().numpy(), cmap='viridis')
     plt.xticks(range(len(chars)), chars, rotation=90)
     plt.yticks(range(len(chars)), chars)
-    plt.title(f'Attention Pattern (Layer {layer_idx}, Head {head_idx})')
+    plt.title(f'Attention Pattern (Layer {layer_idx}, Head {head_idx}) [First {max_tokens} chars]')
     plt.colorbar()
     plt.show()
+```
 
-# Example text from Shakespeare
-text = "To be, or not to be, that is the question"
-visualize_attention(text, model)
+### Short Input Example
+
+This plot shows attention for a short phrase. Look for diagonal patterns, which indicate local attention (each character mostly attends to itself or its neighbors).
+
+```python
+short_text = "To be, or not to be"
+visualize_attention_subset(short_text, model)
+```
+
+### Complex Input Example
+
+With a longer, more complex input, attention patterns can reveal longer-range dependencies, repeated word focus, or punctuation effects. The plot may be more crowded, but you may spot heads that focus on repeated words or punctuation.
+
+```python
+complex_text = (
+    "To be, or not to be, that is the question: "
+    "Whether 'tis nobler in the mind to suffer "
+    "The slings and arrows of outrageous fortune, "
+    "Or to take arms against a sea of troubles "
+    "And by opposing end them."
+)
+visualize_attention_subset(complex_text, model, max_tokens=40)
+```
+
+## Multi-Head Analysis (Subset)
+
+Visualizing all attention heads for a short input helps us compare how different heads focus on different parts of the sequence. Some heads may focus on local context, while others may capture longer-range dependencies or special characters.
+
+```python
+def analyze_attention_heads_subset(text, model, layer_idx=0, max_tokens=20):
+    """Analyze attention patterns across all heads in a layer for a subset of tokens."""
+    chars = list(text)[:max_tokens]
+    x = torch.tensor([ord(c) for c in chars], dtype=torch.long).unsqueeze(0)
+    x = x.to(model.transformer.wte.weight.device)
+    with torch.no_grad():
+        logits, attention_weights = get_attention_patterns(model, x)
+    n_heads = model.config.n_head
+    n_cols = min(4, n_heads)
+    n_rows = (n_heads + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows))
+    fig.suptitle(f'Attention Patterns Across Heads (Layer {layer_idx}) [First {max_tokens} chars]')
+    axes = axes.flatten() if n_heads > 1 else [axes]
+    for i in range(n_heads):
+        ax = axes[i]
+        attn = attention_weights[layer_idx][0, i]
+        im = ax.imshow(attn.cpu().numpy(), cmap='viridis')
+        ax.set_xticks(range(len(chars)))
+        ax.set_xticklabels(chars, rotation=90)
+        ax.set_yticks(range(len(chars)))
+        ax.set_yticklabels(chars)
+        ax.set_title(f'Head {i}')
+        plt.colorbar(im, ax=ax)
+    for j in range(n_heads, len(axes)):
+        axes[j].axis('off')
+    plt.tight_layout()
+    plt.show()
+```
+
+### Multi-Head, Short Input
+
+Compare how different heads focus on the short phrase. Most heads will show local/diagonal attention, but some may focus on punctuation or repeated characters.
+
+```python
+analyze_attention_heads_subset(short_text, model)
+```
+
+### Multi-Head, Complex Input
+
+With a longer input, some heads may focus on repeated words, punctuation, or long-range dependencies. The plot is more crowded, but you may spot heads that specialize in certain patterns.
+
+```python
+analyze_attention_heads_subset(complex_text, model, max_tokens=40)
 ```
 
 ## Multi-Head Analysis
@@ -255,35 +298,34 @@ def analyze_attention_heads(text, model, layer_idx=0):
     # Tokenize input
     chars = list(text)
     x = torch.tensor([ord(c) for c in chars], dtype=torch.long).unsqueeze(0)
-    
-    # Move to device
     x = x.to(model.transformer.wte.weight.device)
     
-    # Get attention weights
+    # Get attention weights using the custom function
     with torch.no_grad():
-        logits, attention_weights = model.get_attention_weights(x)
+        logits, attention_weights = get_attention_patterns(model, x)
     
-    # Create subplot for each head
     n_heads = model.config.n_head
-    fig, axes = plt.subplots(2, 2, figsize=(15, 15))
+    n_cols = min(4, n_heads)
+    n_rows = (n_heads + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows))
     fig.suptitle(f'Attention Patterns Across Heads (Layer {layer_idx})')
     
+    axes = axes.flatten() if n_heads > 1 else [axes]
     for i in range(n_heads):
-        row = i // 2
-        col = i % 2
+        ax = axes[i]
         attn = attention_weights[layer_idx][0, i]
-        
-        im = axes[row, col].imshow(attn.cpu().numpy(), cmap='viridis')
-        axes[row, col].set_xticks(range(len(chars)))
-        axes[row, col].set_xticklabels(chars, rotation=90)
-        axes[row, col].set_yticks(range(len(chars)))
-        axes[row, col].set_yticklabels(chars)
-        axes[row, col].set_title(f'Head {i}')
-        plt.colorbar(im, ax=axes[row, col])
-    
+        im = ax.imshow(attn.cpu().numpy(), cmap='viridis')
+        ax.set_xticks(range(len(chars)))
+        ax.set_xticklabels(chars, rotation=90)
+        ax.set_yticks(range(len(chars)))
+        ax.set_yticklabels(chars)
+        ax.set_title(f'Head {i}')
+        plt.colorbar(im, ax=ax)
+    # Hide any unused subplots
+    for j in range(n_heads, len(axes)):
+        axes[j].axis('off')
     plt.tight_layout()
     plt.show()
 
-# Analyze attention heads
-text = "All the world's a stage, and all the men and women merely players"
+# Use the same complex text for multi-head analysis
 analyze_attention_heads(text, model)

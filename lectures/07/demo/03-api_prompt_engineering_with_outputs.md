@@ -1,3 +1,18 @@
+---
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+      jupytext_version: 1.17.1
+  kernelspec:
+    display_name: Python 3.13
+    language: python
+    name: python3.13
+---
+
 # Demo 3: API Usage and Prompt Engineering for Health Data
 
 This demo explores how to effectively use language model APIs for healthcare applications, focusing on prompt engineering techniques to improve reliability and reduce hallucination.

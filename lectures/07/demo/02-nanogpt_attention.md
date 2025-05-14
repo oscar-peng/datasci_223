@@ -149,20 +149,17 @@ else:
             last_time = current_time
             progress = (iter_num + 1) / config['max_iters'] * 100
             print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}%")
-```
 
-## Save Model
-
-```python
-# Save the trained model
-checkpoint = {
-    'model': model.state_dict(),
-    'optimizer': optimizer.state_dict(),
-    'model_args': model_config.__dict__,
-    'iter_num': iter_num,
-    'best_val_loss': loss.item(),
-}
-torch.save(checkpoint, checkpoint_path)
+        # Save model on last iteration
+        if iter_num == config["max_iters"] - 1:
+            checkpoint = {
+                "model": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "model_args": model_config.__dict__,
+                "iter_num": iter_num,
+                "best_val_loss": loss.item(),
+            }
+            torch.save(checkpoint, checkpoint_path)
 ```
 
 ## Load Saved Model

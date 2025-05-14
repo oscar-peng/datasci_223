@@ -13,3 +13,4 @@ tmp/
 logs/
 .env
 nanoGPT/
+lectures/07/demo/02-model.pt

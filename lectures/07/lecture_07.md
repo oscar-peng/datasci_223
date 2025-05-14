@@ -2,7 +2,50 @@
 
 ## Outline
 
-## 
+1. **Systematic Model Selection**
+   - Preparation and Setup
+   - Data Partitioning
+   - Model Evaluation
+   - Performance Aggregation
+   - Model Selection
+   - Final Model Training and Validation
+   - Documentation and Transparency
+
+2. **A Brief History of Transformers**
+   - Transformers and Attention
+   - Transformer Architecture
+   - Attention Mechanism
+   - Live Demo: DIY GPT (nanoGPT)
+
+3. **Latent Space and Embeddings**
+   - Understanding Latent Space
+   - Role in Autoencoders
+   - Generative Model Applications
+   - Embeddings in Practice
+
+4. **LLMs and General-Purpose Models**
+   - Fine-Tuning
+   - Prompt Engineering
+   - One-Shot and Few-Shot Learning
+   - Structured Responses
+
+5. **LLM API Integration**
+   - API Access Patterns
+   - Common LLM API Providers
+   - Function Calling
+   - Error Handling and Best Practices
+
+6. **Building a Complete LLM Chat Application**
+   - Basic Chat Interface
+   - Command Line Interface
+   - Architecture Benefits
+   - Addressing Hallucination
+
+7. **Resources and Links**
+   - Papers and Documentation
+   - Open Source LLMs
+   - Healthcare AI Applications
+   - Interactive Platforms
 
 ## Systematic model selection
 
@@ -33,7 +76,6 @@
 
 ![simple k-fold](media/Untitled.png)
 
-
 ### Random k-fold
 
 ![random k-fold](media/Untitled 2.png)
@@ -58,11 +100,11 @@ The first appearance of transformers is in the paper [**Attention is All You Nee
 
 Transformers have rapidly become the architecture of choice for a wide range of NLP tasks, achieving state-of-the-art results in machine translation, text generation, sentiment analysis, and more. Their flexibility and efficiency have also inspired adaptations of the transformer architecture to other domains, such as computer vision and audio processing, marking a significant evolution in the field of deep learning.
 
-![media/tx_basic.png]
+![Basic Transformer Architecture](media/tx_basic.png)
 
-![media/tx_moderate.png]
+![Moderate Transformer Architecture](media/tx_moderate.png)
 
-![media/1_vrSX_Ku3EmGPyqF_E-2_Vg.png]
+![Transformer Architecture Overview](media/1_vrSX_Ku3EmGPyqF_E-2_Vg.png)
 
 #### Transformer Architecture
 
@@ -74,11 +116,11 @@ Transformers have rapidly become the architecture of choice for a wide range of 
 
 The **attention** mechanism allows transformers to consider the entire context of the input sequence, or any subset of it, regardless of the distance between elements in the sequence. This global view is particularly advantageous for tasks that require understanding long-range dependencies, such as document summarization or question-answering.
 
-![media/attention.png]
+![Attention Mechanism Visualization](media/attention.png)
 
 The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token _lazy_ selected
 
-![media/simple-pretty-gif.gif]
+![Simple Attention Animation](media/simple-pretty-gif.gif)
 
 - **Scaled Dot-Product Attention:** The most commonly used attention mechanism in transformers involves computing the dot product of the query with all keys, dividing each by the square root of the dimension of the keys, applying a softmax function to obtain the weights on the values. This approach efficiently captures the relevance of different parts of the input data to each other.
 - **Multi-Head Attention:** Transformers further extend the capabilities of the attention mechanism through the use of multi-head attention. This involves running multiple attention operations in parallel, with each "head" focusing on different parts of the input data. This diversity allows the model to attend to different aspects of the data, enhancing its representational power.

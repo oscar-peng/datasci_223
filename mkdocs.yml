@@ -96,7 +96,7 @@ nav:
       - "04. Time Keeps on Slippin' Into the Forecast": 04/lecture_04.md
       - '05. Putting a label on it': 05/lecture_05.md
       - '06. Neural Networks: If I only had a brain': 06/lecture_06.md
-      - "07. Let's get deep": 07/lecture_07.md
+      - "07. Transformers: More than Meets the Eye": 07/lecture_07.md
   - Exercises:
     - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
     - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU

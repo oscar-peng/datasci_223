@@ -1,4 +1,3 @@
-
 # Transformers: More than Meets the Eye
 
 ## Outline
@@ -189,8 +188,7 @@ trainer.train()
 
 After fine-tuning, save your model for future use and inference.
 
-```Python
-pythonCopy code
+```python
 trainer.save_model("./fine_tuned_model")
 
 # To use the model for generation:
@@ -209,6 +207,74 @@ Prompt engineering is the art of crafting input prompts that guide the model to 
 ### **One-Shot and Few-Shot Learning**
 
 One of the most remarkable capabilities of modern LLMs is their ability to perform tasks with minimal examples — sometimes just **one or a few (few-shot learning)**. This ability stems from their extensive pre-training, which provides a rich context for understanding and generating text.
+
+### Structured Responses: Why and How
+
+A **structured response** is output from a language model that follows a specific, machine-readable format—such as JSON, XML, or a table—rather than free-form text.
+
+#### Why does it matter in health data science?
+- **Reliability:** Structured outputs are easier to validate and less prone to hallucination.
+- **Interoperability:** They can be directly used by other software systems (e.g., EHRs, analytics pipelines).
+- **Automation:** Structured data enables downstream processing, such as automated coding, reporting, or alerting.
+- **Auditability:** It's easier to check for missing or inconsistent information.
+
+#### How do you get a structured response from an LLM?
+- Use **schema-based prompting**: "Provide your answer in the following JSON format: { ... }"
+- Be explicit about required fields and data types.
+- Validate the output programmatically.
+
+#### Example Prompt:
+```
+Extract the following information from the clinical note and return it as JSON:
+{
+  "diagnosis": "",
+  "confidence": 0.0,
+  "reasoning": ""
+}
+```
+
+Structured responses are especially important in healthcare, where accuracy, consistency, and the ability to automate downstream tasks are critical. By designing prompts that request structured output, you can make LLMs much more useful and reliable for real-world health data science applications.
+
+#### Function Calling: Enforcing Schema Compliance
+
+Modern LLM APIs (like OpenAI's GPT-4o) support a feature called **function calling**. This allows you to define a schema (function signature) for the expected output, and the model will return a response that matches this schema—helping to ensure the output is well-structured and reliable.
+
+**Why is this useful?**
+
+- The model is guided to only return data that fits your specified structure (e.g., required fields, data types).
+- Reduces the risk of hallucinated or malformed outputs.
+- Makes it easier to integrate LLMs into production systems, especially in healthcare where data quality is critical.
+
+**How does it work?**
+You define a function (with parameters and types) and send it to the LLM. The model will return a JSON object that matches the schema, or indicate if it cannot.
+
+**Example (OpenAI API):**
+
+```python
+functions = [
+    {
+        "name": "extract_diagnosis",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "diagnosis": {"type": "string"},
+                "confidence": {"type": "number"},
+                "reasoning": {"type": "string"}
+            },
+            "required": ["diagnosis", "confidence", "reasoning"]
+        }
+    }
+]
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Extract the diagnosis from this note..."}],
+    functions=functions,
+    function_call={"name": "extract_diagnosis"}
+)
+```
+
+Function calling is especially valuable in health data science, where structured, accurate, and validated outputs are essential for downstream analysis, automation, and patient safety.
 
 ### Addressing Hallucination
 

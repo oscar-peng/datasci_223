@@ -62,7 +62,7 @@ config = {
     'n_embd': 384,     # 384 embedding size
     'dropout': 0.2,    # regularization
     'bias': False,
-    'max_iters': 500,  # training iterations
+    'max_iters': 5000,  # training iterations
     'batch_size': 64,  # larger batch size for small model
     'gradient_accumulation_steps': 1,
     'block_size': 256, # context of up to 256 previous characters
@@ -94,7 +94,7 @@ We'll either load a pre-trained model or train a new one. This step:
 
 ```python
 # Check if we have a saved model
-checkpoint_path = os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt')
+checkpoint_path = '02-model.pt'
 if os.path.exists(checkpoint_path):
     print("Loading saved model...")
     checkpoint = torch.load(checkpoint_path)
@@ -162,14 +162,14 @@ checkpoint = {
     'iter_num': iter_num,
     'best_val_loss': loss.item(),
 }
-torch.save(checkpoint, os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt'))
+torch.save(checkpoint, checkpoint_path)
 ```
 
 ## Load Saved Model
 
 ```python
 # Load the saved model
-checkpoint = torch.load(os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt'))
+checkpoint = torch.load(checkpoint_path)
 model_config = GPTConfig(**checkpoint['model_args'])
 model = GPT(model_config)
 model.load_state_dict(checkpoint['model'])

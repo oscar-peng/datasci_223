@@ -58,9 +58,69 @@ model.compile(optimizer='adam',
 
 ```
 
+### Model Inputs and Data Preparation
+
+Neural networks perform best when input data is properly prepared. This typically involves normalization or standardization to ensure all features contribute equally to the model training process.
+
+#### Input Data Format
+
+- **Required Format**: Keras models expect NumPy arrays or tensors as inputs.
+- **Converting from DataFrames**: If your data is in a pandas DataFrame, you'll need to convert it to a NumPy array using `df.values` or `df.to_numpy()`.
+
+```python
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+# If starting with a DataFrame
+df = pd.DataFrame({'feature1': [1, 2, 3], 'feature2': [4, 5, 6]})
+X = df.values  # Convert to NumPy array
+# Or alternatively:
+X = df.to_numpy()
+```
+
+#### Normalization and Standardization
+
+Normalizing or standardizing your inputs is crucial for neural network performance:
+
+1. **Standardization** (zero mean, unit variance):
+   ```python
+   # Using scikit-learn
+   scaler = StandardScaler()
+   X_scaled = scaler.fit_transform(X)
+   
+   # Manual implementation
+   X_scaled = (X - X.mean(axis=0)) / X.std(axis=0)
+   ```
+
+2. **Normalization** (scaling to a range, typically [0,1]):
+   ```python
+   # Using scikit-learn
+   from sklearn.preprocessing import MinMaxScaler
+   scaler = MinMaxScaler()
+   X_normalized = scaler.fit_transform(X)
+   
+   # Manual implementation
+   X_normalized = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+   ```
+
+3. **Important**: Always fit scalers on training data only, then apply the same transformation to validation and test data.
+
+4. **Saving Scalers**: For production, save your scaler to ensure consistent transformations:
+   ```python
+   import joblib
+   joblib.dump(scaler, 'scaler.pkl')
+   # Later, to load:
+   scaler = joblib.load('scaler.pkl')
+   ```
+
+<!---
+Standardization is particularly important for neural networks because it helps the optimization process converge faster. Without standardization, features with larger scales can dominate the loss function and make training difficult. Students often forget to apply the same scaling to test data that was used on training data, which can lead to poor model performance. Another common mistake is standardizing the target variable in regression problems without remembering to inverse transform predictions later.
+--->
+
 ### Training
 
-Models train on Numpy arrays of input data and labels with the `fit` method.
+Models train on NumPy arrays of input data and labels with the `fit` method.
 
 ```python
 # Given x_train and y_train as your data and labels

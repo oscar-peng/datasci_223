@@ -235,7 +235,55 @@ Extract the following information from the clinical note and return it as JSON:
 
 Structured responses are especially important in healthcare, where accuracy, consistency, and the ability to automate downstream tasks are critical. By designing prompts that request structured output, you can make LLMs much more useful and reliable for real-world health data science applications.
 
-#### Function Calling: Enforcing Schema Compliance
+## LLM API Integration: Building Applications with Language Models
+
+### API Access Patterns
+- **REST APIs**: Most LLM providers offer HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text responses
+- **SDK/Libraries**: Client libraries like OpenAI Python, Hugging Face Transformers, and LangChain provide convenient wrappers around the raw APIs
+- **Authentication**: API keys are typically required and should be stored securely as environment variables or in a secrets manager
+
+### Common LLM API Providers
+
+#### OpenAI API
+```python
+import openai
+
+# Set your API key
+openai.api_key = "your-api-key"
+
+# Generate a completion
+response = openai.ChatCompletion.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": "You are a helpful medical assistant."},
+        {"role": "user", "content": "What are the symptoms of diabetes?"}
+    ],
+    max_tokens=150
+)
+
+print(response.choices[0].message.content)
+```
+
+#### Hugging Face Inference API
+```python
+import requests
+
+API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
+headers = {"Authorization": f"Bearer your-api-key"}
+
+def query(payload):
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.json()
+
+output = query({
+    "inputs": "What are the symptoms of diabetes?",
+})
+
+print(output)
+```
+
+
+### Function Calling: Enforcing Schema Compliance
 
 Modern LLM APIs (like OpenAI's GPT-4o) support a feature called **function calling**. This allows you to define a schema (function signature) for the expected output, and the model will return a response that matches this schema—helping to ensure the output is well-structured and reliable.
 
@@ -275,6 +323,180 @@ response = client.chat.completions.create(
 ```
 
 Function calling is especially valuable in health data science, where structured, accurate, and validated outputs are essential for downstream analysis, automation, and patient safety.
+
+
+### Error Handling and Best Practices
+
+- **Rate limiting**: Implement exponential backoff to handle rate limits gracefully
+- **Timeout handling**: Set appropriate timeouts and handle connection issues
+- **Response validation**: Always validate the structure and content of API responses
+- **Caching**: Consider caching responses for identical or similar prompts to reduce costs
+- **Prompt engineering**: Craft clear, specific prompts to get better responses
+- **Cost management**: Monitor token usage and implement budgeting controls
+
+
+## Building a Complete LLM Chat Application
+
+When building applications that interact with LLMs, it's good practice to separate your code into distinct components with clear responsibilities. In this section, we'll explore a complete chat application with two main components:
+
+1. **LLM Client Library**: Handles the low-level API communication, error handling, and conversation formatting
+2. **Command Line Interface**: Provides a user interface that leverages the client library
+
+This separation of concerns makes the code more maintainable, testable, and reusable. We'll implement these components in the following order:
+
+### 1. Implementing a Basic Chat Interface
+
+```python
+import requests
+import time
+import logging
+
+class LLMClient:
+    """Client for interacting with LLM APIs"""
+    
+    def __init__(
+        self,
+        model_name="google/flan-t5-base",
+        api_key=None,
+        max_retries=3,
+        timeout=30
+    ):
+        self.model_name = model_name
+        self.api_key = api_key
+        self.max_retries = max_retries
+        self.timeout = timeout
+        self.api_url = f"https://api-inference.huggingface.co/models/{model_name}"
+        self.headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+    
+    def generate_text(self, prompt):
+        """Generate text from the LLM based on the prompt"""
+        payload = {"inputs": prompt}
+        
+        for attempt in range(self.max_retries):
+            try:
+                response = requests.post(
+                    self.api_url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=self.timeout
+                )
+                
+                if response.status_code == 200:
+                    return response.json()[0]["generated_text"]
+                elif response.status_code == 429:
+                    # Rate limit exceeded
+                    wait_time = int(response.headers.get("Retry-After", 30))
+                    logging.warning(f"Rate limit exceeded. Waiting {wait_time} seconds.")
+                    time.sleep(wait_time)
+                else:
+                    logging.error(f"API request failed with status code {response.status_code}")
+                    time.sleep(2 ** attempt)  # Exponential backoff
+            except Exception as e:
+                logging.error(f"Error during API request: {str(e)}")
+                time.sleep(2 ** attempt)  # Exponential backoff
+        
+        return "I'm sorry, I couldn't generate a response due to technical difficulties."
+    
+    def chat(self, messages):
+        """Generate a response based on a conversation history"""
+        # Format the conversation history into a prompt
+        prompt = ""
+        for message in messages:
+            role = message["role"]
+            content = message["content"]
+            
+            if role == "system":
+                prompt += f"System: {content}\n\n"
+            elif role == "user":
+                prompt += f"User: {content}\n\n"
+            elif role == "assistant":
+                prompt += f"Assistant: {content}\n\n"
+        
+        prompt += "Assistant: "
+        
+        # Generate response
+        response = self.generate_text(prompt)
+        
+        return response
+
+# Example usage
+client = LLMClient(api_key="your-api-key")
+messages = [
+    {"role": "system", "content": "You are a helpful healthcare assistant."},
+    {"role": "user", "content": "What are the symptoms of diabetes?"}
+]
+response = client.chat(messages)
+print(response)
+```
+
+
+### 2. Building a Command Line Interface
+
+Now that we have our LLMClient class from the previous section, we can build a command-line interface that uses it. This CLI will:
+1. Parse command-line arguments for model selection and API key
+2. Initialize the LLMClient with the appropriate settings
+3. Maintain a conversation history
+4. Handle the interactive chat loop
+
+```python
+import argparse
+import os
+from llm_client import LLMClient
+
+def main():
+    parser = argparse.ArgumentParser(description="Chat with an LLM")
+    parser.add_argument("--model", default="google/flan-t5-base", help="Model to use")
+    parser.add_argument("--api-key", help="API key (or set HUGGINGFACE_API_KEY env var)")
+    args = parser.parse_args()
+    
+    # Get API key from args or environment
+    api_key = args.api_key or os.environ.get("HUGGINGFACE_API_KEY")
+    if not api_key:
+        print("Error: API key required. Provide with --api-key or set HUGGINGFACE_API_KEY")
+        return
+    
+    # Initialize client
+    client = LLMClient(model_name=args.model, api_key=api_key)
+    
+    # Initialize conversation
+    conversation = [
+        {"role": "system", "content": "You are a helpful assistant."}
+    ]
+    
+    print(f"Chat with {args.model} (type 'exit' to quit)")
+    print("-" * 50)
+    
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "exit":
+            break
+        
+        # Add user message to conversation
+        conversation.append({"role": "user", "content": user_input})
+        
+        # Get response
+        response = client.chat(conversation)
+        
+        # Add assistant response to conversation
+        conversation.append({"role": "assistant", "content": response})
+        
+        print(f"Assistant: {response}")
+
+if __name__ == "__main__":
+    main()
+```
+
+### Benefits of This Architecture
+
+This two-component architecture demonstrates several important software engineering principles:
+
+1. **Separation of concerns**: The LLMClient handles API communication and error handling, while the CLI handles user interaction and command-line arguments
+2. **Reusability**: The LLMClient can be used in other applications beyond this CLI (web apps, APIs, etc.)
+3. **Maintainability**: Changes to the API interaction logic only need to be made in one place
+4. **Testability**: Each component can be tested independently
+5. **Flexibility**: The CLI can be easily modified to support different models or parameters without changing the core client logic
+
+This pattern is common in professional software development and is especially useful when building applications that interact with external APIs.
 
 ### Addressing Hallucination
 

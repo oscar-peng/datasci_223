@@ -151,9 +151,100 @@ Optimizers are used to update the weights and biases of your network based on th
 - **SGD** `torch.optim.SGD`: Implements stochastic gradient descent.
 - **Adam** `torch.optim.Adam`: Implements the Adam algorithm.
 
+### Model Inputs and Data Preparation
+
+Neural networks require properly prepared input data for optimal performance. This section covers how to format and preprocess your data for PyTorch models.
+
+#### Input Data Format
+
+- **PyTorch Tensors**: PyTorch models operate on PyTorch tensors, not NumPy arrays or pandas DataFrames directly.
+- **Converting from NumPy**: Use `torch.from_numpy(np_array)` to convert NumPy arrays to PyTorch tensors.
+- **Converting from DataFrames**: Convert pandas DataFrames to NumPy first, then to PyTorch tensors.
+
+```python
+import torch
+import numpy as np
+import pandas as pd
+
+# From NumPy array
+np_array = np.array([[1, 2], [3, 4]])
+tensor = torch.from_numpy(np_array).float()  # Convert to float tensor
+
+# From pandas DataFrame
+df = pd.DataFrame({'feature1': [1, 2, 3], 'feature2': [4, 5, 6]})
+tensor = torch.tensor(df.values).float()
+```
+
+#### Normalization and Standardization
+
+Proper scaling of input data is crucial for neural network training:
+
+1. **Standardization** (zero mean, unit variance):
+   ```python
+   # Using scikit-learn with PyTorch
+   from sklearn.preprocessing import StandardScaler
+   import numpy as np
+   
+   # Standardize NumPy array
+   scaler = StandardScaler()
+   X_np = df.values
+   X_scaled = scaler.fit_transform(X_np)
+   
+   # Convert to PyTorch tensor
+   X_tensor = torch.tensor(X_scaled, dtype=torch.float32)
+   
+   # PyTorch native approach (if data is already a tensor)
+   def standardize(x):
+       mean = x.mean(dim=0, keepdim=True)
+       std = x.std(dim=0, keepdim=True)
+       return (x - mean) / std
+   
+   X_standardized = standardize(X_tensor)
+   ```
+
+2. **Normalization** (scaling to a range, typically [0,1]):
+   ```python
+   # Using scikit-learn
+   from sklearn.preprocessing import MinMaxScaler
+   
+   # Normalize NumPy array
+   scaler = MinMaxScaler()
+   X_normalized = scaler.fit_transform(X_np)
+   X_tensor = torch.tensor(X_normalized, dtype=torch.float32)
+   
+   # PyTorch native approach
+   def normalize(x):
+       min_vals = x.min(dim=0, keepdim=True)[0]
+       max_vals = x.max(dim=0, keepdim=True)[0]
+       return (x - min_vals) / (max_vals - min_vals)
+   
+   X_normalized = normalize(X_tensor)
+   ```
+
+3. **Important Considerations**:
+   - Always fit scalers on training data only, then apply to validation/test data
+   - For image data, normalization with mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225] is common (ImageNet statistics)
+   - Save your preprocessing parameters for consistent application during inference
+
+4. **Using PyTorch Transforms**:
+   ```python
+   from torchvision import transforms
+   
+   # For image data
+   transform = transforms.Compose([
+       transforms.ToTensor(),
+       transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225])
+   ])
+   ```
+
+<!---
+Proper data preparation is often overlooked but is crucial for neural network performance. Students often struggle with understanding the difference between NumPy arrays and PyTorch tensors, and when to convert between them. Another common issue is forgetting to apply the same normalization to test data that was used on training data. For health data, features often have widely different scales (e.g., age vs. blood pressure), making standardization particularly important. Remember that PyTorch expects float tensors for most operations, so be sure to convert integer data when necessary.
+--->
+
 ### Training a Model
 
-Training a model in PyTorch involves running a forward pass, computing the loss, performing a backward pass, and updating the model parameters. Unlike Keras, we have direct control over the epochs and forward/backward flow of model training. 
+Training a model in PyTorch involves running a forward pass, computing the loss, performing a backward pass, and updating the model parameters. Unlike Keras, we have direct control over the epochs and forward/backward flow of model training.
 
 A training loop for a regression model might look like this:
 

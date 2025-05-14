@@ -1,6 +1,19 @@
 # Demo 2: Understanding Attention with nanoGPT
 
+This demo explores the attention mechanism in transformers using nanoGPT, a minimal implementation of GPT. We'll visualize how different attention heads learn to focus on different parts of the input text, helping us understand how transformers process and understand language.
+
+## Key Concepts Covered
+- Self-attention mechanism
+- Multi-head attention
+- Attention visualization
+- Character-level processing
+
 ## Setup and Imports
+
+First, we'll set up our environment and import necessary libraries. This includes:
+1. Installing required packages
+2. Setting up paths for nanoGPT
+3. Importing the model components
 
 ```python
 # Install required packages
@@ -31,14 +44,18 @@ from nanoGPT.model import GPTConfig, GPT
 
 ## Model Configuration
 
+We'll use a small GPT model configuration suitable for educational purposes. The key parameters are:
+- n_layer: Number of transformer layers
+- n_head: Number of attention heads per layer
+- n_embd: Size of the embedding dimension
+- block_size: Maximum context length
+
 ```python
 # Device setup
 device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 
 # Training hyperparameters
-
-# Karpathy's miniature Shakespeare config (baby GPT, fast for laptops/MacBooks)
 config = {
     'n_layer': 6,      # 6 layers
     'n_head': 6,       # 6 attention heads
@@ -66,7 +83,16 @@ model_config = GPTConfig(
     dropout=config['dropout'],
     bias=config['bias']
 )
+```
 
+## Model Training or Loading
+
+We'll either load a pre-trained model or train a new one. This step:
+1. Checks for existing model checkpoint
+2. If found, loads the saved model
+3. If not found, trains a new model
+
+```python
 # Check if we have a saved model
 checkpoint_path = os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'model.pt')
 if os.path.exists(checkpoint_path):
@@ -123,16 +149,6 @@ else:
             last_time = current_time
             progress = (iter_num + 1) / config['max_iters'] * 100
             print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}%")
-    
-    # Save the trained model
-    checkpoint = {
-        'model': model.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'model_args': model_config.__dict__,
-        'iter_num': iter_num,
-        'best_val_loss': loss.item(),
-    }
-    torch.save(checkpoint, checkpoint_path)
 ```
 
 ## Save Model
@@ -163,7 +179,10 @@ model.eval()  # Set to evaluation mode for visualization
 
 ## Attention Visualization Setup
 
-Short or simple sentences often produce diagonal attention patterns, showing that each token mostly attends to itself or its immediate neighbors. By visualizing only a subset of the attention matrix for a short input, we can make the plot readable and see how the model distributes attention across tokens. This is especially useful for character-level models, where long inputs make the plot crowded.
+Now we'll set up the functions to visualize attention patterns. This includes:
+1. A function to extract attention weights
+2. A function to visualize attention patterns
+3. Helper functions for different visualization types
 
 ```python
 def get_attention_patterns(model, x):
@@ -216,18 +235,37 @@ def visualize_attention_subset(text, model, layer_idx=0, head_idx=0, max_tokens=
     plt.show()
 ```
 
+## Visualizing Attention Patterns
+
+Let's visualize attention patterns for different types of inputs. We'll start with:
+1. A short input to see basic attention patterns
+2. A complex input to see how attention handles longer sequences
+3. Multiple attention heads to see different specializations
+
 ### Short Input Example
 
-This plot shows attention for a short phrase. Look for diagonal patterns, which indicate local attention (each character mostly attends to itself or its neighbors).
+For a short input, we expect to see:
+1. Strong diagonal patterns indicating local attention
+2. Some attention to punctuation and special characters
+3. Potential attention to repeated characters or patterns
+
+This helps us understand how the model processes basic text structures.
 
 ```python
 short_text = "To be, or not to be"
+print("Visualizing attention for short text:", short_text)
 visualize_attention_subset(short_text, model)
 ```
 
 ### Complex Input Example
 
-With a longer, more complex input, attention patterns can reveal longer-range dependencies, repeated word focus, or punctuation effects. The plot may be more crowded, but you may spot heads that focus on repeated words or punctuation.
+With a longer, more complex input, we can observe:
+1. How attention patterns evolve across different parts of the text
+2. The emergence of longer-range dependencies
+3. Specialized attention to different linguistic features
+4. How the model handles repeated phrases and patterns
+
+This demonstrates the model's ability to capture complex relationships in text.
 
 ```python
 complex_text = (
@@ -237,12 +275,16 @@ complex_text = (
     "Or to take arms against a sea of troubles "
     "And by opposing end them."
 )
+print("Visualizing attention for complex text (first 40 chars):", complex_text[:40] + "...")
 visualize_attention_subset(complex_text, model, max_tokens=40)
 ```
 
-## Multi-Head Analysis (Subset)
+## Multi-Head Analysis
 
-Visualizing all attention heads for a short input helps us compare how different heads focus on different parts of the sequence. Some heads may focus on local context, while others may capture longer-range dependencies or special characters.
+Now let's analyze how different attention heads specialize in different aspects of the text. We'll:
+1. Visualize all heads in a layer
+2. Compare attention patterns across heads
+3. Understand how different heads capture different relationships
 
 ```python
 def analyze_attention_heads_subset(text, model, layer_idx=0, max_tokens=20):
@@ -276,21 +318,39 @@ def analyze_attention_heads_subset(text, model, layer_idx=0, max_tokens=20):
 
 ### Multi-Head, Short Input
 
-Compare how different heads focus on the short phrase. Most heads will show local/diagonal attention, but some may focus on punctuation or repeated characters.
+For a short input, we can observe:
+1. How different heads specialize in different aspects of the text
+2. The emergence of specialized attention patterns
+3. The complementary nature of different heads
+
+This helps us understand how multi-head attention enables the model to capture different types of relationships simultaneously.
 
 ```python
+print("Analyzing attention heads for short text:", short_text)
 analyze_attention_heads_subset(short_text, model)
 ```
 
 ### Multi-Head, Complex Input
 
-With a longer input, some heads may focus on repeated words, punctuation, or long-range dependencies. The plot is more crowded, but you may spot heads that specialize in certain patterns.
+With a complex input, we can see:
+1. How different heads handle different aspects of the text
+2. The emergence of specialized attention patterns for different linguistic features
+3. The complementary nature of different heads in processing complex text
+
+This demonstrates how multi-head attention enables the model to capture various types of relationships in complex text.
 
 ```python
+print("Analyzing attention heads for complex text (first 40 chars):", complex_text[:40] + "...")
 analyze_attention_heads_subset(complex_text, model, max_tokens=40)
 ```
 
-## Multi-Head Analysis
+## Full Text Analysis
+
+Finally, let's analyze the complete attention patterns across all heads for the full input text. This helps us understand:
+1. How attention patterns evolve across the entire sequence
+2. The role of different heads in processing different parts of the text
+3. The emergence of specialized attention patterns for different linguistic features
+4. How the model handles long-range dependencies
 
 ```python
 def analyze_attention_heads(text, model, layer_idx=0):
@@ -327,5 +387,5 @@ def analyze_attention_heads(text, model, layer_idx=0):
     plt.tight_layout()
     plt.show()
 
-# Use the same complex text for multi-head analysis
-analyze_attention_heads(text, model)
+print("Analyzing full text attention patterns...")
+analyze_attention_heads(complex_text, model)

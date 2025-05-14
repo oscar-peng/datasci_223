@@ -2,9 +2,25 @@
 
 This demo explores how to effectively use language model APIs for healthcare applications, focusing on prompt engineering techniques to improve reliability and reduce hallucination.
 
+## Key Concepts
+- Zero-shot, one-shot, and few-shot learning
+- Schema-based prompting
+- Chain-of-thought reasoning
+- Error handling and validation
+- Healthcare-specific considerations
+
+The demo is designed to help health data science students understand how to:
+1. Structure prompts for reliable medical text processing
+2. Extract structured information from clinical notes
+3. Generate medical reports and diagnoses
+4. Handle errors and validate outputs
+
 ## Setup
 
-First, let's install the necessary packages:
+First, we'll set up our environment and import necessary libraries. This includes:
+1. Installing required packages
+2. Setting up environment variables
+3. Importing the OpenAI client
 
 ```python
 # Install required packages
@@ -26,6 +42,14 @@ from openai import OpenAI
 
 ## Getting Your API Key
 
+To use the OpenAI API, you'll need an API key. This is a security measure to:
+1. Track usage and billing
+2. Apply rate limits
+3. Monitor for abuse
+4. Ensure responsible AI usage
+
+For educational purposes, we'll use a smaller, more cost-effective model.
+
 To use the OpenAI API, you'll need an API key:
 
 1. Go to [platform.openai.com](https://platform.openai.com)
@@ -43,11 +67,22 @@ client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 # Set model to use
 MODEL_NAME = "gpt-4o-mini"  # Using a smaller, more cost-effective model
+print(f"Using model: {MODEL_NAME}")
 ```
 
 ## Zero-Shot Learning
 
-Let's start with zero-shot learning for medical text classification:
+Zero-shot learning allows the model to perform tasks without any examples. This is useful when:
+1. You don't have labeled examples
+2. The task is relatively simple
+3. You need quick results
+
+In healthcare, zero-shot learning can be used for:
+- Basic text classification
+- Simple information extraction
+- Initial screening of medical text
+
+However, it may be less reliable for complex medical tasks.
 
 ```python
 def classify_medical_text(text: str, categories: List[str]) -> Dict[str, Any]:
@@ -85,13 +120,23 @@ Provide the classification in JSON format with the following structure:
 categories = ["Diagnosis", "Treatment", "Prognosis", "Medical History"]
 text = "Patient presents with persistent cough and fever for 3 days. Chest X-ray shows right lower lobe infiltrate. Started on azithromycin 500mg daily."
 
+print("Classifying medical text using zero-shot learning...")
 result = classify_medical_text(text, categories)
+print("\nClassification result:")
 print(json.dumps(result, indent=2))
 ```
 
 ## One-Shot Learning
 
-Now let's try one-shot learning for medical report generation:
+One-shot learning provides a single example to guide the model. This is useful when:
+1. You need consistent formatting
+2. The task has specific requirements
+3. You want to reduce hallucination
+
+In healthcare, one-shot learning is valuable for:
+- Generating structured medical reports
+- Following specific documentation formats
+- Maintaining consistency in medical records
 
 ```python
 def generate_medical_report(patient_data: Dict[str, Any]) -> str:
@@ -158,13 +203,24 @@ patient_data = {
     "diagnosis": "Suspected angina"
 }
 
+print("Generating medical report using one-shot learning...")
 report = generate_medical_report(patient_data)
+print("\nGenerated report:")
 print(report)
 ```
 
 ## Few-Shot Learning
 
-Let's implement few-shot learning for medical coding:
+Few-shot learning provides multiple examples to help the model understand patterns. This is useful when:
+1. The task is complex
+2. You need high accuracy
+3. You want to capture nuanced relationships
+
+In healthcare, few-shot learning is valuable for:
+- Medical coding
+- Complex diagnosis
+- Treatment planning
+- Risk assessment
 
 ```python
 def assign_icd_codes(clinical_note: str, num_examples: int = 3) -> List[Dict[str, Any]]:
@@ -243,15 +299,50 @@ Provide the codes in JSON format with the following structure:
 
 # Example usage
 note = "Patient with chronic obstructive pulmonary disease, severe. Presents with acute exacerbation. Started on prednisone and antibiotics."
+print("Assigning ICD-10 codes using few-shot learning...")
 codes = assign_icd_codes(note)
+print("\nAssigned codes:")
 print(json.dumps(codes, indent=2))
 ```
 
 ## Comparing Effectiveness of Shot Learning Approaches
 
-Let's directly compare zero-shot, one-shot, and few-shot learning on the same medical diagnosis task:
+This section demonstrates how different shot learning approaches affect model performance. We'll compare:
+1. Zero-shot: No examples provided
+2. One-shot: Single example provided
+3. Few-shot: Multiple examples provided
+
+This helps us understand:
+- When to use each approach
+- The trade-offs between approaches
+- How to optimize for different healthcare tasks
 
 ```python
+# Helper functions for processing API responses
+def get_confidence(result: Dict[str, Any]) -> float:
+    """Extract confidence score from API response."""
+    if "error" in result:
+        return 0.0
+    if isinstance(result.get("diagnosis"), dict):
+        return result["diagnosis"].get("confidence", 0.0)
+    return result.get("confidence", 0.0)
+
+def get_diagnosis(result: Dict[str, Any]) -> str:
+    """Extract diagnosis from API response."""
+    if "error" in result:
+        return "Error"
+    if isinstance(result.get("diagnosis"), dict):
+        return result["diagnosis"].get("diagnosis", "Unknown")
+    return result.get("diagnosis", "Unknown")
+
+def get_reasoning_length(result: Dict[str, Any]) -> int:
+    """Get length of reasoning from API response."""
+    if "error" in result:
+        return 0
+    if isinstance(result.get("diagnosis"), dict):
+        return len(result["diagnosis"].get("reasoning", ""))
+    return len(result.get("reasoning", ""))
+
 def diagnose_with_shot_learning(clinical_case: str, approach: str) -> Dict[str, Any]:
     """
     Diagnose a clinical case using different shot learning approaches.
@@ -271,9 +362,11 @@ Provide your diagnosis in JSON format with the following structure:
     "diagnosis": "your diagnosis",
     "confidence": confidence_score (between 0 and 1),
     "reasoning": "brief explanation of your reasoning"
-}}"""
+}}
 
-        system_role = "You are a medical diagnostician."
+Note: For zero-shot learning, be conservative with confidence scores since no examples are provided."""
+
+        system_role = "You are a medical diagnostician. Be conservative with confidence scores when no examples are provided."
         
     elif approach == "one-shot":
         # One-shot approach: One example provided
@@ -281,7 +374,7 @@ Provide your diagnosis in JSON format with the following structure:
         
         example_diagnosis = {
             "diagnosis": "Community-acquired pneumonia",
-            "confidence": 0.9,
+            "confidence": 0.92,
             "reasoning": "The combination of fever, productive cough, elevated WBC, and radiographic evidence of consolidation is highly suggestive of bacterial pneumonia."
         }
         
@@ -295,9 +388,10 @@ Example diagnosis:
 Now diagnose this case:
 {clinical_case}
 
-Provide your diagnosis in the same JSON format as the example."""
+Provide your diagnosis in the same JSON format as the example.
+Note: Adjust confidence based on how closely the case matches the example pattern."""
 
-        system_role = "You are a medical diagnostician."
+        system_role = "You are a medical diagnostician. Adjust confidence based on pattern matching with the example."
         
     elif approach == "few-shot":
         # Few-shot approach: Multiple examples provided
@@ -306,7 +400,7 @@ Provide your diagnosis in the same JSON format as the example."""
                 "case": "Patient presents with fever (39°C), productive cough with yellow sputum for 5 days, and shortness of breath. Physical exam reveals crackles in the left lower lobe. WBC is 14,000. Chest X-ray shows left lower lobe consolidation.",
                 "diagnosis": {
                     "diagnosis": "Community-acquired pneumonia",
-                    "confidence": 0.9,
+                    "confidence": 0.95,
                     "reasoning": "The combination of fever, productive cough, elevated WBC, and radiographic evidence of consolidation is highly suggestive of bacterial pneumonia."
                 }
             },
@@ -314,7 +408,7 @@ Provide your diagnosis in the same JSON format as the example."""
                 "case": "Patient presents with sudden onset chest pain that radiates to the left arm, associated with nausea and diaphoresis. ECG shows ST elevation in leads II, III, and aVF. Troponin is elevated.",
                 "diagnosis": {
                     "diagnosis": "Acute inferior myocardial infarction",
-                    "confidence": 0.95,
+                    "confidence": 0.98,
                     "reasoning": "The clinical presentation, ECG findings, and elevated troponin are diagnostic of an acute MI involving the inferior wall of the heart."
                 }
             },
@@ -322,7 +416,7 @@ Provide your diagnosis in the same JSON format as the example."""
                 "case": "Patient presents with right upper quadrant pain, fever, and jaundice. Labs show elevated WBC, total bilirubin, and alkaline phosphatase. Ultrasound shows gallstones and dilated common bile duct.",
                 "diagnosis": {
                     "diagnosis": "Acute cholangitis",
-                    "confidence": 0.85,
+                    "confidence": 0.93,
                     "reasoning": "The triad of RUQ pain, fever, and jaundice (Charcot's triad) along with imaging findings of biliary obstruction are consistent with acute cholangitis."
                 }
             }
@@ -336,9 +430,10 @@ Examples:
 Now diagnose this case:
 {clinical_case}
 
-Provide your diagnosis in the same JSON format as the examples."""
+Provide your diagnosis in the same JSON format as the examples.
+Note: Use higher confidence scores when the case closely matches multiple examples, and lower scores when there are significant differences."""
 
-        system_role = "You are a medical diagnostician with expertise in pattern recognition."
+        system_role = "You are a medical diagnostician with expertise in pattern recognition. Use higher confidence scores when the case closely matches multiple examples."
     
     else:
         raise ValueError(f"Unknown approach: {approach}. Must be one of 'zero-shot', 'one-shot', or 'few-shot'.")
@@ -362,22 +457,39 @@ Provide your diagnosis in the same JSON format as the examples."""
 # Example clinical case
 clinical_case = "Patient presents with persistent cough and fever for 3 days. Chest X-ray shows right lower lobe infiltrate. Started on azithromycin 500mg daily."
 
-# Compare the three approaches
-print("Zero-Shot Learning:")
-zero_shot_result = diagnose_with_shot_learning(clinical_case, "zero-shot")
-print(json.dumps(zero_shot_result, indent=2))
-print("\nOne-Shot Learning:")
-one_shot_result = diagnose_with_shot_learning(clinical_case, "one-shot")
-print(json.dumps(one_shot_result, indent=2))
-print("\nFew-Shot Learning:")
-few_shot_result = diagnose_with_shot_learning(clinical_case, "few-shot")
-print(json.dumps(few_shot_result, indent=2))
+print("Making API calls to compare different shot learning approaches...")
+print("\nZero-Shot Learning:")
+try:
+    zero_shot_result = diagnose_with_shot_learning(clinical_case, "zero-shot")
+    print("API Response:")
+    print(json.dumps(zero_shot_result, indent=2))
+except Exception as e:
+    print(f"Error in zero-shot API call: {str(e)}")
+    zero_shot_result = {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
 
-# Ensure we have valid confidence scores for visualization
-def get_confidence(result):
-    if isinstance(result, dict) and "confidence" in result and isinstance(result["confidence"], (int, float)):
-        return result["confidence"]
-    return 0
+print("\nOne-Shot Learning:")
+try:
+    one_shot_result = diagnose_with_shot_learning(clinical_case, "one-shot")
+    print("API Response:")
+    print(json.dumps(one_shot_result, indent=2))
+except Exception as e:
+    print(f"Error in one-shot API call: {str(e)}")
+    one_shot_result = {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
+
+print("\nFew-Shot Learning:")
+try:
+    few_shot_result = diagnose_with_shot_learning(clinical_case, "few-shot")
+    print("API Response:")
+    print(json.dumps(few_shot_result, indent=2))
+except Exception as e:
+    print(f"Error in few-shot API call: {str(e)}")
+    few_shot_result = {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
+
+# Print raw results for debugging
+print("\nRaw confidence scores from API responses:")
+for approach, result in [("Zero-Shot", zero_shot_result), ("One-Shot", one_shot_result), ("Few-Shot", few_shot_result)]:
+    confidence = get_confidence(result)
+    print(f"{approach}: {confidence}")
 
 # Visualize confidence scores
 approaches = ["Zero-Shot", "One-Shot", "Few-Shot"]
@@ -403,16 +515,6 @@ plt.tight_layout()
 plt.show()
 
 # Create a comparison table
-def get_diagnosis(result):
-    if isinstance(result, dict) and "diagnosis" in result:
-        return result["diagnosis"]
-    return "N/A"
-
-def get_reasoning_length(result):
-    if isinstance(result, dict) and "reasoning" in result and isinstance(result["reasoning"], str):
-        return len(result["reasoning"])
-    return 0
-
 comparison_data = {
     'Approach': approaches,
     'Diagnosis': [
@@ -436,7 +538,15 @@ print(comparison_df)
 
 ## Schema-Based Prompting
 
-Schema-based prompting is a powerful technique for extracting structured information from unstructured medical text:
+Schema-based prompting is a powerful technique for extracting structured information from unstructured medical text. This is useful for:
+1. Converting clinical notes to structured data
+2. Extracting specific medical entities
+3. Standardizing medical information
+
+The schema defines the expected structure of the output, helping to:
+- Ensure consistency
+- Reduce hallucination
+- Improve reliability
 
 ```python
 def extract_structured_data(text: str, schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -491,13 +601,24 @@ Vitals: T 38.2, HR 110, BP 145/90, O2 sat 96% on room air.
 Current medications: Lisinopril 10mg daily, Metformin 1000mg BID.
 Allergies: Penicillin, Sulfa drugs."""
 
+print("Extracting structured data using schema-based prompting...")
 structured_data = extract_structured_data(text, schema)
+print("\nExtracted data:")
 print(json.dumps(structured_data, indent=2))
 ```
 
 ## Chain-of-Thought Prompting
 
-Chain-of-thought prompting guides the model through a step-by-step reasoning process:
+Chain-of-thought prompting guides the model through a step-by-step reasoning process. This is valuable for:
+1. Complex medical diagnosis
+2. Treatment planning
+3. Risk assessment
+4. Clinical decision support
+
+The step-by-step approach helps to:
+- Make the reasoning process transparent
+- Reduce errors
+- Build trust with healthcare professionals
 
 ```python
 def analyze_medical_case(case: str) -> Dict[str, Any]:
@@ -552,13 +673,24 @@ fever to 38.5°C, and nausea. Physical exam shows right upper quadrant tendernes
 and positive Murphy's sign. WBC is 15,000 with 85% neutrophils. 
 Ultrasound shows gallbladder wall thickening and pericholecystic fluid."""
 
+print("Analyzing medical case using chain-of-thought prompting...")
 analysis = analyze_medical_case(case)
+print("\nAnalysis result:")
 print(json.dumps(analysis, indent=2))
 ```
 
 ## Error Handling and Validation
 
-Let's add some basic error handling to make our code more robust:
+Error handling and validation are crucial for healthcare applications. This section demonstrates:
+1. How to handle API errors gracefully
+2. How to validate extracted information
+3. How to ensure data quality
+4. How to maintain reliability
+
+This is essential for:
+- Patient safety
+- Clinical reliability
+- System robustness
 
 ```python
 def extract_medical_entities(text: str) -> Dict[str, Any]:
@@ -603,11 +735,15 @@ Return the results in JSON format with the following structure:
 
 # Example usage
 sample_text = "Patient with history of hypertension and type 2 diabetes. Recent CBC shows elevated WBC. Taking lisinopril and metformin."
+print("Extracting medical entities with error handling...")
 entities = extract_medical_entities(sample_text)
+print("\nExtracted entities:")
 print(json.dumps(entities, indent=2))
 ```
 
 ## Key Takeaways
+
+This demo has covered several important concepts for using language models in healthcare:
 
 1. **Prompt Engineering Techniques**
    - **Zero-shot learning** requires no examples but may produce less specific results. It's ideal for simple, common tasks where examples aren't available.

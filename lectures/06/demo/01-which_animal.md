@@ -38,7 +38,7 @@ Adapted from Google Keras code example [Image classification from scratch](https
 import os
 
 if os.uname().machine == "arm64":
-    %pip install -q tensorflow-macos tensorflow-metal
+    %pip install -q tensorflow-metal
     pass
 
 %reset -f

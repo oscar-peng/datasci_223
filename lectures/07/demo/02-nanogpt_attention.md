@@ -1,127 +1,241 @@
 # Demo 2: Understanding Attention with nanoGPT
 
-This demo explores the attention mechanism in transformers using Andrej Karpathy's nanoGPT implementation. We'll train a small GPT model on Shakespeare text and analyze how attention heads learn patterns in the text.
-
-## Setup
-
-First, let's clone and set up nanoGPT:
-
-```bash
-# Clone nanoGPT repository
-git clone https://github.com/karpathy/nanoGPT.git
-cd nanoGPT
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-## Data Preparation
-
-Let's prepare the Shakespeare dataset:
-
-```bash
-# Download and prepare Shakespeare dataset
-python data/shakespeare_char/prepare.py
-
-# Display sample of the prepared data
-head -n 5 data/shakespeare_char/input.txt
-```
-
-## Training Configuration
-
-We'll use a small model configuration to demonstrate the concepts:
-
-```bash
-# Create a custom config file
-cat > config/shakespeare_char_custom.py << 'EOL'
-out_dir = 'out-shakespeare-char'
-eval_interval = 250
-eval_iters = 200
-log_interval = 10
-
-# data
-dataset = 'shakespeare_char'
-gradient_accumulation_steps = 1
-batch_size = 64
-block_size = 256
-
-# model
-n_layer = 4
-n_head = 4
-n_embd = 128
-dropout = 0.2
-bias = False
-
-# optimizer
-learning_rate = 1e-3
-max_iters = 5000
-weight_decay = 1e-1
-beta1 = 0.9
-beta2 = 0.99
-grad_clip = 1.0
-
-# learning rate decay settings
-decay_lr = True
-warmup_iters = 100
-lr_decay_iters = 5000
-min_lr = 1e-4
-EOL
-```
-
-## Training the Model
-
-Let's train our small GPT model:
-
-```bash
-# Train the model
-python train.py config/shakespeare_char_custom.py
-```
-
-Now let's load and analyze the model:
+## Setup and Imports
 
 ```python
-# Load the trained model
+# Install required packages
+%pip install -q torch matplotlib seaborn python-dotenv psutil
+
+# Import libraries
+import os
 import torch
-from model import GPTConfig, GPT
+import numpy as np
+import time
+import psutil
+import matplotlib.pyplot as plt
+import seaborn as sns
+import math
+import torch.nn.functional as F
+
+# Set up paths
+notebook_dir = os.getcwd()
+nanoGPT_dir = os.path.join(notebook_dir, 'nanoGPT')
+
+# Add nanoGPT to Python path
+import sys
+sys.path.append(nanoGPT_dir)
+
+# Import model
+from nanoGPT.model import GPTConfig, GPT
+```
+
+## Model Configuration
+
+```python
+# Device setup
+device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"Using device: {device}")
+
+# Training hyperparameters
+config = {
+    'n_layer': 4,  # Reduced layers
+    'n_head': 4,   # Reduced heads
+    'n_embd': 256, # Reduced embedding
+    'dropout': 0.0,
+    'bias': False,
+    'max_iters': 300,
+    'batch_size': 16,
+    'gradient_accumulation_steps': 15,
+    'block_size': 256,  # Smaller block size
+    'learning_rate': 6e-4,
+    'weight_decay': 1e-1,
+    'beta1': 0.9,
+    'beta2': 0.95,
+    'grad_clip': 1.0,
+}
 
 # Initialize model
-config = GPTConfig(
-    block_size=256,
+model_config = GPTConfig(
+    block_size=config['block_size'],
     vocab_size=65,  # ASCII characters
-    n_layer=4,
-    n_head=4,
-    n_embd=128,
-    dropout=0.2,
-    bias=False
+    n_layer=config['n_layer'],
+    n_head=config['n_head'],
+    n_embd=config['n_embd'],
+    dropout=config['dropout'],
+    bias=config['bias']
 )
-model = GPT(config)
-model.load_state_dict(torch.load('out-shakespeare-char/model.pt'))
-model.eval()
+
+# Check if we have a saved model
+checkpoint_path = os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'ckpt.pt')
+if os.path.exists(checkpoint_path):
+    print("Loading saved model...")
+    checkpoint = torch.load(checkpoint_path)
+    model = GPT(model_config)
+    model.load_state_dict(checkpoint['model'])
+    model.to(device)
+    model.eval()  # Set to evaluation mode
+else:
+    print("Training new model...")
+    model = GPT(model_config)
+    model.to(device)
+    
+    # Initialize optimizer
+    optimizer = model.configure_optimizers(
+        weight_decay=config['weight_decay'],
+        learning_rate=config['learning_rate'],
+        betas=(config['beta1'], config['beta2']),
+        device_type=device
+    )
+    
+    # Training loop
+    print("Starting training...")
+    model.train()
+    last_time = time.time()
+    
+    # Pre-load data
+    data_dir = os.path.join(nanoGPT_dir, 'data', 'shakespeare_char')
+    data = np.memmap(os.path.join(data_dir, 'train.bin'), dtype=np.uint16, mode='r')
+    
+    for iter_num in range(config['max_iters']):
+        # Get batch
+        ix = torch.randint(len(data) - config['block_size'], (config['batch_size'],))
+        x = torch.stack([torch.from_numpy((data[i:i+config['block_size']]).astype(np.int64)) for i in ix])
+        y = torch.stack([torch.from_numpy((data[i+1:i+1+config['block_size']]).astype(np.int64)) for i in ix])
+        
+        # Move to device
+        x, y = x.to(device), y.to(device)
+        
+        # Forward pass
+        logits, loss = model(x, y)
+        
+        # Backward pass
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), config['grad_clip'])
+        optimizer.step()
+        
+        # Logging
+        if iter_num % 10 == 0:
+            current_time = time.time()
+            iter_time = current_time - last_time
+            last_time = current_time
+            progress = (iter_num + 1) / config['max_iters'] * 100
+            if device == 'mps':
+                gpu_percent = psutil.cpu_percent(interval=0.1)
+                print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}% | mpu {gpu_percent:.1f}%")
+            else:
+                print(f"iter {iter_num}: loss {loss.item():.4f} | time {iter_time:.2f}s | {progress:.1f}%")
+    
+    # Save the trained model
+    checkpoint = {
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'model_args': model_config.__dict__,
+        'iter_num': iter_num,
+        'best_val_loss': loss.item(),
+    }
+    torch.save(checkpoint, checkpoint_path)
 ```
 
-## Understanding Attention
-
-Let's analyze how the attention heads work:
+## Save Model
 
 ```python
+# Save the trained model
+checkpoint = {
+    'model': model.state_dict(),
+    'optimizer': optimizer.state_dict(),
+    'model_args': model_config.__dict__,
+    'iter_num': iter_num,
+    'best_val_loss': loss.item(),
+}
+torch.save(checkpoint, os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'ckpt.pt'))
+```
+
+## Load Saved Model
+
+```python
+# Load the saved model
+checkpoint = torch.load(os.path.join(nanoGPT_dir, 'out-shakespeare-char', 'ckpt.pt'))
+model_config = GPTConfig(**checkpoint['model_args'])
+model = GPT(model_config)
+model.load_state_dict(checkpoint['model'])
+model.to(device)
+model.eval()  # Set to evaluation mode for visualization
+```
+
+## Attention Visualization Setup
+
+```python
+def get_attention_patterns(model, x):
+    """Extract attention patterns from the model without modifying its structure."""
+    B, T = x.shape
+    assert T <= model.config.block_size, f"Cannot forward sequence of length {T}, block size is only {model.config.block_size}"
+    
+    # forward the GPT model
+    tok_emb = model.transformer.wte(x) # token embeddings of shape (b, t, n_embd)
+    pos = torch.arange(0, T, dtype=torch.long, device=x.device).unsqueeze(0) # shape (1, t)
+    pos_emb = model.transformer.wpe(pos) # position embeddings of shape (1, t, n_embd)
+    x = model.transformer.drop(tok_emb + pos_emb)
+    
+    # Store attention weights
+    attention_weights = []
+    
+    # Forward through each block and capture attention
+    for block in model.transformer.h:
+        # Get query, key, value projections
+        qkv = block.attn.c_attn(block.ln_1(x))
+        q, k, v = qkv.split(model.config.n_embd, dim=2)
+        
+        # Reshape for attention
+        B, T, C = x.shape
+        k = k.view(B, T, block.attn.n_head, C // block.attn.n_head).transpose(1, 2)
+        q = q.view(B, T, block.attn.n_head, C // block.attn.n_head).transpose(1, 2)
+        v = v.view(B, T, block.attn.n_head, C // block.attn.n_head).transpose(1, 2)
+        
+        # Compute attention scores
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        
+        # Apply causal mask if not using Flash Attention
+        if not block.attn.flash:
+            att = att.masked_fill(block.attn.bias[:,:,:T,:T] == 0, float('-inf'))
+        else:
+            # Create causal mask for Flash Attention
+            mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
+            att = att.masked_fill(mask, float('-inf'))
+        
+        att = F.softmax(att, dim=-1)
+        
+        # Store attention weights
+        attention_weights.append(att)
+        
+        # Continue with normal forward pass
+        x = x + block.attn(block.ln_1(x))
+        x = x + block.mlp(block.ln_2(x))
+    
+    x = model.transformer.ln_f(x)
+    logits = model.lm_head(x)
+    
+    return logits, attention_weights
+
 def visualize_attention(text, model, layer_idx=0, head_idx=0):
-    """
-    Visualize attention patterns for a given input text.
-    """
+    """Visualize attention patterns for a given input text."""
     # Tokenize input
     chars = list(text)
     x = torch.tensor([ord(c) for c in chars], dtype=torch.long).unsqueeze(0)
     
+    # Move to device
+    x = x.to(model.transformer.wte.weight.device)
+    
     # Get attention weights
     with torch.no_grad():
-        logits, attention_weights = model(x, return_attention=True)
+        logits, attention_weights = get_attention_patterns(model, x)
     
     # Get attention for specified layer and head
     attn = attention_weights[layer_idx][0, head_idx]
     
     # Create attention heatmap
     plt.figure(figsize=(10, 8))
-    plt.imshow(attn.numpy(), cmap='viridis')
+    plt.imshow(attn.cpu().numpy(), cmap='viridis')
     plt.xticks(range(len(chars)), chars, rotation=90)
     plt.yticks(range(len(chars)), chars)
     plt.title(f'Attention Pattern (Layer {layer_idx}, Head {head_idx})')
@@ -133,22 +247,21 @@ text = "To be, or not to be, that is the question"
 visualize_attention(text, model)
 ```
 
-## Analyzing Different Attention Heads
-
-Let's look at how different heads specialize in different patterns:
+## Multi-Head Analysis
 
 ```python
 def analyze_attention_heads(text, model, layer_idx=0):
-    """
-    Analyze attention patterns across all heads in a layer.
-    """
+    """Analyze attention patterns across all heads in a layer."""
     # Tokenize input
     chars = list(text)
     x = torch.tensor([ord(c) for c in chars], dtype=torch.long).unsqueeze(0)
     
+    # Move to device
+    x = x.to(model.transformer.wte.weight.device)
+    
     # Get attention weights
     with torch.no_grad():
-        logits, attention_weights = model(x, return_attention=True)
+        logits, attention_weights = model.get_attention_weights(x)
     
     # Create subplot for each head
     n_heads = model.config.n_head
@@ -160,7 +273,7 @@ def analyze_attention_heads(text, model, layer_idx=0):
         col = i % 2
         attn = attention_weights[layer_idx][0, i]
         
-        im = axes[row, col].imshow(attn.numpy(), cmap='viridis')
+        im = axes[row, col].imshow(attn.cpu().numpy(), cmap='viridis')
         axes[row, col].set_xticks(range(len(chars)))
         axes[row, col].set_xticklabels(chars, rotation=90)
         axes[row, col].set_yticks(range(len(chars)))
@@ -174,65 +287,3 @@ def analyze_attention_heads(text, model, layer_idx=0):
 # Analyze attention heads
 text = "All the world's a stage, and all the men and women merely players"
 analyze_attention_heads(text, model)
-```
-
-## Text Generation
-
-Let's see how our model generates text:
-
-```python
-def generate_text(model, prompt, max_tokens=100, temperature=0.8):
-    """
-    Generate text using the trained model.
-    """
-    # Tokenize prompt
-    chars = list(prompt)
-    x = torch.tensor([ord(c) for c in chars], dtype=torch.long).unsqueeze(0)
-    
-    # Generate text
-    with torch.no_grad():
-        for _ in range(max_tokens):
-            # Get predictions
-            logits, _ = model(x)
-            logits = logits[:, -1, :] / temperature
-            probs = torch.softmax(logits, dim=-1)
-            
-            # Sample next token
-            next_char = torch.multinomial(probs, num_samples=1)
-            x = torch.cat([x, next_char], dim=1)
-            
-            # Stop if we generate a newline
-            if next_char.item() == ord('\n'):
-                break
-    
-    # Convert back to text
-    generated = ''.join([chr(i) for i in x[0].tolist()])
-    return generated
-
-# Generate some text
-prompt = "ROMEO: "
-generated = generate_text(model, prompt)
-print(generated)
-```
-
-## Key Takeaways
-
-1. **Attention Mechanism**
-   - Allows model to focus on different parts of input
-   - Each head can learn different patterns
-   - Enables parallel processing of sequences
-
-2. **Model Architecture**
-   - Multiple layers of attention
-   - Each layer has multiple attention heads
-   - Residual connections and layer normalization
-
-3. **Training Process**
-   - Character-level prediction
-   - Autoregressive generation
-   - Temperature controls randomness
-
-4. **Healthcare Applications**
-   - Can be adapted for medical text
-   - Useful for clinical note analysis
-   - Potential for medical report generation 

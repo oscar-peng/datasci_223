@@ -3,49 +3,49 @@
 ## Outline
 
 1. **Systematic Model Selection**
-   - Preparation and Setup
-   - Data Partitioning
-   - Model Evaluation
-   - Performance Aggregation
-   - Model Selection
-   - Final Model Training and Validation
-   - Documentation and Transparency
+    - Preparation and Setup
+    - Data Partitioning
+    - Model Evaluation
+    - Performance Aggregation
+    - Model Selection
+    - Final Model Training and Validation
+    - Documentation and Transparency
 
 2. **A Brief History of Transformers**
-   - Transformers and Attention
-   - Transformer Architecture
-   - Attention Mechanism
-   - Live Demo: DIY GPT (nanoGPT)
+    - Transformers and Attention
+    - Transformer Architecture
+    - Attention Mechanism
+    - Live Demo: DIY GPT (nanoGPT)
 
 3. **Latent Space and Embeddings**
-   - Understanding Latent Space
-   - Role in Autoencoders
-   - Generative Model Applications
-   - Embeddings in Practice
+    - Understanding Latent Space
+    - Role in Autoencoders
+    - Generative Model Applications
+    - Embeddings in Practice
 
 4. **LLMs and General-Purpose Models**
-   - Fine-Tuning
-   - Prompt Engineering
-   - One-Shot and Few-Shot Learning
-   - Structured Responses
+    - Fine-Tuning
+    - Prompt Engineering
+    - One-Shot and Few-Shot Learning
+    - Structured Responses
 
 5. **LLM API Integration**
-   - API Access Patterns
-   - Common LLM API Providers
-   - Function Calling
-   - Error Handling and Best Practices
+    - API Access Patterns
+    - Common LLM API Providers
+    - Function Calling
+    - Error Handling and Best Practices
 
 6. **Building a Complete LLM Chat Application**
-   - Basic Chat Interface
-   - Command Line Interface
-   - Architecture Benefits
-   - Addressing Hallucination
+    - Basic Chat Interface
+    - Command Line Interface
+    - Architecture Benefits
+    - Addressing Hallucination
 
 7. **Resources and Links**
-   - Papers and Documentation
-   - Open Source LLMs
-   - Healthcare AI Applications
-   - Interactive Platforms
+    - Papers and Documentation
+    - Open Source LLMs
+    - Healthcare AI Applications
+    - Interactive Platforms
 
 ## Systematic model selection
 
@@ -84,7 +84,7 @@
 
 ![Nested k-fold](media/Untitled 1.png)
 
-## Live Demo!
+## Live Demo
 
 Training splits for systematic model comparison
 
@@ -127,7 +127,7 @@ The left and center figures represent different layers / attention heads. The ri
 
 - [Transformer Explainer](https://poloclub.github.io/transformer-explainer/)
 
-## Live Demo!
+## Live Demo
 
 DIY GPT [nanoGPT](https://github.com/karpathy/nanoGPT)
 
@@ -253,7 +253,7 @@ generated_text = tokenizer.decode(generated_text_ids[0], skip_special_tokens=Tru
 
 print(generated_text)
 ```
-    
+
 ### Prompt Engineering and One-Shot Learning
 
 Prompt engineering is the art of crafting input prompts that guide the model to generate desired outputs. This technique exploits the model's ability to understand context and generate relevant responses, making it possible to "program" the model for new tasks without explicit retraining.
@@ -267,17 +267,20 @@ One of the most remarkable capabilities of modern LLMs is their ability to perfo
 A **structured response** is output from a language model that follows a specific, machine-readable format—such as JSON, XML, or a table—rather than free-form text.
 
 #### Why does it matter in health data science?
+
 - **Reliability:** Structured outputs are easier to validate and less prone to hallucination.
 - **Interoperability:** They can be directly used by other software systems (e.g., EHRs, analytics pipelines).
 - **Automation:** Structured data enables downstream processing, such as automated coding, reporting, or alerting.
 - **Auditability:** It's easier to check for missing or inconsistent information.
 
 #### How do you get a structured response from an LLM?
+
 - Use **schema-based prompting**: "Provide your answer in the following JSON format: { ... }"
 - Be explicit about required fields and data types.
 - Validate the output programmatically.
 
-#### Example Prompt:
+#### Example Prompt
+
 ```
 Extract the following information from the clinical note and return it as JSON:
 {
@@ -292,6 +295,7 @@ Structured responses are especially important in healthcare, where accuracy, con
 ## LLM API Integration: Building Applications with Language Models
 
 ### API Access Patterns
+
 - **REST APIs**: Most LLM providers offer HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text responses
 - **SDK/Libraries**: Client libraries like OpenAI Python, Hugging Face Transformers, and LangChain provide convenient wrappers around the raw APIs
 - **Authentication**: API keys are typically required and should be stored securely as environment variables or in a secrets manager
@@ -299,6 +303,7 @@ Structured responses are especially important in healthcare, where accuracy, con
 ### Common LLM API Providers
 
 #### OpenAI API
+
 ```python
 import openai
 
@@ -319,6 +324,7 @@ print(response.choices[0].message.content)
 ```
 
 #### Hugging Face Inference API
+
 ```python
 import requests
 
@@ -335,7 +341,6 @@ output = query({
 
 print(output)
 ```
-
 
 ### Function Calling: Enforcing Schema Compliance
 
@@ -378,7 +383,6 @@ response = client.chat.completions.create(
 
 Function calling is especially valuable in health data science, where structured, accurate, and validated outputs are essential for downstream analysis, automation, and patient safety.
 
-
 ### Error Handling and Best Practices
 
 - **Rate limiting**: Implement exponential backoff to handle rate limits gracefully
@@ -387,7 +391,6 @@ Function calling is especially valuable in health data science, where structured
 - **Caching**: Consider caching responses for identical or similar prompts to reduce costs
 - **Prompt engineering**: Craft clear, specific prompts to get better responses
 - **Cost management**: Monitor token usage and implement budgeting controls
-
 
 ## Building a Complete LLM Chat Application
 
@@ -483,10 +486,10 @@ response = client.chat(messages)
 print(response)
 ```
 
-
 ### 2. Building a Command Line Interface
 
 Now that we have our LLMClient class from the previous section, we can build a command-line interface that uses it. This CLI will:
+
 1. Parse command-line arguments for model selection and API key
 2. Initialize the LLMClient with the appropriate settings
 3. Maintain a conversation history
@@ -552,7 +555,7 @@ This two-component architecture demonstrates several important software engineer
 
 This pattern is common in professional software development and is especially useful when building applications that interact with external APIs.
 
-## Live Demo!
+## Live Demo
 
 Zero-, One-, and Few-Shot Learning
 
@@ -591,7 +594,6 @@ Health CARE & AI
 - [https://www.suki.ai/](https://www.suki.ai/)
 - [https://www.riken.jp/en/research/labs/bdr/](https://www.riken.jp/en/research/labs/bdr/)
 - [https://sites.research.google/med-palm/](https://sites.research.google/med-palm/)
-
 
 Where to play around
 

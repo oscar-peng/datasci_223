@@ -84,6 +84,7 @@ This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which i
 
 - **Hands-On Learning:** Design 3 practical demo sessions (10-15 minutes each)
 - **Progressive Difficulty:** Start simple, build complexity across demos
-- **Clear Instructions:** Provide step-by-step guidance with expected outcomes
+- **Clear Instructions:** Provide step-by-step guidance with expected outcomes with NO HTML comments for talking points
 - **Success Validation:** Include ways to confirm students completed tasks correctly
+- **Markdown Notebooks:** Format the demos as markdown documents to be converted into jupyter notebooks using jupytext
 p

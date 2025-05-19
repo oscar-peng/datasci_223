@@ -1,3 +1,8 @@
+---
+lecture_number: 07
+pdf: true
+---
+
 # Transformers: More than Meets the Eye
 
 ## Outline

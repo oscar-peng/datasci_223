@@ -91,6 +91,7 @@ This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which i
 
 ### 6. Directory Structure
 
+- **NOTE:** Use underscores instead of spaces for all filenames
 - **Root Level:**
     - `lectures/`: Main lecture content
     - `refs/`: Reference materials and resources

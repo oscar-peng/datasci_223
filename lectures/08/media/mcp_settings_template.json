@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "google-image-search": {
+      "command": "python",
+      "args": ["/absolute/path/to/lectures/08/media/google_image_search_mcp.py"],
+      "env": {},
+      "disabled": false,
+      "timeout": 60,
+      "alwaysAllow": []
+    }
+  }
+}

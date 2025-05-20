@@ -1,7 +1,7 @@
 ---
 lecture_number: 08
-pdf: true
-title: "Computer Vision for Health Data Science"
+pdf: false
+title: "Computer Vision"
 ---
 
 # Computer Vision

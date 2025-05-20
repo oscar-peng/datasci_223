@@ -97,6 +97,7 @@ nav:
       - '05. Putting a label on it': 05/lecture_05.md
       - '06. Neural Networks: If I only had a brain': 06/lecture_06.md
       - "07. Transformers: More than Meets the Eye": 07/lecture_07.md
+      - '08. Transformers: The Movie': 08/lecture_08.md
   - Exercises:
     - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
     - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
@@ -105,6 +106,7 @@ nav:
     - '05. Classification: Putting a label on it': https://classroom.github.com/a/i99LRj_R
     - '06. Neural Networks: If I only had a brain': https://classroom.github.com/a/7lg-zjaN
     - '07. Transformers': https://classroom.github.com/a/4rXS-dEj
+    - '08. NO MORE WEEKLY ASSIGNMENTS'
 
 extra:
   social:

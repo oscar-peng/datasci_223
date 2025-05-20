@@ -4,7 +4,7 @@ pdf: true
 title: "Computer Vision for Health Data Science"
 ---
 
-# Computer Vision for Health Data Science - Lecture 08
+# Computer Vision
 
 ## Overall Learning Objectives
 

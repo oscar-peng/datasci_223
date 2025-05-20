@@ -231,7 +231,7 @@ In healthcare, computer vision is revolutionizing numerous areas:
 1.  **Radiograph Analysis:**
     *   Detecting pneumonia or lung nodules in Chest X-rays.
     *   Identifying fractures in bone X-rays.
-    <!-- #FIXME: Add image: Example of a chest X-ray with a highlighted nodule (simulated or real if public domain and annotated). lectures/08/media/xray_nodule_example.png -->
+    <!-- #FIXME: Added candidate image: Example of a chest X-ray with a highlighted nodule (simulated or real if public domain and annotated). lectures/08/media/xray_nodule_example.png -->
     ![Chest X-ray with Nodule Highlighted](media/xray_nodule_example.png)
     <!---
         **Speaking Notes:**
@@ -243,7 +243,7 @@ In healthcare, computer vision is revolutionizing numerous areas:
 2.  **Pathology Slide Interpretation:**
     *   Automated counting and classification of cells (e.g., identifying cancerous vs. non-cancerous cells).
     *   Grading tumors based on morphology.
-    <!-- #FIXME: Add image: Example of a digital pathology slide with cells highlighted/classified. lectures/08/media/pathology_slide_example.png -->
+    <!-- #FIXME: Added candidate image: Example of a digital pathology slide with cells highlighted/classified. lectures/08/media/pathology_slide_example.png -->
     ![Digital Pathology Slide with Cell Classification](media/pathology_slide_example.png)
     <!---
         **Speaking Notes:**
@@ -255,7 +255,7 @@ In healthcare, computer vision is revolutionizing numerous areas:
     *   Providing surgeons with 3D visualization of the surgical site.
     *   Tracking surgical instruments with high precision.
     *   Overlaying pre-operative scan data onto the live surgical view.
-    <!-- #FIXME: Add image: Conceptual image of robotic surgery with CV guidance (e.g., screen overlay). lectures/08/media/robotic_surgery_cv.png -->
+    <!-- #FIXME: Added candidate image: Conceptual image of robotic surgery with CV guidance (e.g., screen overlay). lectures/08/media/robotic_surgery_cv.png -->
     ![Robotic Surgery with Computer Vision Assistance](media/robotic_surgery_cv.png)
     <!---
         **Speaking Notes:**
@@ -277,7 +277,7 @@ How does a computer "see" an image? It all comes down to numbers!
 *   **Pixels (Picture Elements):**
     *   A digital image is a grid of tiny squares called pixels. Each pixel has a specific location (coordinates) and a value (or set of values) representing its color or intensity.
     *   Think of it like a mosaic, where each tile is a pixel.
-    <!-- #FIXME: Add image: Zoomed-in image showing individual pixels. lectures/08/media/pixel_grid_example.png -->
+    <!-- #FIXME: Added candidate image: Zoomed-in image showing individual pixels. lectures/08/media/pixel_grid_example.png -->
     ![Zoomed-in view of an image showing pixels](media/pixel_grid_example.png)
 
 *   **Resolution:**
@@ -288,7 +288,7 @@ How does a computer "see" an image? It all comes down to numbers!
         *   Show two images of the same thing at different resolutions to illustrate the point.
         *   Mention the trade-off: detail vs. computational cost.
     --->
-    <!-- #FIXME: Add image: Side-by-side comparison of a low-res and high-res image of the same subject. lectures/08/media/resolution_comparison.png -->
+    <!-- #FIXME: Added candidate image: Side-by-side comparison of a low-res and high-res image of the same subject. lectures/08/media/resolution_comparison.png -->
     ![Low Resolution vs. High Resolution](media/resolution_comparison.png)
 
 *   **Aspect Ratio:**
@@ -299,14 +299,14 @@ How does a computer "see" an image? It all comes down to numbers!
     *   **Grayscale:**
         *   Each pixel has a single value representing its intensity (shade of gray), typically from 0 (black) to 255 (white) for an 8-bit image.
         *   Common in medical imaging like X-rays and CT scans where color isn't primary diagnostic information.
-        <!-- #FIXME: Add image: Example of a grayscale medical image (e.g., X-ray) and a small patch showing pixel intensity values. lectures/08/media/grayscale_example.png -->
+        <!-- #FIXME: Added candidate image: Example of a grayscale medical image (e.g., X-ray) and a small patch showing pixel intensity values. lectures/08/media/grayscale_example.png -->
         ![Grayscale X-ray and Pixel Intensity Values](media/grayscale_example.png)
     *   **RGB (Red, Green, Blue):**
         *   Each pixel has three values, one for the intensity of Red, one for Green, and one for Blue.
         *   By combining these three primary colors in various proportions, a wide spectrum of colors can be represented.
         *   Each channel typically ranges from 0 to 255. So, a white pixel might be (255, 255, 255) and a black pixel (0, 0, 0). A pure red pixel would be (255, 0, 0).
         *   Used in color photography, dermatology images, some pathology stains.
-        <!-- #FIXME: Add image: An RGB image decomposed into its R, G, and B channels. lectures/08/media/rgb_channels_example.png -->
+        <!-- #FIXME: Added candidate image: An RGB image decomposed into its R, G, and B channels. lectures/08/media/rgb_channels_example.png -->
         ![RGB Image Decomposed into Red, Green, and Blue Channels](media/rgb_channels_example.png)
     <!---
         **Speaking Notes:**
@@ -329,7 +329,7 @@ While we see images as JPEGs or PNGs in daily life, medical imaging has speciali
     *   **Structure:** A DICOM file is not just an image; it's a dataset containing:
         *   **Pixel Data:** The actual image itself.
         *   **Metadata (Tags):** A rich set of information about the patient (e.g., PatientID, PatientName, Age, Sex), the acquisition (e.g., Modality like CT/MR/X-Ray, StudyDate, AcquisitionTime, equipment settings like KVP for X-rays), the study, series, and more. These are stored as key-value pairs called DICOM tags (e.g., `(0010,0010)` for PatientName).
-        <!-- #FIXME: Add image: Screenshot of a DICOM viewer showing image and some metadata tags. lectures/08/media/dicom_viewer_metadata.png -->
+        <!-- #FIXME: Added candidate image: Screenshot of a DICOM viewer showing image and some metadata tags. lectures/08/media/dicom_viewer_metadata.png -->
         ![DICOM Viewer with Image and Metadata](media/dicom_viewer_metadata.png)
     *   **Importance of Series, Study, Instance:**
         *   **Instance:** A single image (or frame in a multi-frame image).
@@ -345,7 +345,7 @@ While we see images as JPEGs or PNGs in daily life, medical imaging has speciali
             *   **Window Width (WW):** The range of intensity values displayed. A narrow window provides higher contrast for values within that range.
             *   **Window Level (WL) or Window Center (WC):** The center of that intensity range.
         *   By adjusting WW/WL, clinicians can highlight different tissues (e.g., bone window, lung window, soft tissue window in a CT scan).
-        <!-- #FIXME: Add image: Example of a CT scan displayed with different window/level settings (e.g., bone window vs. lung window). lectures/08/media/dicom_windowing_example.png -->
+        <!-- #FIXME: Added candidate image: Example of a CT scan displayed with different window/level settings (e.g., bone window vs. lung window). lectures/08/media/dicom_windowing_example.png -->
         ![CT Scan with Different Window/Level Settings](media/dicom_windowing_example.png)
         <!---
             **Speaking Notes:**
@@ -381,7 +381,7 @@ To work with these images in Python, we have several powerful libraries:
     *   The "Python Imaging Library" (PIL) was the original, but Pillow is the actively maintained fork.
     *   Great for basic image loading, manipulation (resizing, cropping, rotation, color conversion), and saving in various common formats (PNG, JPEG, TIFF, etc.).
     *   Generally easier to use for simple tasks than OpenCV.
-    <!-- #FIXME: Add image: Pillow logo. lectures/08/media/pillow_logo.png -->
+    <!-- #FIXME: Added candidate image: Python Pillow library official logo with PIL text, Python image processing library. lectures/08/media/pillow_logo.png -->
     ![Pillow Logo](media/pillow_logo.png)
 
 *   **OpenCV (`cv2`):**
@@ -389,26 +389,26 @@ To work with these images in Python, we have several powerful libraries:
     *   Excellent for more advanced tasks: feature detection, object tracking, video analysis, image filtering, morphological operations, and much more.
     *   Can read/write many image and video formats.
     *   Often preferred for performance-critical applications.
-    <!-- #FIXME: Add image: OpenCV logo. lectures/08/media/opencv_logo.png -->
+    <!-- #FIXME: Added candidate image: OpenCV logo. lectures/08/media/opencv_logo.png -->
     ![OpenCV Logo](media/opencv_logo.png)
 
 *   **Pydicom:**
     *   The go-to library for reading, modifying, and writing DICOM files in Python.
     *   Allows easy access to both the pixel data and all the metadata tags.
-    <!-- #FIXME: Add image: Pydicom logo (if one exists, or a conceptual DICOM tag icon). lectures/08/media/pydicom_logo.png -->
+    <!-- #FIXME: Added candidate image: Pydicom logo (conceptual DICOM tag icon). lectures/08/media/pydicom_logo.png -->
     ![Pydicom Conceptual Logo](media/pydicom_logo.png)
 
 *   **SimpleITK (or ITK-Python):**
     *   Built on top of the Insight Segmentation and Registration Toolkit (ITK), a powerful open-source system for image analysis, particularly strong in medical image registration and segmentation.
     *   Provides an easier-to-use Python interface to many ITK functionalities.
     *   Supports many medical image formats, including DICOM.
-    <!-- #FIXME: Add image: SimpleITK or ITK logo. lectures/08/media/simpleitk_logo.png -->
+    <!-- #FIXME: Added candidate image: SimpleITK logo. lectures/08/media/simpleitk_logo.png -->
     ![SimpleITK Logo](media/simpleitk_logo.png)
 
 *   **Matplotlib:**
     *   While primarily a plotting library, `matplotlib.pyplot` (often imported as `plt`) is extensively used for displaying images within Python scripts and Jupyter notebooks (`plt.imshow()`).
     *   Essential for visualizing images, feature maps, and results.
-    <!-- #FIXME: Add image: Matplotlib logo. lectures/08/media/matplotlib_logo.png -->
+    <!-- #FIXME: Added candidate image: Matplotlib logo. lectures/08/media/matplotlib_logo.png -->
     ![Matplotlib Logo](media/matplotlib_logo.png)
 
 #### E. Reference Card: Basic Image Loading & Properties
@@ -495,8 +495,8 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
     *   **Filters/Kernels:**
         *   Small matrices of weights (e.g., 3x3, 5x5 pixels). Each filter is specialized to detect a particular type of feature (e.g., an edge, a specific texture, a corner).
         *   The layer typically learns multiple filters in parallel, each looking for a different pattern.
-        <!-- #FIXME: Add image: Diagram showing a 3x3 filter sliding over an input image patch, performing element-wise multiplication and sum. lectures/08/media/convolution_filter_animation.gif (animated if possible) or lectures/08/media/convolution_filter_static.png -->
-        ![Convolutional Filter Operation](media/convolution_filter_animation.gif)
+        <!-- #FIXME: Added candidate image: Diagram showing a 3x3 filter sliding over an input image patch, performing element-wise multiplication and sum. lectures/08/media/convolution_filter_static.png -->
+        ![Convolutional Filter Operation](media/convolution_filter_static.png)
         <!---
             **Speaking Notes:**
             *   Analogy: A filter is like a magnifying glass that highlights specific patterns.
@@ -508,10 +508,10 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
         *   **Why?** Without padding, the output feature map would be smaller than the input. Also, pixels at the very edge of the image would be processed by the filter fewer times than pixels in the center.
         *   `padding='valid'` (no padding): Output size shrinks.
         *   `padding='same'`: Padding is added such that the output feature map has the same height and width as the input (assuming stride 1).
-        <!-- #FIXME: Add image: Diagram illustrating 'valid' vs 'same' padding. lectures/08/media/padding_example.png -->
+        <!-- Added image: Diagram illustrating 'valid' vs 'same' padding. lectures/08/media/padding_example.png -->
         ![Valid vs. Same Padding](media/padding_example.png)
     *   **Feature Maps (Activation Maps):** The output of applying one filter across the input image. It's a 2D map where high values indicate the presence of the feature that the filter is tuned to detect. If a convolutional layer has, say, 32 filters, it will produce 32 feature maps.
-        <!-- #FIXME: Add image: Example showing an input image and a couple of resulting feature maps highlighting different aspects (e.g., edges, textures). lectures/08/media/feature_maps_example.png -->
+        <!-- Added image: Example showing an input image and a couple of resulting feature maps highlighting different aspects (e.g., edges, textures). lectures/08/media/feature_maps_example.png -->
         ![Input Image and Resulting Feature Maps](media/feature_maps_example.png)
 
 2.  **Activation Functions (e.g., ReLU):**
@@ -519,7 +519,7 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
     *   **ReLU (Rectified Linear Unit):** `f(x) = max(0, x)`.
         *   Very common in CNNs. It's simple, computationally efficient, and helps mitigate the vanishing gradient problem.
         *   It essentially "turns off" neurons that have negative activation.
-    <!-- #FIXME: Add image: Graph of the ReLU activation function. lectures/08/media/relu_function.png -->
+    <!-- Added image: Graph of the ReLU activation function. lectures/08/media/relu_function.png -->
     ![ReLU Activation Function](media/relu_function.png)
     <!---
         **Speaking Notes:**
@@ -531,7 +531,7 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
     *   **Purpose:** To reduce the spatial dimensions (height and width) of the feature maps, thereby reducing the number of parameters and computation in the network. It also helps to make the learned features somewhat invariant to small translations in the input.
     *   **Max Pooling:** The most common type. It takes a small window (e.g., 2x2 pixels) over the feature map and outputs the maximum value within that window. It effectively keeps the strongest activations.
     *   **Average Pooling:** Takes the average value within the window. Less common in modern CNNs for feature extraction.
-    <!-- #FIXME: Add image: Diagram illustrating 2x2 Max Pooling operation on a small feature map. lectures/08/media/max_pooling_example.png -->
+    <!-- Added image: Diagram illustrating 2x2 Max Pooling operation on a small feature map. lectures/08/media/max_pooling_example.png -->
     ![Max Pooling Operation](media/max_pooling_example.png)
     <!---
         **Speaking Notes:**
@@ -554,13 +554,13 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
 One of the most powerful aspects of CNNs is their ability to automatically learn a hierarchy of features.
 
 *   **Early Layers (closer to input):** Learn simple, low-level features like edges, corners, simple textures, and color blobs.
-    <!-- #FIXME: Add image: Visualization of features learned by early CNN layers (e.g., Gabor-like filters, edge detectors). lectures/08/media/cnn_early_features.png -->
+    <!-- #FIXME: Added candidate image: Visualization of features learned by early CNN layers (e.g., Gabor-like filters, edge detectors). lectures/08/media/cnn_early_features.png -->
     ![Features Learned by Early CNN Layers](media/cnn_early_features.png)
 *   **Middle Layers:** Combine these low-level features to detect more complex patterns or parts of objects, like an eye, a nose, a wheel, or a specific texture pattern (e.g., fur, scales).
-    <!-- #FIXME: Add image: Visualization of features learned by middle CNN layers (e.g., object parts). lectures/08/media/cnn_mid_features.png -->
+    <!-- #FIXME: Added candidate image: Visualization of features learned by middle CNN layers (e.g., object parts). lectures/08/media/cnn_mid_features.png -->
     ![Features Learned by Middle CNN Layers](media/cnn_mid_features.png)
 *   **Deeper Layers (closer to output):** Combine mid-level features to recognize entire objects or more abstract concepts relevant to the task.
-    <!-- #FIXME: Add image: Visualization of features/activations from deeper CNN layers showing object-level recognition. lectures/08/media/cnn_deep_features.png -->
+    <!-- #FIXME: Added candidate image: Visualization of features/activations from deeper CNN layers showing object-level recognition. lectures/08/media/cnn_deep_features.png -->
     ![Features Learned by Deep CNN Layers](media/cnn_deep_features.png)
 
 This hierarchical process allows CNNs to learn rich, discriminative representations from raw pixel data without requiring manual feature engineering, which was a major bottleneck in traditional computer vision.
@@ -585,7 +585,7 @@ Where:
 *   The final `FC` layer is the output layer with an appropriate activation for the task (e.g., softmax for multi-class classification).
 *   A `Flatten` layer is needed before the first FC layer to convert the 2D feature maps from the convolutional/pooling part into a 1D vector.
 
-<!-- #FIXME: Add image: A simple block diagram of a typical CNN architecture (e.g., Input -> Conv -> Pool -> Conv -> Pool -> FC -> Output). lectures/08/media/cnn_architecture_diagram.png -->
+<!-- #FIXME: Added candidate image: A simple block diagram of a typical CNN architecture (e.g., Input -> Conv -> Pool -> Conv -> Pool -> FC -> Output). lectures/08/media/cnn_architecture_diagram.png -->
 ![Typical CNN Architecture Diagram](media/cnn_architecture_diagram.png)
 
 <!---
@@ -726,10 +726,10 @@ Now that we have a foundational understanding of images and CNNs, let's explore 
 *   **Question it answers:** "What is in this image?" or "Does this image belong to category X?"
 *   **Examples in Health Data Science:**
     *   Classifying a chest X-ray as "normal" or "pneumonia."
-        <!-- #FIXME: Add image: Example of a chest X-ray labeled "Pneumonia" and another labeled "Normal". lectures/08/media/xray_classification_example.png -->
+        <!-- #FIXME: Added candidate image: Example of a chest X-ray labeled "Pneumonia" and another labeled "Normal". lectures/08/media/xray_classification_example.png -->
         ![X-ray Classification Example](media/xray_classification_example.png)
     *   Determining if a skin lesion image is "benign" or "malignant."
-        <!-- #FIXME: Add image: Example of a dermoscopy image labeled "Malignant" and another "Benign". lectures/08/media/dermoscopy_classification_example.png -->
+        <!-- #FIXME: Added candidate image: Example of a dermoscopy image labeled "Malignant" and another "Benign". lectures/08/media/dermoscopy_classification_example.png -->
         ![Dermoscopy Classification Example](media/dermoscopy_classification_example.png)
     *   Identifying the type of cell in a microscopy image (e.g., "lymphocyte," "epithelial cell").
 
@@ -744,22 +744,21 @@ As we discussed, a typical CNN architecture for classification uses:
 Over the years, researchers have developed many influential CNN architectures. Understanding their evolution can provide insights into what makes these models work well. We won't dive deep, but it's good to be familiar with some names:
 
 *   **LeNet-5 (1990s, Yann LeCun et al.):** One of the earliest successful CNNs, primarily used for handwritten digit recognition (MNIST dataset). Relatively simple by today's standards but laid much of the groundwork.
-    <!-- #FIXME: Add image: Diagram of LeNet-5 architecture. lectures/08/media/lenet5_architecture.png -->
+    <!-- #FIXME: Added candidate image: Diagram of LeNet-5 architecture. lectures/08/media/lenet5_architecture.png -->
     ![LeNet-5 Architecture](media/lenet5_architecture.png)
 *   **AlexNet (2012, Alex Krizhevsky et al.):** A breakthrough! Won the ImageNet Large Scale Visual Recognition Challenge (ILSVRC) by a large margin. Deeper and wider than LeNet, used ReLU activations and dropout for regularization. Showed the power of GPUs for training deep networks.
-    <!-- #FIXME: Add image: Diagram of AlexNet architecture. lectures/08/media/alexnet_architecture.png -->
+    <!-- #FIXME: Added candidate image: Diagram of AlexNet architecture. lectures/08/media/alexnet_architecture.png -->
     ![AlexNet Architecture](media/alexnet_architecture.png)
 *   **VGGNets (VGG-16, VGG-19) (2014, Simonyan & Zisserman):** Showed that depth is critical. Used very small (3x3) convolutional filters stacked on top of each other. Simpler and more uniform architecture than AlexNet. Very influential, though computationally expensive.
-    <!-- #FIXME: Add image: Diagram of VGG-16 architecture. lectures/08/media/vgg16_architecture.png -->
+    <!-- #FIXME: Added candidate image: Diagram of VGG-16 architecture. lectures/08/media/vgg16_architecture.png -->
     ![VGG-16 Architecture](media/vgg16_architecture.png)
 *   **GoogLeNet / Inception (2014, Szegedy et al.):** Introduced the "Inception module," which performs convolutions with different filter sizes in parallel and concatenates their outputs. This allows the network to capture features at multiple scales. More computationally efficient than VGG.
-    <!-- #FIXME: Add image: Diagram of an Inception module. lectures/08/media/inception_module.png -->
+    <!-- #FIXME: Added candidate image: Diagram of an Inception module. lectures/08/media/inception_module.png -->
     ![Inception Module](media/inception_module.png)
 *   **ResNet (Residual Networks) (2015, He et al.):** Another major breakthrough, enabling the training of *extremely* deep networks (e.g., 50, 101, 152 layers) by introducing "skip connections" or "residual blocks." These connections allow gradients to flow more easily through very deep networks, addressing the vanishing gradient problem. Won ILSVRC 2015.
-    <!-- #FIXME: Add image: Diagram of a ResNet residual block. lectures/08/media/resnet_block.png -->
     ![ResNet Residual Block](media/resnet_block.png)
 *   **DenseNet (Densely Connected Convolutional Networks) (2016, Huang et al.):** Each layer is connected to every other layer in a feed-forward fashion. Encourages feature reuse and strengthens feature propagation.
-    <!-- #FIXME: Add image: Diagram illustrating DenseNet connectivity. lectures/08/media/densenet_connectivity.png -->
+    <!-- #FIXME: Added candidate image: Diagram illustrating DenseNet connectivity. lectures/08/media/densenet_connectivity.png -->
     ![DenseNet Connectivity](media/densenet_connectivity.png)
 *   **MobileNets (Howard et al.), SqueezeNets, ShuffleNets, etc.:** Architectures designed for efficiency (lower computational cost, smaller model size), making them suitable for mobile and embedded devices. They often use techniques like depthwise separable convolutions.
 
@@ -778,7 +777,7 @@ Training a state-of-the-art CNN from scratch requires a *massive* amount of labe
 
 *   **Concept:** Transfer learning is a machine learning technique where a model developed for a task is reused as the starting point for a model on a second, related task.
     *   For CNNs, this typically means taking a model pre-trained on a very large dataset (like **ImageNet**, which has millions of images and 1000 categories of everyday objects like cats, dogs, cars, etc.) and adapting it for your specific, often smaller, medical dataset.
-    <!-- #FIXME: Add image: Diagram illustrating transfer learning: Large Source Dataset (ImageNet) -> Pre-trained Model -> Small Target Dataset (Medical) -> New Model. lectures/08/media/transfer_learning_diagram.png -->
+    <!-- #FIXME: Added candidate image: Diagram illustrating transfer learning: Large Source Dataset (ImageNet) -> Pre-trained Model -> Small Target Dataset (Medical) -> New Model. lectures/08/media/transfer_learning_diagram.png -->
     ![Transfer Learning Concept Diagram](media/transfer_learning_diagram.png)
 
 *   **Why it's crucial for medical imaging:**
@@ -794,7 +793,6 @@ Training a state-of-the-art CNN from scratch requires a *massive* amount of labe
             3.  Use the remaining convolutional base as a fixed feature extractor. You pass your medical images through this base, and the output will be a set of high-level features.
             4.  Train a new, smaller classifier (e.g., a few Dense layers) on top of these extracted features, using your labeled medical images.
         *   **When to use:** Good when your medical dataset is small and very different from the original dataset the CNN was trained on (though often still surprisingly effective). It's faster to train as only the new classifier's weights are updated.
-        <!-- #FIXME: Add image: Diagram showing feature extraction: Input -> Frozen Pre-trained ConvBase -> Extracted Features -> New Classifier -> Output. lectures/08/media/feature_extraction_tl.png -->
         ![Feature Extraction with Transfer Learning](media/feature_extraction_tl.png)
 
     2.  **Fine-Tuning:**
@@ -806,7 +804,6 @@ Training a state-of-the-art CNN from scratch requires a *massive* amount of labe
         *   **Why unfreeze later layers?** Early layers of a CNN learn very general features (edges, textures), while later layers learn more specialized features. For a new dataset, the general features are likely still useful, but the more specialized features might need some adjustment.
         *   **Why a small learning rate?** To avoid large updates that could destroy the valuable pre-trained weights. We only want to make small adjustments.
         *   **When to use:** Good when your medical dataset is reasonably sized and somewhat similar to the original dataset. Can lead to better performance than just feature extraction but requires more careful training.
-        <!-- #FIXME: Add image: Diagram showing fine-tuning: Input -> Partially Frozen Pre-trained ConvBase + New Classifier -> Output. Highlight which layers are trained. lectures/08/media/fine_tuning_tl.png -->
         ![Fine-Tuning with Transfer Learning](media/fine_tuning_tl.png)
 
 <!---
@@ -847,7 +844,6 @@ We'll implement transfer learning in Demo 2!
 Image classification tells us *what* is in an image, but often we also need to know *where* it is. This is the task of **object detection**.
 
 *   **Task:** Classification + Localization. This means identifying all objects of interest in an image and drawing a **bounding box** around each one, along with a class label for each box.
-    <!-- #FIXME: Add image: Example of object detection: an image with multiple objects (e.g., cells, cars) each enclosed in a bounding box with a class label. lectures/08/media/object_detection_example.png -->
     ![Object Detection Example with Bounding Boxes](media/object_detection_example.png)
 *   **Examples in Health Data Science:**
     *   Finding and outlining nodules or lesions in lung CT scans or chest X-rays.
@@ -862,12 +858,10 @@ Image classification tells us *what* is in an image, but often we also need to k
     *   **Anchor Boxes (or Priors):**
         *   Many modern detectors (especially one-stage detectors like YOLO and SSD) use a set of pre-defined bounding boxes of various sizes and aspect ratios at different locations in the image.
         *   Instead of predicting box coordinates from scratch, the model predicts *offsets* relative to these anchor boxes and a confidence score for each anchor containing an object. This simplifies the learning process.
-        <!-- #FIXME: Add image: Illustration of anchor boxes of different scales/ratios at a point in an image. lectures/08/media/anchor_boxes_example.png -->
         ![Anchor Boxes Example](media/anchor_boxes_example.png)
     *   **Non-Maximum Suppression (NMS):**
         *   Object detectors often output multiple overlapping bounding boxes for the same object.
         *   NMS is a post-processing step to eliminate redundant boxes. It keeps the box with the highest confidence score and suppresses (removes) other boxes that have a high Intersection over Union (IoU) with it.
-        <!-- #FIXME: Add image: Diagram showing multiple overlapping boxes for one object before NMS, and the single best box after NMS. lectures/08/media/nms_example.png -->
         ![Non-Maximum Suppression (NMS) Example](media/nms_example.png)
 
 *   **Approaches (Briefly):**
@@ -878,7 +872,6 @@ Image classification tells us *what* is in an image, but often we also need to k
     *   **One-Stage Detectors (e.g., YOLO - You Only Look Once, SSD - Single Shot MultiBox Detector):**
         *   Directly predict bounding boxes and class probabilities from the full image in a single pass through the network.
         *   Typically faster, making them suitable for real-time applications, though sometimes slightly less accurate than two-stage detectors (though this gap is closing).
-        <!-- #FIXME: Add image: Conceptual difference between one-stage and two-stage detectors. lectures/08/media/one_vs_two_stage_detectors.png -->
         ![One-Stage vs. Two-Stage Detectors](media/one_vs_two_stage_detectors.png)
 
 *   **Evaluation Metrics:**
@@ -886,7 +879,6 @@ Image classification tells us *what* is in an image, but often we also need to k
         *   Measures the overlap between a predicted bounding box (`B_pred`) and a ground-truth bounding box (`B_gt`).
         *   `IoU = Area_of_Overlap(B_pred, B_gt) / Area_of_Union(B_pred, B_gt)`
         *   Ranges from 0 (no overlap) to 1 (perfect overlap). A common threshold to consider a detection "correct" is IoU > 0.5.
-        <!-- #FIXME: Add image: Diagram illustrating IoU calculation (Area of Overlap / Area of Union). lectures/08/media/iou_diagram.png -->
         ![Intersection over Union (IoU) Diagram](media/iou_diagram.png)
     *   **Precision & Recall:**
         *   **Precision:** What proportion of positive identifications was actually correct? `TP / (TP + FP)` (TP=True Positives, FP=False Positives)
@@ -952,15 +944,15 @@ Beyond classifying an entire image or drawing bounding boxes around objects, **i
 --->
 
 *   **Task:** Pixel-level classification. Assigning a class label to each pixel in an image. The output is often a "segmentation mask," which is an image of the same size as the input, where each pixel's value corresponds to its predicted class.
-    <!-- #FIXME: Add image: Example of an input image and its corresponding semantic segmentation mask (e.g., a medical image with an organ segmented). lectures/08/media/segmentation_example.png -->
+    <!-- #FIXME: Added candidate image: Medical image segmentation example showing side-by-side comparison of original MRI/CT scan and its corresponding colored segmentation mask with different organs highlighted in different colors. lectures/08/media/segmentation_example.png -->
     ![Image Segmentation Example: Input and Mask](media/segmentation_example.png)
 
 *   **Examples in Health Data Science:**
     *   **Organ Segmentation:** Precisely outlining organs like the liver, kidneys, heart, or brain in CT or MRI scans. This is crucial for quantitative analysis, volume measurement, and surgical planning.
-        <!-- #FIXME: Add image: MRI/CT scan with a segmented organ (e.g., liver). lectures/08/media/organ_segmentation.png -->
+        <!-- #FIXME: Added candidate image: Abdominal CT scan with liver segmentation highlighted in color overlay, showing precise organ boundaries for volumetric analysis in medical imaging. lectures/08/media/organ_segmentation.png -->
         ![Organ Segmentation in MRI/CT](media/organ_segmentation.png)
     *   **Tumor Delineation:** Accurately segmenting tumors to measure their size, track changes over time in response to treatment, and plan radiotherapy.
-        <!-- #FIXME: Add image: Tumor segmented in a medical scan. lectures/08/media/tumor_segmentation.png -->
+        <!-- #FIXME: Added candidate image: Brain MRI with tumor segmentation highlighted in bright color, showing precise tumor boundaries for treatment planning and volume measurement in neuro-oncology. lectures/08/media/tumor_segmentation.png -->
         ![Tumor Delineation](media/tumor_segmentation.png)
     *   **Cell Segmentation:** Identifying and outlining individual cells or nuclei in microscopy images for quantitative pathology or cell counting.
     *   Segmenting different tissue types (e.g., gray matter, white matter, CSF in brain MRI).
@@ -968,16 +960,14 @@ Beyond classifying an entire image or drawing bounding boxes around objects, **i
 
 *   **Types of Segmentation:**
     *   **Semantic Segmentation:** Assigns a class label to each pixel. All pixels belonging to the same object class get the same label (e.g., all "car" pixels are labeled as car, all "tumor" pixels are labeled as tumor). It doesn't distinguish between different instances of the same class.
-        <!-- #FIXME: Add image: Illustration of semantic segmentation (e.g., multiple sheep all colored the same). lectures/08/media/semantic_segmentation_illustration.png -->
-        ![Semantic Segmentation Illustration](media/semantic_segmentation_illustration.png)
     *   **Instance Segmentation:** Goes a step further. It not only classifies each pixel but also distinguishes between different instances of the same object class (e.g., "car_1," "car_2," "car_3" or "cell_1", "cell_2"). This is more complex.
-        <!-- #FIXME: Add image: Illustration of instance segmentation (e.g., multiple sheep colored differently). lectures/08/media/instance_segmentation_illustration.png -->
-        ![Instance Segmentation Illustration](media/instance_segmentation_illustration.png)
     *   For this lecture, we'll primarily focus on **semantic segmentation**, which is very common in medical imaging.
+        <!-- #FIXME: Added candidate image: Semantic segmentation illustration diagram showing multiple objects of the same class (like multiple people or cells) all colored with the same color mask, demonstrating how semantic segmentation assigns the same label to all instances of a class. lectures/08/media/semantic_segmentation_illustration.png -->
+        ![Semantic Segmentation Illustration](media/semantic_segmentation_illustration.png)
 
 *   **U-Net Architecture:**
     *   **Significance:** The U-Net architecture, introduced by Ronneberger, Fischer, and Brox in 2015, was a landmark paper specifically for biomedical image segmentation. It has become incredibly popular and influential, especially in medical imaging, due to its excellent performance with limited training data and its ability to produce precise segmentations.
-        <!-- #FIXME: Add image: The U-Net architecture diagram from the original paper or a clear reproduction. lectures/08/media/unet_architecture_diagram.png -->
+        <!-- #FIXME: Added candidate image: U-Net architecture diagram showing the characteristic U-shaped network with contracting path (encoder), bottleneck, and expanding path (decoder) with skip connections, specifically designed for biomedical image segmentation. lectures/08/media/unet_architecture_diagram.png -->
         ![U-Net Architecture Diagram](media/unet_architecture_diagram.png)
         <!---
             **Speaking Notes:**
@@ -1108,7 +1098,7 @@ The field of computer vision is incredibly dynamic and rapidly evolving. While w
     *   **Vision Transformers (ViTs):**
         *   **Concept:** Inspired by the success of Transformer models in Natural Language Processing (NLP), ViTs apply the Transformer architecture directly to images.
         *   **How they work (simplified):** An image is split into a sequence of fixed-size patches. These patches are treated like "tokens" (similar to words in NLP), linearly embedded, and fed into a standard Transformer encoder, which uses self-attention mechanisms to capture global relationships between patches.
-            <!-- #FIXME: Add image: Conceptual diagram of a Vision Transformer (image -> patches -> Transformer -> class). lectures/08/media/vit_diagram.png -->
+            <!-- #FIXME: Added candidate image: Vision Transformer (ViT) architecture diagram showing the process flow: input image divided into patches, patch embedding, position encoding, transformer encoder blocks with self-attention, and MLP head for classification. lectures/08/media/vit_diagram.png -->
             ![Vision Transformer (ViT) Diagram](media/vit_diagram.png)
         *   **Potential Advantages:** Can capture long-range dependencies in images more effectively than CNNs (which have local receptive fields). Have shown state-of-the-art results on many benchmarks, sometimes outperforming CNNs, especially with very large training datasets.
         *   **Medical Imaging:** Being explored for various tasks, showing promise where global context is important.
@@ -1117,7 +1107,7 @@ The field of computer vision is incredibly dynamic and rapidly evolving. While w
         *   **Concept:** Models that can learn the underlying distribution of data and generate new, synthetic data samples that resemble the training data.
             *   **GANs (Generative Adversarial Networks):** Involve two networks, a Generator (creates fake data) and a Discriminator (tries to distinguish fake from real), trained in an adversarial game.
             *   **Diffusion Models:** Learn to denoise images by gradually adding noise to training data and then training a model to reverse this process. Can generate very high-quality images.
-            <!-- #FIXME: Add image: Conceptual diagram of a GAN or a Diffusion Model process. lectures/08/media/generative_model_concept.png -->
+            <!-- #FIXME: Added candidate image: Diffusion model process diagram showing the step-by-step noise addition (forward process) and denoising (reverse process) with multiple intermediate images demonstrating the gradual transformation from random noise to a clear medical image. lectures/08/media/generative_model_concept.png -->
             ![Generative Model Concept](media/generative_model_concept.png)
         *   **Applications in Health:**
             *   **Synthetic Medical Data Generation:** Creating realistic medical images for training AI models (can help with data scarcity and privacy concerns), data augmentation.
@@ -1131,7 +1121,7 @@ The field of computer vision is incredibly dynamic and rapidly evolving. While w
         *   **Methods for CV:**
             *   **Saliency Maps / Attention Maps:** Highlight which parts of an input image were most influential in a model's prediction.
             *   **Grad-CAM (Gradient-weighted Class Activation Mapping):** Produces a coarse localization map highlighting important regions in the image for predicting a specific class.
-                <!-- #FIXME: Add image: Example of a Grad-CAM heatmap overlaid on an image, showing regions of interest for a classification. lectures/08/media/grad_cam_example.png -->
+                <!-- #FIXME: Added candidate image: Grad-CAM visualization example showing a medical image (like chest X-ray or mammogram) with a colorful heatmap overlay highlighting the regions that most influenced the neural network's diagnosis decision, with red areas indicating highest importance. lectures/08/media/grad_cam_example.png -->
                 ![Grad-CAM Example](media/grad_cam_example.png)
             *   **LIME (Local Interpretable Model-agnostic Explanations):** Explains individual predictions by learning a simpler, interpretable model locally around the prediction.
             *   **SHAP (SHapley Additive exPlanations):** Uses game theory concepts to assign an importance value to each feature for a particular prediction.
@@ -1141,7 +1131,7 @@ The field of computer vision is incredibly dynamic and rapidly evolving. While w
         *   **Concept:** A type of machine learning where models learn representations from large amounts of *unlabeled* data. The "supervision" comes from the data itself, by creating pretext tasks.
         *   **Example Pretext Tasks for Images:** Predicting the relative position of image patches, image colorization, image inpainting (filling in missing parts), contrastive learning (pulling similar images closer in feature space and pushing dissimilar ones apart).
         *   **Why it's important for Medical CV:** Reduces the dependency on large, expensively annotated datasets. Pre-trained SSL models can then be fine-tuned on smaller labeled datasets for specific tasks.
-        <!-- #FIXME: Add image: Conceptual diagram of a self-supervised learning approach (e.g., contrastive learning with image augmentations). lectures/08/media/self_supervised_learning.png -->
+        <!-- #FIXME: Added candidate image: Self-supervised learning diagram for medical imaging showing contrastive learning approach with different augmentations (rotation, cropping, color jittering) of the same medical image being mapped to similar representations in the embedding space, while different images are pushed apart. lectures/08/media/self_supervised_learning.png -->
         ![Self-Supervised Learning Concept](media/self_supervised_learning.png)
 
 *   **Data Augmentation:**
@@ -1152,7 +1142,7 @@ The field of computer vision is incredibly dynamic and rapidly evolving. While w
         *   Adding noise (e.g., Gaussian noise).
         *   Elastic deformations (especially useful for medical images to simulate natural variations).
         *   Cutout / Mixup / CutMix: More advanced techniques that involve removing regions or mixing images/labels.
-        <!-- #FIXME: Add image: Grid showing examples of various data augmentation techniques applied to a single image. lectures/08/media/data_augmentation_examples.png -->
+        <!-- #FIXME: Added candidate image: Medical image data augmentation techniques grid showing a single original medical image (X-ray, MRI, or histology) and multiple variations created through different augmentations: rotation, flipping, zooming, brightness adjustment, contrast enhancement, and elastic deformation. lectures/08/media/data_augmentation_examples.png -->
         ![Data Augmentation Examples](media/data_augmentation_examples.png)
     *   **Libraries:**
         *   **Albumentations:** A very popular and powerful Python library specifically designed for fast and flexible image augmentation. Highly recommended for computer vision projects.
@@ -1162,7 +1152,7 @@ The field of computer vision is incredibly dynamic and rapidly evolving. While w
     *   **MONAI (Medical Open Network for AI):**
         *   A PyTorch-based, open-source framework specifically designed for deep learning in healthcare imaging.
         *   Provides domain-specific tools for data loading, preprocessing, standard network architectures (like U-Net), and evaluation for medical imaging tasks.
-        <!-- #FIXME: Add image: MONAI logo. lectures/08/media/monai_logo.png -->
+        <!-- #FIXME: Added candidate image: MONAI (Medical Open Network for AI) official logo with full name, the PyTorch-based framework specifically designed for medical imaging deep learning research and applications. lectures/08/media/monai_logo.png -->
         ![MONAI Logo](media/monai_logo.png)
     *   **SimpleITK:** (Mentioned earlier, but worth re-emphasizing for advanced analysis)
         *   Powerful for image registration (aligning images), segmentation, and general image analysis beyond just deep learning.

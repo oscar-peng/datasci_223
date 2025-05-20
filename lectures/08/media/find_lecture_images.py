@@ -199,22 +199,22 @@ def download_candidate_images(
 
 
 def create_html_from_markdown(
-    markdown_content: str, title: str = "Image Viewer"
+    markdown_content: str,
+    title: str = "Image Viewer",
+    candidates: List[Dict[str, str]] = None,
 ) -> str:
     """
-    Convert markdown content to HTML with styling for better image viewing.
+    Create a simple HTML page with the first four images tiled in a grid.
 
     Args:
-        markdown_content: Markdown content to convert
+        markdown_content: Markdown content (not used in this simplified version)
         title: Title for the HTML page
+        candidates: List of candidate images
 
     Returns:
-        HTML content with styling
+        HTML content with tiled images
     """
-    # Convert markdown to HTML
-    html_content = markdown.markdown(markdown_content, extensions=["tables"])
-
-    # Add styling for better image viewing
+    # Create a simple HTML page with the first four images tiled in a grid
     styled_html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -222,62 +222,57 @@ def create_html_from_markdown(
     <style>
         body {{
             font-family: Arial, sans-serif;
-            line-height: 1.6;
             margin: 0;
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
         }}
-        h1, h2, h3 {{
-            color: #333;
-        }}
         h1 {{
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+            text-align: center;
+            margin-bottom: 20px;
         }}
-        h2 {{
-            margin-top: 30px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+        .image-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 20px;
         }}
-        h3 {{
-            margin-top: 25px;
-            background-color: #f5f5f5;
-            padding: 8px;
-            border-radius: 4px;
-        }}
-        img {{
-            max-width: 100%;
-            max-height: 500px;
+        .image-container {{
             border: 1px solid #ddd;
             border-radius: 4px;
-            padding: 5px;
-            margin: 10px 0;
-            display: block;
+            padding: 10px;
+            text-align: center;
         }}
-        ul {{
-            list-style-type: none;
-            padding-left: 0;
+        .image-container img {{
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
         }}
-        li {{
-            margin-bottom: 8px;
-        }}
-        code {{
-            background-color: #f5f5f5;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: monospace;
-        }}
-        .candidate-section {{
-            margin-bottom: 40px;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 5px;
+        .image-label {{
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
         }}
     </style>
 </head>
 <body>
-    {html_content}
+    <h1>{title}</h1>
+    <div class="image-grid">
+"""
+
+    # Add the first four images to the grid
+    if candidates:
+        for i, candidate in enumerate(candidates[:4]):
+            # Use just the filename for the image src to ensure it's in the same directory
+            rel_path = os.path.basename(candidate["path"])
+            styled_html += f"""
+        <div class="image-container">
+            <img src="{rel_path}" alt="Image {candidate["index"]}">
+            <div class="image-label">Image {candidate["index"]}</div>
+        </div>
+"""
+
+    styled_html += """
+    </div>
 </body>
 </html>
 """
@@ -288,7 +283,7 @@ def create_llm_agent_info_file(
     tag_info: Dict[str, str], candidates: List[Dict[str, str]], output_dir: str
 ) -> Tuple[str, str]:
     """
-    Create information files (markdown and HTML) for LLM agent with context about the tag and candidates.
+    Create simplified information files (markdown and HTML) for LLM agent with just the images and labels.
 
     Args:
         tag_info: Dictionary with FIXME tag information
@@ -298,24 +293,20 @@ def create_llm_agent_info_file(
     Returns:
         Tuple of paths to the created markdown and HTML files
     """
-    # Create markdown content
+    # Create simplified markdown content with just the tag details and images
     markdown_content = f"# FIXME Tag Information\n\n"
     markdown_content += f"## Tag Details\n"
-    markdown_content += f"- **Description:** {tag_info['description']}\n"
-    markdown_content += f"- **Target Path:** {tag_info['target_path']}\n"
-    markdown_content += f"- **Line Number:** {tag_info['line_number']}\n"
-    markdown_content += f"- **Original Tag:** `{tag_info['original_tag']}`\n\n"
+    markdown_content += f"Description: {tag_info['description']}\n"
+    markdown_content += f"Target Path: {tag_info['target_path']}\n"
+    markdown_content += f"Line Number: {tag_info['line_number']}\n"
+    markdown_content += f"Original Tag: `{tag_info['original_tag']}`\n\n"
 
     markdown_content += f"## Candidate Images\n\n"
     for candidate in candidates:
-        rel_path = os.path.relpath(
-            candidate["path"],
-            os.path.dirname(os.path.join(output_dir, "tag_info.md")),
-        )
+        # Use just the filename for the image src to ensure it's in the same directory
+        rel_path = os.path.basename(candidate["path"])
         markdown_content += f"### Image {candidate['index']}\n"
-        markdown_content += f"- **Path:** {rel_path}\n"
-        markdown_content += f"- **Title:** {candidate['title']}\n"
-        markdown_content += f"- **URL:** {candidate['url']}\n"
+        markdown_content += f"Path: {rel_path}\n"
         markdown_content += f"\n![Image {candidate['index']}]({rel_path})\n\n"
 
     # Write markdown file
@@ -323,9 +314,9 @@ def create_llm_agent_info_file(
     with open(info_file_path, "w") as f:
         f.write(markdown_content)
 
-    # Create and write HTML file
+    # Create and write HTML file with tiled images
     html_content = create_html_from_markdown(
-        markdown_content, f"FIXME Tag: {tag_info['description']}"
+        markdown_content, f"FIXME Tag: {tag_info['description']}", candidates
     )
     html_file_path = os.path.join(output_dir, "tag_info.html")
     with open(html_file_path, "w") as f:
@@ -406,12 +397,10 @@ def select_best_image(
         print(f"Auto-selecting first candidate: {candidates[0]['path']}")
         return candidates[0]
 
-    # Display candidates with detailed information
+    # Display candidates with minimal information
     print("\nCandidate images:")
     for candidate in candidates:
         print(f"{candidate['index']}. {candidate['path']}")
-        print(f"   Title: {candidate['title']}")
-        print(f"   URL: {candidate['url']}")
 
     # For human users, try to open the images in the default image viewer
     for candidate in candidates:
@@ -595,7 +584,7 @@ def main():
     parser.add_argument(
         "--num-results",
         type=int,
-        default=5,
+        default=4,  # Changed to 4 to match the grid layout
         help="Number of image results to fetch per tag",
     )
     parser.add_argument(
@@ -642,10 +631,27 @@ def main():
                         with open(md_path, "r", encoding="utf-8") as f:
                             md_content = f.read()
 
-                        # Convert to HTML
+                        # Parse the markdown to extract candidate paths
+                        candidates = []
+                        img_pattern = r"!\[Image (\d+)\]\((.*?)\)"
+                        img_matches = re.findall(img_pattern, md_content)
+                        for idx, path in img_matches:
+                            # Use the full path for internal processing
+                            full_path = os.path.join(
+                                os.path.dirname(md_path), path
+                            )
+                            # But store just the filename for the HTML src attribute
+                            path = os.path.basename(path)
+                            candidates.append({
+                                "index": int(idx),
+                                "path": full_path,
+                            })
+
+                        # Convert to HTML with tiled images
                         html_content = create_html_from_markdown(
                             md_content,
                             f"FIXME Tag Viewer: {os.path.basename(root)}",
+                            candidates,
                         )
 
                         # Write the HTML file

@@ -160,8 +160,8 @@ class GoogleImageSearch:
         output_path: str,
         filename: str = None,
         verify_ssl: bool = False,
-        max_retries: int = 3,
-        timeout: int = 30,
+        max_retries: int = 1,
+        timeout: int = 5,
     ) -> Optional[str]:
         """
         Download an image from a URL using curl.
@@ -342,7 +342,7 @@ class GoogleImageSearch:
                     filename,
                     verify_ssl=False,
                     max_retries=3,
-                    timeout=30,
+                    timeout=5,
                 )
                 if path:
                     downloaded_paths.append(path)

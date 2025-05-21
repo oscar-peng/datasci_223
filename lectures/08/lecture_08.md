@@ -753,11 +753,12 @@ Let's briefly explore how computer vision extends to video data!
 
 ## 10. Resources for Further Learning
 
-### Textbooks & Papers
+### Textbooks
 
-* "Computer Vision: Algorithms and Applications" by Richard Szeliski
-* "Deep Learning" by Goodfellow, Bengio, and Courville
-* Recent review papers on medical imaging AI (search PubMed, arXiv)
+* ["Computer Vision: Algorithms and Applications (2nd Edition)" by Richard Szeliski](https://szeliski.org/Book/)
+* ["Foundations of Computer Vision" by Toralba, Isola, and Freeman](https://visionbook.mit.edu)
+* 
+
 
 ### Datasets
 
@@ -770,7 +771,7 @@ Let's briefly explore how computer vision extends to video data!
 
 ### Annotation Tools
 
-* [ITK-SNAP](http://www.itksnap.org/) - 3D medical image segmentation
+* [ITK-SNAP](https://www.itksnap.org/) - 3D medical image segmentation
 * [3D Slicer](https://www.slicer.org/) - Medical image analysis platform
 * LabelMe, LabelImg, CVAT - General annotation tools
 
@@ -778,9 +779,3 @@ Let's briefly explore how computer vision extends to video data!
 
 * **Conferences:** MICCAI, CVPR, ICCV, ECCV, RSNA, NeurIPS
 * **Journals:** IEEE TMI, MedIA, TPAMI, IJCV
-
-### Online Learning
-
-* Coursera, edX, Fast.ai courses
-* Stanford CS231n (Convolutional Neural Networks)
-* Communities: Kaggle, PapersWithCode, GitHub

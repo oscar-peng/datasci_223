@@ -110,11 +110,6 @@ Medical imaging uses specialized formats beyond standard JPEGs and PNGs:
   
   ![DICOM Viewer with Image and Metadata](media/dicom_viewer_metadata.png)
   
-    * **Windowing/Leveling**: Technique to visualize the wide dynamic range of medical images
-        * Window Width (WW): Range of intensity values displayed
-        * Window Level (WL): Center of intensity range
-        * Different windows highlight different tissues (bone, lung, soft tissue)
-  
   ![CT Scan with Different Window/Level Settings](media/dicom_windowing_example.png)
 
 * **Other Common Formats**
@@ -122,7 +117,7 @@ Medical imaging uses specialized formats beyond standard JPEGs and PNGs:
     * **JPEG**: Lossy compression, smaller files but may lose detail
     * **TIFF**: Flexible format, supports multiple layers and high bit depths
 
-[![Image Formats XKCD](https://imgs.xkcd.com/comics/image_formats.png)](https://xkcd.com/2178/)
+[![Image Formats XKCD](media/file_extensions_2x.png)](https://xkcd.com/1301/)
 
 ### D. Essential Python Libraries for Imaging
 
@@ -217,28 +212,26 @@ CNNs solve these problems through three key innovations:
 
    ![Convolutional Filter Operation](media/convolution_filter_static.png)
 
+2. **Transformation Terms:**
     * **Feature Maps:** Output of applying filters
     * **Stride:** Step size when sliding filter (affects output size)
     * **Padding:** Adding pixels around border to preserve dimensions
 
-   ![Valid vs. Same Padding](media/padding_example.png)
    ![Input Image and Resulting Feature Maps](media/feature_maps_example.png)
 
-2. **Activation Functions:**
+3. **Activation Functions:**
     * Add non-linearity to the model
     * **ReLU:** Most common, f(x) = max(0, x)
     * Simple, efficient, helps with vanishing gradient problem
 
-   ![ReLU Activation Function](media/relu_function.png)
-
-3. **Pooling Layer:**
+4. **Pooling Layer:**
     * Reduces spatial dimensions (downsampling)
     * **Max Pooling:** Takes maximum value in each window
     * Reduces computation and provides translation invariance
 
    ![Max Pooling Operation](media/max_pooling_example.png)
 
-4. **Fully Connected Layer:**
+5. **Fully Connected Layer:**
     * Used at the end of the CNN for classification
     * Each neuron connects to all outputs from previous layer
     * Final layer uses softmax (multi-class) or sigmoid (binary) activation
@@ -251,7 +244,6 @@ CNNs automatically learn features at different levels of abstraction:
   ![Features Learned by Early CNN Layers](media/cnn_early_features.png)
 
 * **Middle Layers:** More complex patterns like parts of objects
-  ![Features Learned by Middle CNN Layers](media/cnn_mid_features.png)
 
 * **Deep Layers:** High-level concepts and complete objects
   ![Features Learned by Deep CNN Layers](media/cnn_deep_features.png)
@@ -272,24 +264,8 @@ INPUT → [[CONV → ReLU] → POOL] → [[CONV → ReLU] → POOL] → FLATTEN 
 
 ![Typical CNN Architecture Diagram](media/cnn_architecture_diagram.png)
 
-### E. Ethical Considerations
 
-**Bias in CNNs:**
-
-* Models learn biases present in training data
-* Biased datasets lead to biased predictions
-* Demographic imbalances can cause performance disparities
-
-**Addressing Bias:**
-
-* Diverse, representative training data
-* Regular fairness audits across demographic groups
-* Bias detection and mitigation techniques
-* Transparent model development and deployment
-
-This is a critical consideration for responsible AI deployment.
-
-### F. Reference Card: CNN Layers in PyTorch and TensorFlow
+### E. Reference Card: CNN Layers in PyTorch and TensorFlow
 
 **PyTorch:**
 
@@ -350,7 +326,7 @@ tf.keras.layers.Dense(
 )
 ```
 
-### G. Minimal CNN Examples
+### F. Minimal CNN Examples
 
 **PyTorch Example:**
 

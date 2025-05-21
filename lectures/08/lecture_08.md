@@ -1,6 +1,6 @@
 ---
 lecture_number: 08
-pdf: false
+pdf: true
 ---
 
 # Computer Vision

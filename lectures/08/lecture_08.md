@@ -107,6 +107,8 @@ Medical imaging uses specialized formats beyond standard JPEGs and PNGs:
         * Patient information (ID, name, demographics)
         * Acquisition parameters (modality, date, equipment settings)
         * Organizational hierarchy (study, series, instance)
+     
+  ![Pydicom Conceptual Logo](media/pydicom_logo.png)
   
   ![DICOM Viewer with Image and Metadata](media/dicom_viewer_metadata.png)
   
@@ -141,8 +143,6 @@ Key Python libraries for working with images:
 * **Pydicom**: Specialized for DICOM files
     * Read/write DICOM files and access metadata
     * `import pydicom`
-  
-  ![Pydicom Conceptual Logo](media/pydicom_logo.png)
 
 * **SimpleITK**: Medical image analysis toolkit
     * Registration, segmentation, filtering

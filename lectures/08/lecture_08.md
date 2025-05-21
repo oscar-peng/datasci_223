@@ -1,19 +1,9 @@
 ---
 lecture_number: 08
 pdf: false
-title: "Computer Vision"
 ---
 
 # Computer Vision
-
-## Learning Objectives
-
-* Understand digital image representation and processing fundamentals
-* Learn CNN architecture for image analysis (building on Lecture 6)
-* Explore key computer vision tasks: classification, detection, and segmentation
-* Gain hands-on experience with image processing using Python libraries
-* Apply transfer learning techniques for specialized image tasks
-* Discover advanced topics in computer vision
 
 ## Outline
 
@@ -220,8 +210,6 @@ CNNs solve these problems through three key innovations:
 
 ### B. Core CNN Components
 
-### B. Core CNN Components
-
 1. **Convolutional Layer:**
     * Applies learnable filters across the input image
     * Each filter detects specific patterns (edges, textures, etc.)
@@ -254,12 +242,6 @@ CNNs solve these problems through three key innovations:
     * Used at the end of the CNN for classification
     * Each neuron connects to all outputs from previous layer
     * Final layer uses softmax (multi-class) or sigmoid (binary) activation
-
-### C. Hierarchical Feature Learning
-
-One of the most powerful aspects of CNNs is their ability to automatically learn a hierarchy of features.
-
-* **Early Layers (closer to input):** Learn simple, low-level features like edges, corners, simple textures, and color blobs.
 
 ### C. Hierarchical Feature Learning
 
@@ -638,10 +620,10 @@ Let's apply transfer learning to a medical image classification task!
     * Skip connections between corresponding encoder-decoder levels
   
 ![U-Net Architecture Diagram](media/unet_architecture_diagram.png)
-    ***Key Features of U-Net:**
+    **Key Features of U-Net:**
         1.  **Encoder-Decoder Structure (Symmetric):**
             *   **Contracting Path (Encoder):** This part is like a typical classification CNN. It consists of repeated blocks of convolutions and max pooling operations. Its purpose is to capture the context in the image and extract increasingly complex features while reducing spatial resolution. It learns "what" is in the image.
-            ***Expanding Path (Decoder):** This part takes the low-resolution, high-level feature maps from the encoder and gradually upsamples them (using "up-convolutions" or "transposed convolutions") to recover the original image resolution. Its purpose is to precisely localize the features and produce a full-resolution segmentation mask. It learns "where" things are.
+            *   **Expanding Path (Decoder):** This part takes the low-resolution, high-level feature maps from the encoder and gradually upsamples them (using "up-convolutions" or "transposed convolutions") to recover the original image resolution. Its purpose is to precisely localize the features and produce a full-resolution segmentation mask. It learns "where" things are.
         2.  **Skip Connections:** This is a crucial innovation of U-Net. The feature maps from the encoder path are concatenated (merged) with the corresponding feature maps in the decoder path at the same spatial resolution.
             *   **Why are skip connections important?** The encoder loses some spatial information during pooling. Skip connections allow the decoder to reuse these high-resolution features from the encoder, combining the "what" (semantic context from deep layers) with the "where" (fine-grained spatial detail from early layers). This helps in producing much more precise segmentation boundaries.
 

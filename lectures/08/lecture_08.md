@@ -264,7 +264,6 @@ INPUT → [[CONV → ReLU] → POOL] → [[CONV → ReLU] → POOL] → FLATTEN 
 
 ![Typical CNN Architecture Diagram](media/cnn_architecture_diagram.png)
 
-
 ### E. Reference Card: CNN Layers in PyTorch and TensorFlow
 
 **PyTorch:**
@@ -445,7 +444,6 @@ With our understanding of images and CNNs, let's explore the major computer visi
 | ResNet       | 2015 | Skip connections enabling very deep networks |
 | MobileNet    | 2017 | Efficient models for mobile devices |
 
-
 ### B. Transfer Learning for Medical Image Classification
 
 **Problem:** Medical imaging datasets are often too small to train deep CNNs from scratch
@@ -538,8 +536,6 @@ We'll implement transfer learning in Demo 2!
 | 2. Classify each region           | Faster but sometimes less accurate |
 | More accurate but slower          | Better for real-time applications |
 
-![One-Stage vs. Two-Stage Detectors](media/one_vs_two_stage_detectors.png)
-
 **Evaluation: Intersection over Union (IoU)**
 
 * Measures overlap between predicted and ground-truth boxes
@@ -591,14 +587,18 @@ Let's apply transfer learning to a medical image classification task!
 * Key features:
     * Encoder-decoder structure (U-shaped)
     * Skip connections between corresponding encoder-decoder levels
-  
+
+> tl;dr - For medical image segmentation, U-Net uses a U-shaped CNN. The encoder (left) extracts features at increasing granularities using convolutions and pooling. The decoder (right) then upsamples these features to recover the original image size with fine detail. Skip connections link encoder features to the decoder, combining "what" and "where" for precise segmentation.  
+
 ![U-Net Architecture Diagram](media/unet_architecture_diagram.png)
-    **Key Features of U-Net:**
-        1.  **Encoder-Decoder Structure (Symmetric):**
-            *   **Contracting Path (Encoder):** This part is like a typical classification CNN. It consists of repeated blocks of convolutions and max pooling operations. Its purpose is to capture the context in the image and extract increasingly complex features while reducing spatial resolution. It learns "what" is in the image.
-            *   **Expanding Path (Decoder):** This part takes the low-resolution, high-level feature maps from the encoder and gradually upsamples them (using "up-convolutions" or "transposed convolutions") to recover the original image resolution. Its purpose is to precisely localize the features and produce a full-resolution segmentation mask. It learns "where" things are.
-        2.  **Skip Connections:** This is a crucial innovation of U-Net. The feature maps from the encoder path are concatenated (merged) with the corresponding feature maps in the decoder path at the same spatial resolution.
-            *   **Why are skip connections important?** The encoder loses some spatial information during pooling. Skip connections allow the decoder to reuse these high-resolution features from the encoder, combining the "what" (semantic context from deep layers) with the "where" (fine-grained spatial detail from early layers). This helps in producing much more precise segmentation boundaries.
+
+**Key Features of U-Net:**
+    1.  **Encoder-Decoder Structure (Symmetric):**
+    ***Contracting Path (Encoder):** This part is like a typical classification CNN. It consists of repeated blocks of convolutions and max pooling operations. Its purpose is to capture the context in the image and extract increasingly complex features while reducing spatial resolution. It learns "what" is in the image.
+    *   **Expanding Path (Decoder):** This part takes the low-resolution, high-level feature maps from the encoder and gradually upsamples them (using "up-convolutions" or "transposed convolutions") to recover the original image resolution. Its purpose is to precisely localize the features and produce a full-resolution segmentation mask. It learns "where" things are.
+
+1. **Skip Connections:** This is a crucial innovation of U-Net. The feature maps from the encoder path are concatenated (merged) with the corresponding feature maps in the decoder path at the same spatial resolution.
+    * **Why are skip connections important?** The encoder loses some spatial information during pooling. Skip connections allow the decoder to reuse these high-resolution features from the encoder, combining the "what" (semantic context from deep layers) with the "where" (fine-grained spatial detail from early layers). This helps in producing much more precise segmentation boundaries.
 
 * **Loss Functions for Segmentation:**
     * While pixel-wise **Cross-Entropy** (used in classification) can be applied to segmentation (treating each pixel as a separate classification problem), it often struggles with class imbalance (e.g., when the object to be segmented is very small compared to the background).
@@ -633,28 +633,28 @@ Let's apply transfer learning to a medical image classification task!
     ```python
     # Conceptual U-Net structure (highly simplified)
     # inputs = Input(shape=(height, width, channels))
-    #
-    # # Encoder
-    # c1 = Conv2D(64, (3,3), activation='relu', padding='same')(inputs)
-    # c1 = Conv2D(64, (3,3), activation='relu', padding='same')(c1)
-    # p1 = MaxPooling2D((2,2))(c1)
-    #
-    # # ... more encoder blocks ...
-    #
-    # # Bottleneck
-    # bn = Conv2D(1024, (3,3), activation='relu', padding='same')(...)
-    # bn = Conv2D(1024, (3,3), activation='relu', padding='same')(bn)
-    #
-    # # Decoder
-    # u1 = Conv2DTranspose(512, (2,2), strides=(2,2), padding='same')(bn)
-    # u1 = concatenate([u1, corresponding_encoder_output_c4]) # Skip connection
-    # u1 = Conv2D(512, (3,3), activation='relu', padding='same')(u1)
-    # u1 = Conv2D(512, (3,3), activation='relu', padding='same')(u1)
-    #
-    # # ... more decoder blocks ...
-    #
-    # outputs = Conv2D(num_classes, (1,1), activation='softmax_or_sigmoid')(...)
-    # model = Model(inputs=[inputs], outputs=[outputs])
+    
+    # Encoder
+    c1 = Conv2D(64, (3,3), activation='relu', padding='same')(inputs)
+    c1 = Conv2D(64, (3,3), activation='relu', padding='same')(c1)
+    p1 = MaxPooling2D((2,2))(c1)
+    
+    # ... more encoder blocks ...
+    
+    # Bottleneck
+    bn = Conv2D(1024, (3,3), activation='relu', padding='same')(...)
+    bn = Conv2D(1024, (3,3), activation='relu', padding='same')(bn)
+    
+    # Decoder
+    u1 = Conv2DTranspose(512, (2,2), strides=(2,2), padding='same')(bn)
+    u1 = concatenate([u1, corresponding_encoder_output_c4]) # Skip connection
+    u1 = Conv2D(512, (3,3), activation='relu', padding='same')(u1)
+    u1 = Conv2D(512, (3,3), activation='relu', padding='same')(u1)
+    
+    # ... more decoder blocks ...
+    
+    outputs = Conv2D(num_classes, (1,1), activation='softmax_or_sigmoid')(...)
+    model = Model(inputs=[inputs], outputs=[outputs])
     ```
 
 ## 7. Demo 3: Pre-trained Object Detection or Segmentation

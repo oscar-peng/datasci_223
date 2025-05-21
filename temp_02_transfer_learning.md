@@ -6,12 +6,13 @@
 
 **Tools:** Python, TensorFlow/Keras, MedMNIST, Matplotlib, Scikit-learn.
 
+---
 
 ## 1. Setup and Imports
 
 First, ensure you have the `medmnist` library installed. If not, you can install it by running the following command in your terminal or a code cell:
 ```bash
-# pip install medmnist
+# pip install medmnist (already installed)
 ```
 
 Next, we import the necessary Python libraries:
@@ -37,7 +38,7 @@ import seaborn as sns # For plotting confusion matrix
 
 # MedMNIST specific imports
 import medmnist
-from medmnist import INFO # INFO provides details about datasets
+from medmnist import INFO, Evaluator # INFO provides details about datasets
 
 print(f"MedMNIST version: {medmnist.__version__}")
 print(f"TensorFlow version: {tf.__version__}")
@@ -55,10 +56,7 @@ def show_images_medmnist(dataset_name_key, data_x, data_y_original, num_images=5
             img_display = img.reshape(img.shape[1], img.shape[2]) # Remove channel dim for grayscale
             cmap = 'gray'
         else: # RGB
-            if img.shape[0] == 3: # Check if in (C, H, W) format
-                img_display = np.transpose(img, (1, 2, 0))
-            else:
-                img_display = img
+            img_display = np.transpose(img, (1, 2, 0)) 
             cmap = None
         plt.imshow(img_display, cmap=cmap)
         
@@ -87,12 +85,13 @@ TensorFlow version: 2.16.1
 ```
 (Your versions might differ slightly)
 
+---
 
 ## 2. Load MedMNIST Dataset
 
 MedMNIST is a collection of standardized medical image datasets, which is very convenient for educational purposes and benchmarking. We'll use `PathMNIST`, which contains 28x28 pixel 3-channel (RGB) images of 9 different types of tissue patches from colon-cancer histology.
 
-The `medmnist` library provides helper classes to download and load these datasets. We'll adapt our code to work with the current MedMNIST API.
+The `medmnist` library provides helper classes to download and load these datasets.
 
 ```python
 dataset_name = 'pathmnist' # You can try others like 'dermamnist', 'chestmnist'
@@ -112,14 +111,24 @@ train_dataset = DataClass(split='train', download=True)
 val_dataset = DataClass(split='val', download=True)
 test_dataset = DataClass(split='test', download=True)
 
-# Extract data (X) and original labels (y) directly from the dataset objects
-# MedMNIST 2.x API differs from 3.x - we'll adapt to work with both
-X_train = train_dataset.imgs
-y_train_orig = train_dataset.labels
-X_val = val_dataset.imgs
-y_val_orig = val_dataset.labels
-X_test = test_dataset.imgs
-y_test_orig = test_dataset.labels
+# The MedMNIST library provides data via PyTorch DataLoaders.
+# For use with TensorFlow/Keras, we'll extract the full dataset as NumPy arrays.
+# We set batch_size to the length of the dataset to get all data in one go.
+train_loader = train_dataset.get_loader(batch_size=len(train_dataset), shuffle=False)
+val_loader = val_dataset.get_loader(batch_size=len(val_dataset), shuffle=False)
+test_loader = test_dataset.get_loader(batch_size=len(test_dataset), shuffle=False)
+
+# Extract data (X) and original labels (y_train_orig) as NumPy arrays
+X_train, y_train_orig = next(iter(train_loader))
+X_val, y_val_orig = next(iter(val_loader))
+X_test, y_test_orig = next(iter(test_loader))
+
+X_train = X_train.numpy()
+y_train_orig = y_train_orig.numpy()
+X_val = X_val.numpy()
+y_val_orig = y_val_orig.numpy()
+X_test = X_test.numpy()
+y_test_orig = y_test_orig.numpy()
 
 print(f"\nShape of X_train: {X_train.shape}, y_train_orig: {y_train_orig.shape}")
 print(f"Shape of X_val: {X_val.shape}, y_val_orig: {y_val_orig.shape}")
@@ -132,7 +141,7 @@ show_images_medmnist(dataset_name, X_train, y_train_orig, num_images=10)
 **Example Output:**
 ```text
 Working with MedMNIST dataset: pathmnist
-Description: The PathMNIST is based on a prior study for predicting survival from colorectal cancer histology slides, providing a dataset (NCT-CRC-HE-100K) of 100,000 non-overlapping image patches from hematoxylin & eosin stained histological images, and a test dataset (CRC-VAL-HE-7K) of 7,180 image patches from a different clinical center. The dataset is comprised of 9 types of tissues, resulting in a multi-class classification task. We resize the source images of 3×224×224 into 3×28×28, and split NCT-CRC-HE-100K into training and validation set. We use the CRC-VAL-HE-7K as the test set.
+Description: The PathMNIST is based on a prior study for predicting survival from colorectal cancer histology slides, providing a dataset (NCT-CRC-HE-100K) of 100,000 non-overlapping image patches from hematoxylin & eosin stained histological images, and a test dataset (CRC-VAL-HE-7K) of 7,180 image patches from a different clinical center. The dataset is comprised of 9 types of tissues, resulting in a multi-class classification task. We resize the source images of 3×224×224 into 3×28×28, and split NCT-CRC-HE-100K into training and validation sets. We use the CRC-VAL-HE-7K as the test set.
 Task: multi-class, Number of channels: 3, Number of classes: 9
 Labels: {'0': 'adipose', '1': 'background', '2': 'debris', '3': 'lymphocytes', '4': 'mucus', '5': 'smooth muscle', '6': 'normal colon mucosa', '7': 'cancer-associated stroma', '8': 'colorectal adenocarcinoma epithelium'}
 
@@ -152,6 +161,7 @@ Sample Training Images from PathMNIST:
 
 **Expected Outcome:** The PathMNIST dataset will be downloaded and loaded. Information about the dataset and the shapes of the data arrays will be printed. Sample images with their labels will be displayed.
 
+---
 
 ## 3. Preprocess Data for TensorFlow/Keras
 
@@ -215,6 +225,7 @@ Original dataset is already multi-channel or does not need channel repetition fo
 ```
 **Expected Outcome:** The shapes of the image data and labels will be printed at each step, confirming the transformations.
 
+---
 
 ## 4. Build the Transfer Learning Model
 
@@ -293,6 +304,7 @@ ________________________________________________________________________________
 ```
 **Expected Outcome:** The summary of the compiled model will be printed. Note that only the parameters of the newly added `Dense` layers are trainable, while the MobileNetV2 base is frozen.
 
+---
 
 ## 5. Train the Model
 
@@ -353,6 +365,7 @@ Training finished.
 
 **Expected Outcome:** The model will train, printing loss and accuracy for each epoch. Plots of training/validation accuracy and loss will be displayed, showing how the model learned.
 
+---
 
 ## 6. Evaluate the Model
 
@@ -419,6 +432,7 @@ Confusion Matrix (Test Set):
 
 **Expected Outcome:** Test loss and accuracy will be printed. A detailed classification report and a confusion matrix heatmap will be displayed, providing insights into the model's performance on each class in the test set. Performance will vary based on training, but you should see reasonable results.
 
+---
 
 **Self-Check / Validation:**
 *   Did the MedMNIST dataset load correctly?

@@ -13,7 +13,6 @@
 
 **Tools:** Python, OpenCV, Ultralytics YOLO (for detection-based part).
 
----
 
 ## 1. Setup and Imports
 
@@ -50,7 +49,6 @@ def show_frame_plt(frame_bgr, title='Frame'):
     plt.show()
 ```
 
----
 
 ## 2. Approach 1: Detection-based Tracking (e.g., YOLO frame-by-frame)
 
@@ -124,7 +122,6 @@ A video window titled "YOLO Detection (Frame-by-Frame)" will open.
 *   Each box will have a label (the object class) and a confidence score.
 *   You'll observe how detections might vary slightly frame-to-frame (e.g., confidence scores changing, occasional missed detections or new detections). This highlights why a separate tracking algorithm is needed to link these detections into smooth tracks.
 
----
 
 ## 3. Approach 2: Optical Flow-based Tracking (Lucas-Kanade)
 
@@ -242,7 +239,6 @@ A video window titled "Optical Flow Tracking (Lucas-Kanade)" will open.
 *   If points are lost (e.g., go out of frame or become occluded), they will disappear. If all points are lost, the code attempts to re-detect new features.
 *   This demo visually shows how groups of pixels that move together can be tracked.
 
----
 
 **Self-Check / Validation:**
 *   Were you able to download/provide a sample video file and did it load correctly for both demos?

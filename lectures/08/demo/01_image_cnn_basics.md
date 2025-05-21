@@ -3,12 +3,11 @@
 **Objective:** Learn to load, inspect, and preprocess medical images (DICOM and standard formats). Optionally, visualize the structure of a basic CNN.
 
 **Dataset:**
-*   A sample DICOM image (e.g., a chest X-ray from a public dataset or a provided example). **You will need to provide a path to a DICOM file for this section.**
-*   A sample PNG/JPEG medical image (e.g., a dermoscopy image or a pathology slide excerpt from MedMNIST like DermaMNIST or PathMNIST). **You will need to provide a path to a standard image file for this section.**
+*   A sample DICOM image (000001.dcm) located in the images directory
+*   A sample medical chest X-ray image (medical_DICOM_chest_xray_1.jpg) located in the images directory
 
 **Tools:** Python, Pydicom, Pillow, OpenCV, Matplotlib, TensorFlow/Keras.
 
----
 
 ## 1. Setup and Imports
 
@@ -38,17 +37,16 @@ def show_image(image, title='Image', cmap=None):
     plt.show()
 ```
 
----
 
 ## 2. Loading and Inspecting a DICOM Image
 
 DICOM (Digital Imaging and Communications in Medicine) is a standard format for storing and transmitting medical images. It contains not only pixel data but also rich metadata about the patient, study, and imaging equipment. We use the `pydicom` library to work with these files.
 
-**Action:** Replace `'path/to/your/sample.dcm'` with the actual path to a DICOM file on your system.
+**Note:** We'll use a sample DICOM file located in the images directory.
 
 ```python
-# Provide path to your DICOM file
-dicom_path = 'path/to/your/sample.dcm' # Replace with an actual DICOM file path
+# Path to the DICOM file
+dicom_path = 'images/000001.dcm'
 
 try:
     # Load DICOM file
@@ -58,7 +56,10 @@ try:
     # Let's print some common metadata fields.
     print("DICOM Metadata:")
     print(f"Patient's Name: {ds.PatientName}")
-    print(f"Study Description: {ds.StudyDescription}")
+    if hasattr(ds, 'StudyDescription'):
+        print(f"Study Description: {ds.StudyDescription}")
+    else:
+        print("Study Description: Not available")
     print(f"Modality: {ds.Modality}")
     print(f"Image Shape: {ds.pixel_array.shape}") # Access pixel data via pixel_array
     # PixelSpacing might not be present in all DICOMs, or might be multi-valued
@@ -76,6 +77,7 @@ try:
     print(f"Min pixel value: {dicom_image.min()}")
     print(f"Max pixel value: {dicom_image.max()}")
     print(f"Data type: {dicom_image.dtype}")
+
 
 except FileNotFoundError:
     print(f"Error: DICOM file not found at {dicom_path}. Please provide a valid path.")
@@ -101,17 +103,22 @@ Data type: uint16
 
 **Expected Outcome:** The DICOM image should be displayed, and selected metadata (like PatientName, StudyDescription, Modality, image dimensions, pixel spacing) should be printed. Pixel statistics will also be shown.
 
----
+## Print DICOM metadata using pydicom
+
+```python
+ds = pydicom.dcmread('images/000001.dcm')
+print(ds)
+```
 
 ## 3. Loading and Inspecting a Standard Image (PNG/JPEG)
 
 For non-DICOM images like PNG or JPEG, we can use libraries like Pillow (PIL) or OpenCV. These are common in general computer vision and also useful when dealing with medical images that have been converted to these formats.
 
-**Action:** Replace `'path/to/your/sample_medical_image.png'` with the actual path to a PNG or JPEG image file. You could use an image from the MedMNIST dataset (e.g., a PathMNIST sample if downloaded).
+**Note:** We'll use a sample medical image located in the images directory.
 
 ```python
-# Provide path to your PNG/JPEG file (e.g., from MedMNIST)
-standard_image_path = 'path/to/your/sample_medical_image.png' # Replace with an actual image file path
+# Path to the standard image file
+standard_image_path = 'images/medical_DICOM_chest_xray_1.jpg'
 
 try:
     # Load with Pillow
@@ -161,7 +168,6 @@ Data type: uint8
 
 **Expected Outcome:** The standard image (PNG/JPEG) should be displayed using both Pillow (converted to NumPy) and OpenCV. Information like format, size, mode (Pillow), and shape (OpenCV) will be printed.
 
----
 
 ## 4. Basic Image Preprocessing
 
@@ -175,16 +181,24 @@ Images often come in various sizes. For many machine learning models, especially
 if 'cv_image_rgb' in locals() and cv_image_rgb is not None:
     # Resizing with OpenCV
     # OpenCV's resize function takes (width, height) for the new size.
-    new_size_cv = (128, 128) # (width, height) for OpenCV
-    resized_image_cv = cv2.resize(cv_image_rgb, new_size_cv, interpolation=cv2.INTER_AREA)
-    show_image(resized_image_cv, title=f'Resized Image (OpenCV) to {new_size_cv}')
+    new_size_cv_1 = (64, 64) # (width, height) for OpenCV
+    resized_image_cv_1 = cv2.resize(cv_image_rgb, new_size_cv_1, interpolation=cv2.INTER_AREA)
+    show_image(resized_image_cv_1, title=f'Resized Image (OpenCV) to {new_size_cv_1}')
+
+    new_size_cv_2 = (128, 128) # (width, height) for OpenCV
+    resized_image_cv_2 = cv2.resize(cv_image_rgb, new_size_cv_2, interpolation=cv2.INTER_AREA)
+    show_image(resized_image_cv_2, title=f'Resized Image (OpenCV) to {new_size_cv_2}')
 
     # Resizing with Pillow
     # Pillow's resize method also takes (width, height).
     pil_image_to_resize = Image.fromarray(cv_image_rgb) # Create a PIL image from the OpenCV RGB version
-    new_size_pil = (128, 128) # (width, height) for Pillow
-    resized_image_pil = pil_image_to_resize.resize(new_size_pil)
-    show_image(np.array(resized_image_pil), title=f'Resized Image (Pillow) to {new_size_pil}')
+    new_size_pil_1 = (64, 64) # (width, height) for Pillow
+    resized_image_pil_1 = pil_image_to_resize.resize(new_size_pil_1)
+    show_image(np.array(resized_image_pil_1), title=f'Resized Image (Pillow) to {new_size_pil_1}')
+
+    new_size_pil_2 = (128, 128) # (width, height) for Pillow
+    resized_image_pil_2 = pil_image_to_resize.resize(new_size_pil_2)
+    show_image(np.array(resized_image_pil_2), title=f'Resized Image (Pillow) to {new_size_pil_2}')
 else:
     print("Skipping resizing as 'cv_image_rgb' is not available (likely previous image load failed).")
 ```
@@ -226,19 +240,38 @@ Data type: float32
 Sometimes, color information is not necessary or can even be a distraction for a model. Converting an image to grayscale reduces the number of channels (from 3 for RGB to 1 for grayscale), simplifying the input.
 
 ```python
-if 'resized_image_cv' in locals() and resized_image_cv is not None:
+if "cv_image_rgb" in locals() and cv_image_rgb is not None:
+    # Load a colorful image (e.g., puppy.jpg)
+    color_image_path = "images/puppy.jpg"
+    color_image = cv2.imread(color_image_path)
+    color_image_rgb = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
+
+    show_image(color_image_rgb, title="Colorful Image")
+
     # Convert RGB to Grayscale using OpenCV
-    grayscale_image_cv = cv2.cvtColor(resized_image_cv, cv2.COLOR_RGB2GRAY)
-    show_image(grayscale_image_cv, title='Grayscale Image (OpenCV)', cmap='gray')
+    grayscale_image_cv = cv2.cvtColor(color_image_rgb, cv2.COLOR_RGB2GRAY)
+    show_image(
+        grayscale_image_cv, title="Grayscale Image (OpenCV)", cmap="gray"
+    )
     print(f"\nOpenCV Grayscale Image Shape: {grayscale_image_cv.shape}")
 
+    # Split the color image into channels
+    b, g, r = cv2.split(color_image_rgb)
+
+    # Display the channels
+    show_image(r, title="Red Channel", cmap="gray")
+    show_image(g, title="Green Channel", cmap="gray")
+    show_image(b, title="Blue Channel", cmap="gray")
 
     # Convert RGB to Grayscale using Pillow
     # First, ensure we have a PIL Image object of the resized color image
-    pil_image_for_gray_conversion = Image.fromarray(resized_image_cv)
-    grayscale_image_pil = pil_image_for_gray_conversion.convert('L') # 'L' mode is for grayscale
-    show_image(np.array(grayscale_image_pil), title='Grayscale Image (Pillow)', cmap='gray')
-    print(f"Pillow Grayscale Image Shape: {np.array(grayscale_image_pil).shape}")
+    pil_image_for_gray_conversion = Image.fromarray(color_image_rgb)
+    grayscale_image_pil = pil_image_for_gray_conversion.convert(
+        "L"
+    )  # 'L' mode is for grayscale
+    print(
+        f"Pillow Grayscale Image Shape: {np.array(grayscale_image_pil).shape}"
+    )
 
 else:
     print("Skipping color conversion as 'resized_image_cv' is not available.")
@@ -253,7 +286,6 @@ Pillow Grayscale Image Shape: (128, 128)
 
 **Expected Outcome:** The resized color image will be converted to grayscale and displayed, once using OpenCV and once using Pillow. Their shapes will be printed, showing a single channel.
 
----
 
 ## 5. (Optional) Build and Visualize a Simple CNN Structure
 
@@ -363,7 +395,6 @@ _________________________________________________________________
 
 **Expected Outcome:** The summary of the simple CNN model (layers, output shapes, number of parameters) will be printed. If `graphviz` and `pydot` are installed and correctly configured, a diagram of the model architecture might be generated and saved as `simple_cnn_model.png`.
 
----
 
 **Self-Check / Validation:**
 *   Were you able to load both DICOM and standard image files without errors (assuming valid paths)?

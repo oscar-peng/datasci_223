@@ -12,7 +12,6 @@
 *   **Dataset:** A sample image suitable for segmentation (e.g., a general image where salient objects can be segmented).
 *   **Tools:** Python, TensorFlow/Keras, TensorFlow Hub, OpenCV, Matplotlib, Requests.
 
----
 
 ## Option A: Object Detection with YOLO (Ultralytics)
 
@@ -152,7 +151,6 @@ Detection results plotted by Ultralytics.
 *   The YOLO model will perform object detection on the image.
 *   An image with bounding boxes, class labels, and confidence scores drawn around detected objects will be displayed.
 
----
 
 ## Option B: Image Segmentation with TensorFlow Hub (e.g., DeepLabV3)
 
@@ -287,7 +285,6 @@ Segmentation mask generated. Shape: (224, 224)
 *   The model will perform semantic segmentation on the image.
 *   The original image (resized) and the resulting segmentation mask will be displayed side-by-side. The mask will show different regions colored according to the class predicted for each pixel.
 
----
 
 **Self-Check / Validation:**
 *   **For Option A (YOLO):**

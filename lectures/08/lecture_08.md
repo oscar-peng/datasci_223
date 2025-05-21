@@ -245,11 +245,11 @@ In healthcare, computer vision is revolutionizing numerous areas:
     *   Grading tumors based on morphology.
     <!-- #FIXME: Added candidate image: Example of a digital pathology slide with cells highlighted/classified. lectures/08/media/pathology_slide_example.png -->
     ![Digital Pathology Slide with Cell Classification](media/pathology_slide_example.png)
-    <!---
-        **Speaking Notes:**
-        *   Pathology is a cornerstone of cancer diagnosis.
-        *   Huge amounts of data on a single slide; CV can help analyze this efficiently.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Pathology is a cornerstone of cancer diagnosis.
+    *   Huge amounts of data on a single slide; CV can help analyze this efficiently.
+--->
 
 3.  **Robotic Surgery Guidance:**
     *   Providing surgeons with 3D visualization of the surgical site.
@@ -257,10 +257,10 @@ In healthcare, computer vision is revolutionizing numerous areas:
     *   Overlaying pre-operative scan data onto the live surgical view.
     <!-- #FIXME: Added candidate image: Conceptual image of robotic surgery with CV guidance (e.g., screen overlay). lectures/08/media/robotic_surgery_cv.png -->
     ![Robotic Surgery with Computer Vision Assistance](media/robotic_surgery_cv.png)
-    <!---
-        **Speaking Notes:**
-        *   Focus on how CV enhances the surgeon's capabilities, improving outcomes and safety.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Focus on how CV enhances the surgeon's capabilities, improving outcomes and safety.
+--->
 
 Think of the last time you used a filter on a photo app, or how your phone unlocks with your face. That's computer vision! Now imagine that power applied to saving lives.
 
@@ -283,12 +283,12 @@ How does a computer "see" an image? It all comes down to numbers!
 *   **Resolution:**
     *   Describes the dimensions of the image in terms of pixels, typically expressed as `width x height` (e.g., 1920x1080 pixels).
     *   Higher resolution means more pixels, more detail, but also a larger file size and more data to process.
-    <!---
-        **Speaking Notes:**
-        *   Show two images of the same thing at different resolutions to illustrate the point.
-        *   Mention the trade-off: detail vs. computational cost.
-    --->
-    <!-- #FIXME: Added candidate image: Side-by-side comparison of a low-res and high-res image of the same subject. lectures/08/media/resolution_comparison.png -->
+<!---
+    **Speaking Notes:**
+    *   Show two images of the same thing at different resolutions to illustrate the point.
+    *   Mention the trade-off: detail vs. computational cost.
+--->
+<!-- #FIXME: Added candidate image: Side-by-side comparison of a low-res and high-res image of the same subject. lectures/08/media/resolution_comparison.png -->
     ![Low Resolution vs. High Resolution](media/resolution_comparison.png)
 
 *   **Aspect Ratio:**
@@ -308,11 +308,11 @@ How does a computer "see" an image? It all comes down to numbers!
         *   Used in color photography, dermatology images, some pathology stains.
         <!-- #FIXME: Added candidate image: An RGB image decomposed into its R, G, and B channels. lectures/08/media/rgb_channels_example.png -->
         ![RGB Image Decomposed into Red, Green, and Blue Channels](media/rgb_channels_example.png)
-    <!---
-        **Speaking Notes:**
-        *   Briefly mention that there are other color spaces (HSV, CMYK) but RGB and Grayscale are most common for our purposes.
-        *   Explain bit depth briefly (e.g., 8-bit means 2^8 = 256 values per channel). Medical images can have higher bit depths (e.g., 12-bit, 16-bit) for more intensity levels.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Briefly mention that there are other color spaces (HSV, CMYK) but RGB and Grayscale are most common for our purposes.
+    *   Explain bit depth briefly (e.g., 8-bit means 2^8 = 256 values per channel). Medical images can have higher bit depths (e.g., 12-bit, 16-bit) for more intensity levels.
+--->
 
 #### C. Medical Image Formats
 
@@ -335,10 +335,10 @@ While we see images as JPEGs or PNGs in daily life, medical imaging has speciali
         *   **Instance:** A single image (or frame in a multi-frame image).
         *   **Series:** A sequence of related images acquired in a specific way (e.g., multiple slices in a CT scan, different views in an X-ray exam).
         *   **Study:** A collection of series for a particular patient exam (e.g., a chest CT study might include multiple series with different reconstruction parameters).
-        <!---
-            **Speaking Notes:**
-            *   Analogy: Study = Doctor's visit/exam. Series = A set of pictures taken during that exam. Instance = One picture.
-        --->
+<!---
+    **Speaking Notes:**
+    *   Analogy: Study = Doctor's visit/exam. Series = A set of pictures taken during that exam. Instance = One picture.
+--->
     *   **Concept of Windowing/Leveling (or Window Width/Window Center):**
         *   Medical images, especially from modalities like CT, often have a much wider range of pixel intensity values than can be displayed effectively on a standard monitor (e.g., 12-bit or 16-bit data, representing thousands of shades).
         *   **Windowing** allows us to select a specific range of these intensity values (the "window") to display.
@@ -347,11 +347,11 @@ While we see images as JPEGs or PNGs in daily life, medical imaging has speciali
         *   By adjusting WW/WL, clinicians can highlight different tissues (e.g., bone window, lung window, soft tissue window in a CT scan).
         <!-- #FIXME: Added candidate image: Example of a CT scan displayed with different window/level settings (e.g., bone window vs. lung window). lectures/08/media/dicom_windowing_example.png -->
         ![CT Scan with Different Window/Level Settings](media/dicom_windowing_example.png)
-        <!---
-            **Speaking Notes:**
-            *   This is a critical concept for anyone working with raw DICOM data, as the default display might not show the relevant structures.
-            *   It's a form of display normalization, not a change to the underlying pixel data.
-        --->
+<!---
+    **Speaking Notes:**
+    *   This is a critical concept for anyone working with raw DICOM data, as the default display might not show the relevant structures.
+    *   It's a form of display normalization, not a change to the underlying pixel data.
+--->
 
 *   **Other Common Formats (PNG, JPEG, TIFF):**
     *   **PNG (Portable Network Graphics):** Lossless compression, good for medical images where detail is critical and for images with sharp lines/text. Supports transparency.
@@ -361,20 +361,20 @@ While we see images as JPEGs or PNGs in daily life, medical imaging has speciali
 
     [![Image Formats XKCD](https://imgs.xkcd.com/comics/image_formats.png)](https://xkcd.com/2178/)
     <!-- Source: https://xkcd.com/2178/ -->
-    <!---
-        **Speaking Notes:**
-        *   Briefly discuss the implications of lossy vs. lossless compression in a medical context.
-        *   Mention that when converting from DICOM, it's crucial to consider what metadata might be lost.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Briefly discuss the implications of lossy vs. lossless compression in a medical context.
+    *   Mention that when converting from DICOM, it's crucial to consider what metadata might be lost.
+--->
 
 #### D. Essential Python Libraries for Imaging
 
 To work with these images in Python, we have several powerful libraries:
 
 <!---
-    **Speaking Notes:**
-    *   This is a quick overview; students will get hands-on in the demo.
-    *   Highlight the primary purpose of each.
+**Speaking Notes:**
+*   This is a quick overview; students will get hands-on in the demo.
+*   Highlight the primary purpose of each.
 --->
 
 *   **Pillow (PIL Fork):**
@@ -461,20 +461,20 @@ If you have a 224x224 pixel RGB image, that's 224 * 224 * 3 = 150,528 input feat
 CNNs address these issues through three key ideas:
 
 1.  **Local Connectivity (Receptive Fields):** Neurons in a convolutional layer are only connected to a small, local region of the input image (their "receptive field"). This allows the network to learn features like edges or corners from small parts of the image first.
-    <!---
-        **Speaking Notes:**
-        *   Analogy: Like how your eye focuses on a small part of a scene at a time to recognize details.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Analogy: Like how your eye focuses on a small part of a scene at a time to recognize details.
+--->
 2.  **Parameter (Weight) Sharing:** The same set of weights (a "filter" or "kernel") is applied across different locations in the input image. If a filter is good at detecting a horizontal edge, it can detect it anywhere in the image using the same weights. This drastically reduces the number of parameters.
-    <!---
-        **Speaking Notes:**
-        *   This is a powerful concept. It means the network learns features that are *translation invariant* (an edge is an edge, no matter where it appears).
-    --->
+<!---
+    **Speaking Notes:**
+    *   This is a powerful concept. It means the network learns features that are *translation invariant* (an edge is an edge, no matter where it appears).
+--->
 3.  **Hierarchical Feature Learning:** CNNs typically stack multiple layers. Early layers learn simple features (edges, corners, textures). Subsequent layers combine these simple features to learn more complex patterns (parts of objects, like an eye or a wheel), and even deeper layers can learn to recognize entire objects.
-    <!---
-        **Speaking Notes:**
-        *   This mimics how the human visual cortex is thought to work, processing information in a hierarchy.
-    --->
+<!---
+    **Speaking Notes:**
+    *   This mimics how the human visual cortex is thought to work, processing information in a hierarchy.
+--->
 
 [![XKCD: Machine Learning](https://imgs.xkcd.com/comics/machine_learning.png)](https://xkcd.com/1838/)
 <!-- Source: https://xkcd.com/1838/ -->
@@ -497,11 +497,11 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
         *   The layer typically learns multiple filters in parallel, each looking for a different pattern.
         <!-- #FIXME: Added candidate image: Diagram showing a 3x3 filter sliding over an input image patch, performing element-wise multiplication and sum. lectures/08/media/convolution_filter_static.png -->
         ![Convolutional Filter Operation](media/convolution_filter_static.png)
-        <!---
-            **Speaking Notes:**
-            *   Analogy: A filter is like a magnifying glass that highlights specific patterns.
-            *   Show a simple example of an edge detection kernel (e.g., Sobel) if time permits, or just describe it.
-        --->
+<!---
+    **Speaking Notes:**
+    *   Analogy: A filter is like a magnifying glass that highlights specific patterns.
+    *   Show a simple example of an edge detection kernel (e.g., Sobel) if time permits, or just describe it.
+--->
     *   **Shared Weights & Parameter Efficiency:** As mentioned, the *same* filter (set of weights) is convolved (slid) across the entire input image. This means the number of parameters depends only on the filter size and number of filters, not the input image size.
     *   **Stride:** The number of pixels the filter slides over the input image at each step. A stride of 1 means it moves one pixel at a time. A stride of 2 means it skips every other pixel, which can also reduce the output size.
     *   **Padding:** Adding pixels (usually zeros) around the border of the input image before convolution.
@@ -521,11 +521,11 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
         *   It essentially "turns off" neurons that have negative activation.
     <!-- Added image: Graph of the ReLU activation function. lectures/08/media/relu_function.png -->
     ![ReLU Activation Function](media/relu_function.png)
-    <!---
-        **Speaking Notes:**
-        *   Remind students about activation functions from the general NN lecture.
-        *   Mention other activations like Sigmoid or Tanh are less common in hidden conv layers but might appear in output layers for specific tasks.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Remind students about activation functions from the general NN lecture.
+    *   Mention other activations like Sigmoid or Tanh are less common in hidden conv layers but might appear in output layers for specific tasks.
+--->
 
 3.  **Pooling Layer (e.g., Max Pooling):**
     *   **Purpose:** To reduce the spatial dimensions (height and width) of the feature maps, thereby reducing the number of parameters and computation in the network. It also helps to make the learned features somewhat invariant to small translations in the input.
@@ -533,21 +533,21 @@ Let's break down the main building blocks of a CNN. These build upon concepts fr
     *   **Average Pooling:** Takes the average value within the window. Less common in modern CNNs for feature extraction.
     <!-- Added image: Diagram illustrating 2x2 Max Pooling operation on a small feature map. lectures/08/media/max_pooling_example.png -->
     ![Max Pooling Operation](media/max_pooling_example.png)
-    <!---
-        **Speaking Notes:**
-        *   Analogy: Summarizing a neighborhood by its most prominent feature.
-        *   Explain how this helps with computational efficiency and some degree of translation invariance.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Analogy: Summarizing a neighborhood by its most prominent feature.
+    *   Explain how this helps with computational efficiency and some degree of translation invariance.
+--->
 
 4.  **Fully Connected (Dense) Layer:**
     *   **Purpose:** Typically used at the end of the CNN, after several convolutional and pooling layers have extracted features and reduced dimensionality. These layers perform the final classification (or regression) based on the high-level features learned by the convolutional part of the network.
     *   **How it works:** Each neuron in a dense layer is connected to *all* neurons in the previous layer (which is usually the flattened output of the last pooling or convolutional layer).
     *   The final dense layer often has a `softmax` activation function for multi-class classification (to output probabilities for each class) or a `sigmoid` for binary classification.
-    <!---
-        **Speaking Notes:**
-        *   This is where the "decision making" happens based on the learned features.
-        *   Connect this back to the standard Dense layers students learned about previously.
-    --->
+<!---
+    **Speaking Notes:**
+    *   This is where the "decision making" happens based on the learned features.
+    *   Connect this back to the standard Dense layers students learned about previously.
+--->
 
 #### C. Hierarchical Feature Learning
 
@@ -969,21 +969,21 @@ Beyond classifying an entire image or drawing bounding boxes around objects, **i
     *   **Significance:** The U-Net architecture, introduced by Ronneberger, Fischer, and Brox in 2015, was a landmark paper specifically for biomedical image segmentation. It has become incredibly popular and influential, especially in medical imaging, due to its excellent performance with limited training data and its ability to produce precise segmentations.
         <!-- #FIXME: Added candidate image: U-Net architecture diagram showing the characteristic U-shaped network with contracting path (encoder), bottleneck, and expanding path (decoder) with skip connections, specifically designed for biomedical image segmentation. lectures/08/media/unet_architecture_diagram.png -->
         ![U-Net Architecture Diagram](media/unet_architecture_diagram.png)
-        <!---
-            **Speaking Notes:**
-            *   Highlight that U-Net was *designed* for biomedical images.
-            *   Its U-shape is its defining characteristic.
-        --->
+<!---
+    **Speaking Notes:**
+    *   Highlight that U-Net was *designed* for biomedical images.
+    *   Its U-shape is its defining characteristic.
+--->
     *   **Key Features of U-Net:**
         1.  **Encoder-Decoder Structure (Symmetric):**
             *   **Contracting Path (Encoder):** This part is like a typical classification CNN. It consists of repeated blocks of convolutions and max pooling operations. Its purpose is to capture the context in the image and extract increasingly complex features while reducing spatial resolution. It learns "what" is in the image.
             *   **Expanding Path (Decoder):** This part takes the low-resolution, high-level feature maps from the encoder and gradually upsamples them (using "up-convolutions" or "transposed convolutions") to recover the original image resolution. Its purpose is to precisely localize the features and produce a full-resolution segmentation mask. It learns "where" things are.
         2.  **Skip Connections:** This is a crucial innovation of U-Net. The feature maps from the encoder path are concatenated (merged) with the corresponding feature maps in the decoder path at the same spatial resolution.
             *   **Why are skip connections important?** The encoder loses some spatial information during pooling. Skip connections allow the decoder to reuse these high-resolution features from the encoder, combining the "what" (semantic context from deep layers) with the "where" (fine-grained spatial detail from early layers). This helps in producing much more precise segmentation boundaries.
-            <!---
-                **Speaking Notes:**
-                *   Analogy for skip connections: Imagine trying to draw a detailed map. You first get a general idea of the continents (encoder), then you zoom in to draw coastlines (decoder). Skip connections are like having access to detailed local maps while you're drawing the zoomed-in version, ensuring your coastlines are accurate.
-            --->
+<!---
+    **Speaking Notes:**
+    *   Analogy for skip connections: Imagine trying to draw a detailed map. You first get a general idea of the continents (encoder), then you zoom in to draw coastlines (decoder). Skip connections are like having access to detailed local maps while you're drawing the zoomed-in version, ensuring your coastlines are accurate.
+--->
 
 *   **Loss Functions for Segmentation:**
     *   While pixel-wise **Cross-Entropy** (used in classification) can be applied to segmentation (treating each pixel as a separate classification problem), it often struggles with class imbalance (e.g., when the object to be segmented is very small compared to the background).
@@ -1040,12 +1040,12 @@ Beyond classifying an entire image or drawing bounding boxes around objects, **i
     # outputs = Conv2D(num_classes, (1,1), activation='softmax_or_sigmoid')(...)
     # model = Model(inputs=[inputs], outputs=[outputs])
     ```
-    <!---
-        **Speaking Notes:**
-        *   U-Net is a very elegant and effective architecture.
-        *   The skip connections are key to its success in medical imaging.
-        *   Dice loss is a common choice for training.
-    --->
+<!---
+    **Speaking Notes:**
+    *   U-Net is a very elegant and effective architecture.
+    *   The skip connections are key to its success in medical imaging.
+    *   Dice loss is a common choice for training.
+--->
 
 ### 7. Demo 3: Pre-trained Object Detection or Segmentation (Est. 10 min)
 
@@ -1221,11 +1221,11 @@ This lecture has provided an introduction to the exciting field of computer visi
         *   **NIH ChestX-ray8 / ChestX-ray14:** Large datasets of chest X-rays with disease labels.
         *   **Luna16 / LIDC-IDRI:** Datasets for lung nodule detection in CT scans.
         *   **BraTS (Brain Tumor Segmentation Challenge):** Datasets for brain tumor segmentation in MRI.
-    <!---
-        **Speaking Notes:**
-        *   Emphasize the importance of understanding data usage agreements and patient privacy when working with medical datasets.
-        *   TCIA is a particularly valuable resource for DICOM data.
-    --->
+<!---
+    **Speaking Notes:**
+    *   Emphasize the importance of understanding data usage agreements and patient privacy when working with medical datasets.
+    *   TCIA is a particularly valuable resource for DICOM data.
+--->
 
 *   **Annotation Tools (for creating your own labeled datasets):**
     *   **ITK-SNAP:** Interactive software for image navigation, annotation, and segmentation, especially for 3D medical images. ([ITK-SNAP Website](http://www.itksnap.org/))

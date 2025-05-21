@@ -445,7 +445,6 @@ With our understanding of images and CNNs, let's explore the major computer visi
 | ResNet       | 2015 | Skip connections enabling very deep networks |
 | MobileNet    | 2017 | Efficient models for mobile devices |
 
-![ResNet Residual Block](media/resnet_block.png)
 
 ### B. Transfer Learning for Medical Image Classification
 
@@ -463,15 +462,13 @@ With our understanding of images and CNNs, let's explore the major computer visi
     * Only train the new classification layers
     * Best for: Small medical datasets very different from original data
 
-   ![Feature Extraction with Transfer Learning](media/feature_extraction_tl.png)
-
 2. **Fine-Tuning**
     * Start with feature extraction approach
     * Then unfreeze some later layers of the base model
     * Continue training with very small learning rate
     * Best for: Larger medical datasets with some similarity to original data
 
-   ![Fine-Tuning with Transfer Learning](media/fine_tuning_tl.png)
+   ![Fine-Tuning with Transfer Learning](media/feature_extraction_vs_fine_tuning2.png)
 
 **Implementation (TensorFlow/Keras):**
 
@@ -483,21 +480,21 @@ base_model = tf.keras.applications.ResNet50(
     input_shape=(224, 224, 3)
 )
 
- 2. Freeze base model
+ 1. Freeze base model
 base_model.trainable = False
 
- 3. Add new classification head
+ 1. Add new classification head
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
 x = Dense(128, activation='relu')(x)
 outputs = Dense(num_classes, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=outputs)
 
- 4. Train only the new layers
+ 1. Train only the new layers
 model.compile(optimizer='adam', loss='categorical_crossentropy')
 model.fit(train_data, epochs=10)
 
- 5. Optional: Fine-tuning
+ 1. Optional: Fine-tuning
  Unfreeze some layers and train with small learning rate
 ```
 

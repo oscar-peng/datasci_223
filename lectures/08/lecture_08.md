@@ -18,37 +18,37 @@ title: "Computer Vision"
 ## Outline
 
 1. **Introduction to Computer Vision & Image Data**
-   * What is computer vision and its applications in healthcare
-   * Digital image representation (pixels, resolution, color spaces)
-   * Medical image formats (DICOM, PNG, JPEG)
-   * Python libraries for image processing
+    * What is computer vision and its applications in healthcare
+    * Digital image representation (pixels, resolution, color spaces)
+    * Medical image formats (DICOM, PNG, JPEG)
+    * Python libraries for image processing
 
 2. **Convolutional Neural Networks (CNNs)**
-   * Why CNNs are effective for image analysis
-   * Core components: convolutional layers, pooling, activation functions
-   * Hierarchical feature learning
-   * CNN architectures and implementation
+    * Why CNNs are effective for image analysis
+    * Core components: convolutional layers, pooling, activation functions
+    * Hierarchical feature learning
+    * CNN architectures and implementation
 
 3. **Demo 1: Image Loading, Preprocessing & Basic CNN**
 
 4. **Key Computer Vision Tasks**
-   * Image classification
-   * Transfer learning for medical images
-   * Object detection
-   * Image segmentation with U-Net
+    * Image classification
+    * Transfer learning for medical images
+    * Object detection
+    * Image segmentation with U-Net
 
 5. **Demo 2: Transfer Learning for Medical Image Classification**
 
 6. **Advanced Topics**
-   * Video analysis and tracking
-   * Vision Transformers
-   * Generative models
-   * Explainable AI for medical imaging
-   * Self-supervised learning
+    * Video analysis and tracking
+    * Vision Transformers
+    * Generative models
+    * Explainable AI for medical imaging
+    * Self-supervised learning
 7. **Demo 3: Pre-trained Object Detection or Segmentation**
 
 8. **Resources for Further Learning**
-   * Datasets, tools, and references
+    * Datasets, tools, and references
 9. **Mini-Demo: Video Object Tracking**
 
 ## 1. Introduction to Computer Vision & Image Data
@@ -223,37 +223,37 @@ CNNs solve these problems through three key innovations:
 ### B. Core CNN Components
 
 1. **Convolutional Layer:**
-   * Applies learnable filters across the input image
-   * Each filter detects specific patterns (edges, textures, etc.)
-   * Key parameters: filter size, number of filters, stride, padding
+    * Applies learnable filters across the input image
+    * Each filter detects specific patterns (edges, textures, etc.)
+    * Key parameters: filter size, number of filters, stride, padding
 
    ![Convolutional Filter Operation](media/convolution_filter_static.png)
 
-   * **Feature Maps:** Output of applying filters
-   * **Stride:** Step size when sliding filter (affects output size)
-   * **Padding:** Adding pixels around border to preserve dimensions
+    * **Feature Maps:** Output of applying filters
+    * **Stride:** Step size when sliding filter (affects output size)
+    * **Padding:** Adding pixels around border to preserve dimensions
 
    ![Valid vs. Same Padding](media/padding_example.png)
    ![Input Image and Resulting Feature Maps](media/feature_maps_example.png)
 
 2. **Activation Functions:**
-   * Add non-linearity to the model
-   * **ReLU:** Most common, f(x) = max(0, x)
-   * Simple, efficient, helps with vanishing gradient problem
+    * Add non-linearity to the model
+    * **ReLU:** Most common, f(x) = max(0, x)
+    * Simple, efficient, helps with vanishing gradient problem
 
    ![ReLU Activation Function](media/relu_function.png)
 
 3. **Pooling Layer:**
-   * Reduces spatial dimensions (downsampling)
-   * **Max Pooling:** Takes maximum value in each window
-   * Reduces computation and provides translation invariance
+    * Reduces spatial dimensions (downsampling)
+    * **Max Pooling:** Takes maximum value in each window
+    * Reduces computation and provides translation invariance
 
    ![Max Pooling Operation](media/max_pooling_example.png)
 
 4. **Fully Connected Layer:**
-   * Used at the end of the CNN for classification
-   * Each neuron connects to all outputs from previous layer
-   * Final layer uses softmax (multi-class) or sigmoid (binary) activation
+    * Used at the end of the CNN for classification
+    * Each neuron connects to all outputs from previous layer
+    * Final layer uses softmax (multi-class) or sigmoid (binary) activation
 
 ### C. Hierarchical Feature Learning
 
@@ -500,18 +500,18 @@ With our understanding of images and CNNs, let's explore the major computer visi
 **Two Main Approaches:**
 
 1. **Feature Extraction**
-   * Use pre-trained CNN as a fixed feature extractor
-   * Remove classification layers and add new ones for your task
-   * Only train the new classification layers
-   * Best for: Small medical datasets very different from original data
+    * Use pre-trained CNN as a fixed feature extractor
+    * Remove classification layers and add new ones for your task
+    * Only train the new classification layers
+    * Best for: Small medical datasets very different from original data
 
    ![Feature Extraction with Transfer Learning](media/feature_extraction_tl.png)
 
 2. **Fine-Tuning**
-   * Start with feature extraction approach
-   * Then unfreeze some later layers of the base model
-   * Continue training with very small learning rate
-   * Best for: Larger medical datasets with some similarity to original data
+    * Start with feature extraction approach
+    * Then unfreeze some later layers of the base model
+    * Continue training with very small learning rate
+    * Best for: Larger medical datasets with some similarity to original data
 
    ![Fine-Tuning with Transfer Learning](media/fine_tuning_tl.png)
 
@@ -561,17 +561,17 @@ We'll implement transfer learning in Demo 2!
 **Key Concepts:**
 
 1. **Bounding Boxes**
-   * Rectangles defining object location: `(x_min, y_min, x_max, y_max)` or `(x, y, width, height)`
+    * Rectangles defining object location: `(x_min, y_min, x_max, y_max)` or `(x, y, width, height)`
 
 2. **Anchor Boxes**
-   * Predefined box templates at different locations, sizes, and aspect ratios
-   * Model predicts offsets from these templates rather than absolute coordinates
+    * Predefined box templates at different locations, sizes, and aspect ratios
+    * Model predicts offsets from these templates rather than absolute coordinates
 
    ![Anchor Boxes Example](media/anchor_boxes_example.png)
 
 3. **Non-Maximum Suppression (NMS)**
-   * Post-processing to remove redundant overlapping detections
-   * Keeps highest confidence detection when multiple boxes overlap
+    * Post-processing to remove redundant overlapping detections
+    * Keeps highest confidence detection when multiple boxes overlap
 
    ![Non-Maximum Suppression (NMS) Example](media/nms_example.png)
 
@@ -711,13 +711,13 @@ Let's explore how to use pre-trained models for complex vision tasks without tra
 **Two options in this demo:**
 
 1. **Object Detection with YOLO:**
-   * Use pre-trained YOLO model from ultralytics library
-   * Load model → feed image → visualize bounding boxes and labels
-   * Perfect for rapid prototyping
+    * Use pre-trained YOLO model from ultralytics library
+    * Load model → feed image → visualize bounding boxes and labels
+    * Perfect for rapid prototyping
 
 2. **Image Segmentation with TensorFlow Hub:**
-   * Use pre-trained DeepLabV3 model
-   * Load model → prepare input → generate and visualize segmentation mask
+    * Use pre-trained DeepLabV3 model
+    * Load model → prepare input → generate and visualize segmentation mask
 
 **Let's see these powerful pre-trained models in action!**
 
@@ -787,12 +787,12 @@ Let's briefly explore how computer vision extends to video data!
 **Two tracking approaches:**
 
 1. **Detection-based Tracking:**
-   * Run object detector (YOLO) on each video frame
-   * Link detections across frames to maintain identity
+    * Run object detector (YOLO) on each video frame
+    * Link detections across frames to maintain identity
 
 2. **Optical Flow Tracking:**
-   * Track feature points between frames using Lucas-Kanade algorithm
-   * Follow motion without needing full object detection
+    * Track feature points between frames using Lucas-Kanade algorithm
+    * Follow motion without needing full object detection
 
 **Let's see tracking in action!**
 

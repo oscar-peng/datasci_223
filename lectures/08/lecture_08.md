@@ -233,12 +233,12 @@ In healthcare, computer vision is revolutionizing numerous areas:
     *   Identifying fractures in bone X-rays.
     <!-- #FIXME: Added candidate image: Example of a chest X-ray with a highlighted nodule (simulated or real if public domain and annotated). lectures/08/media/xray_nodule_example.png -->
     ![Chest X-ray with Nodule Highlighted](media/xray_nodule_example.png)
-    <!---
-        **Speaking Notes:**
-        *   Briefly explain what a radiograph is.
-        *   Mention the challenges: subtle signs, inter-observer variability among radiologists.
-        *   CV can act as a "second pair of eyes."
-    --->
+<!---
+    **Speaking Notes:**
+    *   Briefly explain what a radiograph is.
+    *   Mention the challenges: subtle signs, inter-observer variability among radiologists.
+    *   CV can act as a "second pair of eyes."
+--->
 
 2.  **Pathology Slide Interpretation:**
     *   Automated counting and classification of cells (e.g., identifying cancerous vs. non-cancerous cells).

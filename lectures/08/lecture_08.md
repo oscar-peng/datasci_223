@@ -111,8 +111,6 @@ Medical imaging uses specialized formats beyond standard JPEGs and PNGs:
   ![Pydicom Conceptual Logo](media/pydicom_logo.png)
   
   ![DICOM Viewer with Image and Metadata](media/dicom_viewer_metadata.png)
-  
-  ![CT Scan with Different Window/Level Settings](media/dicom_windowing_example.png)
 
 * **Other Common Formats**
     * **PNG**: Lossless compression, preserves details

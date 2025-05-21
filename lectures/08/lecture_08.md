@@ -63,7 +63,7 @@ Computer vision has applications across many domains, from facial recognition in
 
 The field combines techniques from image processing, pattern recognition, and deep learning to achieve increasingly sophisticated visual understanding capabilities.
 
-![Robotic Surgery with Computer Vision Assistance](media/robotic_surgery_cv.png)
+![Robotic Surgery with Computer Vision Assistance](media/robotic_surgery.webp)
 
 ### B. Digital Image Representation
 

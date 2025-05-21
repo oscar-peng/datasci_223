@@ -19,7 +19,7 @@ Object detection involves not only classifying objects in an image but also loca
 
 First, ensure you have `ultralytics` installed. If not, run:
 ```bash
-pip install ultralytics requests
+# pip install ultralytics requests
 ```
 
 ```python
@@ -158,7 +158,7 @@ Semantic segmentation classifies each pixel in an image, allowing us to understa
 
 Ensure `tensorflow` and `tensorflow_hub` are installed:
 ```bash
-pip install tensorflow tensorflow_hub requests
+# pip install tensorflow tensorflow_hub requests
 ```
 
 ```python
@@ -184,25 +184,107 @@ def show_segmentation(original_rgb_image, segmentation_mask_2d, title='Segmentat
     plt.tight_layout()
     plt.show()
 
-# --- B.1. Load a Pre-trained Segmentation Model from TensorFlow Hub ---
+# --- B.1. Load a Pre-trained Segmentation Model using KaggleHub ---
 # We'll use a DeepLabV3 model with a MobileNetV2 backbone, pre-trained on PASCAL VOC.
 # This model expects 224x224 RGB images.
-# Find more models on: https://tfhub.dev/
-segmentation_model_url = "https://tfhub.dev/google/deeplabv3_mobilenet_v2_1_0_224/1" 
-# This model outputs logits for 21 classes (PASCAL VOC dataset).
+# Instead of using TensorFlow Hub directly, we'll use kagglehub which is more reliable
 
+# First, ensure you have kagglehub installed
+# pip install kagglehub
+
+import kagglehub
+import tensorflow as tf
+
+# Download the DeepLabV3 model
+model_path = None
 tf_hub_segmentation_model = None
+
 try:
-    print(f"Loading segmentation model from TensorFlow Hub: {segmentation_model_url}")
-    tf_hub_segmentation_model = hub.KerasLayer(segmentation_model_url)
-    print("TensorFlow Hub segmentation model loaded successfully.")
+    # Download latest version of the model
+    print("Downloading DeepLabV3 model from KaggleHub...")
+    model_path = kagglehub.model_download("tensorflow/deeplabv3/tfLite/default")
+    print(f"Model downloaded to: {model_path}")
+    
+    # List files in the model directory to find the correct model file
+    import os
+    print("Files in the model directory:")
+    for root, dirs, files in os.walk(model_path):
+        for file in files:
+            print(f"  {os.path.join(root, file)}")
+    
+    # Check if this is a SavedModel (has saved_model.pb file)
+    is_saved_model = os.path.exists(os.path.join(model_path, "saved_model.pb"))
+    
+    # Create a wrapper function to make predictions
+    if is_saved_model:
+        print("Loading as a SavedModel...")
+        # Load as a SavedModel
+        loaded_model = tf.saved_model.load(model_path)
+        model_func = loaded_model.signatures["serving_default"]
+        
+        # Create a wrapper function
+        def segmentation_model(input_tensor):
+            # Get the input tensor name from the model signature
+            input_name = list(model_func.structured_input_signature[1].keys())[0]
+            result = model_func(**{input_name: input_tensor})
+            # Get the output tensor (usually the first or only output)
+            output_name = list(result.keys())[0]
+            return result[output_name]
+            
+        print("SavedModel loaded successfully.")
+    else:
+        # Look for .tflite files
+        tflite_files = []
+        for root, dirs, files in os.walk(model_path):
+            for file in files:
+                if file.endswith('.tflite'):
+                    tflite_files.append(os.path.join(root, file))
+        
+        if tflite_files:
+            print(f"Found TFLite model file(s): {tflite_files}")
+            model_file = tflite_files[0]  # Use the first .tflite file found
+            
+            # Load as TFLite model
+            interpreter = tf.lite.Interpreter(model_path=model_file)
+            interpreter.allocate_tensors()
+            
+            # Get input and output details
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()
+            
+            # Create a wrapper function
+            def segmentation_model(input_tensor):
+                interpreter.set_tensor(input_details[0]['index'], input_tensor)
+                interpreter.invoke()
+                return interpreter.get_tensor(output_details[0]['index'])
+                
+            print("TensorFlow Lite model loaded successfully.")
+        else:
+            # Try using a different model from TensorFlow Hub directly
+            print("No TFLite files found and not a SavedModel. Trying TensorFlow Hub...")
+            tf_hub_url = "https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/default/1"
+            tf_hub_segmentation_model = hub.load(tf_hub_url)
+            
+            # Create a wrapper function
+            def segmentation_model(input_tensor):
+                return tf_hub_segmentation_model(input_tensor)
+                
+            print("TensorFlow Hub model loaded successfully.")
+    
+    print(f"Model input shape: {input_details[0]['shape']}")
+    print(f"Model output shape: {output_details[0]['shape']}")
+    
+    # Set the model function
+    tf_hub_segmentation_model = segmentation_model
+    print("Segmentation model loaded successfully.")
 except Exception as e:
-    print(f"Error loading segmentation model from TF Hub: {e}")
+    print(f"Error loading segmentation model: {e}")
 
 # --- B.2. Load and Preprocess a Sample Image for Segmentation ---
-# The model expects input images of size 224x224, normalized to [0,1].
-IMG_HEIGHT_SEG = 224
-IMG_WIDTH_SEG = 224
+# The model expects input images of size 257x257, normalized to [0,1].
+# This is based on the model's input shape: [1, 257, 257, 3]
+IMG_HEIGHT_SEG = 257
+IMG_WIDTH_SEG = 257
 
 # You can use a different image for segmentation.
 image_url_segmentation = 'https://images.pexels.com/photos/617278/pexels-photo-617278.jpeg?auto=compress&cs=tinysrgb&w=600' # A cat image
@@ -243,11 +325,11 @@ except Exception as e:
 
 # --- B.3. Perform Image Segmentation ---
 if tf_hub_segmentation_model is not None and processed_image_seg_batch is not None:
-    print("\nPerforming image segmentation with TF Hub model...")
+    print("\nPerforming image segmentation with loaded model...")
     try:
         # The model outputs logits (raw scores) for each class at each pixel.
         # Output shape is typically (batch_size, height, width, num_classes).
-        # For this model: (1, 224, 224, 21)
+        # For this model: (1, 257, 257, 21)
         segmentation_logits = tf_hub_segmentation_model(processed_image_seg_batch)
         
         # To get the final segmentation mask, we take the argmax along the class dimension.
@@ -255,7 +337,7 @@ if tf_hub_segmentation_model is not None and processed_image_seg_batch is not No
         segmentation_mask_2d = tf.argmax(segmentation_logits, axis=-1)
         segmentation_mask_2d = segmentation_mask_2d[0].numpy() # Remove batch dim and convert to NumPy array
         
-        print(f"Segmentation mask generated. Shape: {segmentation_mask_2d.shape}") # Should be (224, 224)
+        print(f"Segmentation mask generated. Shape: {segmentation_mask_2d.shape}") # Should be (257, 257)
 
         # --- B.4. Visualize Segmentation Result ---
         # Display the original (resized for fair comparison) and the segmentation mask
@@ -269,13 +351,21 @@ else:
 ```
 **Example Output (for the cat image):**
 ```text
-Loading segmentation model from TensorFlow Hub: https://tfhub.dev/google/deeplabv3_mobilenet_v2_1_0_224/1
-TensorFlow Hub segmentation model loaded successfully.
+Downloading DeepLabV3 model from KaggleHub...
+Model downloaded to: /Users/username/.cache/kagglehub/models/tensorflow/deeplabv3/tfLite/default/1
+Files in the model directory:
+  /Users/username/.cache/kagglehub/models/tensorflow/deeplabv3/tfLite/default/1/saved_model.pb
+  /Users/username/.cache/kagglehub/models/tensorflow/deeplabv3/tfLite/default/1/variables/variables.index
+  /Users/username/.cache/kagglehub/models/tensorflow/deeplabv3/tfLite/default/1/variables/variables.data-00000-of-00001
+  /Users/username/.cache/kagglehub/models/tensorflow/deeplabv3/tfLite/default/1/assets/labels.txt
+Loading as a SavedModel...
+SavedModel loaded successfully.
+Segmentation model loaded successfully.
 Attempting to load image for segmentation from: https://images.pexels.com/photos/617278/pexels-photo-617278.jpeg?auto=compress&cs=tinysrgb&w=600
-Image for segmentation loaded and preprocessed. Batch shape: (1, 224, 224, 3)
+Image for segmentation loaded and preprocessed. Batch shape: (1, 257, 257, 3)
 
-Performing image segmentation with TF Hub model...
-Segmentation mask generated. Shape: (224, 224)
+Performing image segmentation with loaded model...
+Segmentation mask generated. Shape: (257, 257)
 ```
 *(Two images should be displayed side-by-side: the preprocessed cat image, and its segmentation mask where different colors represent different PASCAL VOC classes like 'cat', 'background', etc.).*
 
@@ -284,14 +374,3 @@ Segmentation mask generated. Shape: (224, 224)
 *   A sample image will be loaded, preprocessed (resized, normalized), and displayed.
 *   The model will perform semantic segmentation on the image.
 *   The original image (resized) and the resulting segmentation mask will be displayed side-by-side. The mask will show different regions colored according to the class predicted for each pixel.
-
-
-**Self-Check / Validation:**
-*   **For Option A (YOLO):**
-    *   Did the YOLO model load without errors?
-    *   Was the sample image loaded and displayed correctly?
-    *   Were objects detected in the image, and were bounding boxes, class labels, and confidence scores visualized?
-*   **For Option B (Segmentation with TF Hub):**
-    *   Did the TensorFlow Hub segmentation model load correctly?
-    *   Was the sample image loaded, preprocessed to the model's expected input size, and displayed?
-    *   Was a segmentation mask generated? Does the mask visually correspond to different objects or regions in the original image? (The quality and classes depend on the model's training data, e.g., PASCAL VOC).

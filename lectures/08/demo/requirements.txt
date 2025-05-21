@@ -12,6 +12,7 @@ pydicom>=2.3.0  # For DICOM file handling
 # Deep learning frameworks
 tensorflow>=2.9.0  # Includes Keras
 tensorflow-hub>=0.12.0  # For pre-trained models
+kagglehub>=0.2.0  # For downloading models from Kaggle
 
 # Medical imaging specific
 medmnist>=3.0.2  # Medical MNIST datasets

@@ -201,6 +201,19 @@ CNNs solve these problems through three key innovations:
 
 [![XKCD: Machine Learning](https://imgs.xkcd.com/comics/machine_learning.png)](https://xkcd.com/1838/)
 
+### What is a Filter in a CNN?
+
+A **filter** (also called a kernel) is a small matrix of weights that slides over the input image. At each position, it multiplies its weights with the underlying pixel values and sums them up to produce a single output value. This process is called **convolution**.
+
+- Each filter is designed to detect a specific pattern, such as an edge, corner, or texture.
+- In early layers, filters might detect simple features (like vertical or horizontal edges).
+- In deeper layers, filters can detect more complex patterns (like shapes or objects).
+
+**Example:**  
+A 3×3 filter moves across the image, looking for a specific pattern everywhere. The same filter (with the same weights) is used at every location—this is called **parameter sharing**.
+
+![Convolutional Filter Operation](media/convolution_filter_static.gif)
+
 ### B. Core CNN Components
 
 1. **Convolutional Layer:**

@@ -23,7 +23,7 @@
         - *Panel Data / Repeated Measures (Fixed Interval)*: E.g., Monthly sales data across multiple stores, quarterly patient metrics for a cohort (where time intervals are regular). Requires careful handling of splits to respect both time and entity.
         - *Single/Multiple Time Series (Irregular Interval)*: E.g., Patient vital signs recorded during hospital visits (times are irregular), specific event occurrences over time. Feature engineering often relies on time differences and aggregation over periods.
         - *Dense/High-Frequency Data*: E.g., Sensor readings (temperature, vibration) sampled every second, minute-by-minute stock prices, potentially simplified ECG/pulse data. Often involves downsampling or sophisticated rolling features.
-5. **Introduction to ML & Classification (+ FE, Model Selection & Tuning):**
+5. ✅ **Introduction to ML & Classification (+ FE, Model Selection & Tuning):**
     - **Focus:** Classification task, Workflow, Basic models, FE, Evaluation, Model Selection & Hyperparameter Tuning.
     - **Libraries:** `scikit-learn`, `xgboost`, `imbalanced-learn`
     - **Methods:**
@@ -39,7 +39,7 @@
         - Handling dataset shift and concept drift
         - Addressing Simpson's paradox in healthcare data
         - Strategies for troublesome classes and edge cases
-6. **Neural Network Flavors & Applications (Hands-on Examples) + Coding Interview Snippets:**
+6. ✅ **Neural Network Flavors & Applications (Hands-on Examples) + Coding Interview Snippets:**
     - **Focus:** Building basic NNs (MLP, CNN, RNN/LSTM) using PyTorch. Conceptual understanding.
     - **Libraries:** `torch`, `torch.nn`, `torch.optim`, `torch.utils.data`, `torchvision`
     - **Methods:**
@@ -58,7 +58,7 @@
         - Activation functions and their properties
         - Loss functions and optimization
         - Regularization and preventing overfitting
-7. **Deep Learning: Using LLM APIs & Transformers:**
+7. ✅ **Deep Learning: Using LLM APIs & Transformers:**
     - **Focus:** Practical NLP via APIs and Hugging Face. Local LLM option.
     - **Libraries:** `transformers`, `openai`, `anthropic`, `cohere`, `requests`, `dotenv`, optional `ollama`
     - **Methods:**
@@ -74,7 +74,7 @@
         - Prompt engineering strategies
         - Ethical considerations and bias
         - Handling medical terminology and PHI
-8. **Computer Vision: Identifying and Tracking (PyTorch Focus) + Coding Interview Snippets:**
+8. ✅ **Computer Vision: Identifying and Tracking (PyTorch Focus) + Coding Interview Snippets:**
     - **Focus:** CNNs for images (PyTorch). Classification, Detection concepts, Tracking overview.
     - **Libraries:** `torch`, `torchvision`, `PIL`, `opencv-python`
     - **Methods:**
@@ -89,35 +89,70 @@
         - Data augmentation techniques
         - Medical image preprocessing
         - Model interpretability for healthcare
-9.  **Data Visualization & Communication (Interactive Focus & Deep Dive):**
-    - **Focus:** Principles, Storytelling. Deep dive: `matplotlib`/`seaborn`. Interactive: `altair`. Alternative: `plotnine`.
-    - **Libraries:** `matplotlib.pyplot`, `seaborn`, `altair`, `plotnine`, `plotly`, `streamlit`, `dash`
+9.  🚧 **Data Visualization, Diagramming, Reporting & Dashboards:**
+    - **Focus:** Communicating insights effectively using diagrams (Mermaid), interactive visualizations (Altair), generating shareable reports (MkDocs), and building simple interactive dashboards (Streamlit).
+    - **Libraries:** `altair`, `altair_viewer`, `pandas`, `mermaid` (conceptual/CLI), `mkdocs`, `mkdocs-material`, `mkdocs-altair-plugin`, `streamlit`.
     - **Methods:**
-        - *Static Visualization*: Statistical plots, custom visualizations
-        - *Interactive Plots*: Web-based dashboards, notebooks
-        - *Advanced Techniques*: Animations, 3D plots, geographic visualization
-        - *Best Practices*: Color theory, accessibility, data-ink ratio
-    - **Dataset:** Revisit course datasets, focusing on effective communication of results
+        - *Diagramming as Code (Mermaid)*: Creating and embedding Mermaid diagrams.
+        - *Visualization with Altair-Vega*:
+            - Crafting static (PNG/SVG) and interactive JS/HTML charts (JSON definitions).
+            - Saving charts for web embedding.
+            - Understanding Altair's declarative grammar (vs. `plotnine`/`ggplot2`).
+        - *Automated Report Generation (MkDocs)*:
+            - Setting up MkDocs Material.
+            - Generating report content (text, tables, static plots) in Markdown.
+            - Using `mkdocs-altair-plugin` for interactive charts.
+            - Building, serving locally, and deploying with GitHub Pages.
+        - *Interactive Dashboards with Streamlit*:
+            - Basic Streamlit app structure (`st.title`, `st.write`, input widgets like `st.slider`, `st.selectbox`).
+            - Displaying Pandas DataFrames (`st.dataframe`).
+            - Embedding Altair charts (`st.altair_chart`).
+            - Running and sharing Streamlit apps (conceptual overview of deployment).
+    - **Dataset:** From PhysioNet open databases ([`refs/physionet.md`](refs/physionet.md)), adaptable for reports and a simple dashboard.
     - **Key Concepts:**
-        - Grammar of graphics
-        - Perceptual principles
-        - Storytelling with data
-        - Interactive visualization
-        - Dashboard design
-10. **Experimentation & Research Design (A/B Testing + Advanced Techniques):**
-    - **Focus:** Causal inference, A/B testing design, analysis. Variance reduction (CUPED), GLMs for analysis, multiple comparisons.
-    - **Libraries:** `scipy.stats`, `statsmodels`, `pandas`, `numpy`
-    - **Methods:**
-        - *Basic Tests*: `ttest_ind`, `proportions_ztest`, power analysis
-        - *Advanced Methods*: CUPED variance reduction, sequential testing
-        - *GLM Analysis*: Model specification, family selection, interpretation
-        - *Multiple Testing*: Bonferroni, Benjamini-Hochberg, Multi-Armed Bandits
-    - **Dataset:** Clinical trial data, A/B test results
-    - **Key Concepts:**
-        - Experimental design principles
-        - Power analysis and sample size
-        - Covariate adjustment
-        - Multiple comparison problems
-        - Bayesian vs. Frequentist approaches
-
-??. Walkthrough end-to-end lifecycle of a data science project
+        - Declarative visualization (Altair).
+        - "Diagrams as code" (Mermaid).
+        - Effective data storytelling.
+        - Static site generation for reproducible reports (MkDocs).
+        - Introduction to building interactive web applications for data insights (Streamlit).
+        - Integrating Python data analysis workflows with documentation, reporting, and dashboarding tools.
+10. 🧪 **Experimentation & Research Design, followed by End-to-End Project Application:**
+    - **Part 1: Experimentation & Research Design (A/B Testing + Advanced Techniques)**
+        - **Focus:** Causal inference, A/B testing design, analysis. Variance reduction (CUPED), GLMs for analysis, multiple comparisons.
+        - **Libraries:** `scipy.stats`, `statsmodels`, `pandas`, `numpy`.
+        - **Methods:**
+            - *Basic Tests*: `ttest_ind`, `proportions_ztest`, power analysis.
+            - *Advanced Methods*: CUPED variance reduction, sequential testing.
+            - *GLM Analysis*: Model specification, family selection, interpretation.
+            - *Multiple Testing*: Bonferroni, Benjamini-Hochberg, Multi-Armed Bandits.
+        - **Dataset:** Clinical trial data, A/B test results.
+        - **Key Concepts:**
+            - Experimental design principles.
+            - Power analysis and sample size.
+            - Covariate adjustment.
+            - Multiple comparison problems.
+            - Bayesian vs. Frequentist approaches.
+            - Ethical considerations in experimentation.
+    - **Part 2: End-to-End Data Science Project Lifecycle (Applying Research Design)**
+        - **Focus:** A comprehensive walkthrough of a health data science project, demonstrating the application of research design principles and other learned skills in a practical context.
+        - **Libraries:** A selection from the course, e.g., `pandas`, `polars`, `scikit-learn`, `altair`, `mkdocs`, `streamlit`, `git`, plus `statsmodels` and `scipy.stats` for applying Part 1 concepts.
+        - **Methods/Project Stages (with emphasis on applying Part 1):**
+            - *Problem Definition & Scoping*: Defining a clear, answerable question, potentially framed as an experiment; identifying stakeholders; setting success metrics; applying **experimental design principles**.
+            - *Data Acquisition & Understanding*: Sourcing data (e.g., from PhysioNet via [`refs/physionet.md`](refs/physionet.md)); data dictionaries; initial data exploration; ethical considerations (privacy, bias, informed consent if primary data collection for an experiment).
+            - *Exploratory Data Analysis (EDA)*: Univariate and bivariate analysis; visualization for hypothesis generation; identifying data quality issues.
+            - *Data Preprocessing & Feature Engineering*: Handling missing data; encoding categorical variables; scaling/transforming features; creating new features.
+            - *Model Selection & Training (or Intervention Design)*: Choosing appropriate models or designing interventions; train/validation/test splits; baseline models/control groups.
+            - *Model Evaluation & Iteration (or Experiment Analysis)*:
+                - Using appropriate metrics; interpreting results; error analysis; hyperparameter tuning.
+                - Applying **A/B testing analysis**, **statistical tests**, **GLMs**, and addressing **multiple comparisons** as learned in Part 1 to evaluate model performance or intervention effects.
+            - *Communication & Reporting*: Presenting findings effectively using tools from Lecture 9, ensuring clear communication of experimental design, analysis, and results.
+            - *Version Control & Reproducibility*: Using Git for tracking changes; structuring project for reproducibility of both the overall analysis and any experimental components.
+            - *(Conceptual) Deployment & Monitoring*: Brief discussion on deploying models/interventions and continued monitoring, potentially involving further A/B testing.
+        - **Dataset:** A moderately complex health dataset (e.g., MIMIC-IV demo, a subset of a PhysioNet challenge) that allows for a multi-stage analysis and includes an aspect where experimental design/A/B testing can be conceptually or practically applied.
+        - **Key Concepts:**
+            - CRISP-DM or similar data mining process model.
+            - The iterative nature of data science projects.
+            - Importance of clear communication at each stage.
+            - Ethical responsibilities in health data science, particularly in designing and conducting studies.
+            - Reproducibility and maintainability of data science workflows.
+            - Demonstrating how robust research design strengthens the validity and impact of a data science project.

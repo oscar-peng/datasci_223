@@ -2,6 +2,8 @@
 
 This project is a **deeply annotated, beginner-friendly Dash app** for exploring Uber ride data in New York City. It is designed for health data science and data visualization students who are new to Python, Dash, and interactive dashboards.
 
+[Live dash!](https://dash.gallery/dash-uber-rides-demo/)
+
 ## What You'll Learn
 
 - How to build a real-world interactive dashboard using Dash and Plotly

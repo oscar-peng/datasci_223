@@ -1,12 +1,9 @@
 # Lecture 09: Data Visualization & Communication
 
-**Overall Goal:** Equip students with skills to create effective visualizations and interactive dashboards, focusing on clear communication of insights to both technical and non-technical stakeholders.
+## -1. Project Inspiration
 
-**Target Audience:** Health data science master's students (beginners in programming).
-**Lecture Duration:** 90 minutes.
-**Format:** Long-form Markdown.
-
----
+- [SF Budget Visualization](https://missionlocal.org/2025/05/explore-san-francisco-2024-2025-budget/)
+- [Tuesday Night Movie Night (movie recommendations)](https://www.tuesdaynightmovienight.com/quiza)
 
 ## 0. Introduction (5 minutes)
 

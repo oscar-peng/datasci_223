@@ -150,6 +150,16 @@ Flowcharts are used to represent processes, workflows, or algorithms, showing st
 * **Minimal Example (Data Analysis Pipeline):**
     This diagram outlines a typical workflow for a data analysis project.
 
+    ```js
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
     ```mermaid
     graph TD;
         A[Load Data] --> B(Data Cleaning & Preprocessing);

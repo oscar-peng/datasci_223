@@ -1,11 +1,11 @@
-site_name: Clinical Heart Rate Analysis Report
-site_description: 'Automated analysis of heart rate patterns in clinical populations'
-site_author: 'Health Data Science Team'
-site_url: 'https://yourusername.github.io/clinical_data_report' # IMPORTANT: Students should change this
+site_name: Neonatal Feeding Study Pipeline
+site_description: 'Automated analysis of feeding progression patterns in premature infants'
+site_author: 'Clinical Data Science Team'
+# site_url: 'https://yourusername.github.io/neonatal-feeding-study' # IMPORTANT: Students should change this
 
 # Repository information (optional, for GitHub integration)
-repo_name: 'yourusername/clinical_data_report' # IMPORTANT: Students should change this
-repo_url: 'https://github.com/yourusername/clinical_data_report' # IMPORTANT: Students should change this
+repo_name: 'yourusername/neonatal-feeding-study' # IMPORTANT: Students should change this
+repo_url: 'https://github.com/yourusername/neonatal-feeding-study' # IMPORTANT: Students should change this
 
 theme:
   name: material
@@ -39,13 +39,7 @@ theme:
 
 plugins:
   - search
-  - charts  # Using mkdocs-charts-plugin
-  # Ensure vega_lite_version is compatible if the plugin has such an option,
-  # or that Altair output matches what the plugin expects.
-  # Example options for mkdocs-charts-plugin (refer to its documentation):
-  # charts:
-  #   vega_lite_version: "5" # Or similar if supported
-  #   use_data_path: true # If you want paths relative to markdown file
+  - charts  # Using mkdocs-charts-plugin for interactive Vega-Lite charts
 
 markdown_extensions:
   - admonition
@@ -55,17 +49,28 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+        - name: vegalite
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
   - pymdownx.tabbed:
       alternate_style: true
   - tables
   - attr_list
   - md_in_html
+  - toc:
+      permalink: true
+
+# Required JavaScript dependencies for mkdocs-charts-plugin
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
 
 nav:
   - 'Home': 'index.md'
   - 'Analysis':
     - 'Data Overview': 'analysis/data_overview.md'
-    - 'Heart Rate Patterns': 'analysis/heart_rate_analysis.md'
+    - 'Automated Analysis': 'analysis/automated_analysis.md'
     - 'Risk Factors': 'analysis/risk_factors.md'
   - 'Interactive Charts': 'interactive_charts.md'
   - 'Methodology': 'methodology.md'

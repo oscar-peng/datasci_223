@@ -20,3 +20,5 @@ jupyter-dash>=0.4.2
 nilearn
 dash_bootstrap_components
 dash_slicer
+soundfile
+vosk

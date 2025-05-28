@@ -1,129 +1,130 @@
+#!/usr/bin/env python3
+"""
+Generate Altair chart specifications for the lecture examples.
+This script creates JSON files for various Altair charts used in the lecture.
+"""
+
+import os
+from pathlib import Path
 import altair as alt
 import pandas as pd
 import numpy as np
-from pathlib import Path
 
-# Create output directory
-charts_dir = Path("media")
-charts_dir.mkdir(parents=True, exist_ok=True)
+# Create media directory if it doesn't exist
+media_dir = Path("media")
+media_dir.mkdir(exist_ok=True)
 
-# Generate synthetic health data
+# Generate sample data
 np.random.seed(42)
-n_samples = 100
-
 df = pd.DataFrame({
-    "patient_id": range(1, n_samples + 1),
-    "age": np.random.normal(45, 15, n_samples).astype(int),
-    "blood_pressure": np.random.normal(120, 10, n_samples).astype(int),
-    "heart_rate": np.random.normal(75, 8, n_samples).astype(int),
-    "condition": np.random.choice(
-        ["Healthy", "Hypertension", "Arrhythmia"], n_samples
-    ),
-    "visit_date": pd.date_range(
-        start="2024-01-01", periods=n_samples, freq="D"
-    ),
-    "medication": np.random.choice(
-        ["None", "Beta Blocker", "ACE Inhibitor", "Diuretic"], n_samples
-    ),
-    "dosage": np.random.uniform(0, 100, n_samples),
+    "x": np.random.normal(0, 1, 100),
+    "y": np.random.normal(0, 1, 100),
+    "category": np.random.choice(["A", "B", "C"], 100),
 })
 
-# 1. Basic Scatter Plot
+
+def save_chart(chart, filename):
+    """Save chart specification to JSON file."""
+    chart.save(str(media_dir / f"{filename}.json"))
+
+
+# 1. Scatter Plot with Marginal Histograms
 scatter = (
     alt.Chart(df)
     .mark_circle()
     .encode(
-        x="age:Q",
-        y="blood_pressure:Q",
-        color="condition:N",
-        tooltip=["patient_id:N", "age:Q", "blood_pressure:Q", "condition:N"],
+        x="x:Q",
+        y="y:Q",
+        color="category:N",
+        tooltip=["x:Q", "y:Q", "category:N"],
     )
-    .properties(
-        title="Age vs Blood Pressure by Condition", width=400, height=300
-    )
+    .properties(width=400, height=400)
 )
-scatter.save(charts_dir / "chart_basic_scatter.json")
 
-# 2. Time Series with Multiple Metrics
-time_series = (
+x_hist = (
     alt.Chart(df)
-    .mark_line()
-    .encode(
-        x="visit_date:T",
-        y="blood_pressure:Q",
-        color="condition:N",
-        tooltip=["visit_date:T", "blood_pressure:Q", "condition:N"],
-    )
-    .properties(title="Blood Pressure Trends Over Time", width=600, height=300)
+    .mark_bar()
+    .encode(x=alt.X("x:Q", bin=True), y="count()")
+    .properties(width=400, height=100)
 )
-time_series.save(charts_dir / "chart_time_series.json")
 
-# 3. Box Plot
-box_plot = (
+y_hist = (
     alt.Chart(df)
-    .mark_boxplot()
-    .encode(
-        x="condition:N",
-        y="heart_rate:Q",
-        color="condition:N",
-        tooltip=["condition:N", "heart_rate:Q"],
-    )
-    .properties(
-        title="Heart Rate Distribution by Condition", width=400, height=300
-    )
-)
-box_plot.save(charts_dir / "chart_box_plot.json")
-
-# 4. Heatmap
-heatmap = (
-    alt.Chart(df)
-    .mark_rect()
-    .encode(
-        x=alt.X("condition:N", title="Condition"),
-        y=alt.Y("medication:N", title="Medication"),
-        color=alt.Color("mean(dosage):Q", title="Average Dosage"),
-        tooltip=["condition:N", "medication:N", "mean(dosage):Q"],
-    )
-    .properties(
-        title="Average Medication Dosage by Condition", width=400, height=300
-    )
-)
-heatmap.save(charts_dir / "chart_heatmap.json")
-
-# 5. Interactive Selection
-selection = alt.selection_point(
-    name="select", fields=["condition"], bind="legend"
+    .mark_bar()
+    .encode(y=alt.Y("y:Q", bin=True), x="count()")
+    .properties(width=100, height=400)
 )
 
-interactive = (
+marginal_chart = x_hist & (scatter | y_hist)
+save_chart(marginal_chart, "chart_marginal_histograms")
+
+# 2. Interactive Variable Selection
+var_select = alt.param(
+    name="var_select",
+    bind=alt.binding_select(
+        options=["x", "y", "category"], name="Select Variable: "
+    ),
+    value="x",
+)
+
+var_selection_chart = (
     alt.Chart(df)
     .mark_circle()
     .encode(
-        x="age:Q",
-        y="blood_pressure:Q",
-        color=alt.condition(selection, "condition:N", alt.value("lightgray")),
-        tooltip=["patient_id:N", "age:Q", "blood_pressure:Q", "condition:N"],
+        x=alt.X("x:Q"),
+        y=alt.Y("y:Q"),
+        color=alt.condition(
+            var_select == "category", "category:N", alt.value("steelblue")
+        ),
     )
-    .add_params(selection)
-    .properties(title="Interactive Patient Data", width=400, height=300)
+    .add_params(var_select)
 )
-interactive.save(charts_dir / "chart_interactive.json")
+save_chart(var_selection_chart, "chart_variable_selection")
 
-# 6. Faceted Plot
-faceted = (
+# 3. Layered Chart with Multiple Marks
+base = alt.Chart(df).encode(x="x:Q", y="y:Q")
+
+points = base.mark_circle().encode(
+    color="category:N", tooltip=["x:Q", "y:Q", "category:N"]
+)
+
+trend = base.mark_line(color="red").transform_regression("x", "y")
+
+layered_chart = (points + trend).properties(
+    width=400, height=300, title="Scatter Plot with Trend Line"
+)
+save_chart(layered_chart, "chart_layered")
+
+# 4. Interactive Brushing and Linking
+brush = alt.selection_interval()
+
+chart1 = (
     alt.Chart(df)
-    .mark_bar()
+    .mark_circle()
     .encode(
-        x="medication:N",
-        y="count():Q",
-        color="condition:N",
-        tooltip=["medication:N", "count():Q", "condition:N"],
+        x="x:Q",
+        y="y:Q",
+        color=alt.condition(brush, "category:N", alt.value("lightgray")),
+        tooltip=["x:Q", "y:Q", "category:N"],
     )
-    .properties(
-        title="Medication Distribution by Condition", width=100, height=300
-    )
-    .facet(column="condition:N")
+    .add_params(brush)
+    .properties(width=300, height=300)
 )
-faceted.save(charts_dir / "chart_faceted.json")
 
-print(f"Generated charts in {charts_dir}")
+chart2 = (
+    alt.Chart(df)
+    .mark_circle()
+    .encode(
+        x="category:N",
+        y="y:Q",
+        color=alt.condition(brush, "category:N", alt.value("lightgray")),
+        tooltip=["x:Q", "y:Q", "category:N"],
+    )
+    .add_params(brush)
+    .properties(width=300, height=300)
+)
+
+brushing_chart = chart1 | chart2
+save_chart(brushing_chart, "chart_brushing")
+
+print("Chart specifications generated successfully!")

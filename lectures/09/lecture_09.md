@@ -968,6 +968,7 @@ These examples demonstrate different ways to visualize health data using Altair.
 
 #### Scatter Plot with Marginal Histograms
 
+**Code:**
 ```python
 import altair as alt
 import pandas as pd
@@ -1013,8 +1014,16 @@ y_hist = alt.Chart(df).mark_bar().encode(
 chart = (x_hist & (scatter | y_hist))
 ```
 
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_marginal_histograms.json"
+}
+```
+
 #### Interactive Variable Selection
 
+**Code:**
 ```python
 # Create a parameter for variable selection
 var_select = alt.param(
@@ -1036,6 +1045,80 @@ chart = alt.Chart(df).mark_circle().encode(
         alt.value('steelblue')
     )
 ).add_params(var_select)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_variable_selection.json"
+}
+```
+
+#### Layered Chart with Multiple Marks
+
+**Code:**
+```python
+# Create a layered chart with points and a trend line
+base = alt.Chart(df).encode(
+    x='x:Q',
+    y='y:Q'
+)
+
+points = base.mark_circle().encode(
+    color='category:N',
+    tooltip=['x:Q', 'y:Q', 'category:N']
+)
+
+trend = base.mark_line(color='red').transform_regression('x', 'y')
+
+chart = (points + trend).properties(
+    width=400,
+    height=300,
+    title='Scatter Plot with Trend Line'
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_layered.json"
+}
+```
+
+#### Interactive Brushing and Linking
+
+**Code:**
+```python
+# Create a selection for brushing
+brush = alt.selection_interval()
+
+# Create two linked scatter plots
+chart1 = alt.Chart(df).mark_circle().encode(
+    x='x:Q',
+    y='y:Q',
+    color=alt.condition(brush, 'category:N', alt.value('lightgray')),
+    tooltip=['x:Q', 'y:Q', 'category:N']
+).add_params(brush)
+
+chart2 = alt.Chart(df).mark_circle().encode(
+    x='category:N',
+    y='y:Q',
+    color=alt.condition(brush, 'category:N', alt.value('lightgray')),
+    tooltip=['x:Q', 'y:Q', 'category:N']
+).add_params(brush)
+
+# Combine the charts
+chart = (chart1 | chart2).properties(
+    width=300,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_brushing.json"
+}
 ```
 
 #### Generated JSON Specification
@@ -1067,6 +1150,15 @@ When saved as JSON, these charts produce specifications like:
   ]
 }
 ```
+
+<!---
+These advanced examples demonstrate more sophisticated Altair features:
+1. Marginal histograms show the distribution of variables alongside the main plot
+2. Interactive variable selection allows users to explore different aspects of the data
+3. Layered charts combine multiple mark types for richer visualizations
+4. Brushing and linking enables coordinated views of the same data
+5. The JSON specification shows how Altair generates Vega-Lite code
+--->
 
 ### Demo 3: Automated Report with MkDocs
 
@@ -1339,7 +1431,7 @@ Dash by Plotly is a powerful framework for building analytical web applications.
 
     # Run the app
     if __name__ == '__main__':
-        app.run_server(debug=True)
+        app.run(debug=True)
     ```
     <!---
     *   This example shows the basic structure of a Dash app: initialization, layout definition, and running the server.
@@ -1396,7 +1488,7 @@ Dash by Plotly is a powerful framework for building analytical web applications.
 
     # Run the app
     if __name__ == '__main__':
-        app.run_server(debug=True)
+        app.run(debug=True)
     ```
     <!---
     *   This example demonstrates how to use callbacks to make the app interactive.
@@ -1457,7 +1549,7 @@ Dash by Plotly is a powerful framework for building analytical web applications.
 * **Local Development:** During development, use `debug=True` for hot reloading:
 
     ```python
-    app.run_server(debug=True)
+    app.run(debug=True)
     ```
 * **Production Deployment:** For production, use a WSGI server like Gunicorn:
 
@@ -1613,7 +1705,7 @@ def update_charts(selected_region):
     return main_fig, drill_fig
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
 ```
 
 This example demonstrates:

@@ -8,6 +8,9 @@
 2. Clear the default content
 3. We'll build our diagram step by step
 
+**Note on Jupyter Notebooks:** This demo uses Markdown ` ```mermaid ... ``` ` blocks. If you convert this file to a Jupyter Notebook (e.g., using Jupytext) and the diagrams don't render automatically:
+    * Then, for each Mermaid diagram, change its cell type from Markdown to Code and add `%%mermaid` at the very beginning of the cell, before the `graph TD;` line.
+
 ## Step 2: Basic Structure
 
 Start with this basic framework:

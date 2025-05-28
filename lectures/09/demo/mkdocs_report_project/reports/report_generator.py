@@ -213,6 +213,9 @@ def generate_demographics_chart_spec(df):
         alt.hconcat(ga_hist, weight_hist)
         .resolve_scale(x="independent", y="independent")
         .properties(title="Patient Demographics Overview")
+        .configure_view(
+            continuousWidth=300, continuousHeight=300, strokeWidth=0
+        )
     )
 
 
@@ -227,7 +230,9 @@ def generate_primary_analysis_chart_spec(df):
 
     # Create interactive scatter plot with regression line
     base = alt.Chart(df).add_selection(
-        alt.selection_interval(bind="scales")  # Enable zoom/pan
+        alt.selection_interval(
+            bind="scales", zoom=False
+        )  # Enable pan but disable scroll zoom
     )
 
     # Scatter plot

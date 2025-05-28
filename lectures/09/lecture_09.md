@@ -936,6 +936,88 @@ When saved as JSON, these charts produce specifications like:
     *   This demo provides a comprehensive example of building and deploying an automated data science report. Students will explore the project structure and run the build process.
     --->
 
+### 3.8. GitHub Setup for MkDocs
+
+<!--- 
+Setting up GitHub Pages with MkDocs can be intimidating for beginners. We'll break it down into clear steps with visual guides. The key is to emphasize that this is a one-time setup that makes future documentation updates much easier.
+--->
+
+#### Step 1: Create a New Repository
+
+1. Go to GitHub.com and click the "+" button in the top right
+2. Select "New repository"
+3. Name your repository (e.g., `health-docs`)
+4. Make it public
+5. Initialize with a README
+
+![Creating a new repository](media/github_create_repo.png)
+
+#### Step 2: Clone and Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/health-docs.git
+cd health-docs
+
+# Initialize MkDocs
+mkdocs new .
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+#### Step 3: Configure GitHub Pages
+
+1. Go to your repository's Settings
+2. Navigate to "Pages" in the sidebar
+3. Under "Source", select "GitHub Actions"
+
+![GitHub Pages Settings](media/github_pages_settings.png)
+
+#### Step 4: Add GitHub Actions Workflow
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy Docs
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: pip install mkdocs-material
+      - run: mkdocs gh-deploy --force
+```
+
+#### Step 5: Verify Deployment
+
+1. Push your changes to GitHub
+2. Check the Actions tab to monitor deployment
+3. Once complete, your site will be available at `https://yourusername.github.io/health-docs/`
+
+![GitHub Actions Deployment](media/github_actions.png)
+
+#### Example: Published Documentation Site
+
+Here's an example of a well-structured MkDocs site:
+
+![Example Published Site](media/github_published_site.png)
+
+<!---
+The published site demonstrates what students can achieve with MkDocs and GitHub Pages. It shows clean navigation, search functionality, and responsive design - all features they can implement in their own documentation.
+--->
+
 ### 3.6. Useful MkDocs Plugins
 
 Here are some essential plugins for data science reports:
@@ -1266,24 +1348,24 @@ Explore some of the most engaging and interactive Dash apps from the official Da
 
 - [t-SNE Explorer](https://dash.gallery/dash-tsne/)
   
-  ![#FIXME](#FIXME "dash gallery tsne app screenshot, try: dash gallery tsne app")
+  ![t-SNE Explorer Dashboard](media/dash_tsne_explorer.png)
   
   *Visualizes high-dimensional data using t-SNE for interactive clustering and exploration.*
 
 - [Medical Provider Charges](https://dash.gallery/dash-medical-provider-charges/)
   
-  ![#FIXME](#FIXME "dash gallery medical provider charges screenshot, try: dash gallery medical provider charges app")
+  ![Medical Provider Charges Dashboard](media/dash_medical_charges.png)
   
   *Interactive dashboard for exploring Medicare provider charges by state, region, and procedure.*
 
 - [DUB (Dash User Behavior)](https://dash.gallery/dash-dub/)
   
-  ![#FIXME](#FIXME "dash gallery dub user behavior screenshot, try: dash gallery dub app")
+  ![DUB Dashboard](media/dash_dub.png)
   
   *Analyzes user behavior and engagement in web applications using Dash.*
 
 <!---
-These links and images are meant to inspire students and show the breadth of what Dash can do. Replace #FIXME with actual image URLs or screenshots for your course materials.
+These examples demonstrate the power of Dash for creating interactive data applications. The t-SNE Explorer shows how complex machine learning results can be made accessible through visualization. The Medical Provider Charges dashboard demonstrates practical healthcare data analysis. The DUB dashboard illustrates how Dash can be used for application analytics.
 --->
 
 ### 4.6. Data Handling in Dash

@@ -1707,9 +1707,3 @@ def update_charts(selected_region):
 if __name__ == '__main__':
     app.run(debug=True)
 ```
-
-This example demonstrates:
-* Dropdown selection for filtering
-* Multiple linked charts
-* Drill-down visualization
-* Simple callback structure

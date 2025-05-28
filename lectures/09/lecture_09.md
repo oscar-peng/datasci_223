@@ -1,6 +1,6 @@
-# Lecture 09: Data Visualization, Diagramming, Reporting & Dashboards
+# Lecture 09: Data Visualization & Communication
 
-**Overall Goal:** Equip students with skills to create insightful diagrams (Mermaid), interactive data visualizations (Altair), automated shareable reports (MkDocs), and simple interactive dashboards (Streamlit), applied to health data contexts, culminating in engaging data storytelling examples.
+**Overall Goal:** Equip students with skills to create effective visualizations and interactive dashboards, focusing on clear communication of insights to both technical and non-technical stakeholders.
 
 **Target Audience:** Health data science master's students (beginners in programming).
 **Lecture Duration:** 90 minutes.
@@ -10,25 +10,25 @@
 
 ## 0. Introduction (5 minutes)
 
-### The Data Communication Crisis in Healthcare
+### The Data Communication Crisis
 
-Picture this: You've just completed a groundbreaking analysis showing that a simple intervention could reduce hospital readmissions by 23%. You present a dense Excel table with 47 rows of statistics to the hospital board. Eyes glaze over. Your brilliant insight dies in a spreadsheet graveyard. 💀
+Picture this: You've just completed a groundbreaking analysis showing that a simple intervention could reduce costs by 23%. You present a dense Excel table with 47 rows of statistics to the board. Eyes glaze over. Your brilliant insight dies in a spreadsheet graveyard. 💀
 
-Now imagine instead: An interactive dashboard where board members can explore the data themselves, see the intervention's impact across different patient populations, and watch the cost savings accumulate in real-time. Which presentation gets funding? 🎯
+Now imagine instead: An interactive dashboard where stakeholders can explore the data themselves, see the intervention's impact across different segments, and watch the savings accumulate in real-time. Which presentation gets funding? 🎯
 
 ![Data communication dense table vs interactive dashboard comparison](media/data_communication_dense_table_00.png)
 
 <!---
-This scenario illustrates the critical gap between having insights and communicating them effectively. In healthcare, poor data communication can literally be a matter of life and death - or at least budget approval and implementation. The tools we'll learn today bridge this gap between analysis and action.
+This scenario illustrates the critical gap between having insights and communicating them effectively. Poor data communication can lead to missed opportunities and failed initiatives. The tools we'll learn today bridge this gap between analysis and action.
 --->
 
 **Lecture Objectives:**
 
-* Create diagrams as code using Mermaid for clear process documentation.
-* Craft interactive visualizations with Altair, including building towards a Gapminder-style dynamic chart.
-* Build automated, shareable reports using MkDocs for disseminating findings.
-* Develop simple, practical dashboards and then a more dynamic one with Streamlit for data exploration.
-* Apply these tools to health data scenarios, focusing on principles of effective communication.
+* Create clear process diagrams using Mermaid for workflows and data pipelines
+* Build interactive visualizations with Altair that tell compelling data stories
+* Generate automated, shareable reports using MkDocs for disseminating findings
+* Develop professional dashboards with Dash by Plotly for data exploration
+* Apply these tools to real-world scenarios, focusing on principles of effective communication
 
 **Agenda Overview:**
 
@@ -37,42 +37,42 @@ graph TD
     A[Intro: The Power of Visual Communication] --> B(Diagramming: Mermaid);
     B --> C(Interactive Viz: Altair);
     C --> D(Automated Reports: MkDocs);
-    D --> E(Dashboards: Streamlit);
+    D --> E(Dashboards: Dash by Plotly);
 ```
 
 <!---
 *   This lecture builds upon previous sessions on data analysis and machine learning, focusing on how to make the results of such work understandable and impactful.
-*   The core theme is moving from raw data and complex analyses to clear narratives and interactive explorations.
+*   The core theme is moving from raw data and complex analyses to clear narratives and interactive explorations that drive decisions.
 *   Effective communication can significantly amplify the value of data science work.
 --->
 
 ---
 
-## 1. Diagramming as Code with Mermaid (15 minutes)
+## 1. Diagrams as Code with Mermaid (15 minutes)
 
-Visualizing processes, architectures, and workflows is essential for understanding and communicating complex systems, especially in data science. While many tools exist for creating diagrams, the "diagrams as code" approach offers unique advantages for technical projects.
+Visualizing processes, architectures, and workflows is essential for understanding and communicating complex systems. While many tools exist for creating diagrams, the "diagrams as code" approach offers unique advantages for data science projects.
 
-### 1.1. Why "Diagrams as Code"?
+### 1.1. Why Diagrams as Code?
 
 * **Concept:** Treating diagrams as source code offers several advantages. These diagrams are defined using text, making them version-controllable with tools like Git, inherently reproducible, and easier to update systematically.
     <!---
     *   Instead of using a graphical user interface (GUI) to draw shapes and connectors, you write text-based definitions that a tool then renders into a visual diagram.
-    *   This is analogous to writing code for software rather than using a WYSIWYG website builder for all web development tasks.
+    *   This is particularly valuable where processes and workflows need to be clearly documented and updated.
     --->
 * **Benefits:** This approach promotes:
     * **Consistency:** Diagrams maintain a uniform style, especially across a team or project.
-    * **Version Control:** Changes to diagrams can be tracked, diffed, and reverted using Git, just like any other code. This is invaluable for collaborative projects and understanding the evolution of a design.
+    * **Version Control:** Changes to diagrams can be tracked, diffed, and reverted using Git, just like any other code. This is invaluable for collaborative projects and understanding the evolution of workflows.
         ![Git diff mermaid diagram version control example screenshot](media/git_diff_mermaid_diagram_versi_01.png)
-    * **Reproducibility:** Anyone with the text definition can regenerate the exact same diagram.
-    * **Easy Integration:** Text-based diagrams can be easily embedded into documentation (like MkDocs sites, which we'll cover later), README files, or even code comments.
+    * **Reproducibility:** Anyone with the text definition can regenerate the exact same diagram, ensuring consistent documentation.
+    * **Easy Integration:** Text-based diagrams can be easily embedded into documentation (like MkDocs sites), README files, or even code comments.
     * **Collaboration:** Team members can collaborate on diagrams using familiar code review workflows.
     * **Accessibility:** Text-based definitions can be more accessible to individuals using screen readers than complex image files, although the rendered output's accessibility also matters.
     <!---
-    *   Reproducibility ensures that the diagram accurately reflects the documented system at any point in time.
+    *   Reproducibility ensures that the diagram accurately reflects the documented workflow at any point in time.
     *   Ease of integration means diagrams live alongside the documentation or code they describe, reducing the chance of them becoming outdated or lost.
     --->
 * **Contrast with GUI Tools:** GUI-based diagramming tools (e.g., Microsoft Visio, Lucidchart, draw.io) offer a visual interface for drawing. While often user-friendly for initial creation, they can be challenging for:
-    * **Versioning:** Tracking precise changes can be difficult.
+    * **Versioning:** Tracking precise changes can be difficult, which is crucial for workflow documentation.
     * **Reproducibility:** Ensuring identical regeneration by different users or on different systems can be tricky.
     * **Programmatic Updates:** Making systematic changes across many diagrams is often manual.
     * **Integration with Code/Docs:** Often involves exporting static images, which can become outdated.
@@ -92,14 +92,14 @@ Mermaid is a popular JavaScript-based tool that takes Markdown-inspired text def
 * **Common Diagram Types:** It supports various diagram types, including:
     * **Flowcharts:** For visualizing processes, workflows, and decision trees. (e.g., `graph TD; A-->B;`)
         ![Simple fun mermaid flowchart example rendered diagram technical](media/simple_fun_mermaid_flowchart_e_00.png)
-    * **Sequence Diagrams:** For showing interactions between different components or actors over time. (e.g., `sequenceDiagram; Alice->>John: Hello John;`)
+    * **Sequence Diagrams:** For showing interactions between different components or actors over time. (e.g., `sequenceDiagram; User->>System: Submit Request;`)
         ![Simple mermaid sequence diagram](media/mermaid_sequence.png)
-    * **Gantt Charts:** For project scheduling and tracking task timelines.
-    * **Class Diagrams:** For visualizing object-oriented software structures.
+    * **Gantt Charts:** For project scheduling and tracking timelines.
+    * **Class Diagrams:** For visualizing software structures.
     * **Entity Relationship Diagrams (ERDs):** For database schema design.
-    * And more (User Journey, Pie Chart, Requirement Diagram, etc.).
+    * And more (User Journey, Process Flow, System Design, etc.).
     <!---
-    *   Flowcharts and sequence diagrams are particularly useful in data science for documenting data pipelines, model workflows, or system interactions.
+    *   Flowcharts and sequence diagrams are particularly useful for documenting workflows, user pathways, or system interactions.
     --->
 * **Tools for Mermaid:**
     * **Online Editor:** The [Mermaid Live Editor](https://mermaid.live) is an excellent resource for quickly writing, previewing, and sharing Mermaid diagrams.
@@ -113,11 +113,11 @@ Mermaid is a popular JavaScript-based tool that takes Markdown-inspired text def
 
 ### 1.3. Basic Mermaid Syntax & Examples
 
-Let's focus on flowcharts, as they are broadly applicable.
+Let's focus on flowcharts, as they are broadly applicable to many workflows.
 
 #### Flowcharts
 
-Flowcharts are used to represent a process, workflow, or algorithm, showing steps as boxes of various kinds, and their order by connecting them with arrows.
+Flowcharts are used to represent processes, workflows, or algorithms, showing steps as boxes of various kinds, and their order by connecting them with arrows.
 
 * **Concept:** Visualizing processes, step-by-step logic, and decision points.
 * **Reference Card: Mermaid Flowchart**
@@ -127,11 +127,11 @@ Flowcharts are used to represent a process, workflow, or algorithm, showing step
         *   `LR` for Left to Right.
         --->
     * **Nodes (Shapes):**
-        * `id[Text]`  Default rectangle: `A[Hard edge]`
-        * `id(Text)`  Rounded rectangle: `B(Round edge)`
-        * `id((Text))` Circle: `C((Circle))`
-        * `id{Text}`  Diamond (for decisions): `D{Decision?}`
-        * `id>Text]`  Asymmetric/Stadium: `E>Stadium]`
+        * `id[Text]`  Default rectangle: `A[Data Collection]`
+        * `id(Text)`  Rounded rectangle: `B(Data Processing)`
+        * `id((Text))` Circle: `C((Analysis))`
+        * `id{Text}`  Diamond (for decisions): `D{Results Significant?}`
+        * `id>Text]`  Asymmetric/Stadium: `E>Report Generation]`
         * Many other shapes are available (parallelogram, trapezoid, etc.).
         <!---
         *   The `id` is a unique identifier for the node, used for linking. The `Text` is what's displayed.
@@ -147,61 +147,58 @@ Flowcharts are used to represent a process, workflow, or algorithm, showing step
         *   Links define the flow and relationships between steps.
         *   Text on links can clarify conditions or actions.
         --->
-* **Minimal Example (Health Data Analysis Pipeline):**
-    This diagram outlines a typical workflow for a health data analysis project.
+* **Minimal Example (Data Analysis Pipeline):**
+    This diagram outlines a typical workflow for a data analysis project.
 
     ```mermaid
     graph TD;
-        A[Load PhysioNet Data] --> B(Data Cleaning & Preprocessing);
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
         B --> C{Select Analysis Type};
-        C -- Descriptive Stats --> D[Generate Summary Tables];
+        C -- Descriptive Stats --> D[Generate Summary];
         C -- Predictive Model --> E[Train & Evaluate Model];
         D --> F[Visualize Key Metrics];
         E --> F;
-        F --> G[Compile Report/Dashboard];
+        F --> G[Compile Report];
     ```
     <!---
-    *   `A[Load PhysioNet Data]`: Represents the initial step of data ingestion.
-    *   `B(Data Cleaning & Preprocessing)`: A process step with rounded edges.
+    *   `A[Load Data]`: Represents the initial step of data ingestion.
+    *   `B(Data Cleaning & Preprocessing)`: A process step with rounded edges for data preparation.
     *   `C{Select Analysis Type}`: A decision point, indicated by the diamond shape.
     *   The arrows (`-->`) show the direction of flow.
     * Text on arrows (`-- Descriptive Stats -->`) clarifies the path taken from a decision.
     --->
 
-#### More Health Workflow Examples
+#### More Workflow Examples
 
-**Clinical Decision Support System:**
+**Decision Support System:**
 
 ```mermaid
 graph TD;
-    A[Patient Symptoms Input] --> B{Risk Assessment};
-    B -->|High Risk| C[Immediate Alert to Physician];
-    B -->|Medium Risk| D[Schedule Follow-up];
-    B -->|Low Risk| E[Patient Education Materials];
+    A[User Input] --> B{Risk Assessment};
+    B -->|High Risk| C[Immediate Alert];
+    B -->|Medium Risk| D[Schedule Review];
+    B -->|Low Risk| E[Standard Processing];
     C --> F[Emergency Protocol];
-    D --> G[Appointment Scheduling];
-    E --> H[Discharge with Instructions];
+    D --> G[Follow-up Planning];
+    E --> H[Regular Processing];
 ```
 
-**Epic Integration Workflow (because we've all been there):**
+**User Journey Through System:**
 
 ```mermaid
 graph LR;
-    A[Epic Data Export] --> B{Data Format Check};
-    B -->|HL7| C[Parse HL7 Messages];
-    B -->|CSV| D[Direct Import];
-    B -->|"Proprietary Format 😱"| E[Cry Softly];
-    C --> F[Data Validation];
+    A[User Entry] --> B{Initial Check};
+    B -->|Critical| C[Priority Processing];
+    B -->|Standard| D[Regular Queue];
+    B -->|Basic| E[Simple Processing];
+    C --> F[Main Process];
     D --> F;
-    E --> G[Call Epic Support];
-    G --> H[Wait 3 Business Days];
-    H --> I[Receive Cryptic Response];
-    I --> E;
+    E --> F;
+    F --> G{Outcome};
+    G -->|Success| H[Complete];
+    G -->|Needs Review| I[Review Process];
+    G -->|Error| J[Error Handling];
 ```
-
-<!---
-The Epic workflow diagram adds humor while addressing a real pain point many health data scientists face. It's both educational and cathartic, helping students realize they're not alone in dealing with complex healthcare IT systems.
---->
 
 ### Demo 1: Mermaid Flowchart
 
@@ -236,13 +233,13 @@ While static charts are useful, interactive visualizations empower users to expl
     * **Data:** The dataset, typically a Pandas DataFrame. Altair works best with data in a "tidy" long-form format.
     * **Mark:** The geometric object representing data (e.g., `mark_point()`, `mark_bar()`, `mark_line()`, `mark_area()`, `mark_rect()`).
     * **Encoding:** The mapping of data fields (columns) to visual channels like:
-        * `x`: x-axis position
-        * `y`: y-axis position
-        * `color`: mark color
-        * `size`: mark size
-        * `shape`: mark shape
+        * `x`: x-axis position (e.g., time, category)
+        * `y`: y-axis position (e.g., value, count)
+        * `color`: mark color (e.g., category, group)
+        * `size`: mark size (e.g., magnitude, importance)
+        * `shape`: mark shape (e.g., type, status)
         * `opacity`: mark transparency
-        * `tooltip`: information to show on hover
+        * `tooltip`: information to show on hover (e.g., ID, details)
     <!---
     *   The Grammar of Graphics provides a structured way to think about and construct visualizations, promoting consistency and expressiveness.
     *   Tidy data means each variable forms a column, each observation forms a row, and each type of observational unit forms a table.
@@ -268,11 +265,11 @@ Let's look at the fundamental components for creating an Altair chart.
         *   `alt` is the conventional alias for `import altair as alt`.
         --->
     * **Mark Type:** `.mark_type()`: Specifies the geometric shape. Examples:
-        * `mark_point()`: For scatter plots.
-        * `mark_bar()`: For bar charts.
-        * `mark_line()`: For line charts.
-        * `mark_area()`: For area charts.
-        * `mark_rect()`: For heatmaps.
+        * `mark_point()`: For scatter plots (e.g., correlations).
+        * `mark_bar()`: For bar charts (e.g., counts).
+        * `mark_line()`: For line charts (e.g., trends).
+        * `mark_area()`: For area charts (e.g., cumulative values).
+        * `mark_rect()`: For heatmaps (e.g., patterns).
     * **Encodings:** `.encode(...)`: This is where you map data columns to visual properties.
         * Syntax: `channel='column_name:type_shorthand'`
         * **Type Shorthands:**
@@ -280,7 +277,7 @@ Let's look at the fundamental components for creating an Altair chart.
             * `:N` - Nominal (discrete, unordered categorical data)
             * `:O` - Ordinal (discrete, ordered categorical data)
             * `:T` - Temporal (date/time data)
-        * Example: `alt.X('age:Q')`, `alt.Y('systolic_bp:Q')`, `alt.Color('gender:N')`
+        * Example: `alt.X('age:Q')`, `alt.Y('value:Q')`, `alt.Color('category:N')`
         <!---
         *   Specifying the correct data type is crucial for Altair to apply appropriate scales, axes, and legends.
         --->
@@ -291,48 +288,48 @@ Let's look at the fundamental components for creating an Altair chart.
     * **Interactivity:** `.interactive()`: A convenient shortcut to enable basic panning and zooming.
     * **Saving Charts:** `.save('filename.ext')`
         * `'chart.html'`: Saves as a self-contained HTML file.
-        * `'chart.json'`: Saves the Vega-Lite JSON specification. This is very useful for embedding in web pages or using with tools like MkDocs and Streamlit.
+        * `'chart.json'`: Saves the Vega-Lite JSON specification. This is very useful for embedding in web pages or using with tools like MkDocs and Dash.
         * `'chart.png'` or `'chart.svg'`: Saves as a static image. Requires the `vl-convert` package (`pip install vl-convert-python`).
         <!---
         *   `altair_viewer` is another package that can help display charts during development, especially outside of Jupyter environments.
         --->
-* **Minimal Example (Scatter Plot from PhysioNet data snippet):**
-    Let's assume we have a Pandas DataFrame `physio_df` from a PhysioNet source with columns like `age`, `heart_rate`, and `patient_id`.
+* **Minimal Example (Scatter Plot):**
+    Let's assume we have a Pandas DataFrame `data_df` with columns like `x`, `y`, and `category`.
 
     ```python
     import altair as alt
     import pandas as pd
 
-    # Example: Create a placeholder DataFrame if physio_df is not loaded
+    # Example: Create a placeholder DataFrame if data_df is not loaded
     # This is just for demonstration if you run this code block standalone.
-    # In a real scenario, physio_df would be loaded from a CSV or other source.
-    if 'physio_df' not in locals():
-        physio_df = pd.DataFrame({
-           'age': [65, 70, 55, 80, 62, 75, 58, 72], 
-           'heart_rate': [75, 88, 60, 92, 70, 85, 65, 90], 
-           'patient_id': ['P001', 'P002', 'P003', 'P004', 'P005', 'P006', 'P007', 'P008'],
-           'gender': ['Male', 'Female', 'Male', 'Female', 'Female', 'Male', 'Male', 'Female']
+    # In a real scenario, data_df would be loaded from a CSV or other source.
+    if 'data_df' not in locals():
+        data_df = pd.DataFrame({
+            'x': [1, 2, 3, 4, 5, 6, 7, 8], 
+            'y': [2, 4, 6, 8, 10, 12, 14, 16], 
+            'id': ['A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007', 'A008'],
+            'category': ['Type A', 'Type B', 'Type A', 'Type B', 'Type A', 'Type B', 'Type A', 'Type B']
         })
     
-    scatter_plot = alt.Chart(physio_df).mark_point(size=100).encode(
-        x='age:Q',  # Age on x-axis, quantitative
-        y='heart_rate:Q',  # Heart rate on y-axis, quantitative
-        color='gender:N', # Color points by gender (nominal)
-        tooltip=['patient_id:N', 'age:Q', 'heart_rate:Q', 'gender:N'] # Info on hover
+    scatter_plot = alt.Chart(data_df).mark_point(size=100).encode(
+        x='x:Q',  # X-axis, quantitative
+        y='y:Q',  # Y-axis, quantitative
+        color='category:N', # Color points by category (nominal)
+        tooltip=['id:N', 'x:Q', 'y:Q', 'category:N'] # Info on hover
     ).properties(
-        title='Age vs. Heart Rate by Gender'
+        title='X vs. Y by Category'
     ).interactive() # Enable pan and zoom
 
     # To display in a Jupyter Notebook, this is often enough:
     # scatter_plot 
     
     # To save (uncomment the one you need):
-    # scatter_plot.save('age_vs_hr_scatter.html')
-    # scatter_plot.save('age_vs_hr_scatter.json') 
-    # scatter_plot.save('age_vs_hr_scatter.png') # Requires vl-convert
+    # scatter_plot.save('x_vs_y_scatter.html')
+    # scatter_plot.save('x_vs_y_scatter.json') 
+    # scatter_plot.save('x_vs_y_scatter.png') # Requires vl-convert
     ```
 
-    ![Altair scatter plot python gender age heart rate example output chart](media/altair_scatter_plot_python_gen_05.png)
+    ![Altair scatter plot python category x y example output chart](media/altair_scatter_plot_python_gen_05.png)
 
 *   **Generated JSON Specification:**
     When you save this chart as JSON (`scatter_plot.save('chart.json')`), Altair generates a Vega-Lite specification like this:
@@ -347,17 +344,17 @@ Let's look at the fundamental components for creating an Altair chart.
         "size": 100
       },
       "encoding": {
-        "x": {"field": "age", "type": "quantitative"},
-        "y": {"field": "heart_rate", "type": "quantitative"},
-        "color": {"field": "gender", "type": "nominal"},
+        "x": {"field": "x", "type": "quantitative"},
+        "y": {"field": "y", "type": "quantitative"},
+        "color": {"field": "category", "type": "nominal"},
         "tooltip": [
-          {"field": "patient_id", "type": "nominal"},
-          {"field": "age", "type": "quantitative"},
-          {"field": "heart_rate", "type": "quantitative"},
-          {"field": "gender", "type": "nominal"}
+          {"field": "id", "type": "nominal"},
+          {"field": "x", "type": "quantitative"},
+          {"field": "y", "type": "quantitative"},
+          {"field": "category", "type": "nominal"}
         ]
       },
-      "title": "Age vs. Heart Rate by Gender",
+      "title": "X vs. Y by Category",
       "params": [
         {
           "name": "param_1",
@@ -367,28 +364,28 @@ Let's look at the fundamental components for creating an Altair chart.
       ],
       "datasets": {
         "data-cc85da6ba14ea85607962b8b20b8f7ab": [
-          {"age": 65, "heart_rate": 75, "patient_id": "P001", "gender": "Male"},
-          {"age": 70, "heart_rate": 88, "patient_id": "P002", "gender": "Female"}
+          {"x": 1, "y": 2, "id": "A001", "category": "Type A"},
+          {"x": 2, "y": 4, "id": "A002", "category": "Type B"}
         ]
       }
     }
     ```
     <!---
-    *   This JSON specification is what gets embedded in MkDocs sites and Streamlit apps.
+    *   This JSON specification is what gets embedded in MkDocs sites and Dash apps.
     *   Understanding this structure helps debug issues and customize charts beyond Python.
     *   The "params" section handles the interactivity from `.interactive()`.
     *   Notice how Altair separates the data into a "datasets" section and references it by name.
     --->
 
     <!---
-    *   This example creates a scatter plot showing the relationship between age and heart rate, with points colored by gender.
-    *   Tooltips allow users to see specific data values when they hover over a point.
+    *   This example creates a scatter plot showing the relationship between x and y, with points colored by category.
+    *   Tooltips allow users to see specific data when they hover over a point.
     *   The `.interactive()` call enables basic zoom and pan functionality.
     --->
 
-### 2.4. Building Blocks for Dynamic Charts (e.g., for Gapminder-style visualization)
+### 2.4. Building Blocks for Dynamic Charts (e.g., for Interactive Dashboard)
 
-To create more advanced interactive charts, like the Gapminder-style visualization we'll aim for in the Streamlit demo, we need a few more Altair concepts. This section focuses on the Altair techniques for creating components that can be assembled into such visualizations.
+To create more advanced interactive charts, like the dashboard we'll aim for in the Dash demo, we need a few more Altair concepts. This section focuses on the Altair techniques for creating components that can be assembled into such visualizations.
 
 * **Selections:** Selections are the core of Altair's interactivity. They define how users can interact with the chart.
     * `alt.selection_interval()`: Allows selecting a rectangular region (brushing).
@@ -409,47 +406,47 @@ To create more advanced interactive charts, like the Gapminder-style visualizati
     * `chart1 | chart2`: Place charts side-by-side (horizontal concatenation).
     * `chart1 & chart2`: Place charts one above the other (vertical concatenation).
 
-* **Key Altair features for a Gapminder-style dynamic chart:**
-    * **Data:** A DataFrame with columns for an X-variable (e.g., health expenditure, often log-scaled), a Y-variable (e.g., life expectancy), a size variable (e.g., population), a color variable (e.g., region/country group), and a time variable (e.g., year).
-    * **Time Slider:** Use `alt.selection_single` with `bind=alt.binding_range` to create a slider for the `year` field.
-    * **Filtering:** Use `transform_filter(year_slider_selection)` to filter the data displayed in the chart based on the year selected by the slider.
+* **Key Altair features for an interactive dashboard:**
+    * **Data:** A DataFrame with columns for metrics, categories, and timestamps.
+    * **Time Slider:** Use `alt.selection_single` with `bind=alt.binding_range` to create a slider for the `timestamp` field.
+    * **Filtering:** Use `transform_filter(timestamp_slider_selection)` to filter the data displayed in the chart based on the time selected by the slider.
     * **Encodings:** Map the data columns to `x`, `y`, `size`, and `color` visual channels.
     * **Tooltips:** Provide rich information on hover.
-    * **Scales:** May need to customize scales (e.g., `alt.Scale(type="log")` for the x-axis).
+    * **Scales:** May need to customize scales (e.g., `alt.Scale(type="log")` for skewed distributions).
 
 *   **Example Pattern for Dynamic Charts:**
     ```python
     # Basic pattern for time-based filtering
-    year_slider = alt.selection_single(
-        fields=['year'],
-        bind=alt.binding_range(min=2000, max=2023, step=1)
+    time_slider = alt.selection_single(
+        fields=['timestamp'],
+        bind=alt.binding_range(min='2024-01-01', max='2024-12-31', step=86400000)  # 1 day in milliseconds
     )
     
     chart = alt.Chart(data).mark_circle().encode(
-        x='health_expenditure:Q',
-        y='life_expectancy:Q',
-        size='population:Q',
-        color='region:N'
-    ).add_params(year_slider).transform_filter(year_slider)
+        x='timestamp:T',
+        y='value:Q',
+        size='magnitude:Q',
+        color='category:N'
+    ).add_params(time_slider).transform_filter(time_slider)
     ```
 
-**Pro Tip for Health Data Scientists:** 🏥
-When creating Gapminder-style visualizations with health data, consider these encoding strategies:
-* **X-axis**: Health expenditure per capita (log scale) or healthcare access score
-* **Y-axis**: Life expectancy or health outcome measure
-* **Size**: Population or disease burden
-* **Color**: Geographic region or income level
-* **Animation**: Time progression showing policy impacts
+**Pro Tip for Data Scientists:** 📊
+When creating interactive visualizations with Altair, consider these encoding strategies:
+* **X-axis**: Time or category
+* **Y-axis**: Value or count
+* **Size**: Magnitude or importance
+* **Color**: Category or status
+* **Animation**: Time progression showing trends
 
 <!---
-This conceptual code outlines how to define an Altair chart with a time slider. The `selection_single` with `binding_range` creates the slider, and `transform_filter` dynamically updates the chart based on the slider's current year. The actual data loading and precise binding would be part of the demo implementation. This JSON specification can then be used by Streamlit to render the interactive chart.
+This conceptual code outlines how to define an Altair chart with a time slider. The `selection_single` with `binding_range` creates the slider, and `transform_filter` dynamically updates the chart based on the slider's current time. The actual data loading and precise binding would be part of the demo implementation. This JSON specification can then be used by Dash to render the interactive chart.
 --->
 
 ### Demo 2: Interactive Altair Chart
 
 * (Refer to [`lectures/09/demo/02_altair_interactive_chart.md`](lectures/09/demo/02_altair_interactive_chart.md))
     <!---
-    *   This demo will involve creating a simpler interactive chart, perhaps with a categorical filter or a brush selection, using a real PhysioNet dataset.
+    *   This demo will involve creating a simpler interactive chart, perhaps with a categorical filter or a brush selection, using a real dataset.
     *   It reinforces the concepts of selections and saving for embedding.
     --->
 
@@ -491,14 +488,14 @@ Once you have created insightful visualizations and diagrams, you need an effect
 * **Project Initialization:** To start a new MkDocs project:
 
     ```bash
-    mkdocs new my_health_report
-    cd my_health_report
+    mkdocs new my_report
+    cd my_report
     ```
 
     This creates a basic project structure:
 
     ```
-    my_health_report/
+    my_report/
     ├── mkdocs.yml    # The main configuration file
     └── docs/
         └── index.md  # The homepage for your report
@@ -510,7 +507,7 @@ Once you have created insightful visualizations and diagrams, you need an effect
 * **Directory Structure (Recommended):** It's good practice to organize supporting files. For example, create a `docs/charts/` directory for Altair JSON specifications and `docs/media/` for images.
 
     ```
-    my_health_report/
+    my_report/
     ├── mkdocs.yml
     └── docs/
         ├── index.md
@@ -528,8 +525,8 @@ The `mkdocs.yml` file controls your site's settings, theme, navigation, and plug
 * **Basic Configuration:**
 
     ```yaml
-    site_name: My Health Data Report
-    site_description: 'A report on health data analysis findings.'
+    site_name: My Data Report
+    site_description: 'A report on data analysis findings.'
     site_author: 'Your Name'
 
     theme:
@@ -587,14 +584,14 @@ The `mkdocs.yml` file controls your site's settings, theme, navigation, and plug
     # import pandas as pd
     # from pathlib import Path
 
-    # # Assume physio_df is loaded or created
+    # # Assume data_df is loaded or created
     # # ... (chart creation code from section 2.3) ...
-    # # scatter_plot = alt.Chart(physio_df).mark_point()... 
+    # # scatter_plot = alt.Chart(data_df).mark_point()... 
 
     # output_dir = Path("../docs/charts") # Relative to script location if script is in scripts/
     # output_dir.mkdir(parents=True, exist_ok=True)
-    # # scatter_plot.save(output_dir / "age_vs_hr_scatter.json")
-    # print(f"Saved chart to {output_dir / 'age_vs_hr_scatter.json'}")
+    # # scatter_plot.save(output_dir / "x_vs_y_scatter.json")
+    # print(f"Saved chart to {output_dir / 'x_vs_y_scatter.json'}")
     ```
     <!---
     *   This script would be run manually or as part of an automated build process *before* running `mkdocs build`.
@@ -602,11 +599,11 @@ The `mkdocs.yml` file controls your site's settings, theme, navigation, and plug
 * **Embedding Altair Charts:** In your Markdown files, use the `mkdocs-charts-plugin` with vegalite code blocks:
 
     ```markdown
-    Here is an interactive chart showing age vs. heart rate, referencing an external JSON schema:
+    Here is an interactive chart showing x vs. y, referencing an external JSON schema:
 
     ```vegalite
     {
-      "schema-url": "charts/age_vs_hr_scatter.json"
+      "schema-url": "charts/x_vs_y_scatter.json"
     }
     ```
 
@@ -617,24 +614,24 @@ The `mkdocs.yml` file controls your site's settings, theme, navigation, and plug
     ```vegalite
     {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "description": "A scatter plot of age vs. heart rate.",
+      "description": "A scatter plot of x vs. y.",
       "data": {
-        "name": "patient_data"
+        "name": "data"
         // Data can be embedded here, or referenced via a URL:
-        // "url": "charts/heart_rate_data.json"
-        // "values": [ {"age": 65, "heart_rate": 75, ...}, ... ]
+        // "url": "charts/data.json"
+        // "values": [ {"x": 1, "y": 2, ...}, ... ]
       },
       "mark": {"type": "point", "size": 100, "tooltip": true},
       "encoding": {
-        "x": {"field": "age", "type": "quantitative", "title": "Age (Years)"},
-        "y": {"field": "heart_rate", "type": "quantitative", "title": "Heart Rate (bpm)"},
-        "color": {"field": "gender", "type": "nominal", "title": "Gender"}
+        "x": {"field": "x", "type": "quantitative", "title": "X Value"},
+        "y": {"field": "y", "type": "quantitative", "title": "Y Value"},
+        "color": {"field": "category", "type": "nominal", "title": "Category"}
       }
       // Example of providing data directly if not using an external file for this example:
       // "datasets": {
-      //   "patient_data": [
-      //      {"age": 65, "heart_rate": 75, "gender": "Male"},
-      //      {"age": 70, "heart_rate": 88, "gender": "Female"}
+      //   "data": [
+      //      {"x": 1, "y": 2, "category": "Type A"},
+      //      {"x": 2, "y": 4, "category": "Type B"}
       //    ]
       // }
     }
@@ -702,131 +699,230 @@ The `mkdocs.yml` file controls your site's settings, theme, navigation, and plug
 
 ---
 
-## 4. Interactive Dashboards with Streamlit (25 minutes)
+## 4. Interactive Dashboards with Dash by Plotly (20 minutes)
 
-While MkDocs is excellent for creating static reports with embedded interactive charts, sometimes you need a more dynamic application where users can manipulate inputs, trigger computations, and see results update live. Streamlit is a Python library designed for rapidly building and sharing such data applications.
+Dash by Plotly is a powerful framework for building analytical web applications. It's particularly well-suited for creating interactive dashboards that combine data visualization, user inputs, and real-time updates.
 
-### 4.1. From Reports to Interactive Applications
+### 4.1. Why Dash for Dashboards?
 
-* **What is Streamlit?** Streamlit is an open-source Python library that makes it easy to create and share beautiful, custom web apps for machine learning and data science. Think of it as "PowerPoint for data scientists" - but instead of static slides, you create interactive applications that let users explore your analysis in real-time.
+* **Concept & Benefits:** Dash provides a framework for building web applications using Python. It's built on top of Flask and React, offering:
+    * **Python-First:** Write your entire application in Python, including the UI components.
+    * **Interactive Components:** Built-in support for interactive elements like dropdowns, sliders, and date pickers.
+    * **Real-time Updates:** Components can update in real-time based on user interactions or data changes.
+    * **Responsive Design:** Dash apps can be responsive and work well on different screen sizes.
+    * **Production-Ready:** Can be deployed to production servers and handle multiple users.
     <!---
-    *   Streamlit allows you to build interactive UIs directly from your Python scripts with minimal overhead. The "PowerPoint for data scientists" analogy helps students understand that it's about presentation and interaction, not just analysis.
+    *   Dash is particularly powerful for data science applications because it allows you to create interactive UIs without needing to know JavaScript.
+    *   The framework is mature and well-documented, making it a good choice for both beginners and experienced developers.
     --->
-* **Why Streamlit?**
-    * **Rapid Prototyping:** Go from Python script to interactive web app in minutes.
-    * **Python-centric:** Write apps using only Python; no HTML, CSS, or JavaScript knowledge is required for basic apps.
-    * **Interactive Widgets:** Comes with a rich set of input widgets (sliders, dropdowns, text inputs, etc.) that are easy to implement.
-    * **Easy to Share:** Streamlit Community Cloud offers free deployment for public apps.
-    <!---
-    *   Streamlit is particularly useful when you want to provide a tool for others (even non-programmers) to explore data or model predictions by changing parameters.
-    *   It bridges the gap between a data analysis script and a user-friendly web application.
-    --->
-    ![Streamlit official logo](media/streamlit_official_logo_05.png)
 
-### 4.2. Streamlit Fundamentals
+### 4.2. Basic Dash App Structure
 
-* **Installation:**
+* **Installation:** First, install Dash and its dependencies:
 
     ```bash
-    pip install streamlit altair pandas
+    pip install dash pandas plotly
+    ```
+* **Minimal Example:** Here's a basic Dash app that creates a simple scatter plot:
+
+    ```python
+    import dash
+    from dash import dcc, html
+    import plotly.express as px
+    import pandas as pd
+
+    # Create sample data
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5],
+        'y': [2, 4, 6, 8, 10],
+        'category': ['A', 'B', 'A', 'B', 'A']
+    })
+
+    # Initialize the Dash app
+    app = dash.Dash(__name__)
+
+    # Create the scatter plot
+    fig = px.scatter(df, x='x', y='y', color='category',
+                     title='Sample Scatter Plot')
+
+    # Define the app layout
+    app.layout = html.Div([
+        html.H1('My First Dash App'),
+        dcc.Graph(figure=fig)
+    ])
+
+    # Run the app
+    if __name__ == '__main__':
+        app.run_server(debug=True)
     ```
     <!---
-    *   `streamlit`: The core library.
-    *   `altair`, `pandas`: Often used with Streamlit to create and display data/visualizations.
+    *   This example shows the basic structure of a Dash app: initialization, layout definition, and running the server.
+    *   The layout is defined using HTML components from `dash.html` and interactive components from `dash.dcc`.
     --->
-* **Running an App:**
-    Save your Streamlit code as a Python file (e.g., `my_app.py`) and run it from your terminal:
+
+### 4.3. Interactive Components
+
+* **Input Components:** Dash provides various input components that can trigger callbacks:
+
+    ```python
+    import dash
+    from dash import dcc, html
+    from dash.dependencies import Input, Output
+    import plotly.express as px
+    import pandas as pd
+
+    # Create sample data
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5],
+        'y': [2, 4, 6, 8, 10],
+        'category': ['A', 'B', 'A', 'B', 'A']
+    })
+
+    # Initialize the Dash app
+    app = dash.Dash(__name__)
+
+    # Define the app layout
+    app.layout = html.Div([
+        html.H1('Interactive Dash App'),
+        
+        # Dropdown for selecting category
+        html.Label('Select Category:'),
+        dcc.Dropdown(
+            id='category-dropdown',
+            options=[{'label': cat, 'value': cat} for cat in df['category'].unique()],
+            value='A'
+        ),
+        
+        # Graph component
+        dcc.Graph(id='scatter-plot')
+    ])
+
+    # Define callback to update graph
+    @app.callback(
+        Output('scatter-plot', 'figure'),
+        [Input('category-dropdown', 'value')]
+    )
+    def update_graph(selected_category):
+        filtered_df = df[df['category'] == selected_category]
+        fig = px.scatter(filtered_df, x='x', y='y',
+                        title=f'Scatter Plot for Category {selected_category}')
+        return fig
+
+    # Run the app
+    if __name__ == '__main__':
+        app.run_server(debug=True)
+    ```
+    <!---
+    *   This example demonstrates how to use callbacks to make the app interactive.
+    *   The callback function updates the graph whenever the dropdown selection changes.
+    --->
+
+### 4.4. Advanced Features
+
+* **Multiple Inputs/Outputs:** Callbacks can have multiple inputs and outputs:
+
+    ```python
+    @app.callback(
+        [Output('graph1', 'figure'),
+         Output('graph2', 'figure')],
+        [Input('dropdown1', 'value'),
+         Input('dropdown2', 'value')]
+    )
+    def update_graphs(value1, value2):
+        # Update logic for both graphs
+        return fig1, fig2
+    ```
+* **State Management:** Use `State` for values that shouldn't trigger updates:
+
+    ```python
+    from dash.dependencies import Input, Output, State
+
+    @app.callback(
+        Output('output', 'children'),
+        [Input('button', 'n_clicks')],
+        [State('input', 'value')]
+    )
+    def update_output(n_clicks, input_value):
+        # Only updates when button is clicked
+        return f'Button clicked {n_clicks} times. Input value: {input_value}'
+    ```
+* **Interval Updates:** Use `dcc.Interval` for periodic updates:
+
+    ```python
+    app.layout = html.Div([
+        dcc.Interval(
+            id='interval-component',
+            interval=5*1000,  # in milliseconds
+            n_intervals=0
+        ),
+        html.Div(id='output')
+    ])
+
+    @app.callback(
+        Output('output', 'children'),
+        [Input('interval-component', 'n_intervals')]
+    )
+    def update_output(n):
+        return f'Updated {n} times'
+    ```
+
+### 4.5. Deployment
+
+* **Local Development:** During development, use `debug=True` for hot reloading:
+
+    ```python
+    app.run_server(debug=True)
+    ```
+* **Production Deployment:** For production, use a WSGI server like Gunicorn:
 
     ```bash
-    streamlit run my_app.py
+    pip install gunicorn
+    gunicorn app:server
     ```
-
-    This will typically open the app in your default web browser.
-* **Core Concepts:**
-    * **Script Reruns:** Streamlit apps rerun your Python script from top to bottom whenever a user interacts with a widget or the app needs to update. This is a fundamental concept to grasp.
-    * **Layout Commands:**
-        * `st.title("My App Title")`
-        * `st.header("Section Header")`
-        * `st.subheader("Sub-Section")`
-        * `st.write("Some text or a Python variable.")`
-        * `st.markdown("Supports **Markdown** formatting.")`
-        * `st.sidebar`: Used to place elements in a sidebar (e.g., `st.sidebar.header("Filters")`).
-    * **Displaying Data:**
-        * `st.dataframe(my_pandas_df)`: Displays a Pandas DataFrame as an interactive table.
-        * `st.table(my_pandas_df)`: Displays a static table.
-        * `st.metric(label="Metric Name", value=123, delta="-5%")`: Displays a single metric with an optional change indicator.
-        * `st.json(my_dict_or_list)`: Displays JSON.
-    * **Displaying Charts:**
-        * `st.altair_chart(my_altair_chart_object, use_container_width=True)`
-        * `st.pyplot(my_matplotlib_fig_object)`
-        * `st.plotly_chart(my_plotly_fig_object)`
-    * **Input Widgets:** These are functions that return the current value selected by the user.
-        * `st.button("Click me")`: Returns `True` when clicked.
-        * `selected_value = st.slider("Select a range", 0, 100, (25, 75))`: Returns a tuple for a range slider.
-        * `option = st.selectbox("Choose an option", ('A', 'B', 'C'))`: Returns the selected option.
-        * `options = st.multiselect("Choose multiple", ['X', 'Y', 'Z'])`: Returns a list of selected options.
-        * `text = st.text_input("Enter text", "Default value")`
-        * `date = st.date_input("Pick a date")`
-    * **Caching:** Use `@st.cache_data` or `@st.cache_resource` decorators to cache the results of expensive functions (like data loading or model computation) to improve performance, as the script reruns frequently.
+* **Cloud Deployment:** Dash apps can be deployed to various cloud platforms:
+    * **Heroku:** Create a `Procfile` with `web: gunicorn app:server`
+    * **AWS Elastic Beanstalk:** Use the Python platform
+    * **Google Cloud Run:** Containerize the app and deploy to Cloud Run
     <!---
-    *   The simplicity of Streamlit's API allows for quick iteration.
-    *   Understanding the rerun behavior is key to managing state and performance in more complex apps.
-    *   Widgets are the primary way users interact with and control the app.
+    *   The deployment process depends on your specific needs and infrastructure.
+    *   For beginners, Heroku offers a simple way to deploy Dash apps.
     --->
-    ![Streamlit app example interface common widgets screenshot python dashboard](media/streamlit_app_example_interfac_10.png)
 
-### 4.3. The "Netflix Effect" in Health Dashboards
+### Demo 4: Interactive Dashboard with Dash
 
-Just as Netflix revolutionized how we consume entertainment by making it interactive and personalized, modern health dashboards are transforming how we consume data. Instead of passive reports, we now have:
+*   **Location:** The full project for this demo is located in `lectures/09/demo/dash_dashboard_project/`.
+*   **Instructions:** A detailed guide for setting up and running this demo, including explanations of the app structure, interactive components, callbacks, and deployment, can be found in `lectures/09/demo/04_dash_dashboard_guide.md`.
+*   **Key Features:** This demo showcases a complete Dash application that:
+    *   Uses multiple interactive components (dropdowns, sliders, date pickers)
+    *   Implements callbacks for real-time updates
+    *   Includes responsive layout and styling
+    *   Demonstrates deployment to a cloud platform
+    <!---
+    *   This demo provides a comprehensive example of building and deploying an interactive dashboard. Students will explore the app structure and run it locally.
+    --->
 
-* **Personalized views**: Filter by patient population, time period, or condition
-* **Binge-worthy exploration**: One insight leads to another through interactive drilling
-* **Recommendation engines**: "Patients similar to this one also had..."
-* **Real-time updates**: Like Netflix's "continue watching," dashboards remember where you left off
+## Dash Gallery Inspiration
+
+Explore some of the most engaging and interactive Dash apps from the official Dash Gallery. These examples showcase what's possible with Dash for data science, health, and analytics communication:
+
+- [t-SNE Explorer](https://dash.gallery/dash-tsne/)
+  
+  ![#FIXME](#FIXME "dash gallery tsne app screenshot, try: dash gallery tsne app")
+  
+  *Visualizes high-dimensional data using t-SNE for interactive clustering and exploration.*
+
+- [Medical Provider Charges](https://dash.gallery/dash-medical-provider-charges/)
+  
+  ![#FIXME](#FIXME "dash gallery medical provider charges screenshot, try: dash gallery medical provider charges app")
+  
+  *Interactive dashboard for exploring Medicare provider charges by state, region, and procedure.*
+
+- [DUB (Dash User Behavior)](https://dash.gallery/dash-dub/)
+  
+  ![#FIXME](#FIXME "dash gallery dub user behavior screenshot, try: dash gallery dub app")
+  
+  *Analyzes user behavior and engagement in web applications using Dash.*
 
 <!---
-This analogy helps students understand why interactivity matters in healthcare. Just as Netflix keeps viewers engaged through personalization and recommendations, interactive health dashboards keep clinicians and administrators engaged with data, leading to better insights and decisions.
+These links and images are meant to inspire students and show the breadth of what Dash can do. Replace #FIXME with actual image URLs or screenshots for your course materials.
 --->
-
-### 4.4. Demo 4: Combined Streamlit Dashboard (Simple Explorer & Advanced Gapminder)
-
-*   **(Refer to [`lectures/09/demo/04_streamlit_combined_dashboard.md`](lectures/09/demo/04_streamlit_combined_dashboard.md))**
-*   This combined demo walks through building two Streamlit applications:
-    1.  **Part 1: Simple Clinical Data Explorer:**
-        *   **Goal:** Demonstrate immediate utility with a common task using a synthetically generated PhysioNet-style dataset snippet.
-        *   **Key features showcased:**
-            *   Loading data (using [`@st.cache_data`](https://docs.streamlit.io/library/api-reference/performance/st.cache_data) for efficiency).
-            *   Using [`st.sidebar`](https://docs.streamlit.io/library/api-reference/layout/st.sidebar) for filters (e.g., [`st.selectbox`](https://docs.streamlit.io/library/api-reference/widgets/st.selectbox), [`st.slider`](https://docs.streamlit.io/library/api-reference/widgets/st.slider), [`st.multiselect`](https://docs.streamlit.io/library/api-reference/widgets/st.multiselect)).
-            *   Filtering a Pandas DataFrame based on widget selections.
-            *   Displaying the filtered DataFrame ([`st.dataframe`](https://docs.streamlit.io/library/api-reference/data/st.dataframe)).
-            *   Displaying a simple Altair chart based on the filtered data ([`st.altair_chart`](https://docs.streamlit.io/library/api-reference/charts/st.altair_chart)).
-            *   Using [`st.metric`](https://docs.streamlit.io/library/api-reference/data/st.metric) to show key summary statistics.
-    2.  **Part 2: Advanced Gapminder-Style Health & Wealth Dashboard:**
-        *   **Goal:** Showcase more dynamic interactivity and data storytelling, building on Altair components with a richer, time-series dataset.
-        *   **Key features showcased:**
-            *   Using a more complex, synthetically generated Gapminder-style dataset with health and economic indicators over several years.
-            *   Implementing a [`st.select_slider`](https://docs.streamlit.io/library/api-reference/widgets/st.select_slider) for "Year" selection.
-            *   Dynamically filtering the DataFrame passed to an Altair chart based on the slider.
-            *   An Altair chart with multiple encodings (X, Y, Size, Color) as discussed in section 2.4.
-            *   An animation feature to cycle through years.
-            *   Displaying interactive Altair charts using [`st.altair_chart`](https://docs.streamlit.io/library/api-reference/charts/st.altair_chart).
-            *   Displaying summary metrics and regional breakdowns.
-            *   Time series analysis charts for selected countries.
-    <!---
-    *   This combined demo first focuses on the fundamental Streamlit workflow (input widgets -> data manipulation -> output display) with a simple dataset.
-    *   It then progresses to a more sophisticated example illustrating how Streamlit can host complex, interactive Altair visualizations and build feature-rich dashboards.
-    --->
-
-### 4.6. Sharing Streamlit Apps (Briefly)
-
-* **Streamlit Community Cloud:** Streamlit offers a free platform called Streamlit Community Cloud for deploying and sharing public Streamlit apps directly from GitHub repositories.
-    <!---
-    *   This is the easiest way for students to share their projects.
-    *   Requires pushing the app script and a `requirements.txt` file to GitHub.
-    --->
-* **Other Deployment Options (Conceptual Mention):** For private apps or more complex needs, Streamlit apps can also be deployed using Docker containers on various cloud platforms (AWS, GCP, Azure) or on-premise servers.
-    <!---
-    *   These options offer more control but involve more setup.
-    --->
-
----

@@ -1,329 +1,316 @@
-# Demo 2: Interactive Altair Chart - PhysioNet Heart Rate Analysis
+# Demo 2: Interactive Altair Chart - Simplified Wearable Health Insights
 
-**Goal:** Create an interactive Altair chart with selection mechanisms using real physiological data, then save it for embedding in reports.
+**Goal:** Create clear, functional, and engaging interactive Altair charts using a synthetic dataset simulating daily health metrics from wearable devices. This demo prioritizes robust chart rendering and understandable interactivity.
 
 ## Step 1: Set Up Your Environment
 
-Create a new Python file or Jupyter notebook and install required packages:
-
-```bash
-pip install altair pandas numpy vl-convert-python
-```
-
-## Step 2: Create Sample PhysioNet-Style Data
-
-Since we're simulating PhysioNet data, let's create a realistic dataset:
+Ensure all required packages from `requirements.txt` are installed.
 
 ```python
+# Import required packages
 import altair as alt
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from IPython.display import HTML, Image, display # Ensure display is imported
+import os # For checking file existence
 
 # Enable Altair to render in notebooks
 alt.data_transformers.enable('json')
+```
 
-# Create synthetic PhysioNet-style heart rate data
+## Step 2: Create Synthetic Wearable Device Data
+
+We'll generate a dataset simulating daily health metrics over a month for several individuals. This version simplifies some data generation aspects to ensure clarity for visualization.
+
+```python
+# Generate synthetic wearable device data
 np.random.seed(42)  # For reproducibility
 
-# Generate patient data
-n_patients = 150
-patients = []
+n_users = 10 # Reduced user count for potentially clearer individual plots
+n_days = 30
+data = []
 
-for i in range(n_patients):
-    patient_id = f"P{i+1:03d}"
-    age = np.random.randint(25, 85)
-    gender = np.random.choice(['Male', 'Female'])
-    condition = np.random.choice(['Healthy', 'Hypertension', 'Arrhythmia', 'Heart Disease'])
-    
-    # Heart rate varies by condition and age
-    if condition == 'Healthy':
-        base_hr = 70 + np.random.normal(0, 8)
-    elif condition == 'Hypertension':
-        base_hr = 80 + np.random.normal(0, 12)
-    elif condition == 'Arrhythmia':
-        base_hr = 75 + np.random.normal(0, 20)  # More variable
-    else:  # Heart Disease
-        base_hr = 85 + np.random.normal(0, 15)
-    
-    # Age effect
-    base_hr += (age - 50) * 0.2
-    
-    # Ensure reasonable bounds
-    heart_rate = max(50, min(120, base_hr))
-    
-    # Blood pressure (systolic)
-    if condition == 'Hypertension':
-        systolic_bp = 150 + np.random.normal(0, 15)
-    else:
-        systolic_bp = 120 + np.random.normal(0, 12)
-    
-    systolic_bp = max(90, min(200, systolic_bp))
-    
-    patients.append({
-        'patient_id': patient_id,
-        'age': age,
-        'gender': gender,
-        'condition': condition,
-        'heart_rate': round(heart_rate, 1),
-        'systolic_bp': round(systolic_bp, 1),
-        'bmi': round(18.5 + np.random.exponential(5), 1)
-    })
+genders = ['Male', 'Female']
+activity_profiles_config = {
+    'Sedentary': {'base_steps': 3000, 'hr_factor': 1.03, 'stress_add': 1.5, 'sleep_hours_base': 6.8},
+    'Lightly Active': {'base_steps': 6000, 'hr_factor': 1.0, 'stress_add': 0.5, 'sleep_hours_base': 7.2},
+    'Active': {'base_steps': 10000, 'hr_factor': 0.97, 'stress_add': -1.0, 'sleep_hours_base': 7.7}
+}
+profile_keys = list(activity_profiles_config.keys())
 
-physio_df = pd.DataFrame(patients)
-print(f"Created dataset with {len(physio_df)} patients")
-print(physio_df.head())
+for user_i in range(n_users):
+    user_id = f"User{201+user_i}"
+    age = np.random.randint(28, 58)
+    gender = np.random.choice(genders)
+    user_profile_key = np.random.choice(profile_keys)
+    user_profile = activity_profiles_config[user_profile_key]
+
+    for day_j in range(1, n_days + 1):
+        # Daily variation
+        steps_variation = np.random.normal(1, 0.25) # Multiplicative factor
+        steps_taken = int(user_profile['base_steps'] * steps_variation)
+        steps_taken = max(1000, min(22000, steps_taken))
+
+        calories_burned = int(1600 + (steps_taken * 0.05) + (np.random.normal(0, 150)) + (100 if gender == 'Male' else 0) - (age*2))
+        calories_burned = max(1300, calories_burned)
+
+        avg_heart_rate = 70 - (age - 40)*0.25 + (10000 - steps_taken)*0.0015 / user_profile['hr_factor'] + np.random.normal(0,2.5)
+        avg_heart_rate = int(max(50, min(100, avg_heart_rate))) # Daily average, not peak
+
+        sleep_hours = user_profile['sleep_hours_base'] + np.random.normal(0, 0.6) - (steps_taken / 20000) # High activity might slightly reduce
+        sleep_hours = round(max(4.5, min(9.5, sleep_hours)), 1)
+        
+        stress_level = 4 + user_profile['stress_add'] - (sleep_hours - 7)*0.8 - (steps_taken / 5000) + np.random.normal(0,1.2)
+        stress_level = round(max(0.5, min(9.5, stress_level)), 1) # Keep within 0-10 effectively
+        
+        data.append({
+            'user_id': user_id, 'day_of_study': day_j, 'age': age, 'gender': gender,
+            'activity_profile': user_profile_key,
+            'steps_taken': steps_taken, 'avg_heart_rate': avg_heart_rate,
+            'sleep_hours': sleep_hours, 'stress_level': stress_level,
+            'calories_burned': calories_burned
+        })
+
+wearable_df = pd.DataFrame(data)
+print(f"Generated {len(wearable_df)} daily records for {wearable_df['user_id'].nunique()} users.")
+print(wearable_df.head())
 ```
 
-## Step 3: Basic Interactive Scatter Plot
+## Step 3: Basic Interactive Plot - Daily Steps Over Study Period
 
-Let's start with a simple interactive scatter plot:
+Visualizing daily steps for each user, colored by their activity profile. Scroll wheel zoom on the y-axis is disabled for easier navigation.
 
 ```python
-# Basic scatter plot with tooltips
-basic_chart = alt.Chart(physio_df).mark_circle(size=100).encode(
-    x=alt.X('age:Q', title='Age (years)'),
-    y=alt.Y('heart_rate:Q', title='Heart Rate (bpm)'),
-    color=alt.Color('condition:N', title='Medical Condition'),
+steps_over_time_chart = alt.Chart(wearable_df).mark_line(point=alt.OverlayMarkDef(size=20)).encode(
+    x=alt.X('day_of_study:Q', title='Day of Study', axis=alt.Axis(tickCount=n_days//3, grid=False)),
+    y=alt.Y('steps_taken:Q', title='Daily Steps Taken', scale=alt.Scale(zero=False)),
+    color=alt.Color('activity_profile:N', title='Activity Profile'),
+    strokeDash=alt.StrokeDash('user_id:N', title='User ID', legend=None), 
     tooltip=[
-        alt.Tooltip('patient_id:N', title='Patient ID'),
-        alt.Tooltip('age:Q', title='Age'),
-        alt.Tooltip('heart_rate:Q', title='Heart Rate'),
-        alt.Tooltip('condition:N', title='Condition'),
-        alt.Tooltip('gender:N', title='Gender')
+        'user_id:N', 'day_of_study:Q', 'steps_taken:Q', 
+        'activity_profile:N', 'avg_heart_rate:Q', 'stress_level:Q', 'sleep_hours:Q'
     ]
 ).properties(
-    title='Heart Rate vs Age by Medical Condition',
-    width=500,
-    height=350
-).interactive()  # Enable pan and zoom
+    title='Daily Steps Over Study Period by User and Activity Profile',
+    width=650, 
+    height=300
+).interactive(bind_y=False) # Disable y-axis scroll zoom, allow x-axis pan/zoom
 
-# Display the chart
-basic_chart
+steps_over_time_chart
 ```
 
-## Step 4: Add Brush Selection
+## Step 4: Brush Selection - Heart Rate vs. Calories Burned
 
-Now let's add a brush selection that highlights selected points:
+Exploring the relationship between average daily heart rate and calories burned. Scroll wheel zoom on the y-axis is disabled.
 
 ```python
-# Create a brush selection
-brush = alt.selection_interval(name='brush')
+hr_calories_brush_sel = alt.selection_interval(name='hr_calories_brush_selection')
 
-# Chart with brush selection
-brush_chart = alt.Chart(physio_df).mark_circle(size=100).encode(
-    x=alt.X('age:Q', title='Age (years)'),
-    y=alt.Y('heart_rate:Q', title='Heart Rate (bpm)'),
+hr_calories_scatter_chart = alt.Chart(wearable_df).mark_circle(size=70, opacity=0.8).encode(
+    x=alt.X('avg_heart_rate:Q', title='Average Daily Heart Rate (bpm)', scale=alt.Scale(zero=False)),
+    y=alt.Y('calories_burned:Q', title='Calories Burned', scale=alt.Scale(zero=False)),
     color=alt.condition(
-        brush,
-        alt.Color('condition:N', title='Medical Condition'),
-        alt.value('lightgray')  # Non-selected points are gray
+        hr_calories_brush_sel,
+        alt.Color('activity_profile:N', title='Activity Profile'),
+        alt.value('lightgray')
     ),
-    opacity=alt.condition(brush, alt.value(0.8), alt.value(0.3)),
-    tooltip=[
-        alt.Tooltip('patient_id:N', title='Patient ID'),
-        alt.Tooltip('age:Q', title='Age'),
-        alt.Tooltip('heart_rate:Q', title='Heart Rate'),
-        alt.Tooltip('condition:N', title='Condition'),
-        alt.Tooltip('systolic_bp:Q', title='Systolic BP')
-    ]
-).add_selection(
-    brush
+    tooltip=['user_id:N', 'avg_heart_rate:Q', 'calories_burned:Q', 'steps_taken:Q', 'stress_level:Q']
+).add_params(
+    hr_calories_brush_sel
 ).properties(
-    title='Heart Rate vs Age - Brush to Select Patients',
+    title='Heart Rate vs. Calories Burned (Brush to Select)',
     width=500,
-    height=350
-)
+    height=300
+).interactive(bind_y=False) # Disable y-axis scroll zoom
 
-brush_chart
+hr_calories_scatter_chart
 ```
 
-## Step 5: Linked Charts with Selection
+## Step 5: Interactive Filtering with Dropdown Selection
 
-Create a more sophisticated visualization with linked charts:
+Create a simple dropdown filter to explore how different activity profiles affect sleep patterns.
 
 ```python
-# Create a dropdown selection for medical condition
-condition_dropdown = alt.selection_single(
-    fields=['condition'],
-    bind=alt.binding_select(options=['All'] + list(physio_df['condition'].unique())),
-    name='condition_select',
-    init={'condition': 'All'}
+print("Creating interactive chart with dropdown filter...")
+
+# Create a parameter for the dropdown selection
+activity_filter = alt.param(
+    name='activity_filter',
+    bind=alt.binding_select(
+        options=['All'] + sorted(wearable_df['activity_profile'].unique().tolist()),
+        name='Activity Profile: '
+    ),
+    value='All'
 )
 
-# Base chart
-base = alt.Chart(physio_df).add_selection(condition_dropdown)
-
-# Main scatter plot
-scatter = base.mark_circle(size=80).encode(
-    x=alt.X('age:Q', title='Age (years)', scale=alt.Scale(domain=[20, 90])),
-    y=alt.Y('heart_rate:Q', title='Heart Rate (bpm)', scale=alt.Scale(domain=[45, 125])),
-    color=alt.Color('condition:N', 
-                   title='Medical Condition',
-                   scale=alt.Scale(range=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])),
-    size=alt.Size('bmi:Q', title='BMI', scale=alt.Scale(range=[50, 200])),
-    opacity=alt.condition(condition_dropdown, alt.value(0.8), alt.value(0.1)),
-    tooltip=[
-        alt.Tooltip('patient_id:N', title='Patient ID'),
-        alt.Tooltip('age:Q', title='Age'),
-        alt.Tooltip('heart_rate:Q', title='Heart Rate'),
-        alt.Tooltip('systolic_bp:Q', title='Systolic BP'),
-        alt.Tooltip('condition:N', title='Condition'),
-        alt.Tooltip('bmi:Q', title='BMI', format='.1f')
-    ]
+# Create the chart with dropdown filtering
+sleep_steps_chart = alt.Chart(wearable_df).add_params(
+    activity_filter
 ).transform_filter(
-    alt.expr.if_(condition_dropdown.condition == 'All', 
-                 True, 
-                 alt.datum.condition == condition_dropdown.condition)
+    # Filter data based on dropdown selection
+    alt.expr.if_(
+        activity_filter == 'All',
+        True,
+        alt.datum.activity_profile == activity_filter
+    )
+).mark_circle(size=80, opacity=0.7).encode(
+    x=alt.X('steps_taken:Q', title='Daily Steps', scale=alt.Scale(zero=False)),
+    y=alt.Y('sleep_hours:Q', title='Sleep Hours', scale=alt.Scale(domain=[4, 10])),
+    color=alt.Color('activity_profile:N', title='Activity Profile'),
+    tooltip=['user_id:N', 'steps_taken:Q', 'sleep_hours:Q', 'stress_level:Q', 'activity_profile:N']
 ).properties(
-    title='Heart Rate vs Age (Size = BMI, Filter by Condition)',
-    width=450,
+    title='Sleep vs Steps by Activity Profile (Use dropdown to filter)',
+    width=500,
     height=300
 )
 
-# Summary statistics bar chart
-summary_bars = base.mark_bar().encode(
-    x=alt.X('condition:N', title='Medical Condition'),
-    y=alt.Y('mean(heart_rate):Q', title='Average Heart Rate'),
-    color=alt.Color('condition:N', legend=None),
-    opacity=alt.condition(condition_dropdown, alt.value(0.8), alt.value(0.3))
-).transform_filter(
-    alt.expr.if_(condition_dropdown.condition == 'All', 
-                 True, 
-                 alt.datum.condition == condition_dropdown.condition)
-).properties(
-    title='Average Heart Rate by Condition',
-    width=450,
-    height=200
-)
-
-# Combine charts vertically
-linked_chart = alt.vconcat(scatter, summary_bars).resolve_scale(color='independent')
-
-linked_chart
+# Display the chart
+sleep_steps_chart
 ```
 
-## Step 6: Save Charts for Embedding
+## Step 6: Save Interactive Charts for Reports
 
-Save your charts in different formats for use in reports:
+Learn how to export Altair charts in different formats for embedding in reports and presentations.
 
 ```python
-# Create output directory
 import os
-os.makedirs('charts', exist_ok=True)
 
-# Save the linked chart as JSON for MkDocs
-linked_chart.save('charts/heart_rate_analysis.json')
+# Create charts directory if it doesn't exist
+charts_dir = 'charts'
+os.makedirs(charts_dir, exist_ok=True)
 
-# Save as HTML for standalone viewing
-linked_chart.save('charts/heart_rate_analysis.html')
+# Save the interactive chart from Step 5 in multiple formats
+chart_name = 'sleep_steps_interactive'
 
-# Save as PNG for presentations (requires vl-convert-python)
+# 1. Save as JSON (preserves all interactivity)
+json_path = os.path.join(charts_dir, f'{chart_name}.json')
+sleep_steps_chart.save(json_path)
+print(f"✅ Saved JSON: {json_path}")
+
+# 2. Save as HTML (standalone interactive file)
+html_path = os.path.join(charts_dir, f'{chart_name}.html')
+sleep_steps_chart.save(html_path)
+print(f"✅ Saved HTML: {html_path}")
+
+# 3. Save as PNG (static image for presentations)
 try:
-    linked_chart.save('charts/heart_rate_analysis.png', scale_factor=2)
-    print("✅ Saved PNG successfully")
+    png_path = os.path.join(charts_dir, f'{chart_name}.png')
+    sleep_steps_chart.save(png_path, scale_factor=2.0)
+    print(f"✅ Saved PNG: {png_path}")
 except Exception as e:
     print(f"⚠️  PNG save failed: {e}")
-    print("Install vl-convert-python for PNG export: pip install vl-convert-python")
+    print("   Install vl-convert-python for PNG export: pip install vl-convert-python")
 
-print("✅ Charts saved successfully!")
-print("Files created:")
-print("- charts/heart_rate_analysis.json (for MkDocs)")
-print("- charts/heart_rate_analysis.html (standalone)")
+print(f"\n📁 All charts saved to '{charts_dir}/' directory")
+print("💡 Use HTML files for interactive web reports")
+print("💡 Use PNG files for static presentations")
 ```
 
-## Step 7: Create a "Clinical Dashboard" Style Chart
+## Step 7: "Daily Wellness Dashboard" - Simplified
 
-Let's create something that looks more like a clinical monitoring dashboard:
+A less cluttered dashboard focusing on daily steps, sleep, and stress. Y-axis scroll zoom is disabled.
 
 ```python
-# Clinical dashboard style
-dashboard_chart = alt.Chart(physio_df).mark_circle(
-    stroke='white',
-    strokeWidth=1
-).encode(
-    x=alt.X('systolic_bp:Q', 
-           title='Systolic Blood Pressure (mmHg)',
-           scale=alt.Scale(domain=[80, 200])),
-    y=alt.Y('heart_rate:Q', 
-           title='Heart Rate (bpm)',
-           scale=alt.Scale(domain=[45, 125])),
-    size=alt.Size('age:Q', 
-                 title='Age',
-                 scale=alt.Scale(range=[100, 400])),
-    color=alt.Color('condition:N',
-                   title='Condition',
-                   scale=alt.Scale(
-                       domain=['Healthy', 'Hypertension', 'Arrhythmia', 'Heart Disease'],
-                       range=['#2ecc71', '#f39c12', '#e74c3c', '#8e44ad']
-                   )),
+# Simplified Wellness Dashboard
+wellness_dashboard_v2 = alt.Chart(wearable_df).mark_circle(size=70, opacity=0.6, stroke='black', strokeWidth=0.2).encode(
+    x=alt.X('steps_taken:Q', title='Daily Steps', scale=alt.Scale(zero=False)),
+    y=alt.Y('sleep_hours:Q', title='Sleep (Hours)', scale=alt.Scale(domain=[4,10])),
+    color=alt.Color('stress_level:Q', title='Stress Level', 
+                  scale=alt.Scale(scheme='redyellowgreen', reverse=True)), # Lower stress = greener
     tooltip=[
-        alt.Tooltip('patient_id:N', title='Patient'),
-        alt.Tooltip('age:Q', title='Age'),
-        alt.Tooltip('heart_rate:Q', title='HR (bpm)'),
-        alt.Tooltip('systolic_bp:Q', title='SBP (mmHg)'),
-        alt.Tooltip('condition:N', title='Condition')
+        'user_id:N', 'day_of_study:Q', 'steps_taken:Q', 'sleep_hours:Q', 
+        'stress_level:Q', 'activity_profile:N', 'avg_heart_rate:Q'
     ]
 ).properties(
     title={
-        "text": "Clinical Monitoring Dashboard",
-        "subtitle": "Heart Rate vs Blood Pressure (bubble size = age)"
+        "text": "Daily Wellness Overview",
+        "subtitle": "Steps vs. Sleep (Color = Stress Level)"
     },
-    width=600,
-    height=400,
-    background='#fafafa'
-).interactive()
+    width=550, 
+    height=350
+).interactive(bind_y=False) # Y-axis scroll zoom already disabled by default on composite charts, but explicit for clarity
 
-# Add reference lines for normal ranges
-hr_normal = alt.Chart(pd.DataFrame({'hr': [60, 100]})).mark_rule(
-    color='green', strokeDash=[5, 5], opacity=0.7
-).encode(y='hr:Q')
+# Subtle reference lines
+ideal_steps_ref = alt.Chart(pd.DataFrame({'ideal_steps': [8000]})).mark_rule(color='lightgray', strokeDash=[2,2]).encode(x='ideal_steps:Q')
+ideal_sleep_ref = alt.Chart(pd.DataFrame({'ideal_sleep': [7.5]})).mark_rule(color='lightgray', strokeDash=[2,2]).encode(y='ideal_sleep:Q')
 
-bp_normal = alt.Chart(pd.DataFrame({'bp': [120]})).mark_rule(
-    color='green', strokeDash=[5, 5], opacity=0.7
-).encode(x='bp:Q')
+final_wellness_dashboard_v2 = (wellness_dashboard_v2 + ideal_steps_ref + ideal_sleep_ref).properties(
+    background='#ffffff' # Plain background
+)
 
-# Combine with reference lines
-clinical_dashboard = dashboard_chart + hr_normal + bp_normal
+json_path_wellness_v2 = os.path.join(charts_dir, 'wellness_dashboard_v2.json')
+if 'final_wellness_dashboard_v2' in locals():
+    try:
+        final_wellness_dashboard_v2.save(json_path_wellness_v2)
+        print(f"\nSaved {json_path_wellness_v2}")
+    except Exception as e:
+        print(f"⚠️ Error saving final_wellness_dashboard_v2: {e}")
+else:
+    print("⚠️ 'final_wellness_dashboard_v2' not defined. Skipping save.")
 
-clinical_dashboard.save('charts/clinical_dashboard.json')
-clinical_dashboard
+final_wellness_dashboard_v2
 ```
 
 ## Success Validation
+This section remains the same, outlining the goals for the interactive charts.
 
-Your interactive charts should demonstrate:
-
-- ✅ **Basic interactivity**: Tooltips showing detailed patient information
-- ✅ **Selection mechanisms**: Brush selection or dropdown filters
-- ✅ **Linked visualizations**: Multiple charts that respond to the same selection
-- ✅ **Professional appearance**: Appropriate colors, titles, and formatting
-- ✅ **Saved outputs**: JSON files ready for embedding in MkDocs
-- ✅ **Health data context**: Realistic physiological parameters and medical conditions
+- ✅ **Clear relationships** between variables in the synthetic data.
+- ✅ **Engaging tooltips** providing rich contextual information.
+- ✅ **Effective use of selections** (brush, dropdown) for data exploration.
+- ✅ **Linked visualizations** where interactions in one chart update others.
+- ✅ **Visually appealing** and informative "dashboard-style" compositions.
+- ✅ **Saved outputs** (JSON, HTML, PNG) for various use cases.
 
 ## Bonus: Quick Data Quality Check
 
-Add this code to validate your data makes clinical sense:
+**Why perform data quality checks?**
+Before diving into complex visualizations or analyses, it's crucial to perform basic data quality checks. This step helps us:
+1.  **Identify potential errors:** Catch issues in data generation or loading (e.g., values outside expected ranges, incorrect data types).
+2.  **Understand data distributions:** Get a feel for the typical values, ranges, and frequencies of different features in our dataset.
+3.  **Ensure data makes sense:** Verify that the synthetic data, while not real, reflects plausible scenarios for the domain we're simulating (in this case, daily wearable metrics).
+4.  **Prevent misleading visualizations:** Using flawed data can lead to incorrect interpretations and conclusions. Early checks mitigate this risk.
+
+**What does the following code do?**
+The Python code below will:
+- Print the total number of records and unique users to confirm dataset size.
+- Display the minimum and maximum values for key numerical features (age, steps, heart rate, sleep, stress, calories) to check their ranges.
+- Show the distribution (value counts) for important categorical features (activity profile, gender) to understand their frequencies.
+- Perform some example plausibility checks (e.g., ensuring stress levels are within 0-10, sleep hours are reasonable).
+- Report any identified "issues" if values fall outside these predefined plausible ranges.
+
+This provides a quick overview and helps build confidence in the data before we rely on it for visualization.
 
 ```python
-# Quick sanity check on our synthetic data
-print("Data Quality Check:")
-print(f"Heart rate range: {physio_df['heart_rate'].min():.1f} - {physio_df['heart_rate'].max():.1f} bpm")
-print(f"Age range: {physio_df['age'].min()} - {physio_df['age'].max()} years")
-print(f"Blood pressure range: {physio_df['systolic_bp'].min():.1f} - {physio_df['systolic_bp'].max():.1f} mmHg")
-print(f"Conditions: {physio_df['condition'].value_counts().to_dict()}")
+# Quick sanity check on our new synthetic data
+print("\nData Quality Check (Synthetic Wearable Data):")
+if not wearable_df.empty:
+    print(f"Total records: {len(wearable_df)}")
+    print(f"Unique users: {wearable_df['user_id'].nunique()}")
+    print(f"Age range: {wearable_df['age'].min()} - {wearable_df['age'].max()} years")
+    print(f"Day of Study range: {wearable_df['day_of_study'].min()} - {wearable_df['day_of_study'].max()}")
+    print(f"Steps Taken range: {wearable_df['steps_taken'].min()} - {wearable_df['steps_taken'].max()}")
+    print(f"Avg Heart Rate range: {wearable_df['avg_heart_rate'].min()} - {wearable_df['avg_heart_rate'].max()} bpm")
+    print(f"Sleep Hours range: {wearable_df['sleep_hours'].min():.1f} - {wearable_df['sleep_hours'].max():.1f} hrs")
+    print(f"Stress Level range: {wearable_df['stress_level'].min():.1f} - {wearable_df['stress_level'].max():.1f}")
+    print(f"Calories Burned range: {wearable_df['calories_burned'].min()} - {wearable_df['calories_burned'].max()}")
+    
+    print(f"\nPrimary Activity Profiles: {wearable_df['activity_profile'].value_counts().to_dict()}")
+    print(f"Gender Distribution: {wearable_df['gender'].value_counts().to_dict()}")
 
-# Check for any impossible values
-issues = []
-if physio_df['heart_rate'].min() < 30 or physio_df['heart_rate'].max() > 200:
-    issues.append("Heart rate out of physiological range")
-if physio_df['age'].min() < 0 or physio_df['age'].max() > 120:
-    issues.append("Age out of reasonable range")
-
-if issues:
-    print(f"⚠️  Issues found: {issues}")
+    issues = []
+    if not (0 <= wearable_df['stress_level'].min() and wearable_df['stress_level'].max() <= 10):
+        issues.append(f"Stress level out of 0-10 bounds: min={wearable_df['stress_level'].min()}, max={wearable_df['stress_level'].max()}")
+    if not (3 <= wearable_df['sleep_hours'].min() and wearable_df['sleep_hours'].max() <= 11): 
+        issues.append(f"Sleep hours out of typical range: min={wearable_df['sleep_hours'].min()}, max={wearable_df['sleep_hours'].max()}")
+    if wearable_df['steps_taken'].min() < 0:
+        issues.append(f"Steps taken has negative values: {wearable_df['steps_taken'].min()}")
+    
+    if issues:
+        print(f"\n⚠️  Potential data issues found: {issues}")
+    else:
+        print("\n✅ Basic data checks for plausible ranges passed.")
 else:
-    print("✅ All values within reasonable physiological ranges")
+    print("⚠️ wearable_df is empty, skipping data quality checks.")
 ```
 
-This demo gives students hands-on experience with Altair's key interactive features while working with realistic health data! 🏥📊
+This revised demo aims to provide a more compelling and educational example for students learning Altair with health-related data. 🏃‍♀️💤🧘‍♂️📊

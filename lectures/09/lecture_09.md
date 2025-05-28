@@ -208,6 +208,149 @@ graph LR;
     *   Students will apply the syntax learned to visualize a familiar process.
     --->
 
+### 1.4. More Mermaid Examples
+
+Here are some practical examples showing different node shapes and their use cases in healthcare workflows. Each example shows both the code and the rendered diagram:
+
+#### Clinical Trial Enrollment Flow
+
+**Reference Card: Mermaid Flowchart**
+- **Declaration:** `graph TD;` (Top-Down) or `graph LR;` (Left-Right)
+- **Node Types:**
+  - `[()]` - Database/Storage
+  - `()` - Process/Step
+  - `{}` - Decision Point
+  - `[[]]` - Subroutine/Complex Process
+  - `>]` - Output/Document
+  - `(())` - End Point/Result
+- **Links:**
+  - `-->` - Arrow link
+  - `-- Text -->` - Labeled arrow
+  - `-.->` - Dotted arrow
+
+**Code:**
+```mermaid
+graph TD;
+    A[(Patient Database)] --> B{Meets Criteria?};
+    B -->|Yes| C[Screen Patient];
+    B -->|No| D[Document Exclusion];
+    C --> E{Consent Given?};
+    E -->|Yes| F[[Randomization]];
+    E -->|No| G[Document Refusal];
+    F --> H[Intervention Group];
+    F --> I[Control Group];
+    H --> J>Follow-up Visits];
+    I --> J;
+    J --> K((Study End));
+```
+
+**Rendered:**
+![Clinical Trial Enrollment Flow](media/mermaid_clinical_trial_flow.png)
+
+#### Hospital Admission Process
+
+**Code:**
+```mermaid
+graph LR;
+    A[Patient Arrival] --> B{Urgency Level};
+    B -->|Emergency| C[[ER Triage]];
+    B -->|Scheduled| D[Registration];
+    C --> E{Stable?};
+    E -->|Yes| D;
+    E -->|No| F[Immediate Care];
+    D --> G[Room Assignment];
+    F --> G;
+    G --> H>Treatment Plan];
+```
+
+**Rendered:**
+![Hospital Admission Process](media/mermaid_hospital_admission.png)
+
+#### Data Pipeline with Error Handling
+
+**Code:**
+```mermaid
+graph TD;
+    A[(Raw Data)] --> B[Validation];
+    B --> C{Valid?};
+    C -->|Yes| D[Processing];
+    C -->|No| E>Error Log];
+    E --> F[Manual Review];
+    F -->|Fixed| B;
+    F -->|Unfixable| G[[Archive]];
+    D --> H[Analysis];
+    H --> I((Results));
+```
+
+**Rendered:**
+![Data Pipeline with Error Handling](media/mermaid_data_pipeline.png)
+
+### 1.5. Mermaid Configuration
+
+Mermaid supports various configuration options to customize the appearance of diagrams. Here are some key configurations:
+
+* **Theme:** You can switch between different themes (e.g., default, dark, forest) using the `theme` keyword.
+    ```mermaid
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
+
+* **Style:** You can apply custom styles to nodes, links, and overall diagram appearance.
+    ```mermaid
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
+
+* **Custom Fonts:** You can specify custom fonts for text and labels.
+    ```mermaid
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
+
+### 1.6. Advanced Mermaid Features
+
+* **Subgraphs:** You can create subgraphs to group related nodes and links.
+    ```mermaid
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
+
+* **Styling:** You can apply custom styles to individual nodes and links.
+    ```mermaid
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
+
 ---
 
 ## 2. Interactive Data Visualization with Altair (25 minutes)
@@ -450,239 +593,335 @@ This conceptual code outlines how to define an Altair chart with a time slider. 
     *   It reinforces the concepts of selections and saving for embedding.
     --->
 
----
+### 2.5. Controlling Interactivity
 
-## 3. Automated Report Generation with MkDocs (20 minutes)
+Altair provides fine-grained control over interactive features. Here are some key controls:
 
-Once you have created insightful visualizations and diagrams, you need an effective way to share them along with your narrative and findings. MkDocs is a static site generator that allows you to create professional-looking project documentation and reports using Markdown.
-
-### 3.1. Why Static Site Generators for Reports?
-
-* **Concept & Benefits:** Static site generators (SSGs) like MkDocs take source files (e.g., Markdown text, images, chart specifications) and templates to produce a complete, self-contained HTML website. For data science reports, this offers:
-    * **Shareability:** Simple HTML files are easy to host on a web server, GitHub Pages, or send as a zipped archive.
-    * **Version Control:** The entire report source (Markdown, Python scripts for generating charts, configuration files) can be managed with Git.
-    * **Reproducibility:** Reports can be consistently rebuilt from the source files at any time.
-    * **Professional Appearance:** Themes (like Material for MkDocs) provide a polished look with minimal effort.
-    * **Automation:** The process of generating charts and building the report can be scripted.
-    <!---
-    *   SSGs bridge the gap between writing analysis code and producing a presentable, shareable output.
-    *   They are an excellent alternative to manually assembling reports in word processors or relying solely on Jupyter Notebooks for dissemination.
-    --->
-* **MkDocs:** MkDocs is known for its speed, simplicity, and focus on creating project documentation, which extends well to generating data analysis reports. It uses Markdown for content, making it easy to write.
-    ![MkDocs official logo](media/mkdocs_official_logo_03.png)
-    ![MkDocs material official logo](media/mkdocs_material_official_logo_04.png)
-
-### 3.2. Setting up MkDocs
-
-* **Installation:** You'll need MkDocs itself, a theme (Material for MkDocs is highly recommended), and any plugins. For embedding Altair charts, we'll use `mkdocs-altair-plugin`.
-
-    ```bash
-    pip install mkdocs mkdocs-material mkdocs-altair-plugin pandas altair
-    ```
-    <!---
-    *   `mkdocs`: The core static site generator.
-    *   `mkdocs-material`: A popular and feature-rich theme for MkDocs.
-    *   `mkdocs-altair-plugin`: Allows easy embedding of Altair charts.
-    *   `pandas` and `altair`: Needed if your report generation process involves creating charts with Python.
-    --->
-* **Project Initialization:** To start a new MkDocs project:
-
-    ```bash
-    mkdocs new my_report
-    cd my_report
-    ```
-
-    This creates a basic project structure:
-
-    ```
-    my_report/
-    ├── mkdocs.yml    # The main configuration file
-    └── docs/
-        └── index.md  # The homepage for your report
-    ```
-    <!---
-    *   The `mkdocs new` command sets up the essential files and directories.
-    *   You'll primarily work within the `docs/` directory for content and edit `mkdocs.yml` for configuration.
-    --->
-* **Directory Structure (Recommended):** It's good practice to organize supporting files. For example, create a `docs/charts/` directory for Altair JSON specifications and `docs/media/` for images.
-
-    ```
-    my_report/
-    ├── mkdocs.yml
-    └── docs/
-        ├── index.md
-        ├── analysis_page.md
-        ├── charts/
-        │   └── my_altair_chart.json
-        └── media/
-            └── workflow_diagram.png 
-    ```
-
-### 3.3. Configuring `mkdocs.yml`
-
-The `mkdocs.yml` file controls your site's settings, theme, navigation, and plugins.
-
-* **Basic Configuration:**
-
-    ```yaml
-    site_name: My Data Report
-    site_description: 'A report on data analysis findings.'
-    site_author: 'Your Name'
-
-    theme:
-      name: material  # Using the Material for MkDocs theme
-      # Optional: add features, palette, logo, etc.
-      # features:
-      #   - navigation.tabs
-      # palette:
-      #   primary: 'indigo'
-      #   accent: 'blue'
-      # logo: media/logo.png 
-    ```
-
-    ![MkDocs material theme example website screenshot documentation site](media/mkdocs_material_theme_example__08.png)
-* **Plugins:** Enable plugins, especially for Altair charts.
-
-    ```yaml
-    plugins:
-      - search        # Built-in search plugin
-      - charts        # For mkdocs-charts-plugin (or the specific name it uses, e.g., mkdocs_charts_plugin)
-      # Ensure vega_lite_version is compatible if the plugin has such an option,
-      # or that Altair output matches what the plugin expects.
-      # Example options for mkdocs-charts-plugin (refer to its documentation):
-      # charts:
-      #   vega_lite_version: "5" # Or similar if supported
-      #   use_data_path: true # If you want paths relative to markdown file
-    ```
-    <!---
-    *   The `mkdocs-material` theme offers many customization options documented on its website.
-    *   Ensure the `vega_lite_version` in the `altair` plugin matches the version Altair is using to avoid rendering issues.
-    --->
-* **Navigation (`nav`):** Defines the structure of your site's navigation menu.
-
-    ```yaml
-    nav:
-      - 'Home': 'index.md'
-      - 'Analysis Details':
-        - 'Part 1: EDA': 'eda.md'
-        - 'Part 2: Modeling': 'modeling.md'
-      - 'Interactive Charts': 'interactive_charts.md'
-      - 'About': 'about.md'
-    ```
-    <!---
-    *   The `nav` section allows you to create a hierarchical menu for your report pages.
-    --->
-
-### 3.4. Creating Report Content & Embedding Charts/Diagrams
-
-* **Markdown:** Write your report narrative, analysis, and findings in `.md` files within the `docs/` directory. Standard Markdown syntax applies.
-* **Python Script for Charts:** It's good practice to have a separate Python script (e.g., in a `scripts/` directory at the project root, or directly in `docs/` if simple) that generates your Altair charts and saves them as JSON files into a designated folder, like `docs/charts/`.
-
+* **Disabling Specific Interactions:**
     ```python
-    # Example: scripts/generate_report_charts.py
-    # import altair as alt
-    # import pandas as pd
-    # from pathlib import Path
-
-    # # Assume data_df is loaded or created
-    # # ... (chart creation code from section 2.3) ...
-    # # scatter_plot = alt.Chart(data_df).mark_point()... 
-
-    # output_dir = Path("../docs/charts") # Relative to script location if script is in scripts/
-    # output_dir.mkdir(parents=True, exist_ok=True)
-    # # scatter_plot.save(output_dir / "x_vs_y_scatter.json")
-    # print(f"Saved chart to {output_dir / 'x_vs_y_scatter.json'}")
-    ```
-    <!---
-    *   This script would be run manually or as part of an automated build process *before* running `mkdocs build`.
-    --->
-* **Embedding Altair Charts:** In your Markdown files, use the `mkdocs-charts-plugin` with vegalite code blocks:
-
-    ```markdown
-    Here is an interactive chart showing x vs. y, referencing an external JSON schema:
-
-    ```vegalite
-    {
-      "schema-url": "charts/x_vs_y_scatter.json"
-    }
+    # Disable y-axis zoom but keep x-axis zoom
+    chart.interactive(bind_y=False)
+    
+    # Disable all zooming but keep panning
+    chart.interactive(bind_x=False, bind_y=False)
     ```
 
-    The chart shows a positive correlation...
+* **Selection Types:**
+    * `alt.selection_interval()`: For rectangular region selection
+    * `alt.selection_point()`: For selecting individual points
+    * `alt.selection_single()`: For single item selection
 
-    Alternatively, you can embed the full Vega-Lite JSON specification directly:
+### 2.6. Health Data Visualization Examples
 
-    ```vegalite
+Here are several examples of health data visualizations using Altair, each with its reference card and code:
+
+#### 1. Basic Scatter Plot
+
+**Reference Card: `alt.Chart().mark_circle()`**
+- **Purpose:** Visualize relationships between two continuous variables
+- **Key Parameters:**
+  - `x`: Quantitative variable (e.g., age)
+  - `y`: Quantitative variable (e.g., blood pressure)
+  - `color`: Categorical variable for grouping
+  - `tooltip`: Fields to show on hover
+
+**Code:**
+```python
+scatter = alt.Chart(df).mark_circle().encode(
+    x='age:Q',
+    y='blood_pressure:Q',
+    color='condition:N',
+    tooltip=['patient_id:N', 'age:Q', 'blood_pressure:Q', 'condition:N']
+).properties(
+    title='Age vs Blood Pressure by Condition',
+    width=400,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_basic_scatter.json"
+}
+```
+
+#### 2. Time Series Plot
+
+**Reference Card: `alt.Chart().mark_line()`**
+- **Purpose:** Show trends over time
+- **Key Parameters:**
+  - `x`: Temporal variable (e.g., visit date)
+  - `y`: Quantitative variable (e.g., blood pressure)
+  - `color`: Categorical variable for grouping
+  - `tooltip`: Fields to show on hover
+
+**Code:**
+```python
+time_series = alt.Chart(df).mark_line().encode(
+    x='visit_date:T',
+    y='blood_pressure:Q',
+    color='condition:N',
+    tooltip=['visit_date:T', 'blood_pressure:Q', 'condition:N']
+).properties(
+    title='Blood Pressure Trends Over Time',
+    width=600,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_time_series.json"
+}
+```
+
+#### 3. Box Plot
+
+**Reference Card: `alt.Chart().mark_boxplot()`**
+- **Purpose:** Show distribution of continuous variables by category
+- **Key Parameters:**
+  - `x`: Categorical variable (e.g., condition)
+  - `y`: Quantitative variable (e.g., heart rate)
+  - `color`: Categorical variable for grouping
+  - `tooltip`: Fields to show on hover
+
+**Code:**
+```python
+box_plot = alt.Chart(df).mark_boxplot().encode(
+    x='condition:N',
+    y='heart_rate:Q',
+    color='condition:N',
+    tooltip=['condition:N', 'heart_rate:Q']
+).properties(
+    title='Heart Rate Distribution by Condition',
+    width=400,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_box_plot.json"
+}
+```
+
+#### 4. Heatmap
+
+**Reference Card: `alt.Chart().mark_rect()`**
+- **Purpose:** Show relationships between two categorical variables
+- **Key Parameters:**
+  - `x`: Categorical variable (e.g., condition)
+  - `y`: Categorical variable (e.g., medication)
+  - `color`: Aggregated quantitative variable (e.g., mean dosage)
+  - `tooltip`: Fields to show on hover
+
+**Code:**
+```python
+heatmap = alt.Chart(df).mark_rect().encode(
+    x=alt.X('condition:N', title='Condition'),
+    y=alt.Y('medication:N', title='Medication'),
+    color=alt.Color('mean(dosage):Q', title='Average Dosage'),
+    tooltip=['condition:N', 'medication:N', 'mean(dosage):Q']
+).properties(
+    title='Average Medication Dosage by Condition',
+    width=400,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_heatmap.json"
+}
+```
+
+#### 5. Interactive Selection
+
+**Reference Card: `alt.selection_point()`**
+- **Purpose:** Enable interactive filtering through legend
+- **Key Parameters:**
+  - `fields`: Fields to filter on
+  - `bind`: Where to bind the selection (e.g., 'legend')
+  - `condition`: How to highlight selected data
+
+**Code:**
+```python
+selection = alt.selection_point(
+    name='select',
+    fields=['condition'],
+    bind='legend'
+)
+
+interactive = alt.Chart(df).mark_circle().encode(
+    x='age:Q',
+    y='blood_pressure:Q',
+    color=alt.condition(
+        selection,
+        'condition:N',
+        alt.value('lightgray')
+    ),
+    tooltip=['patient_id:N', 'age:Q', 'blood_pressure:Q', 'condition:N']
+).add_params(selection).properties(
+    title='Interactive Patient Data',
+    width=400,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_interactive.json"
+}
+```
+
+#### 6. Faceted Plot
+
+**Reference Card: `alt.Chart().facet()`**
+- **Purpose:** Create small multiples for comparison
+- **Key Parameters:**
+  - `column`: Variable to facet by
+  - `mark`: Type of mark to use
+  - `encode`: Visual encodings for each facet
+
+**Code:**
+```python
+faceted = alt.Chart(df).mark_bar().encode(
+    x='medication:N',
+    y='count():Q',
+    color='condition:N',
+    tooltip=['medication:N', 'count():Q', 'condition:N']
+).facet(
+    column='condition:N'
+).properties(
+    title='Medication Distribution by Condition',
+    width=100,
+    height=300
+)
+```
+
+**Chart:**
+```vegalite
+{
+  "schema-url": "media/chart_faceted.json"
+}
+```
+
+<!---
+These examples demonstrate different ways to visualize health data using Altair. Each example includes:
+1. A reference card explaining the key components
+2. The Python code to generate the chart
+3. The rendered chart using the JSON specification
+4. Health-specific context and use cases
+--->
+
+### 2.7. Advanced Altair Examples
+
+#### Scatter Plot with Marginal Histograms
+
+```python
+import altair as alt
+import pandas as pd
+import numpy as np
+
+# Generate sample data
+np.random.seed(42)
+df = pd.DataFrame({
+    'x': np.random.normal(0, 1, 100),
+    'y': np.random.normal(0, 1, 100),
+    'category': np.random.choice(['A', 'B', 'C'], 100)
+})
+
+# Create the main scatter plot
+scatter = alt.Chart(df).mark_circle().encode(
+    x='x:Q',
+    y='y:Q',
+    color='category:N',
+    tooltip=['x:Q', 'y:Q', 'category:N']
+).properties(
+    width=400,
+    height=400
+)
+
+# Create the marginal histograms
+x_hist = alt.Chart(df).mark_bar().encode(
+    x=alt.X('x:Q', bin=True),
+    y='count()'
+).properties(
+    width=400,
+    height=100
+)
+
+y_hist = alt.Chart(df).mark_bar().encode(
+    y=alt.Y('y:Q', bin=True),
+    x='count()'
+).properties(
+    width=100,
+    height=400
+)
+
+# Combine the charts
+chart = (x_hist & (scatter | y_hist))
+```
+
+#### Interactive Variable Selection
+
+```python
+# Create a parameter for variable selection
+var_select = alt.param(
+    name='var_select',
+    bind=alt.binding_select(
+        options=['x', 'y', 'category'],
+        name='Select Variable: '
+    ),
+    value='x'
+)
+
+# Create the chart with variable selection
+chart = alt.Chart(df).mark_circle().encode(
+    x=alt.X('x:Q'),
+    y=alt.Y('y:Q'),
+    color=alt.condition(
+        var_select == 'category',
+        'category:N',
+        alt.value('steelblue')
+    )
+).add_params(var_select)
+```
+
+#### Generated JSON Specification
+
+When saved as JSON, these charts produce specifications like:
+
+```json
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "name": "data"
+  },
+  "mark": "circle",
+  "encoding": {
+    "x": {"field": "x", "type": "quantitative"},
+    "y": {"field": "y", "type": "quantitative"},
+    "color": {"field": "category", "type": "nominal"}
+  },
+  "params": [
     {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "description": "A scatter plot of x vs. y.",
-      "data": {
-        "name": "data"
-        // Data can be embedded here, or referenced via a URL:
-        // "url": "charts/data.json"
-        // "values": [ {"x": 1, "y": 2, ...}, ... ]
+      "name": "var_select",
+      "bind": {
+        "input": "select",
+        "options": ["x", "y", "category"],
+        "name": "Select Variable: "
       },
-      "mark": {"type": "point", "size": 100, "tooltip": true},
-      "encoding": {
-        "x": {"field": "x", "type": "quantitative", "title": "X Value"},
-        "y": {"field": "y", "type": "quantitative", "title": "Y Value"},
-        "color": {"field": "category", "type": "nominal", "title": "Category"}
-      }
-      // Example of providing data directly if not using an external file for this example:
-      // "datasets": {
-      //   "data": [
-      //      {"x": 1, "y": 2, "category": "Type A"},
-      //      {"x": 2, "y": 4, "category": "Type B"}
-      //    ]
-      // }
+      "value": "x"
     }
-    ```
-    ```
-    <!---
-    *   The `mkdocs-charts-plugin` renders `vegalite` fenced code blocks.
-    *   You can embed the full JSON specification or use `schema-url` to point to an external `.json` file containing the Vega-Lite spec.
-    *   If using `schema-url` or `data.url`, paths are typically relative to the `docs/` directory, unless configured otherwise in the plugin options.
-    --->
-* **Embedding Mermaid Diagrams:** If your MkDocs theme (like Material for MkDocs) supports it, you can embed Mermaid diagrams directly in your Markdown using standard Mermaid fenced code blocks:
-
-    ```markdown
-    This workflow was followed:
-
-    ```mermaid
-    graph TD;
-        A[Data Collection] --> B(Processing);
-        B --> C[Analysis];
-        C --> D[Report Generation];
-    ```
-    <!---
-    *   Material for MkDocs includes support for Mermaid out-of-the-box. For other themes, a plugin like `mkdocs-mermaid2-plugin` might be needed.
-    --->
-
-### 3.5. Building, Serving, and Deploying
-
-* **Build:** To generate the static HTML site:
-
-    ```bash
-    mkdocs build
-    ```
-
-    This creates a `site/` directory containing all the HTML, CSS, and JS files for your report.
-* **Serve Locally:** To preview your report locally with live reloading as you make changes:
-
-    ```bash
-    mkdocs serve
-    ```
-
-    This usually starts a server at `http://127.0.0.1:8000`.
-* **Deploying with GitHub Pages (Conceptual Overview):**
-    GitHub Pages is a free way to host your static MkDocs site directly from a GitHub repository.
-    1. Ensure your MkDocs project is a GitHub repository.
-    2. Install `ghp-deploy`: `pip install ghp-deploy`.
-    3. Run: `mkdocs gh-deploy`. This command builds your site and pushes the `site/` contents to a special `gh-pages` branch on GitHub, which then serves the site.
-    4. Alternatively, GitHub Actions can be configured to automate this deployment on every push to your main branch.
-    <!---
-    *   The `site/` directory is what gets deployed. It's entirely self-contained.
-    *   `mkdocs gh-deploy` simplifies the deployment process to GitHub Pages significantly.
-    --->
+  ]
+}
+```
 
 ### Demo 3: Automated Report with MkDocs
 
@@ -696,6 +935,126 @@ The `mkdocs.yml` file controls your site's settings, theme, navigation, and plug
     <!---
     *   This demo provides a comprehensive example of building and deploying an automated data science report. Students will explore the project structure and run the build process.
     --->
+
+### 3.6. Useful MkDocs Plugins
+
+Here are some essential plugins for data science reports:
+
+* **`mkdocs-charts-plugin`**
+    * Embeds Vega-Lite charts in markdown
+    * Supports dark mode and instant loading
+    * Configuration:
+    ```yaml
+    plugins:
+      - charts
+    extra_javascript:
+      - https://cdn.jsdelivr.net/npm/vega@5
+      - https://cdn.jsdelivr.net/npm/vega-lite@5
+      - https://cdn.jsdelivr.net/npm/vega-embed@6
+    markdown_extensions:
+      - pymdownx.superfences:
+          custom_fences:
+            - name: vegalite
+              class: vegalite
+              format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
+    ```
+
+* **`mkdocs-material`**
+    * Rich feature set including:
+        * Search
+        * Tabs
+        * Code blocks with syntax highlighting
+        * Admonitions
+        * Task lists
+    * Configuration:
+    ```yaml
+    theme:
+      name: material
+      features:
+        - navigation.tabs
+        - navigation.sections
+        - navigation.expand
+        - search.highlight
+        - search.share
+    ```
+
+* **`mkdocs-exporter`**
+    * Generates PDF documents
+    * Supports custom page selection
+    * Configuration:
+    ```yaml
+    plugins:
+      - exporter:
+          formats:
+            pdf:
+              enabled: true
+              explicit: true  # Only export pages with pdf: true in front matter
+    ```
+
+### 3.7. Deployment Options
+
+#### GitHub Pages Deployment
+
+1. **Simple Branch Deployment**
+    ```yaml
+    # .github/workflows/deploy.yml
+    name: Deploy to GitHub Pages
+    on:
+      push:
+        branches: [ main ]
+    jobs:
+      deploy:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v2
+          - uses: actions/setup-python@v2
+            with:
+              python-version: 3.x
+          - run: pip install mkdocs-material mkdocs-charts-plugin
+          - run: mkdocs gh-deploy --force
+    ```
+
+2. **Custom Branch Deployment**
+    ```yaml
+    # .github/workflows/deploy.yml
+    name: Deploy to GitHub Pages
+    on:
+      push:
+        branches: [ main ]
+    jobs:
+      deploy:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v2
+          - uses: actions/setup-python@v2
+            with:
+              python-version: 3.x
+          - run: pip install -r requirements.txt
+          - run: mkdocs build
+          - name: Deploy
+            uses: peaceiris/actions-gh-pages@v3
+            with:
+              github_token: ${{ secrets.GITHUB_TOKEN }}
+              publish_dir: ./site
+              publish_branch: gh-pages
+    ```
+
+#### Navigation Options
+
+```yaml
+nav:
+  - Home: index.md
+  - Analysis:
+    - Overview: analysis/overview.md
+    - Methods: analysis/methods.md
+    - Results: analysis/results.md
+  - Visualizations:
+    - Charts: visualizations/charts.md
+    - Dashboards: visualizations/dashboards.md
+  - About:
+    - Team: about/team.md
+    - Contact: about/contact.md
+```
 
 ---
 
@@ -926,3 +1285,112 @@ Explore some of the most engaging and interactive Dash apps from the official Da
 <!---
 These links and images are meant to inspire students and show the breadth of what Dash can do. Replace #FIXME with actual image URLs or screenshots for your course materials.
 --->
+
+### 4.6. Data Handling in Dash
+
+#### Base64 vs JSON
+
+* **Base64 Encoding:**
+    * Used for binary data (images, audio, files)
+    * Example:
+    ```python
+    import base64
+    
+    def file_to_base64(file_path):
+        with open(file_path, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    
+    # In layout
+    html.Img(src=file_to_base64("path/to/image.png"))
+    ```
+
+* **JSON Data:**
+    * Used for structured data (charts, tables)
+    * Example:
+    ```python
+    import json
+    
+    # Load chart specification
+    with open("chart.json") as f:
+        chart_spec = json.load(f)
+    
+    # In layout
+    dcc.Graph(figure=chart_spec)
+    ```
+
+### 4.7. Simple Dashboard Example
+
+Here's a simple dashboard with drill-down capabilities:
+
+```python
+import dash
+from dash import dcc, html
+from dash.dependencies import Input, Output
+import plotly.express as px
+import pandas as pd
+
+# Sample data
+df = pd.DataFrame({
+    'region': ['North', 'South', 'East', 'West'] * 3,
+    'category': ['A', 'B', 'C'] * 4,
+    'value': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]
+})
+
+# Initialize the app
+app = dash.Dash(__name__)
+
+# Layout
+app.layout = html.Div([
+    html.H1("Simple Dashboard"),
+    
+    # Region selector
+    dcc.Dropdown(
+        id='region-dropdown',
+        options=[{'label': r, 'value': r} for r in df['region'].unique()],
+        value='North'
+    ),
+    
+    # Main chart
+    dcc.Graph(id='main-chart'),
+    
+    # Drill-down chart
+    dcc.Graph(id='drill-down-chart')
+])
+
+# Callbacks
+@app.callback(
+    [Output('main-chart', 'figure'),
+     Output('drill-down-chart', 'figure')],
+    [Input('region-dropdown', 'value')]
+)
+def update_charts(selected_region):
+    # Filter data
+    filtered_df = df[df['region'] == selected_region]
+    
+    # Main chart - bar plot by category
+    main_fig = px.bar(
+        filtered_df,
+        x='category',
+        y='value',
+        title=f'Values by Category in {selected_region}'
+    )
+    
+    # Drill-down chart - line plot over time
+    drill_fig = px.line(
+        filtered_df,
+        x='category',
+        y='value',
+        title=f'Detailed View for {selected_region}'
+    )
+    
+    return main_fig, drill_fig
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
+```
+
+This example demonstrates:
+* Dropdown selection for filtering
+* Multiple linked charts
+* Drill-down visualization
+* Simple callback structure

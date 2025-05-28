@@ -43,6 +43,9 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+        - name: vegalite
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -67,6 +70,7 @@ plugins:
   - minify:
       minify_html: true
   - callouts
+  - charts
   - exporter:
       enabled: true
       buttons:
@@ -98,6 +102,7 @@ nav:
       - '06. Neural Networks: If I only had a brain': 06/lecture_06.md
       - "07. Transformers: More than Meets the Eye": 07/lecture_07.md
       - '08. Transformers: The Movie': 08/lecture_08.md
+      - '09. Visualize This': 09/lecture_09.md
   - Exercises:
     - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
     - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
@@ -117,3 +122,6 @@ extra:
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6

@@ -93,7 +93,7 @@ Mermaid is a popular JavaScript-based tool that takes Markdown-inspired text def
     * **Flowcharts:** For visualizing processes, workflows, and decision trees. (e.g., `graph TD; A-->B;`)
         ![Simple fun mermaid flowchart example rendered diagram technical](media/simple_fun_mermaid_flowchart_e_00.png)
     * **Sequence Diagrams:** For showing interactions between different components or actors over time. (e.g., `sequenceDiagram; User->>System: Submit Request;`)
-        ![Simple mermaid sequence diagram](media/mermaid_sequence.png)
+        ![Simple mermaid sequence diagram](media/mermaid_sequence.webp)
     * **Gantt Charts:** For project scheduling and tracking timelines.
     * **Class Diagrams:** For visualizing software structures.
     * **Entity Relationship Diagrams (ERDs):** For database schema design.

@@ -182,6 +182,16 @@ Flowcharts are used to represent processes, workflows, or algorithms, showing st
 
 **Decision Support System:**
 
+```js
+graph TD;
+    A[User Input] --> B{Risk Assessment};
+    B -->|High Risk| C[Immediate Alert];
+    B -->|Medium Risk| D[Schedule Review];
+    B -->|Low Risk| E[Standard Processing];
+    C --> F[Emergency Protocol];
+    D --> G[Follow-up Planning];
+    E --> H[Regular Processing];
+```
 ```mermaid
 graph TD;
     A[User Input] --> B{Risk Assessment};
@@ -195,6 +205,20 @@ graph TD;
 
 **User Journey Through System:**
 
+```js
+graph LR;
+    A[User Entry] --> B{Initial Check};
+    B -->|Critical| C[Priority Processing];
+    B -->|Standard| D[Regular Queue];
+    B -->|Basic| E[Simple Processing];
+    C --> F[Main Process];
+    D --> F;
+    E --> F;
+    F --> G{Outcome};
+    G -->|Success| H[Complete];
+    G -->|Needs Review| I[Review Process];
+    G -->|Error| J[Error Handling];
+```
 ```mermaid
 graph LR;
     A[User Entry] --> B{Initial Check};
@@ -239,6 +263,20 @@ Here are some practical examples showing different node shapes and their use cas
   - `-.->` - Dotted arrow
 
 **Code:**
+```js
+graph TD;
+    A[(Patient Database)] --> B{Meets Criteria?};
+    B -->|Yes| C[Screen Patient];
+    B -->|No| D[Document Exclusion];
+    C --> E{Consent Given?};
+    E -->|Yes| F[[Randomization]];
+    E -->|No| G[Document Refusal];
+    F --> H[Intervention Group];
+    F --> I[Control Group];
+    H --> J>Follow-up Visits];
+    I --> J;
+    J --> K((Study End));
+```
 ```mermaid
 graph TD;
     A[(Patient Database)] --> B{Meets Criteria?};
@@ -254,12 +292,22 @@ graph TD;
     J --> K((Study End));
 ```
 
-**Rendered:**
-![Clinical Trial Enrollment Flow](media/mermaid_clinical_trial_flow.png)
 
 #### Hospital Admission Process
 
 **Code:**
+```js
+graph LR;
+    A[Patient Arrival] --> B{Urgency Level};
+    B -->|Emergency| C[[ER Triage]];
+    B -->|Scheduled| D[Registration];
+    C --> E{Stable?};
+    E -->|Yes| D;
+    E -->|No| F[Immediate Care];
+    D --> G[Room Assignment];
+    F --> G;
+    G --> H>Treatment Plan];
+```
 ```mermaid
 graph LR;
     A[Patient Arrival] --> B{Urgency Level};
@@ -273,12 +321,21 @@ graph LR;
     G --> H>Treatment Plan];
 ```
 
-**Rendered:**
-![Hospital Admission Process](media/mermaid_hospital_admission.png)
-
 #### Data Pipeline with Error Handling
 
 **Code:**
+```js
+graph TD;
+    A[(Raw Data)] --> B[Validation];
+    B --> C{Valid?};
+    C -->|Yes| D[Processing];
+    C -->|No| E>Error Log];
+    E --> F[Manual Review];
+    F -->|Fixed| B;
+    F -->|Unfixable| G[[Archive]];
+    D --> H[Analysis];
+    H --> I((Results));
+```
 ```mermaid
 graph TD;
     A[(Raw Data)] --> B[Validation];
@@ -292,15 +349,25 @@ graph TD;
     H --> I((Results));
 ```
 
-**Rendered:**
-![Data Pipeline with Error Handling](media/mermaid_data_pipeline.png)
 
 ### 1.5. Mermaid Configuration
 
 Mermaid supports various configuration options to customize the appearance of diagrams. Here are some key configurations:
 
-* **Theme:** You can switch between different themes (e.g., default, dark, forest) using the `theme` keyword.
+* **Theme:** You can switch between different themes (e.g., default, dark, forest) using the `%%{init: {'theme': 'theme_name'}}%%` directive.
+    ```js
+    %%{init: {'theme': 'dark'}}%%
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
     ```mermaid
+    %%{init: {'theme': 'dark'}}%%
     graph TD;
         A[Load Data] --> B(Data Cleaning & Preprocessing);
         B --> C{Select Analysis Type};
@@ -311,8 +378,38 @@ Mermaid supports various configuration options to customize the appearance of di
         F --> G[Compile Report];
     ```
 
-* **Style:** You can apply custom styles to nodes, links, and overall diagram appearance.
+* **Style:** You can apply custom styles to nodes, links, and overall diagram appearance using the `%%{init: {'themeVariables': {...}}}%%` directive.
+    ```js
+    %%{init: {'themeVariables': {
+        'fontSize': '16px',
+        'fontFamily': 'Arial',
+        'primaryColor': '#ff0000',
+        'primaryTextColor': '#fff',
+        'primaryBorderColor': '#7C0000',
+        'lineColor': '#F8B229',
+        'secondaryColor': '#006100',
+        'tertiaryColor': '#fff'
+    }}}%%
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
     ```mermaid
+    %%{init: {'themeVariables': {
+        'fontSize': '16px',
+        'fontFamily': 'Arial',
+        'primaryColor': '#ff0000',
+        'primaryTextColor': '#fff',
+        'primaryBorderColor': '#7C0000',
+        'lineColor': '#F8B229',
+        'secondaryColor': '#006100',
+        'tertiaryColor': '#fff'
+    }}}%%
     graph TD;
         A[Load Data] --> B(Data Cleaning & Preprocessing);
         B --> C{Select Analysis Type};
@@ -323,8 +420,26 @@ Mermaid supports various configuration options to customize the appearance of di
         F --> G[Compile Report];
     ```
 
-* **Custom Fonts:** You can specify custom fonts for text and labels.
+* **Custom Fonts:** You can specify custom fonts for text and labels using the `%%{init: {'themeVariables': {'fontFamily': '...'}}}%%` directive.
+    ```js
+    %%{init: {'themeVariables': {
+        'fontFamily': 'Comic Sans MS, cursive',
+        'fontSize': '14px'
+    }}}%%
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
     ```mermaid
+    %%{init: {'themeVariables': {
+        'fontFamily': 'Comic Sans MS, cursive',
+        'fontSize': '14px'
+    }}}%%
     graph TD;
         A[Load Data] --> B(Data Cleaning & Preprocessing);
         B --> C{Select Analysis Type};
@@ -338,6 +453,16 @@ Mermaid supports various configuration options to customize the appearance of di
 ### 1.6. Advanced Mermaid Features
 
 * **Subgraphs:** You can create subgraphs to group related nodes and links.
+    ```js
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
     ```mermaid
     graph TD;
         A[Load Data] --> B(Data Cleaning & Preprocessing);
@@ -350,6 +475,16 @@ Mermaid supports various configuration options to customize the appearance of di
     ```
 
 * **Styling:** You can apply custom styles to individual nodes and links.
+    ```js
+    graph TD;
+        A[Load Data] --> B(Data Cleaning & Preprocessing);
+        B --> C{Select Analysis Type};
+        C -- Descriptive Stats --> D[Generate Summary];
+        C -- Predictive Model --> E[Train & Evaluate Model];
+        D --> F[Visualize Key Metrics];
+        E --> F;
+        F --> G[Compile Report];
+    ```
     ```mermaid
     graph TD;
         A[Load Data] --> B(Data Cleaning & Preprocessing);

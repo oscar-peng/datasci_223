@@ -1,0 +1,8 @@
+# Requirements for Lecture 09 chart generation and demos
+altair>=5.0.0
+pandas>=1.5.0
+vl-convert-python>=1.0.0
+streamlit>=1.28.0
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+mkdocs-charts-plugin>=0.0.10

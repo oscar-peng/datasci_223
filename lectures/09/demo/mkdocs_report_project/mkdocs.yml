@@ -1,0 +1,77 @@
+site_name: Clinical Heart Rate Analysis Report
+site_description: 'Automated analysis of heart rate patterns in clinical populations'
+site_author: 'Health Data Science Team'
+site_url: 'https://yourusername.github.io/clinical_data_report' # IMPORTANT: Students should change this
+
+# Repository information (optional, for GitHub integration)
+repo_name: 'yourusername/clinical_data_report' # IMPORTANT: Students should change this
+repo_url: 'https://github.com/yourusername/clinical_data_report' # IMPORTANT: Students should change this
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - charts  # Using mkdocs-charts-plugin
+  # Ensure vega_lite_version is compatible if the plugin has such an option,
+  # or that Altair output matches what the plugin expects.
+  # Example options for mkdocs-charts-plugin (refer to its documentation):
+  # charts:
+  #   vega_lite_version: "5" # Or similar if supported
+  #   use_data_path: true # If you want paths relative to markdown file
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - 'Home': 'index.md'
+  - 'Analysis':
+    - 'Data Overview': 'analysis/data_overview.md'
+    - 'Heart Rate Patterns': 'analysis/heart_rate_analysis.md'
+    - 'Risk Factors': 'analysis/risk_factors.md'
+  - 'Interactive Charts': 'interactive_charts.md'
+  - 'Methodology': 'methodology.md'
+  - 'About': 'about.md'
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername # IMPORTANT: Students should change this

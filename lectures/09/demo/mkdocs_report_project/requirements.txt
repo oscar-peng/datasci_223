@@ -1,0 +1,9 @@
+mkdocs>=1.5.0 # Or a specific version
+mkdocs-material>=9.0.0 # Or a specific version
+mkdocs-charts-plugin>=0.0.12 # Or a specific version
+altair>=5.0.0 # Or a specific version
+pandas>=1.5.0 # Or a specific version
+numpy>=1.20.0 # Or a specific version
+
+# Add any other specific dependencies your project might have
+# e.g., if generate_charts.py uses other libraries

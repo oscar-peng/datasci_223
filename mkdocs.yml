@@ -88,11 +88,11 @@ plugins:
 nav:
   - Home: index.md
   - Course Information:
-    - Syllabus: syllabus.md
-    - Project: project.md
-    - References: references.md
-    - 'Keras Cheat Sheet': nn_keras_cheat_sheet.md
-    - 'PyTorch Cheat Sheet': nn_pytorch_cheat_sheet.md
+      - Syllabus: syllabus.md
+      - Project: project.md
+      - References: references.md
+      - 'Keras Cheat Sheet': nn_keras_cheat_sheet.md
+      - 'PyTorch Cheat Sheet': nn_pytorch_cheat_sheet.md
   - Lectures:
       - '01. `git init`': 01/lecture_01.md
       - '02. bugs, ducks, and data': 02/lecture_02.md
@@ -104,13 +104,14 @@ nav:
       - '08. Transformers: The Movie': 08/lecture_08.md
       - '09. Visualize This': 09/lecture_09.md
   - Exercises:
-    - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
-    - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
-    - '03. `JOIN` the `DISTINCT` with SQL': https://classroom.github.com/a/hXtQfWAB
-    - "04. It's about time": https://classroom.github.com/a/Nt5jaJsY
-    - '05. Classification: Putting a label on it': https://classroom.github.com/a/i99LRj_R
-    - '06. Neural Networks: If I only had a brain': https://classroom.github.com/a/7lg-zjaN
-    - '07. Transformers': https://classroom.github.com/a/4rXS-dEj
+      - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
+      - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU
+      - '03. `JOIN` the `DISTINCT` with SQL': https://classroom.github.com/a/hXtQfWAB
+      - "04. It's about time": https://classroom.github.com/a/Nt5jaJsY
+      - '05. Classification: Putting a label on it': https://classroom.github.com/a/i99LRj_R
+      - '06. Neural Networks: If I only had a brain': https://classroom.github.com/a/7lg-zjaN
+      - '07. Transformers': https://classroom.github.com/a/4rXS-dEj
+      - 'Final Project': https://classroom.github.com/a/lqRvusMP
 
 extra:
   social:

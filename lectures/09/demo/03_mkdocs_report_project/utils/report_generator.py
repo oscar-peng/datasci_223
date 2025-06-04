@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Report generator for neonatal feeding study.
-Performs statistical analysis and generates markdown reports.
+Report generator library for neonatal feeding study.
+Provides utilities for generating markdown reports with sections, charts, and tables.
 """
 
 import pandas as pd
@@ -9,147 +9,131 @@ import numpy as np
 from scipy import stats
 from pathlib import Path
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple, Optional
 
 
-def generate_statistical_report(data: pd.DataFrame) -> None:
+def create_markdown_section(
+    heading: str,
+    content: Optional[str] = None,
+    table_data: Optional[pd.DataFrame] = None,
+    chart_reference: Optional[str] = None,
+    image_location: Optional[str] = None,
+) -> str:
     """
-    Generate statistical analysis report for the neonatal feeding study.
+    Create a markdown section with heading and various content types.
 
     Args:
-        data (pd.DataFrame): Patient data to analyze
+        heading (str): Section heading
+        content (str, optional): Text content
+        table_data (pd.DataFrame, optional): Data for table
+        chart_reference (str, optional): Path to chart JSON
+        image_location (str, optional): Path to image file
+
+    Returns:
+        str: Formatted markdown section
     """
-    # Load data dictionary
-    data_dict_path = (
-        Path(__file__).parent.parent / "docs" / "data" / "data_dictionary.json"
-    )
-    with open(data_dict_path) as f:
-        data_dict = json.load(f)
+    heading_level = 0
+    heading_text = heading
+    while heading_text.startswith("#"):
+        heading_level += 1
+        heading_text = heading_text[1:]
+    if heading_level == 0:
+        heading_level = 2
+    section = f"{'#' * heading_level} {heading_text.strip()}\n\n"
 
-    # Perform analyses
-    summary = {
-        "study_overview": generate_study_overview(data),
-        "statistical_analysis": perform_statistical_analysis(data),
-    }
+    if content is not None:
+        section += f"{content}\n\n"
 
-    # Save summary
-    output_dir = Path(__file__).parent.parent / "docs" / "data"
-    with open(output_dir / "comprehensive_summary.json", "w") as f:
-        json.dump(summary, f, indent=2)
+    if table_data is not None:
+        if isinstance(table_data, pd.DataFrame):
+            section += table_data.to_markdown(index=False)
+        elif isinstance(table_data, dict):
+            if all(
+                isinstance(v, (int, float, str, bool))
+                for v in table_data.values()
+            ):
+                df = pd.DataFrame({
+                    "Variable": list(table_data.keys()),
+                    "Value": list(table_data.values()),
+                })
+                section += df.to_markdown(index=False)
+            else:
+                for key, value in table_data.items():
+                    if isinstance(value, (int, float)):
+                        section += f"**{key}**: {value:.2f}\n\n"
+                    else:
+                        section += f"**{key}**: {value}\n\n"
+        else:
+            section += str(table_data)
+        section += "\n\n"
 
-    # Generate markdown report
-    report = generate_markdown_report(data, summary, data_dict)
+    if chart_reference is not None:
+        section += "```vegalite\n"
+        section += "{\n"
+        section += f'  "schema-url": "{chart_reference}"\n'
+        section += "}\n"
+        section += "```\n\n"
 
-    # Save report
-    report_path = (
-        Path(__file__).parent.parent
-        / "docs"
-        / "analysis"
-        / "statistical_analysis.md"
-    )
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(report_path, "w") as f:
-        f.write(report)
+    if image_location is not None:
+        image_name = Path(image_location).name
+        section += f"![{image_name}](media/{image_name})\n\n"
 
-
-def generate_study_overview(data: pd.DataFrame) -> Dict[str, Any]:
-    """Generate overview statistics for the study."""
-    return {
-        "total_patients": len(data),
-        "mean_gestational_age": data["gestational_age"].mean(),
-        "mean_time_to_fof": data["time_to_fof"].mean(),
-        "ventilation_rate": (data["ventilation_status"] == "Yes").mean(),
-        "maternal_diabetes_rate": (data["maternal_diabetes"] == "Yes").mean(),
-    }
-
-
-def perform_statistical_analysis(data: pd.DataFrame) -> Dict[str, Any]:
-    """Perform statistical analyses on the data."""
-    # Correlation analysis
-    correlations = {
-        "ga_vs_time_to_fof": stats.pearsonr(
-            data["gestational_age"], data["time_to_fof"]
-        )[0],
-        "weight_vs_time_to_fof": stats.pearsonr(
-            data["birth_weight"], data["time_to_fof"]
-        )[0],
-        "apgar_vs_time_to_fof": stats.pearsonr(
-            data["apgar_5min"], data["time_to_fof"]
-        )[0],
-    }
-
-    # Ventilation effect
-    vent_yes = data[data["ventilation_status"] == "Yes"]["time_to_fof"]
-    vent_no = data[data["ventilation_status"] == "No"]["time_to_fof"]
-    t_stat, p_value = stats.ttest_ind(vent_yes, vent_no)
-
-    ventilation_effect = {
-        "mean_with_vent": vent_yes.mean(),
-        "mean_without_vent": vent_no.mean(),
-        "t_statistic": t_stat,
-        "p_value": p_value,
-        "significant": p_value < 0.05,
-    }
-
-    # Gestational age regression
-    slope, intercept, r_value, p_value, std_err = stats.linregress(
-        data["gestational_age"], data["time_to_fof"]
-    )
-
-    ga_regression = {
-        "slope": slope,
-        "intercept": intercept,
-        "r_squared": r_value**2,
-        "p_value": p_value,
-        "interpretation": f"Each week of gestational age is associated with {abs(slope):.1f} days shorter time to full oral feeding",
-    }
-
-    return {
-        "correlations": correlations,
-        "mechanical_ventilation_effect": ventilation_effect,
-        "ga_regression": ga_regression,
-    }
+    return section
 
 
-def generate_markdown_report(
-    data: pd.DataFrame, summary: Dict[str, Any], data_dict: Dict[str, Any]
-) -> str:
-    """Generate markdown report from the analysis results."""
-    report = [
-        "# Statistical Analysis Report",
-        "\n## Study Overview",
-        f"\nThis analysis includes {summary['study_overview']['total_patients']} premature infants.",
-        f"The mean gestational age was {summary['study_overview']['mean_gestational_age']:.1f} weeks,",
-        f"and the mean time to full oral feeding was {summary['study_overview']['mean_time_to_fof']:.1f} days.",
-        "\n## Key Findings",
-        "\n### Gestational Age Impact",
-        f"\n{summary['statistical_analysis']['ga_regression']['interpretation']}",
-        f"(r = {summary['statistical_analysis']['correlations']['ga_vs_time_to_fof']:.3f}, p < 0.001).",
-        "\n### Mechanical Ventilation",
-        "\nInfants requiring mechanical ventilation had:",
-        f"- Mean time to full oral feeding: {summary['statistical_analysis']['mechanical_ventilation_effect']['mean_with_vent']:.1f} days",
-        f"- Without ventilation: {summary['statistical_analysis']['mechanical_ventilation_effect']['mean_without_vent']:.1f} days",
-        f"- Difference: {summary['statistical_analysis']['mechanical_ventilation_effect']['mean_with_vent'] - summary['statistical_analysis']['mechanical_ventilation_effect']['mean_without_vent']:.1f} days",
-        f"- Statistical significance: {'Yes' if summary['statistical_analysis']['mechanical_ventilation_effect']['significant'] else 'No'} (p = {summary['statistical_analysis']['mechanical_ventilation_effect']['p_value']:.3f})",
-        "\n### Other Factors",
-        "\nAdditional correlations with time to full oral feeding:",
-        f"- Birth weight: r = {summary['statistical_analysis']['correlations']['weight_vs_time_to_fof']:.3f}",
-        f"- 5-minute Apgar score: r = {summary['statistical_analysis']['correlations']['apgar_vs_time_to_fof']:.3f}",
-        "\n## Methods",
-        "\n### Statistical Analysis",
-        "- Pearson correlation for continuous variables",
-        "- T-test for categorical comparisons",
-        "- Linear regression for gestational age relationship",
-        "\n### Data Collection",
-        "- Retrospective chart review",
-        "- Inclusion criteria: < 37 weeks gestational age",
-        "- Exclusion criteria: Major congenital anomalies",
-        "\n## Limitations",
-        "\n1. Retrospective study design",
-        "2. Single-center data",
-        "3. Potential for documentation bias",
-        "\n## Conclusion",
-        "\nThis analysis demonstrates significant relationships between various factors and time to full oral feeding in premature infants. The findings can help clinicians better predict feeding outcomes and plan care accordingly.",
-    ]
+def generate_report(
+    sections: List[
+        Tuple[
+            str,
+            Optional[str],
+            Optional[pd.DataFrame],
+            Optional[str],
+            Optional[str],
+        ]
+    ],
+    output_path: Optional[Path] = None,
+    title: str = "Analysis Report",
+) -> Path:
+    """
+    Generate a complete markdown report from a list of sections.
 
-    return "\n".join(report)
+    Args:
+        sections: List of section tuples (heading, content, table_data, chart_reference, image_location)
+        output_path: Where to save the report
+        title: Report title
+
+    Returns:
+        Path: Path to generated report
+    """
+    content = f"# {title}\n\n"
+
+    for section in sections:
+        content += create_markdown_section(*section)
+
+    if output_path is None:
+        output_path = Path("docs") / "generated_report.md"
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    print(f"📝 Report saved to: {output_path}")
+    return output_path
+
+
+def save_altair_chart_json(chart, output_path_str: str) -> None:
+    """Save an Altair chart as JSON."""
+    output_file = Path(output_path_str)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    chart.save(str(output_file))
+    print(f"📊 Chart JSON saved to: {output_file}")
+
+
+def save_json_data(data: Dict[str, Any], output_path_str: str) -> None:
+    """Save data as JSON file."""
+    output_file = Path(output_path_str)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, default=str)
+    print(f"💾 Data saved to: {output_file}")

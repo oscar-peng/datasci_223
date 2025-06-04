@@ -103,6 +103,7 @@ nav:
       - "07. Transformers: More than Meets the Eye": 07/lecture_07.md
       - '08. Transformers: The Movie': 08/lecture_08.md
       - '09. Visualize This': 09/lecture_09.md
+      - '10. The Final Frontier: Scale and Design': 10/lecture_10.md
   - Exercises:
       - '01. `git init` (Due April 9th)': https://classroom.github.com/a/6fFVVHyL
       - '02. bugs, ducks, and data': https://classroom.github.com/a/nPCmNefU

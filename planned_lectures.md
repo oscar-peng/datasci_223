@@ -1,9 +1,33 @@
-1. ✅ **Dev Environment Setup & Python Fundamentals** 
-    - *Covered:* Tools (Python, Jupyter, Git, Conda/Venv), basic Python review.
+1. ✅ **Dev Environment Setup & Python Fundamentals**
+    - **Focus:** Tools (Python, Jupyter, Git, Conda/Venv), basic Python review.
+    - **Libraries:** `python`, `jupyter`, `git`, `conda`
+    - **Methods:**
+        - Virtual environments (`conda`, `venv`)
+        - Git workflows (init, clone, commit, branch)
+        - Jupyter notebooks (launch, cells, markdown)
+    - **Dataset:** Sample patient vitals CSV
+    - **Key Concepts:** Environment isolation, version control basics, reproducible workflows
+
 2. ✅ **Handling Larger-than-Memory Data with Polars**
-    - *Covered:* Lazy evaluation, efficient processing (CSVs/Parquet), core Polars API.
-3. ✅ **SQL for Data Analysis** 
-    - *Covered:* Core concepts (SELECT, FROM, WHERE, GROUP BY, JOINs), window functions, maybe CTEs. Connecting Python to DBs. (Dataset: Health-related).
+    - **Focus:** Lazy evaluation and efficient processing of large tabular data
+    - **Libraries:** `polars`
+    - **Methods:**
+        - Lazy DataFrames (`scan_csv`, `scan_parquet`)
+        - Eager DataFrames (`read_csv`, `read_parquet`)
+        - Basic operations: select, filter, groupby, join
+        - Memory optimization and chunking
+    - **Dataset:** Large health dataset in Parquet/CSV format
+    - **Key Concepts:** Out-of-core processing, eager vs lazy, performance tuning
+
+3. ✅ **SQL for Data Analysis**
+    - **Focus:** Core SQL for data wrangling and querying
+    - **Libraries:** `sqlite3`, `pandas`, `sqlalchemy`
+    - **Methods:**
+        - SELECT, FROM, WHERE, GROUP BY, ORDER BY
+        - JOIN types (INNER, LEFT, RIGHT)
+        - Window functions and CTEs
+    - **Dataset:** Health-related database (patient records)
+    - **Key Concepts:** Relational model, query optimization, aggregations
 4. ✅ **Regression Concepts & Time-Series Forecasting (+ FE & ML Regressors):**
     - **Focus:** Supervised Learning intro, Regression task, Time-based splits, Regression evaluation, TS specifics & FE, Statistical & ML models.
     - **Libraries:** `scikit-learn`, `statsmodels`, `lifelines`
@@ -89,10 +113,19 @@
         - Data augmentation techniques
         - Medical image preprocessing
         - Model interpretability for healthcare
-9.  🚧 **Data Visualization, Diagramming, Reporting & Dashboards:**
+9. ✅ **Data Visualization, Diagramming, Reporting & Dashboards:**
     - **Focus:** Communicating insights effectively using diagrams (Mermaid), interactive visualizations (Altair), generating shareable reports (MkDocs), and building simple interactive dashboards (Streamlit).
     - **Libraries:** `altair`, `altair_viewer`, `pandas`, `mermaid` (conceptual/CLI), `mkdocs`, `mkdocs-material`, `mkdocs-altair-plugin`, `streamlit`.
     - **Methods:**
+- **Focus:** Experimentation & Research Design (A/B Testing, Causal Inference, Variance Reduction) and End-to-End Project Application (research design applied in practice)
+    - **Libraries:** Part 1: `scipy.stats`, `statsmodels`, `pandas`, `numpy`  
+      Part 2: `pandas`, `polars`, `scikit-learn`, `altair`, `mkdocs`, `streamlit`, `git`, `statsmodels`, `scipy.stats`
+    - **Methods:**  
+        - A/B testing design (`ttest_ind`, `proportions_ztest`), CUPED variance reduction, sequential testing  
+        - GLM analysis (model specification, interpretation), multiple comparison corrections  
+        - Project lifecycle stages: problem definition, EDA, preprocessing & feature engineering, model selection & training, evaluation & iteration, reporting & reproducibility  
+    - **Dataset:** Clinical trial data for experimentation; MIMIC-IV subset for end-to-end project  
+    - **Key Concepts:** Experimental design principles, power analysis & sample size, multiple testing, CRISP-DM process, reproducibility, ethical considerations
         - *Diagramming as Code (Mermaid)*: Creating and embedding Mermaid diagrams.
         - *Visualization with Altair-Vega*:
             - Crafting static (PNG/SVG) and interactive JS/HTML charts (JSON definitions).
@@ -117,6 +150,9 @@
         - Introduction to building interactive web applications for data insights (Streamlit).
         - Integrating Python data analysis workflows with documentation, reporting, and dashboarding tools.
 10. 🧪 **Experimentation & Research Design, followed by End-to-End Project Application:**
+    - **Student Requests**
+        - Distributed computing (start with threads/processes, history/architectures, then practical approaches ideally abstracting much of the problem away, application at UCSF Wynton HPC `dmtcp`?)
+        - Help, I have a capstone mentor who gave me a dataset (gene expression among transplant recipients vs non-recipients) and I have no idea what to do with it or even where to begin
     - **Part 1: Experimentation & Research Design (A/B Testing + Advanced Techniques)**
         - **Focus:** Causal inference, A/B testing design, analysis. Variance reduction (CUPED), GLMs for analysis, multiple comparisons.
         - **Libraries:** `scipy.stats`, `statsmodels`, `pandas`, `numpy`.

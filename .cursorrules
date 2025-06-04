@@ -1,7 +1,7 @@
 ## Meta-Instruction
 
 - **Audience Assessment:** Create content for health data science masters students who are beginners in programming (Python, git, shell commands)
-- **Continuous Evaluation:** Before generating each section, ensure content matches student level, balances concept / reference / example, and includes speaking notes
+- **Continuous Evaluation:** Before generating each section, ensure content matches student level, balances concept / reference / example
 - **Time Structure:** Design for 90-minute lectures, with maximum 60 slides if using Marp. Otherwise, long-form Markdown.
 - **Demo Integration:** Include 3 hands-on demo breaks (at ⅓, ⅔, and end points)
 
@@ -10,7 +10,6 @@
 ### 1. Format & Structure
 
 - **Markdown Format:** Create lectures in long-form Markdown or, only if requested, in marp markdown slide format (separated by `---`).
-- **Speaking Notes:** Include detailed talking points in multi-line HTML comments <!--- ... ---> with specific explanations. The talking points should be supplemental content/context to each sub-sub-heading (###), written to be helpful to students reading the lecture notes on their own. It should _NOT_ be instructions to the lecturer;e.g., "speak about X" or "mention relationship to Y".
 - **Progressive Learning:** Structure content to build knowledge incrementally
 - **Visual Organization:** Use consistent heading levels, bullet points, and white space
 
@@ -64,15 +63,14 @@ This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which i
 
 - **Conceptual Foundations:** Explain how things work in accessible terms
 - **Reference Material:** Include function definitions, syntax rules, and common parameters
-- **Practical Examples:** Provide executable code samples with health data applications
-- **Health Relevance:** Connect Python concepts to health data scenarios whenever possible
+- **Practical Examples:** Provide executable code samples with grounded applications
 
 ### 3. Teaching Approach
 
 - **Beginner-Friendly:** Avoid jargon, explain terms when introduced
 - **Visual Learning:** Use diagrams, analogies, screenshots, and concrete examples/outputs
 - **Engagement:** Include comprehension checkpoints and practice opportunities
-- **Misconceptions:** Address common beginner mistakes in speaking notes
+- **Misconceptions:** Address common beginner mistakes 
 
 ### 4. Tone & Style
 
@@ -85,7 +83,7 @@ This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which i
 
 - **Hands-On Learning:** Design 3 practical demo sessions (10-15 minutes each)
 - **Progressive Difficulty:** Start simple, build complexity across demos
-- **Clear Instructions:** Provide step-by-step guidance with expected outcomes with NO HTML comments for talking points
+- **Clear Instructions:** Provide step-by-step guidance with expected outcomes as markdown cells
 - **Success Validation:** Include ways to confirm students completed tasks correctly
 - **Markdown Notebooks:** Format the demos as markdown documents to be converted into jupyter notebooks using jupytext
 

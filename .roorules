@@ -5,6 +5,13 @@
 - **Time Structure:** Design for 90-minute lectures, with maximum 60 slides if using Marp. Otherwise, long-form Markdown.
 - **Demo Integration:** Include 3 hands-on demo breaks (at ⅓, ⅔, and end points)
 
+## Environment Management
+
+- **Working Directory:** Working directory should always be repo root
+- **Directory Changes:** Do not use cd or otherwise change directory
+- **Package Management:** Use `uv` and `uv pip` to manage `.venv` in repo root
+- **Package Installation:** Install packages by adding to requirements.txt and uv pip install -r requirements.txt
+
 ## Core Principles
 
 ### 1. Format & Structure

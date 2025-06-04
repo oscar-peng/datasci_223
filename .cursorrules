@@ -5,6 +5,13 @@
 - **Time Structure:** Design for 90-minute lectures, with maximum 60 slides if using Marp. Otherwise, long-form Markdown.
 - **Demo Integration:** Include 3 hands-on demo breaks (at ⅓, ⅔, and end points)
 
+## Environment Management
+
+- **Working Directory:** Working directory should always be repo root
+- **Directory Changes:** Do not use cd or otherwise change directory
+- **Package Management:** Use `uv` and `uv pip` to manage `.venv` in repo root
+- **Package Installation:** Install packages by adding to requirements.txt and uv pip install -r requirements.txt
+
 ## Core Principles
 
 ### 1. Format & Structure
@@ -18,6 +25,9 @@ Example section (complex topics may span multiple sections, only need the refere
 #### Random forest
 
 """
+<!Random forests are powerful and robust for tabular health data. They combine many decision trees, each trained on a random subset of the data, and vote on the final prediction. Beginners sometimes think more trees always means better results, but too many can slow things down.
+--->
+
 Each of the steps can be tweaked, but the general flow goes:
 
 1. **Bagging** - create _k_ random samples from the data set
@@ -43,6 +53,16 @@ model = RandomForestClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
+<!This code fits a random forest and predicts a class. Beginners sometimes forget to set a random seed for reproducibility or to check feature importances.
+--->
+
+<!---
+This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which is the core idea behind Random Forests.
+1.  **Original Dataset:** We start with our full dataset (imagine a spreadsheet of patient data).
+2.  **Bootstrap Samples:** We create multiple new datasets by sampling *with replacement* from the original. This means some patients might appear multiple times in a sample, while others might be left out. Each sample is roughly the same size as the original. Think of it like drawing names from a hat, putting the name back each time.
+3.  **Train Models:** We train a separate decision tree on each of these bootstrap samples. Because each tree sees slightly different data, they will learn slightly different patterns.
+4.  **Aggregate Predictions:** For a new patient, we run their data through *all* the trees. For classification, each tree "votes" for a class, and the class with the most votes wins. For regression, we average the predictions. This ensemble approach makes the final prediction more robust and less prone to overfitting than a single decision tree. It's the wisdom of the crowd, but for trees!
+--->
 ![Bagging diagram](media/bagging.png)
 """
 

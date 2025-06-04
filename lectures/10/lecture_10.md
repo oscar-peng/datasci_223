@@ -127,12 +127,14 @@ Before we dive into making computers work together like a well-oiled boy band, l
 #### 1.2.1. Threads vs. Processes: The Roommate Analogy 🏠
 
 **Threads (Shared Memory):**
+
 - Like roommates sharing an apartment and all the furniture
 - **Perfect for:** I/O-bound tasks like downloading DICOM images
 - **Health Example:** Downloading patient records from multiple hospital APIs simultaneously
 - **Python Tools:** [`threading.Thread`](multiprocessing.py:1), [`concurrent.futures.ThreadPoolExecutor`](concurrent/futures.py:1)
 
 **Processes (Isolated Memory):**
+
 - Like separate apartments - each has its own everything
 - **Perfect for:** CPU-intensive tasks like training neural networks
 - **Health Example:** Running multiple CNNs on different medical image batches
@@ -143,11 +145,13 @@ Before we dive into making computers work together like a well-oiled boy band, l
 #### 1.2.2. Parallelism vs. Concurrency: The Kitchen Metaphor 👨‍🍳
 
 **Parallelism (True Simultaneous):**
+
 - 8 chefs working on 8 different dishes at the same time
 - **Health Example:** 8 CPU cores analyzing 8 different patient records simultaneously
 - **Result:** Actually faster because work happens at the same time
 
 **Concurrency (Interleaved Tasks):**
+
 - 1 chef switching between chopping vegetables and stirring soup
 - **Health Example:** Single core downloading patient data while processing previous batch
 - **Result:** More efficient use of waiting time, but not necessarily faster
@@ -157,12 +161,14 @@ Before we dive into making computers work together like a well-oiled boy band, l
 #### 1.2.3. CPU-bound vs. I/O-bound: Know Your Bottleneck 🔍
 
 **CPU-bound Health Tasks (Need Process Power):**
+
 - Deep learning model training
 - Genomic sequence alignment
 - Statistical model fitting on large datasets
 - **Strategy:** More cores = better performance
 
 **I/O-bound Health Tasks (Need Thread Efficiency):**
+
 - Downloading medical images from hospital servers
 - Querying multiple databases
 - Reading large files from network storage
@@ -175,12 +181,14 @@ Think of this as evolving from a single-family home to a skyscraper. Each approa
 #### 1.3.1. Single-Machine Scaling: Maximizing Your Desktop 💪
 
 **Multi-threading Approach:**
+
 - **Best for:** Concurrent downloads, database queries
 - **Health Use Case:** Downloading 1000 DICOM images simultaneously
 - **Limitation:** Python's GIL means threads can't truly parallelize CPU work
 - **Tools:** [`threading`](threading.py:1), [`asyncio`](asyncio.py:1)
 
 **Multi-processing Approach:**
+
 - **Best for:** Parallel computation, model training
 - **Health Use Case:** Training multiple models on different patient cohorts
 - **Resource Planning:** Use 1-2 processes per CPU core for compute tasks
@@ -189,16 +197,19 @@ Think of this as evolving from a single-family home to a skyscraper. Each approa
 #### 1.3.2. Cluster Computing: When One Computer Isn't Enough 🤝
 
 **Traditional HPC (High-Performance Computing):**
+
 - **Health Use:** Large-scale genomics pipelines, climate health modeling
 - **Characteristics:** Tight coupling, specialized hardware, very fast networking
 - **Example:** Analyzing whole genome sequences across thousands of samples
 
 **Grid Computing (SGE/SLURM):**
+
 - **Health Use:** Embarrassingly parallel analyses (each task independent)
 - **UCSF Example:** Wynton cluster with 4,000+ cores for health research
 - **Perfect for:** Parameter sweeps, cross-validation, Monte Carlo simulations
 
 **Modern Distributed (Kubernetes, Spark):**
+
 - **Health Use:** Real-time monitoring, elastic ML pipelines
 - **Benefits:** Auto-scaling (more patients = more compute), fault tolerance, cloud integration
 - **Example:** COVID-19 tracking dashboard that scales with data volume
@@ -210,6 +221,7 @@ Think of this as evolving from a single-family home to a skyscraper. Each approa
 Before jumping into distributed computing, you need to identify which tasks can actually benefit from parallelization. Think of it like figuring out which chores you can do simultaneously versus which must be done in sequence.
 
 **Embarrassingly Parallel Tasks (Perfect Candidates):**
+
 - **Definition:** Tasks where each unit of work is completely independent
 - **Patient file analysis:** Each patient's record can be processed without knowing about others
 - **Cross-validation folds:** Each fold trains/tests independently
@@ -218,12 +230,14 @@ Before jumping into distributed computing, you need to identify which tasks can 
 - **Image preprocessing:** Each medical image can be processed separately
 
 **Algorithmic Characteristics that Enable Parallelization:**
+
 - **No shared state:** Functions don't need to communicate during execution
 - **Deterministic inputs:** Each task has well-defined, independent inputs
 - **Atomic operations:** Each task is self-contained and produces complete output
 - **No ordering requirements:** Results don't depend on execution order
 
 **Tasks That DON'T Parallelize Well:**
+
 - **Sequential algorithms:** Where step N depends on result from step N-1
 - **Shared mutable state:** Multiple processes modifying the same data structure
 - **Heavy communication:** Where processes need to talk to each other frequently
@@ -232,6 +246,7 @@ Before jumping into distributed computing, you need to identify which tasks can 
 ![Easy vs Hard Parallel Tasks](media/easy_vs_hard_tasks.png)
 
 **Quick Parallelization Assessment:**
+
 1. **Can I split my data into independent chunks?** ✅ Good candidate
 2. **Does each chunk need results from other chunks?** ❌ Poor candidate
 3. **Is each chunk's computation time >> setup time?** ✅ Good candidate
@@ -240,16 +255,19 @@ Before jumping into distributed computing, you need to identify which tasks can 
 #### 1.3.4. Common Distributed Patterns 🎭
 
 **Map-Reduce Pattern:**
+
 - **Example:** Process 1M patient records, then aggregate population statistics
 - **Map Step:** Extract risk factors from each patient record
 - **Reduce Step:** Calculate population-level disease prevalence
 
 **Orchestrator/Worker Pattern:**
+
 - **Example:** Hyperparameter tuning for drug discovery models
 - **Orchestrator:** Manages which parameter combinations to try next
 - **Workers:** Train models with specific hyperparameters and report results
 
 **Pipeline Pattern:**
+
 - **Example:** Medical image analysis workflow
 - **Stage 1:** DICOM preprocessing (anonymization, format conversion)
 - **Stage 2:** Feature extraction (radiomics features, deep learning features)
@@ -262,16 +280,19 @@ Before jumping into distributed computing, you need to identify which tasks can 
 For beginners, start with local parallelism before jumping to distributed systems. It's like learning to drive before attempting Formula 1 racing!
 
 **multiprocessing Module - The Workhorse:**
+
 - **Best for:** CPU-intensive health data analysis
 - **Key Feature:** Process pools for easy parallel execution
 - **Health Example:** Parallel patient cohort analysis across multiple files
 
 **concurrent.futures - The User-Friendly Option:**
+
 - **ThreadPoolExecutor:** For I/O-bound tasks (downloading, database queries)
 - **ProcessPoolExecutor:** For CPU-bound tasks (model training, analysis)
 - **Health Example:** Concurrent medical database queries across hospitals
 
 **joblib - The Scientist's Choice:**
+
 - **Perfect for:** Scientific computing and sklearn integration
 - **Memory Mapping:** Efficient sharing of large NumPy arrays between processes
 - **Health Example:** Parallel cross-validation for medical prediction models
@@ -279,11 +300,13 @@ For beginners, start with local parallelism before jumping to distributed system
 #### 1.4.2. Distributed Frameworks: When You Need More 🌐
 
 **Dask - Pandas/NumPy but Bigger:**
+
 - **Use Case:** Familiar APIs for larger-than-memory health datasets
 - **Features:** Lazy evaluation, automatic task optimization
 - **Health Example:** EHR analysis on 100GB+ datasets that don't fit in RAM
 
 **Ray - The ML Powerhouse:**
+
 - **Use Case:** Distributed machine learning and hyperparameter tuning
 - **Features:** Actor model, distributed objects, auto-scaling
 - **Health Example:** Distributed training of deep learning models for medical imaging
@@ -295,12 +318,14 @@ For beginners, start with local parallelism before jumping to distributed system
 **Function:** [`multiprocessing.Pool(processes=None)`](multiprocessing.py:1)
 **Purpose:** Create a pool of worker processes for parallel execution of health data analysis tasks
 **Key Parameters:**
+
 - `processes`: (Optional, default=None) Number of worker processes. If None, uses number of CPU cores. For health data, often set to number of CPU cores or slightly less
 - `initializer`: (Optional, default=None) Function to run when each worker starts. Useful for loading reference data like medical ontologies
 - `initargs`: (Optional, default=()) Arguments for initializer function
 - `maxtasksperchild`: (Optional, default=None) Maximum tasks per worker before restart. Helps prevent memory leaks in long-running health analyses
 
 **Key Methods:**
+
 - `map(func, iterable)`: Apply function to each item in parallel - perfect for processing patient files
 - `starmap(func, iterable)`: Like map but unpacks arguments from tuples - useful when functions need multiple parameters
 - `apply_async(func, args)`: Asynchronous function application for non-blocking execution
@@ -343,6 +368,7 @@ Wynton is UCSF's high-performance computing cluster - think of it as having acce
 #### 1.5.1. Wynton Cluster Overview 🏢
 
 **Hardware Specifications:**
+
 - **CPU Cores:** 4,000+ cores across 200+ nodes (like having 4,000 laptops working together)
 - **GPUs:** 88 high-end GPUs for deep learning (RTX, V100, H100 series)
 - **Memory:** Nodes ranging from 64GB to 1.5TB RAM (some computers have more RAM than your entire hard drive!)
@@ -355,6 +381,7 @@ SLURM (Simple Linux Utility for Resource Management) is like a smart traffic con
 ![Your Job in the SLURM Queue](media/your_job_in_the_slurm_queue_01.png)
 
 **Key SLURM Commands:**
+
 - [`sbatch`](slurm.sh:1): Submit a job script (like "please run this analysis when you have time")
 - [`squeue`](slurm.sh:1): Check job status (like "where is my job in line?")
 - [`scancel`](slurm.sh:1): Cancel a job (like "never mind, I changed my mind")
@@ -365,6 +392,7 @@ SLURM (Simple Linux Utility for Resource Management) is like a smart traffic con
 **Purpose:** SLURM job scripts use `#SBATCH` directives to specify resource requirements. These special comments tell SLURM what resources your job needs.
 
 **Common #SBATCH Options:**
+
 - `--job-name=name`: (Optional) Give your job a descriptive name for easy identification in queue
 - `--partition=name`: (Optional, default=default) Which compute partition to use (cpu, gpu, bigmem)
 - `--cpus-per-task=N`: (Optional, default=1) Number of CPU cores per task
@@ -375,6 +403,7 @@ SLURM (Simple Linux Utility for Resource Management) is like a smart traffic con
 - `--output=file`: (Optional) Redirect stdout to specified file
 
 **Health Data Examples:**
+
 ```bash
 # Basic CPU job for data analysis
 #SBATCH --job-name=patient_analysis
@@ -397,6 +426,7 @@ SLURM (Simple Linux Utility for Resource Management) is like a smart traffic con
 #### 1.5.4. Health Data Job Examples 📋
 
 **Example 1: GPU Deep Learning Job**
+
 ```bash
 #!/bin/bash
 #SBATCH --job-name=medical_cnn
@@ -407,6 +437,7 @@ python train_cnn.py --data chest_xrays/ --epochs 100
 ```
 
 **Example 2: Array Job for Genomics**
+
 ```bash
 #!/bin/bash
 #SBATCH --job-name=variant_calling
@@ -420,6 +451,7 @@ gatk HaplotypeCaller -I ${SAMPLE_ID}.bam -O ${SAMPLE_ID}.vcf
 #### 1.5.4. Resource Estimation Guidelines 📏
 
 **Memory Requirements by Data Type:**
+
 - **Tabular Health Data:** 2-4x dataset size in RAM (if your CSV is 10GB, request 20-40GB RAM)
 - **Medical Images:** 16-32GB for CNN training, more for larger models
 - **Genomics:** 32-128GB depending on reference genome and sample size
@@ -451,18 +483,21 @@ The most common scenario: someone hands you a dataset and says "find something i
 #### 2.1.1. Dataset-Driven Question Framework 🎯
 
 **Step 1: What type of data do you have?**
+
 - **Cross-sectional:** Snapshot at one time point → Can study associations, prevalence
 - **Longitudinal:** Multiple time points → Can study changes, trends, some causation
 - **Intervention data:** Before/after treatment → Can study treatment effects
 - **Matched pairs:** Naturally paired observations → Can control for confounding
 
 **Step 2: What's your outcome variable?**
+
 - **Continuous (blood pressure, weight):** Use t-tests, regression, ANOVA
 - **Binary (diseased/healthy, survived/died):** Use logistic regression, chi-square tests
 - **Count (hospital visits, seizures):** Use Poisson regression
 - **Time-to-event (time until diagnosis):** Use survival analysis
 
 **Step 3: What questions CAN'T you answer?**
+
 - **Causation from correlation-only data:** Just because A and B are related doesn't mean A causes B
 - **Effects you didn't measure:** Can't study smoking effects if you didn't record smoking status
 - **Generalization beyond your sample:** Results from hospital patients may not apply to general population
@@ -472,11 +507,13 @@ The most common scenario: someone hands you a dataset and says "find something i
 ![Study Design Decision Tree](media/Flowchart_WST.jpg)
 
 **Randomized Controlled Trials (RCTs):**
+
 - **Best for:** Testing treatments, interventions
 - **Why randomization works:** Eliminates selection bias, balances known/unknown confounders
 - **Methods:** Simple (coin flip), block (balanced chunks), stratified (subgroup balance)
 
 **Observational Studies:**
+
 - **Cohort:** Follow people forward in time (e.g., Framingham Heart Study)
 - **Case-Control:** Work backwards from disease to exposure
 - **Cross-Sectional:** Snapshot at one time point
@@ -498,6 +535,7 @@ The key question isn't "What's the most sophisticated test?" but rather "What te
 Use when you have two groups and want to compare means of a normally distributed variable.
 
 **Examples:**
+
 - Compare blood pressure before/after medication
 - Compare recovery times between treatment groups
 - Test if biomarker levels differ from normal values
@@ -527,6 +565,7 @@ print(f"P-value: {p_val:.3f}, Significant: {p_val < 0.05}")
 ```
 
 **Common Beginner Mistakes with T-Tests:**
+
 - **Assuming normality without checking:** T-tests assume normal distributions. Use [`scipy.stats.shapiro`](scipy/stats.py:1) to test normality first
 - **Ignoring unequal variances:** If one group has much more variability, set `equal_var=False`
 - **Multiple comparisons:** Running many t-tests inflates Type I error rate (more on this below!)
@@ -537,6 +576,7 @@ print(f"P-value: {p_val:.3f}, Significant: {p_val < 0.05}")
 Use when you have categorical variables and want to test if they're independent.
 
 **Examples:**
+
 - Test if treatment response differs by gender
 - Check if smoking status is related to lung cancer
 - Analyze if hospital readmission varies by treatment type
@@ -548,6 +588,7 @@ Use when you have categorical variables and want to test if they're independent.
 Use when you have more than two groups and want to compare means of a normally distributed variable.
 
 **Examples:**
+
 - Compare pain scores across three different medications
 - Test if blood glucose varies by diet type (low-carb, Mediterranean, low-fat)
 - Analyze if recovery time differs across multiple treatment protocols
@@ -559,6 +600,7 @@ Use when you have more than two groups and want to compare means of a normally d
 Use when you want to predict a continuous outcome from one or more predictors.
 
 **Examples:**
+
 - Predict blood pressure from age, weight, and sodium intake
 - Model relationship between exercise hours and weight loss
 - Estimate hospital length of stay from admission severity scores
@@ -570,6 +612,7 @@ Use when you want to predict a continuous outcome from one or more predictors.
 Use when your data violates normality assumptions or you have ordinal data.
 
 **Examples:**
+
 - **Mann-Whitney U:** Compare pain scores (1-10 scale) between two treatments
 - **Kruskal-Wallis:** Compare satisfaction ratings across multiple hospitals
 - **Wilcoxon signed-rank:** Test before/after treatment when data is skewed
@@ -581,6 +624,7 @@ Use when your data violates normality assumptions or you have ordinal data.
 Use when your outcome is binary (yes/no, survived/died) and you have multiple predictors.
 
 **Examples:**
+
 - Predict diabetes risk from age, BMI, and family history
 - Model probability of treatment success from patient characteristics
 - Analyze factors affecting hospital readmission (yes/no)
@@ -596,6 +640,7 @@ Use when your outcome is binary (yes/no, survived/died) and you have multiple pr
     - `family`: (Optional) Automatically set to binomial for logit, but can specify other GLM families
 
 **Key Methods:**
+
 - `.fit()`: Estimate model parameters using maximum likelihood
 - `.summary()`: Display comprehensive results including coefficients, p-values, confidence intervals
 - `.predict()`: Generate predicted probabilities for new observations
@@ -624,6 +669,7 @@ print(f"Diabetes risk for 60yr, BMI=30: {model.predict(pd.DataFrame({'age': [60]
 Use when your outcome is time until an event occurs (death, disease recurrence, recovery).
 
 **Examples:**
+
 - Time until cancer recurrence after treatment
 - Days until hospital discharge
 - Months until medication side effects appear
@@ -635,6 +681,7 @@ Use when your outcome is time until an event occurs (death, disease recurrence, 
 Use when you want to measure how strongly two continuous variables are related.
 
 **Examples:**
+
 - **Pearson:** Correlation between height and weight (linear relationship)
 - **Spearman:** Correlation between pain severity ranking and quality of life scores
 - Relationship between medication dosage and symptom improvement
@@ -646,6 +693,7 @@ Use when you want to measure how strongly two continuous variables are related.
 Use when you have the same subjects measured twice (before/after, left/right).
 
 **Examples:**
+
 - Blood pressure before and after medication in same patients
 - Weight loss before and after diet intervention
 - Cognitive scores pre- and post-surgery
@@ -658,6 +706,7 @@ Here's a dirty secret: if you test enough hypotheses, you'll find "significant" 
 ![Statistical Fishing Expedition](media/gonefishing.jpg)
 
 **The Multiple Testing Problem:**
+
 - Test 20 biomarkers at α = 0.05
 - Expected false positives: 20 × 0.05 = 1 false discovery
 - Your "significant" finding might be noise!
@@ -692,6 +741,7 @@ print(f"After correction: {sum(rejected)}")
 ```
 
 **Correction Method Cheatsheet:**
+
 - **Bonferroni:** Most conservative, controls family-wise error rate
 - **Holm-Bonferroni:** Less conservative than Bonferroni, still controls FWER
 - **Benjamini-Hochberg:** Controls false discovery rate (more power than FWER methods)
@@ -728,6 +778,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 ![CRISP-DM health data science adaptation](media/crispdm.webp)
 
 #### 3.1.1. Business Understanding 🎯
+
 **What problem are we solving, and why does it matter to patient outcomes?**
 
 - **Clinical Problem Definition:** Clear medical question with measurable outcomes
@@ -740,6 +791,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 **Health Example:** "Can we predict which COVID-19 patients will need ICU admission within 24 hours using readily available lab values and vital signs?"
 
 #### 3.1.2. Data Understanding 📊
+
 **What data do we have, and what are its quirks?**
 
 - **Data Sources:** EHRs, imaging systems, wearables, public health databases
@@ -750,6 +802,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 **Integration Point:** This is where you decide if your dataset needs the distributed computing tools from Section 1.
 
 #### 3.1.3. Experimental Design 🔬
+
 **How do we set up the study to actually answer our question?**
 
 - **Study Type:** RCT vs. observational design based on feasibility and ethics
@@ -760,6 +813,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 **Integration Point:** This is where you apply the experimental design principles from Section 2.
 
 #### 3.1.4. Data Preparation ⚙️
+
 **Getting data ready for analysis - the unglamorous but essential work.**
 
 - **Missing Data Strategy:** MCAR/MAR/MNAR assessment, imputation methods
@@ -768,6 +822,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 - **Quality Control:** Outlier detection with clinical domain knowledge
 
 #### 3.1.5. Modeling & Analysis 🤖
+
 **Building predictive models or testing hypotheses.**
 
 - **Algorithm Selection:** Interpretable (logistic regression) vs. complex (deep learning)
@@ -776,6 +831,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 - **Cross-Validation:** Temporal splits, patient-level splits, stratified CV
 
 #### 3.1.6. Evaluation 📈
+
 **How well does our solution actually work?**
 
 - **Clinical Metrics:** Sensitivity/specificity at clinically relevant thresholds
@@ -784,6 +840,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 - **Error Analysis:** When and why does the model fail?
 
 #### 3.1.7. Deployment 🚀
+
 **Getting research results into clinical practice.**
 
 - **Infrastructure:** Real-time APIs, batch processing, edge deployment
@@ -792,6 +849,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 - **Regulatory:** FDA approval pathway, clinical validation studies
 
 #### 3.1.8. Communication 📢
+
 **Translating technical results for different audiences.**
 
 - **Clinical Reports:** Focus on patient outcomes and workflow impact
@@ -800,6 +858,7 @@ CRISP-DM (Cross-Industry Standard Process for Data Mining) is like having a GPS 
 - **Documentation:** Code repositories, model cards, ethical considerations
 
 #### 3.1.9. Maintenance & Iteration 🔄
+
 **Keeping the system working and improving over time.**
 
 - **Model Retraining:** Scheduled updates, trigger-based retraining
@@ -816,6 +875,7 @@ Let's walk through a concrete example that shows how distributed computing and e
 **Scenario:** We want to identify genetic biomarkers that predict organ transplant rejection using gene expression data from 10,000+ patients across multiple medical centers.
 
 **Why This Needs Both Skills:**
+
 - **Distributed Computing:** 10,000 patients × 20,000 genes = 200 million data points
 - **Experimental Design:** Need proper controls, multiple testing correction, validation strategies
 
@@ -826,12 +886,14 @@ Let's walk through a concrete example that shows how distributed computing and e
 **Distributed Processing:** 500GB data, 128GB+ RAM needs, 48+ hour runtime.
 
 **SLURM Array Job:**
+
 ```bash
 #SBATCH --array=1-20 --cpus-per-task=16 --mem=64G --time=12:00:00
 python transplant_analysis.py --organ_type $ORGAN_TYPE --threads $SLURM_CPUS_PER_TASK
 ```
 
 **Key Python Implementation:**
+
 ```python
 import multiprocessing as mp
 from sklearn.linear_model import LogisticRegression
@@ -873,6 +935,7 @@ Congratulations! You've completed a comprehensive tour of health data science th
 Over these 10 lectures, you've built a toolkit that would make any health data scientist jealous:
 
 **Technical Skills:**
+
 - **Programming Fluency:** Python, SQL, and command-line tools
 - **Data Analysis:** From pandas to Polars, from statistics to machine learning
 - **Specialized Domains:** Time series, NLP, computer vision, and deep learning
@@ -881,6 +944,7 @@ Over these 10 lectures, you've built a toolkit that would make any health data s
 - **Experimental Design:** Designing studies that actually answer the questions you're asking
 
 **Professional Skills:**
+
 - **Scientific Thinking:** Moving from correlation to causation with proper experimental design
 - **Ethical Awareness:** Understanding IRB requirements, HIPAA compliance, and bias prevention
 - **Project Management:** Using CRISP-DM to organize complex health data science projects
@@ -891,6 +955,7 @@ Over these 10 lectures, you've built a toolkit that would make any health data s
 Here's what seasoned health data scientists want you to know:
 
 **You'll Never Stop Learning (And That's the Fun Part!)** 📚
+
 - New tools emerge constantly (remember when transformers didn't exist?)
 - Health data keeps getting bigger and more complex
 - Regulations and ethical standards evolve
@@ -906,6 +971,7 @@ Here's what seasoned health data scientists want you to know:
 - You'll spend 80% of your time on data cleaning and stakeholder management (and that's normal!)
 
 **You're Now Dangerous in the Best Possible Way** ⚡
+
 - You can ask better questions than people without statistical training
 - You can scale analyses beyond what most researchers thought possible
 - You understand both the power and limitations of AI in healthcare
@@ -914,12 +980,14 @@ Here's what seasoned health data scientists want you to know:
 ### The Path Forward: From Student to Professional 🛤️
 
 **Immediate Next Steps (Next 6 Months):**
+
 1. **Build a Portfolio:** Create 2-3 real health data projects using capstone or public datasets
 2. **Join the Community:** Attend health data science meetups, conferences, join online forums
 3. **Specialize:** Pick one domain (genomics, imaging, EHR analysis) for deeper focus
 4. **Practice Communication:** Present your work to non-technical audiences
 
 **Medium-Term Goals (1-2 Years):**
+
 1. **Gain Domain Expertise:** Shadow clinicians, take biology courses, understand the healthcare system
 2. **Professional Certification:** Consider certifications in specific tools or domains
 3. **Collaboration Skills:** Work on interdisciplinary teams with clinicians, engineers, and researchers

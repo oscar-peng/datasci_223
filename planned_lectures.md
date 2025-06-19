@@ -1,3 +1,5 @@
+# DataSci-223 Lectures
+
 1. ✅ **Dev Environment Setup & Python Fundamentals**
     - **Focus:** Tools (Python, Jupyter, Git, Conda/Venv), basic Python review.
     - **Libraries:** `python`, `jupyter`, `git`, `conda`

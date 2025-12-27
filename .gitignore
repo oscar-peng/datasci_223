@@ -20,3 +20,5 @@ gen-lang-client-0306464806-ee14603523e3.json
 altair-data-*.json
 lectures/10/demo/patient_cohorts/
 patient_cohorts/
+# Ignore large Vosk model artifacts to keep snapshots clean
+lectures_25/09/demo/vosk-model-small-en-us-0.15/

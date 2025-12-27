@@ -1,0 +1,24 @@
+# Requirements for Lecture 09 chart generation and demos
+dash==2.14.2
+plotly==5.18.0
+pandas==2.1.4
+numpy==1.26.2
+altair==5.2.0
+vl-convert-python>=1.0.0
+streamlit>=1.28.0
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+mkdocs-charts-plugin>=0.0.10
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+dash-core-components>=2.0.0
+dash-html-components>=2.0.0
+dash-table>=5.0.0
+jupytext>=1.16.0
+jupyter-dash>=0.4.2
+nilearn
+dash_bootstrap_components
+dash_slicer
+soundfile
+vosk

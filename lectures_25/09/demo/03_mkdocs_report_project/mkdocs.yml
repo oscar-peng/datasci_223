@@ -1,0 +1,87 @@
+# Basic site information
+site_name: Interactive Clinical Research Reports
+site_description: 'Automated analysis of feeding progression patterns in premature infants'
+site_author: 'Clinical Data Science Team'
+
+# Documentation source directory
+docs_dir: results
+
+# Theme configuration
+# Material theme is a popular choice for technical documentation
+theme:
+  name: material
+  # Navigation and UI features
+  features:
+    - navigation.sections      # Groups navigation items into collapsible sections
+    - navigation.expand       # Allows sections to be expanded/collapsed
+    - navigation.instant     # Enables instant loading of pages without full page reload
+    - navigation.tracking    # Highlights the current section in the navigation
+    - navigation.indexes     # Shows index pages for each section
+    - header.autohide       # Hides the header when scrolling down
+    - content.code.copy     # Adds a copy button to code blocks
+    - content.action.edit   # Adds an edit button to pages (links to GitHub)
+    - content.action.view   # Adds a view button to pages (links to GitHub)
+  
+  # Color scheme configuration
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  # Repository icon in the top right
+  icon:
+    repo: fontawesome/brands/github
+
+# Plugins extend MkDocs functionality
+plugins:
+  - search        # Enables search functionality
+  - charts        # Enables interactive Vega-Lite charts
+
+# Markdown extensions add features to the markdown parser
+markdown_extensions:
+  - admonition    # Adds support for note/warning boxes
+  - codehilite    # Adds syntax highlighting to code blocks
+  - toc:          # Adds table of contents
+      permalink: true  # Adds permalink to each heading
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid    # For Mermaid diagrams
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+        - name: vegalite   # For Vega-Lite charts
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
+  - pymdownx.tasklist  # Adds support for task lists
+
+# JavaScript dependencies for interactive features
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/vega@5      # Vega for charts
+  - https://cdn.jsdelivr.net/npm/vega-lite@5  # Vega-Lite for charts
+  - https://cdn.jsdelivr.net/npm/vega-embed@6 # Vega-Embed for charts
+
+# Navigation structure
+# This defines the menu structure and page hierarchy
+nav:
+  - Home: index.md
+  - Reports:
+      - Interactive Visualizations: reports/visualization.md
+      - Bivariate Analysis: reports/bivariate_analysis.md
+
+# Social media links
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/christopherseaman/datasci_223-09-03_mkdocs_report

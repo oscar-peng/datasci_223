@@ -1,0 +1,28 @@
+# Core scientific and visualization libraries
+numpy>=1.20.0
+matplotlib>=3.5.0
+scikit-learn>=1.0.0
+seaborn>=0.11.0
+
+# Image processing libraries
+Pillow>=9.0.0  # PIL fork
+opencv-python>=4.5.0  # cv2
+pydicom>=2.3.0  # For DICOM file handling
+
+# Deep learning frameworks
+tensorflow>=2.9.0  # Includes Keras
+tensorflow-hub>=0.12.0  # For pre-trained models
+kagglehub>=0.2.0  # For downloading models from Kaggle
+
+# Medical imaging specific
+medmnist>=3.0.2  # Medical MNIST datasets
+
+# Object detection
+ultralytics>=8.0.0  # For YOLO
+
+# HTTP requests
+requests>=2.27.0
+
+# Notebook conversion
+jupytext>=1.14.0  # For converting markdown to notebooks
+jupyter>=1.0.0  # Core Jupyter

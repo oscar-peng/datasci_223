@@ -1,0 +1,45 @@
+name: Deploy MkDocs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Or your default branch, e.g., master
+      # - master
+  pull_request:
+    branches:
+      - main # Or your default branch
+      # - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # Or a specific version like '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs mkdocs-material mkdocs-charts-plugin pandas altair
+          # Add any other Python packages required by your generate_charts.py script
+          # For example, if your script uses 'requests':
+          # pip install requests
+
+      - name: Generate Report Elements
+        run: python orchestrator.py --no-build # Run orchestrator to generate charts/data, but don't build site yet
+
+      - name: Build MkDocs site
+        run: mkdocs build # MkDocs build will use the generated elements
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          # Optional: specify a custom domain if you have one
+          # cname: your.custom.domain.com

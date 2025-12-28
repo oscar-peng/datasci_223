@@ -33,7 +33,7 @@ Links: [GitHub Education](https://education.github.com/pack) · `#FIXME` Classro
 Reassure students they already know the basics; emphasize this session is about reliability. Mention we'll move faster than last year and lean on links for depth.
 --->
 Summary: Quick reminder that Python, git, Markdown, and VS Code basics already exist so we can focus on reliability and debugging.
-Visual: ![XKCD: Git](./media/xkcd_git.png)
+Visual: ![XKCD: Git](/01/media/xkcd_git.png)
 Signature: `python -m venv .venv && source .venv/bin/activate`
 Example:
 ```bash
@@ -45,10 +45,10 @@ git status && git commit -am "chore: warm up"
 
 ### Fast local/cloud workflow
 <!---
-Explain that choosing a single environment reduces friction. Encourage Codespaces for consistency, local venv for performance/PHI. Mention WSL briefly for Windows.
+Explain that choosing a single environment reduces friction. Encourage Codespaces for consistency, local venv for performance/PHI. Mention WSL briefly for Windows. For Windows activation: `.venv\Scripts\activate` instead of `source .venv/bin/activate`.
 --->
 Summary: Pick one workflow (local venv or Codespaces) and stick to it for predictable grading and fewer surprises.
-Visual: ![Codespaces debug icon](./media/debug-icon.png)
+Visual: ![Codespaces debug icon](/01/media/debug-icon.png)
 Signature: `codespace.create(repo, machine="small")`
 Example:
 ```bash
@@ -56,16 +56,18 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
-- Local: `python -m venv .venv && source .venv/bin/activate` then `pip install -r requirements.txt`.
+- Local: `python -m venv .venv && source .venv/bin/activate` then `pip install -r requirements.txt`. (Windows: `.venv\Scripts\activate`)
 - Cloud: GitHub Codespaces → select the repo → pick a small machine → reuse devcontainer if provided.
+- Windows users: consider WSL2 for a Linux environment inside Windows—matches Codespaces and avoids path headaches.
 - VS Code essentials: Python + Jupyter extensions; Command Palette for everything; auto-format on save.
+- The `-m` flag runs a module as a script (e.g., `python -m venv` runs the venv module).
 
 ### Notebook hygiene and reproducibility
 <!---
 Highlight “run-all ready” notebooks, cleared outputs on commit, deterministic runs, and config separation. Mention why this matters for grading and team science.
 --->
 Summary: Notebooks must be run-all ready, deterministic, and free of stray outputs or secret paths.
-Visual: ![Debugging gif](./media/debugging.gif)
+Visual: ![XKCD: Data Trap](/01/media/data_trap_2x.png)
 Signature: `def run_all(notebook_path: Path) -> None`
 Example:
 ```python
@@ -82,7 +84,7 @@ jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace lecture.ipynb
 Offer the minimal command set and when to use GUI. Encourage short commits and descriptive messages. Note Markdown basics for README and notebooks.
 --->
 Summary: Minimal git/Markdown toolkit for fast, clean commits and readable docs.
-Visual: ![XKCD: Git Commit](./media/xkcd_git_commit.png)
+Visual: ![XKCD: Git Commit](/01/media/xkcd_git_commit.png)
 Signature: `git commit -m "feat: summary"`
 Example:
 ```markdown
@@ -126,7 +128,7 @@ Links: [`defensive_programming_notebook.ipynb`](./demo/defensive_programming_not
 Frame debugging as risk management: data drift, messy inputs, environment drift, bad assumptions. Use light humor (ghost of missing values).
 --->
 Summary: How health datasets fail—missing columns, unit drift, stale environments, and silent PHI leaks.
-Visual: ![When code works first time (suspicious)](./media/code-worked-the-first-time-suspicious.jpg)
+Visual: ![XKCD: Error Types](/01/media/xkcd_error_types.png)
 Signature: `def assert_expected_columns(df: pd.DataFrame, expected: list[str]) -> None`
 Example:
 ```python
@@ -140,12 +142,17 @@ def assert_expected_columns(df, expected):
 - Hidden assumptions: hardcoded file paths, magic numbers, unseeded randomness.
 - Security/ethics: avoid PHI in logs, public clouds, or screenshots.
 
-### Guardrails: DRY/KISS and configs over hardcoding
+### Guardrails: DRY/KISS, linters, and configs over hardcoding
 <!---
-Show how small helpers/configs reduce bugs. Emphasize clarity and minimal abstractions. Mention `.env` + `pydantic` or `dotenv` as optional.
+Show how small helpers/configs reduce bugs. Emphasize clarity and minimal abstractions. Mention `.env` + `pydantic` or `dotenv` as optional. Define DRY/KISS for beginners.
 --->
 Summary: Centralize settings and keep helpers tiny so you can reuse them and spot side effects.
-Visual: ![Linter reminder](./media/linter.png)
+
+**Quick definitions:**
+- **DRY** (Don't Repeat Yourself): Extract repeated code into functions—one place to fix bugs.
+- **KISS** (Keep It Simple): Prefer clear, obvious code over clever one-liners.
+- **Pure functions**: Functions that always return the same output for the same input and don't modify external state—easier to test and debug.
+Visual: ![Linter reminder](/01/media/linter.png)
 Signature: `def load_settings(config_path: Path) -> dict`
 Example:
 ```python
@@ -161,13 +168,14 @@ SETTINGS = load_settings(Path("config.yaml"))
 - Keep helper functions small and named for intent; avoid clever one-liners that hide side effects.
 - Validate inputs early: assert expected columns, value ranges, and units.
 - Prefer pure functions where possible so tests are easy.
+- **Use a linter** (e.g., `ruff`, `flake8`): catches typos, unused imports, and style issues before you run the code. VS Code can run linters on save.
 
 ### Exceptions, logging, and safe exits
 <!---
 Students often overuse bare except. Show structured exceptions, logging levels, and graceful fallbacks. Mention PHI-safe logging.
 --->
 Summary: Raise specific exceptions, log clearly, and fail fast without leaking PHI.
-Visual: ![Read the docs](./media/read-the-docs.jpeg)
+Visual: ![XKCD: Compiler Complaint](/01/media/xkcd_compiler_complaint.png)
 Signature: `def load_clean_data(path: str) -> list[dict]`
 Example:
 ```python
@@ -195,7 +203,7 @@ except FileNotFoundError as err:
 Practice adding assertions, config loading, and logging to an existing notebook. Show before/after of a failing cell now giving actionable errors. Encourage students to try with bad input.
 --->
 Summary: Run the cleaning notebook with broken inputs, add schema/bounds checks and logging, rerun to see actionable errors.
-Visual: ![Debug run](./media/debug-run.png)
+Visual: ![Debugging gif](/01/media/debugging.gif)
 Signature: `def validate_values(df: pd.DataFrame) -> pd.DataFrame`
 Example:
 ```python
@@ -224,30 +232,51 @@ Hands-on walkthrough of debugger flows for scripts and notebooks using the BMI e
 **Demo (~90 min): Step-through debugging in VS Code for scripts and notebooks.**  
 Links: [VS Code Python debugging](https://code.visualstudio.com/docs/python/debugging) · [`vscode_debug_sample.py`](./demo/vscode_debug_sample.py) · [`vscode_debug_walkthrough.md`](./demo/vscode_debug_walkthrough.md) · screenshots below.
 
-### Quick debugging toolkit
+### Print debugging: start here
+<!---
+Cover print debugging first—it's the most accessible technique for beginners. Show strategic print placement and f-string tricks.
+--->
+Summary: Print statements are your first debugging tool—fast, simple, and works everywhere.
+Visual: ![When code works first time (suspicious)](/01/media/code-worked-the-first-time-suspicious.jpg)
+Signature: `print(f"{var=}")`  # Python 3.8+ shows variable name and value
+Example:
+```python
+def calculate_bmi(weight_kg, height_m):
+    print(f"{weight_kg=}, {height_m=}")  # See inputs
+    bmi = weight_kg / (height_m ** 2)
+    print(f"{bmi=}")  # See output
+    return bmi
+```
+- Start with `print()` statements at key points: function entry, before/after transforms, inside loops.
+- Use f-string `{var=}` syntax (Python 3.8+) to print both name and value: `print(f"{df.shape=}")`.
+- For persistent debugging, switch to `logging` so you can toggle verbosity without removing code.
+- Remove or comment out prints before committing—or graduate to logging.
+
+### When prints aren't enough: pdb and VS Code debugger
 <!---
 Outline when to use print/logging vs. debugger. Mention pdb for terminal-only cases and VS Code for visual learners. Keep tone light (detective reference).
 --->
-Summary: Start with prints/logs, move to pdb or VS Code debugger when you need state and call stacks.
-Visual: ![Debug view](./media/debug_view.png)
-Signature: `import pdb; pdb.set_trace()`
+Summary: Move to pdb or VS Code debugger when you need state inspection and call stacks.
+Visual: ![XKCD: Debugging](/01/media/xkcd_debugging.png)
+Signature: `import pdb; pdb.set_trace()`  # or just `breakpoint()` in Python 3.7+
 Example:
 ```python
 try:
     risky_fn()
 except Exception:
-    import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()  # Drop into debugger on error
 ```
-- Start simple: `print`/`logging` for fast signals, especially inside notebooks.
-- Use `pdb`/`ipdb` when you need state inspection without a GUI.
+- **pdb** (Python Debugger): built-in, terminal-based, works anywhere. Commands: `n` (next), `s` (step into), `c` (continue), `p var` (print).
+- **ipdb**: like pdb but with IPython features (tab completion, colors). Install: `pip install ipdb`.
 - Switch to the VS Code debugger for call stacks, watches, and conditional breakpoints.
+- Debugging is like being a detective in a crime movie where you're also the culprit.
 
 ### VS Code debugger basics (scripts)
 <!---
 Describe setting breakpoints, inspecting variables, and stepping controls. Note launch.json is optional with the Python extension. Add placeholder for a screenshot.
 --->
 Summary: Set breakpoints, run under the debugger, and use call stack/watches to trace BMI bugs.
-Visual: ![VS Code breakpoint UI](./demo/media/vscode-breakpoint-ui.png) <!-- #FIXME replace with real capture -->
+Visual: ![VS Code debug view](/01/media/debug_view.png)
 Signature: `"request": "launch"` entry in `.vscode/launch.json`
 Example:
 ```json
@@ -270,7 +299,7 @@ Example:
 Students may not know notebook debugging exists. Show the debug cell button and how it maps to standard debugger controls. Warn about state carried between cells.
 --->
 Summary: Use the debug button per cell, set breakpoints inside cells, and restart kernels before Run All.
-Visual: ![VS Code notebook debug controls](./demo/media/vscode-notebook-debug.png) <!-- #FIXME replace with real capture -->
+Visual: ![XKCD: Debugger](/01/media/xkcd_debugger.png)
 Signature: `#%%` cell debug blocks in Python files map to notebook-style debugging.
 Example:
 ```python
@@ -287,7 +316,7 @@ calculate_bmi(80, 1.75)
 Provide a reusable flow: reproduce, minimize, inspect assumptions, add guards, re-run. Emphasize saving small failing fixtures for tests.
 --->
 Summary: Reproduce with tiny fixtures, check assumptions, add assertions/logging, and rerun until stable.
-Visual: ![XKCD: Compiling](./media/xkcd_compiling.png)
+Visual: ![XKCD: Existential Bug Reports](/01/media/xkcd_existential_bug_reports.png)
 Signature: `def reproduce_bug(input_path: Path) -> None`
 Example:
 ```python
@@ -307,7 +336,7 @@ except Exception as err:
 Guide students through setting a breakpoint, stepping through a loop, and fixing a logic bug. Use a BMI calculator or similar from lecture_02. End by rerunning tests/notebook.
 --->
 Summary: Step through the BMI script, fix the formula/typo/indexing bugs, and rerun to verify clean output.
-Visual: ![Debug icon](./media/debug-icon.png)
+Visual: ![Rubber duck debugging](/01/media/ducky.jpg)
 Signature: `breakpoint()` builtin for quick stops
 Example:
 ```python
@@ -325,7 +354,7 @@ print(calculate_bmi(70, 1.75))
 Clarify scaffold + grading so students know what to submit after the debugging focus.
 --->
 Summary: Auto-graded Classroom repo mirroring datasci_217 scaffold; prove logging/assertions and one VS Code debug walkthrough.
-Visual: ![XKCD classification humor](./media/xkcd_classification.png)
+Visual: ![XKCD: New Bug](/01/media/xkcd_new_bug.png)
 Signature: `.github/tests/test_*` executed by GitHub Actions
 Example:
 ```bash
@@ -341,7 +370,7 @@ pytest .github/tests -q
 Point to deeper references and remind about tone; mention humor break to keep energy up.
 --->
 Summary: Where to dig deeper on tooling/debugging plus a comic to keep morale up.
-Visual: ![XKCD: Git](./media/xkcd_git.png)
+Visual: ![XKCD: Compiling](/01/media/xkcd_compiling.png)
 Signature: `open("refs/instructions.md").read()`
 Example:
 ```bash
@@ -350,4 +379,4 @@ sed -n '1,40p' refs/instructions.md
 
 - Deep dives: DS-217 Lecture 01 (tooling) and `lectures_25/02` (debugging demos) plus the local `./demo` assets above.
 - References: Python `logging`, VS Code debugging guide, and MkDocs notes in `refs/`.
-- Remember, debugging is like being a detective in a crime movie where you’re also the culprit.
+- When in doubt, explain your code to a rubber duck. If it still doesn't make sense, the bug is in your assumptions.

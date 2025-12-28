@@ -1,5 +1,6 @@
 site_name: Applied Data Science with Python
 site_description: UCSF DataSci 223 Course Materials
+site_url: https://christopherseaman.github.io/datasci_223/
 docs_dir: lectures
 site_dir: docs
 use_directory_urls: false

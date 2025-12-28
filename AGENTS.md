@@ -4,7 +4,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 
 **Course structure**: Applied survey course—each week covers a single topic, either standalone (e.g., SQL) or as part of a series building complexity (classification → neural networks → LLMs → LLM API/agentic/workflows).
 
-**GitHub Pages base URL**: `https://christopherseaman.github.io/datasci_223/` (use for image references in markdown)
+**GitHub Pages site URL**: `https://christopherseaman.github.io/datasci_223/` (configured in `mkdocs.yml` as `site_url`; images use relative paths like `01/media/...` WITHOUT leading slash so MkDocs prepends site_url correctly)
 
 **IDE**: VS Code is the common IDE for this class.
 

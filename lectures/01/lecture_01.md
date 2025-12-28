@@ -35,6 +35,7 @@ Reassure students they already know the basics; emphasize this session is about 
 Summary: Quick reminder that Python, git, Markdown, and VS Code basics already exist so we can focus on reliability and debugging.
 Visual: ![XKCD: Git](/01/media/xkcd_git.png)
 Signature: `python -m venv .venv && source .venv/bin/activate`
+*venv = virtual environment (isolated Python packages for this project)*
 Example:
 ```bash
 git status && git commit -am "chore: warm up"
@@ -42,6 +43,7 @@ git status && git commit -am "chore: warm up"
 - Assume familiarity with Python syntax, basic git, Markdown, and VS Code navigation.
 - Skip long installs: choose one path for local (venv + VS Code) or cloud (Codespaces).
 - Detailed setup lives in DS-217 Lecture 01 (link above) and prior notes in `lectures_25/01`.
+- **PHI (Protected Health Information)**: Patient data requiring special security—never commit to public repos or log in plain text.
 
 ### Fast local/cloud workflow
 <!---
@@ -57,7 +59,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 - Local: `python -m venv .venv && source .venv/bin/activate` then `pip install -r requirements.txt`. (Windows: `.venv\Scripts\activate`)
-- Cloud: GitHub Codespaces → select the repo → pick a small machine → reuse devcontainer if provided.
+  - **pip**: Python's package installer (installs libraries listed in requirements.txt)
+- Cloud: GitHub Codespaces → select the repo → pick a small machine → reuse **devcontainer** if provided (pre-configured development environment).
 - Windows users: consider WSL2 for a Linux environment inside Windows—matches Codespaces and avoids path headaches.
 - VS Code essentials: Python + Jupyter extensions; Command Palette for everything; auto-format on save.
 - The `-m` flag runs a module as a script (e.g., `python -m venv` runs the venv module).
@@ -137,7 +140,7 @@ def assert_expected_columns(df, expected):
     if missing:
         raise ValueError(f"Missing columns: {missing}")
 ```
-- Data surprises: missing columns, unexpected units, schema drift between hospitals.
+- Data surprises: missing columns, unexpected units, **schema drift** between hospitals (schema = expected structure/types of data columns).
 - Environment drift: different Python versions, missing packages, stale virtualenvs.
 - Hidden assumptions: hardcoded file paths, magic numbers, unseeded randomness.
 - Security/ethics: avoid PHI in logs, public clouds, or screenshots.
@@ -160,13 +163,13 @@ import yaml
 from pathlib import Path
 
 def load_settings(config_path: Path) -> dict:
-    return yaml.safe_load(config_path.read_text())
+    return yaml.safe_load(config_path.read_text())  # YAML: human-readable config format
 
 SETTINGS = load_settings(Path("config.yaml"))
 ```
 - Centralize settings (e.g., `config.yaml` or `.env`) and load them once.
 - Keep helper functions small and named for intent; avoid clever one-liners that hide side effects.
-- Validate inputs early: assert expected columns, value ranges, and units.
+- Validate inputs early: **assert** expected columns, value ranges, and units (assertions = checks that raise errors if assumptions violated).
 - Prefer pure functions where possible so tests are easy.
 - **Use a linter** (e.g., `ruff`, `flake8`): catches typos, unused imports, and style issues before you run the code. VS Code can run linters on save.
 
@@ -268,8 +271,16 @@ except Exception:
 ```
 - **pdb** (Python Debugger): built-in, terminal-based, works anywhere. Commands: `n` (next), `s` (step into), `c` (continue), `p var` (print).
 - **ipdb**: like pdb but with IPython features (tab completion, colors). Install: `pip install ipdb`.
+- **breakpoint()**: Python 3.7+ builtin that drops into pdb (replaces `import pdb; pdb.set_trace()`).
 - Switch to the VS Code debugger for call stacks, watches, and conditional breakpoints.
 - Debugging is like being a detective in a crime movie where you're also the culprit.
+
+**Which debugging tool should you use?**
+
+- **Quick variable check?** → `print(f"{var=}")`
+- **See how state changes over time?** → VS Code debugger with breakpoints
+- **Debugging via SSH/remote terminal?** → `pdb` or `breakpoint()`
+- **Want persistent debug messages?** → `logging` module (can toggle on/off)
 
 ### VS Code debugger basics (scripts)
 <!---
@@ -277,6 +288,7 @@ Describe setting breakpoints, inspecting variables, and stepping controls. Note 
 --->
 Summary: Set breakpoints, run under the debugger, and use call stack/watches to trace BMI bugs.
 Visual: ![VS Code debug view](/01/media/debug_view.png)
+![Debug run button](/01/media/debug-run.png)
 Signature: `"request": "launch"` entry in `.vscode/launch.json`
 Example:
 ```json
@@ -380,3 +392,5 @@ sed -n '1,40p' refs/instructions.md
 - Deep dives: DS-217 Lecture 01 (tooling) and `lectures_25/02` (debugging demos) plus the local `./demo` assets above.
 - References: Python `logging`, VS Code debugging guide, and MkDocs notes in `refs/`.
 - When in doubt, explain your code to a rubber duck. If it still doesn't make sense, the bug is in your assumptions.
+
+![Read the docs](/01/media/read-the-docs.jpeg)

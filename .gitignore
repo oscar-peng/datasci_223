@@ -22,3 +22,7 @@ lectures/10/demo/patient_cohorts/
 patient_cohorts/
 # Ignore large Vosk model artifacts to keep snapshots clean
 lectures_25/09/demo/vosk-model-small-en-us-0.15/
+
+site/
+docs/
+.cache/

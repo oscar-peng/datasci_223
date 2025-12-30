@@ -1,0 +1,8 @@
+# Generated from .md files
+*.ipynb
+
+# Test artifacts
+processed_email.txt
+*_test_*.ipynb
+.pytest_cache/
+__pycache__/

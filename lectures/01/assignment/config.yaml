@@ -1,0 +1,21 @@
+# Configuration for Assignment 01 - Part 2c
+
+data:
+  input_file: "data/patient_intake.csv"
+
+bounds:
+  weight_kg:
+    min: 30
+    max: 250
+  height_cm:
+    min: 120
+    max: 230
+  age:
+    min: 0
+    max: 110
+
+bmi_thresholds:
+  underweight: 18.5
+  normal: 25
+  overweight: 30
+  # Obese is > overweight threshold

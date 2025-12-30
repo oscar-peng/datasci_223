@@ -38,7 +38,39 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 - Content style: each section/subsection should include (1) brief prose intro/explanation, (2) optional visual or `#FIXME` placeholder, (3) reference (function signature, common parameters), and (4) minimal code example. Demos should have more complexity with real/realistic data. Sprinkle humor/comics throughout (use existing assets—never invent links).
 - Comics/visual sourcing: prefer images local to the lecture folder; if reusing from elsewhere, copy into the lecture’s `media/` subdir first. `all_xkcd.html` lists available XKCD panels—pick from there and copy locally instead of hotlinking.
 - XKCD helper: use `scripts/fetch_xkcd_2x.py` to download comics via explainxkcd file pages (2x "Original file" links). Usage: `./scripts/fetch_xkcd_2x.py 1597:Git 1722:Debugging:xkcd_debugging.png`
-- Demo format: Markdown notebooks in `demo/` folder, convert via `jupytext --to notebook demo.md`. Use realistic health data examples.
+
+## Demo structure and conventions
+
+Lectures include 3 hands-on demos at ~1/3, ~2/3, and end of 90-minute session. Demos build on lecture content with realistic complexity.
+
+**Content philosophy:**
+- **Lecture code blocks:** Short, simple, minimal examples demonstrating single concepts
+- **Demo code:** Realistic complexity with health data, multiple steps, edge cases—mirrors real-world usage
+- Demos should be completable in 10-15 minutes with clear success checkpoints
+
+**File naming convention:** `0Xy_description.suffix`
+- `X` = demo number (1, 2, 3)
+- `y` = order within demo (a, b, c, ...; omit if single file)
+- `description` = very short descriptor (1-3 words)
+- `suffix` = file type (`.md`, `.py`, `.ipynb`, `.yaml`, etc.)
+
+**Examples:**
+```
+demo/
+├── DEMO_GUIDE.md              # Brief walkthrough for all demos
+├── 01_setup_resources.md      # Demo 1: single file, no letter needed
+├── 02a_brittle_cleaning.md    # Demo 2: starter notebook (before)
+├── 02b_hardened_cleaning.md   # Demo 2: solution notebook (after)
+├── 02_config.yaml             # Demo 2: config file (single file, no letter)
+├── 03a_buggy_bmi.py           # Demo 3: script to debug
+├── 03b_buggy_analysis.md      # Demo 3: notebook to debug
+└── data/                      # Shared data for all demos
+```
+
+**Markdown → Jupyter conversion:**
+- Write demos as `.md` files (easier to review, git-friendly)
+- Convert with `jupytext --to notebook demo/*.md` before class
+- Use jupytext percent format (`#%%`) or markdown format for cells
 
 ## Assignment structure
 Weekly assignments are **pass/fail** and should be straightforward for students who understand the lecture content. Coursework uses GitHub Classroom with pytest-based autograding via GitHub Actions.
@@ -53,7 +85,55 @@ lectures/XX/assignment/
     └── workflows/classroom.yml
 ```
 
-Grading workflow downloads latest tests from template repo and runs pytest. References:
+### Assignment testing philosophy
+
+**Test behaviors and artifacts, not implementation details.** Students may solve problems in many valid ways (Gödel incompleteness applies to grading too).
+
+**Good tests check:**
+1. **Code execution**: Does the code run without errors?
+2. **Artifacts generated**: Are output files created with correct format/content?
+3. **Function behavior**: Do imported functions produce correct results with known inputs?
+4. **Known input/output pairs**: Test with fixtures, verify expected outputs
+
+**Bad tests check:**
+- Specific code patterns ("import logging" string matching)
+- Function names or variable names (students may name differently)
+- Code structure or style (unless that's the learning objective)
+
+**Testing patterns:**
+
+```python
+# GOOD: Test execution and output
+def test_script_produces_correct_output():
+    result = subprocess.run(["python", "script.py", "input.csv"], capture_output=True)
+    assert result.returncode == 0
+    assert Path("output.csv").exists()
+    df = pd.read_csv("output.csv")
+    assert len(df) == 50  # Expected number of rows
+    assert df["bmi"].between(15, 50).all()  # Sanity check values
+
+# GOOD: Test imported function behavior
+def test_validation_function():
+    from student_module import validate_bounds  # Import their function
+    valid_df = pd.DataFrame({"weight_kg": [70], "height_cm": [175]})
+    assert validate_bounds(valid_df) is not None  # Should pass
+
+    invalid_df = pd.DataFrame({"weight_kg": [5], "height_cm": [175]})
+    with pytest.raises(ValueError):
+        validate_bounds(invalid_df)  # Should fail
+
+# BAD: Test code patterns
+def test_has_logging():  # Too brittle!
+    source = notebook_source()
+    assert "import logging" in source  # Students might use print() or custom logger
+```
+
+**For notebooks:**
+- Execute with `nbconvert --execute` and check exit code
+- Read outputs from executed notebook cells
+- Or import functions from converted `.py` and test directly
+
+**References:**
 - `lectures_25/06/assignment/` - last year's multi-part notebook assignment example
 - `../datasci_217/07/assignment/.github` - grading workflow examples from prerequisite course
 

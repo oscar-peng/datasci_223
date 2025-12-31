@@ -282,6 +282,39 @@ except Exception:
 - **Debugging via SSH/remote terminal?** → `pdb` or `breakpoint()`
 - **Want persistent debug messages?** → `logging` module (can toggle on/off)
 
+### Runtime variable inspection in VS Code
+<!---
+Explicitly show how to inspect variables at runtime using VS Code's debugging panels. Many students know how to set breakpoints but don't leverage the Variables/Watch/Debug Console panels effectively.
+--->
+Summary: Use Variables panel, Watch expressions, and Debug Console to inspect state without littering code with print statements.
+Visual: ![VS Code debug panels](media/debug_view.png)
+Signature: Variables panel auto-populates when paused at breakpoint
+Example:
+```python
+# When paused at breakpoint, inspect:
+# - Variables panel: see all locals/globals
+# - Watch: add expressions like `df.shape`, `len(results)`
+# - Debug Console: evaluate `df.head()`, `type(variable)`
+```
+- **Variables panel:** Auto-shows all local/global variables when paused; expand DataFrames to see shape/dtypes/head
+- **Watch expressions:** Add custom expressions (e.g., `len(patients)`, `patients["age"].max()`) that update at each step
+- **Debug Console:** Evaluate any Python expression while paused: `df.describe()`, `type(variable)`, `variable.keys()`
+- **Call Stack:** Shows function call chain—click frames to inspect variables at different levels
+- **Hover inspection:** Hover over variables in code to see current values inline
+
+**Key workflow for scripts:**
+1. Set breakpoint → run debugger → execution pauses
+2. Check Variables panel for unexpected values
+3. Add Watch for calculated expressions (e.g., `row["bmi"] > 30`)
+4. Use Debug Console to run methods: `df.info()`, `df["col"].value_counts()`
+5. Step through and watch expressions update
+
+**Key workflow for notebooks:**
+1. Click debug icon on cell → debugger starts
+2. Set breakpoint inside cell code
+3. Same Variables/Watch/Debug Console features as scripts
+4. After debugging, restart kernel to clear state
+
 ### VS Code debugger basics (scripts)
 <!---
 Describe setting breakpoints, inspecting variables, and stepping controls. Note launch.json is optional with the Python extension. Add placeholder for a screenshot.

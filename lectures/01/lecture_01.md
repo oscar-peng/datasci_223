@@ -7,8 +7,7 @@ pdf: true
 
 ## Quick hits: setup + hygiene
 
-**Demo: Accept the course repo via GitHub Classroom + enable GitHub Education perks.**  
-Links: [GitHub Education](https://education.github.com/pack) · `#FIXME` Classroom invite · [DS-217 Lecture 01 deep-dive on tooling](https://www.notion.so/1-Python-the-Command-Line-and-VS-Code-271d9fdd1a1a805784e1fe68dc985696?pvs=21).
+Links: [GitHub Education](https://education.github.com/pack) · `#FIXME` Classroom invite · [DS-217 Lecture 01 deep-dive on tooling](https://www.notion.so/1-Python-the-Command-Line-and-VS-Code-271d9fdd1a1a805784e1fe68dc985696?pvs=21) · Self-study review: [Exercism Python](https://exercism.org/tracks/python), [GitHub Hello World](https://docs.github.com/en/get-started/start-your-journey/hello-world).
 
 ### What carries over from the prereq
 <!---
@@ -82,7 +81,7 @@ Example:
 - Use GitHub Desktop or VS Code Source Control if the CLI slows you down.
 - Markdown recap: one `#` title per doc, headings for structure, fenced code blocks with language tags, link with `[text](url)`.
 
-### Demo (~30 min): Accept and open the starter repo
+### Demo: Accept and open the starter repo
 <!---
 Walkthrough: open the classroom link, create repo, clone or open in Codespaces, run `pip install -r requirements.txt`, verify notebooks open. Note this sets up grading later.
 --->

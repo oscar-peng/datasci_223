@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Fetch XKCD images via explainxkcd file pages (2x originals when available).
 
-Flow per comic:
-1) Article page: https://www.explainxkcd.com/wiki/index.php/<num>:_<Slug>
-2) Grab the first image link (/wiki/index.php/File:...)
-3) File page: follow to /wiki/images/... and download the linked file (highest res).
-
 Usage:
     ./fetch_xkcd_2x.py <id:Slug[:filename]> [...]
 Example:
     ./fetch_xkcd_2x.py 1597:Git 1722:Debugging:xkcd_debugging.png
+
+Flow per comic:
+1) Article page: https://www.explainxkcd.com/wiki/index.php/<num>:_<Slug>
+2) Grab the first image link (/wiki/index.php/File:...)
+3) File page: follow to /wiki/images/... and download the linked file (highest res).
 """
 from __future__ import annotations
 

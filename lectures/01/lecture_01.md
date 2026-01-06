@@ -4,28 +4,10 @@ pdf: true
 ---
 
 # Lecture 1: Reliable Notebooks and Debugging First 🚦🐛
-<!---
-Set the tone: fast refresher, then reliability/debugging focus; reassure returning students.
---->
 
-Welcome back! You already met Python, git/GitHub, Markdown, and VS Code in the prereq course—today we sprint through the essentials, add notebook hygiene, then spend most of the time on defensive programming and debugging so your analyses survive first contact with messy data.
+## Quick hits: setup + hygiene
 
-## Table of Contents
-<!---
-Outline the 90-minute flow so students know when demos land.
---->
-
-- Quick hits: setup, Markdown/git refresher, notebook hygiene (first 30 minutes)
-- Defensive programming for data science (30→60)
-- Debugging in VS Code + Jupyter (60→90, closing demo)
-- Assignment and resources
-
-## Quick hits: setup + hygiene (first ~30 minutes)
-<!---
-Sprint through carryover skills and notebook hygiene; aim for 30 minutes with a demo break.
---->
-
-**Demo (~30 min): Accept the course repo via GitHub Classroom + enable GitHub Education perks.**  
+**Demo: Accept the course repo via GitHub Classroom + enable GitHub Education perks.**  
 Links: [GitHub Education](https://education.github.com/pack) · `#FIXME` Classroom invite · [DS-217 Lecture 01 deep-dive on tooling](https://www.notion.so/1-Python-the-Command-Line-and-VS-Code-271d9fdd1a1a805784e1fe68dc985696?pvs=21).
 
 ### What carries over from the prereq
@@ -118,12 +100,9 @@ pip install -r requirements.txt && jupyter nbconvert --execute starter.ipynb
 - Open the repo locally or in Codespaces; verify `.venv` or devcontainer activation.
 - Run `pip install -r requirements.txt`; open the starter notebook and confirm it runs `Run All` without edits.
 
-## Defensive programming for data science (30→60)
-<!---
-Shift from hygiene to guardrails: assertions, logging, configs, and controlled failure modes.
---->
+## Defensive programming for data science
 
-**Demo (~60 min): Hardening a tiny data-cleaning notebook before it breaks.**  
+**Demo: Hardening a tiny data-cleaning notebook before it breaks.**  
 Links: [`defensive_programming_notebook.ipynb`](./demo/defensive_programming_notebook.ipynb) · [`logging` docs](https://docs.python.org/3/library/logging.html).
 
 ### Common failure modes in health data projects
@@ -227,12 +206,9 @@ validate_values(df)
 - Add config-driven file paths, schema checks, and logging statements.
 - Re-run with both good and bad inputs; confirm errors are now descriptive and logged.
 
-## Debugging in VS Code + Jupyter (60→90)
-<!---
-Hands-on walkthrough of debugger flows for scripts and notebooks using the BMI example.
---->
+## Debugging in VS Code + Jupyter
 
-**Demo (~90 min): Step-through debugging in VS Code for scripts and notebooks.**  
+**Demo: Step-through debugging in VS Code for scripts and notebooks.**  
 Links: [VS Code Python debugging](https://code.visualstudio.com/docs/python/debugging) · [`vscode_debug_sample.py`](./demo/vscode_debug_sample.py) · [`vscode_debug_walkthrough.md`](./demo/vscode_debug_walkthrough.md) · screenshots below.
 
 ### Print debugging: start here

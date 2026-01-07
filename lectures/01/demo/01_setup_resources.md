@@ -123,6 +123,35 @@ pytest -q
 
 You'll use these throughout the course to keep code clean and catch bugs early.
 
+## Part 6: Notebook Hygiene
+
+Practice clearing notebook outputs before committing (prevents committing stale results or secrets):
+
+```bash
+# Clear outputs from a notebook
+jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace starter.ipynb
+
+# Verify outputs are cleared (open and check)
+# Then run the notebook fresh
+jupyter notebook starter.ipynb
+# Click "Restart Kernel and Run All"
+```
+
+**Why clear outputs?**
+- Prevents committing stale screenshots or old results
+- Ensures notebook is "Run All" ready (reproducible)
+- Avoids accidentally committing secrets or PHI in output cells
+- Keeps git diffs clean (only code changes, not output changes)
+
+**When to clear:**
+- Before committing notebooks to git
+- After debugging sessions that produce sensitive output
+- When outputs are outdated or misleading
+
+**In VS Code:**
+- You can also use: "Clear All Outputs" from the notebook toolbar
+- Then "Restart Kernel and Run All" to verify clean execution
+
 ## Success Checklist
 
 - [ ] Accepted GitHub Classroom assignment
@@ -132,6 +161,7 @@ You'll use these throughout the course to keep code clean and catch bugs early.
 - [ ] Test commit pushed to GitHub
 - [ ] VS Code extensions installed (if local)
 - [ ] Linter and formatter work (`ruff check .` runs without errors)
+- [ ] Can clear notebook outputs and run fresh
 
 ## Common Issues
 
@@ -154,7 +184,8 @@ Once your environment is verified:
 1. Clear test files (`git rm test.md && git commit -m "chore: remove test file"`)
 2. Keep this setup throughout the course—don't switch environments mid-semester
 3. Get comfortable with `ruff` and `black`—run them before committing code
-4. Proceed to Demo 2 for defensive programming exercises
+4. **Remember:** Clear notebook outputs before commits (`nbconvert --ClearOutput...`)
+5. Proceed to Demo 2 for defensive programming exercises
 
 ## Resources
 

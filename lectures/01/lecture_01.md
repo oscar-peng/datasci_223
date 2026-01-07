@@ -254,29 +254,6 @@ def load_settings(config_path: Path) -> dict:
     return yaml.safe_load(config_path.read_text())
 ```
 
-## Working with larger data (preview)
-
-![Polars vs pandas](media/polars_vs_pandas.png)
-
-- When data gets big, prefer columnar formats (Parquet) and lazy engines (Polars) over in-memory pandas.
-- Use chunking or database-backed queries to stay under memory limits.
-
-### Quick reference
-
-| Tool                  | Use                                  |
-| --------------------- | ------------------------------------ |
-| `polars.scan_parquet` | Lazy read without loading everything |
-| `df.collect()`        | Trigger execution when ready         |
-| Parquet               | Columnar, compressed storage         |
-
-### Code Snippet: Lazy aggregation
-
-```python
-import polars as pl
-
-df = pl.scan_parquet("data/large_events.parquet")  # lazy
-summary = df.groupby("hospital_id").agg(pl.col("length_of_stay").mean()).collect()
-```
 
 ## Code quality tools (quick sweep)
 

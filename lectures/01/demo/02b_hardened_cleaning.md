@@ -191,6 +191,27 @@ for test_file in test_files:
 
 ---
 
+## Jupyter magics for analysis
+
+```python
+# Jupyter magics help with quick checks and profiling
+# Use them directly in notebooks (won't work in .py scripts)
+
+# Where am I?
+%pwd
+
+# How long does BMI calculation take?
+%timeit calculate_bmi(validated_df).head()
+
+# Check file sizes
+!ls -lh data/
+
+# Display current variables
+%whos DataFrame
+```
+
+---
+
 ## Summary statistics
 
 ```python

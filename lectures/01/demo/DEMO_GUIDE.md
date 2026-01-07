@@ -51,11 +51,19 @@ Verify students can:
    - Check GitHub—commit should appear
    - Clean up: `git rm test.md && git commit -m "chore: remove test file"`
 
+6. **Demonstrate notebook hygiene:**
+   - Run starter notebook, show outputs appear
+   - Clear outputs: `jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace starter.ipynb`
+   - Open notebook—outputs are gone
+   - Run All—outputs regenerated cleanly
+   - Explain: Always clear before committing to avoid stale results or secrets
+
 ### Success criteria
 - [ ] Students can access their assignment repo
 - [ ] Dependencies installed without errors
 - [ ] Starter notebook runs
 - [ ] Test commit appears on GitHub
+- [ ] Students can clear notebook outputs and verify clean run
 
 ### Common issues
 - **Wrong Python interpreter in VS Code:** Command Palette → "Python: Select Interpreter" → choose `.venv`
@@ -114,7 +122,12 @@ Show how defensive programming prevents silent failures:
      2        P003        500
      ```
 
-6. **Highlight key changes:**
+6. **Show Jupyter magics section:**
+   - Demonstrate `%pwd`, `%timeit`, `!ls`, `%whos`
+   - Explain these only work in notebooks, not .py scripts
+   - Show how `%timeit` helps profile performance
+
+7. **Highlight key changes:**
    - Config file vs hardcoded values
    - Schema validation function
    - Bounds checking with clear error messages

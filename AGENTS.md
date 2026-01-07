@@ -29,13 +29,14 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 - Deploy: `mkdocs gh-deploy --force` (CI auto-deploys on push to main via `.github/workflows/deploy.yml`).
 
 ## Authoring workflow
-- Follow `refs/instructions.md`: audience is beginner health data science students; 90-minute lectures with additional demo time at 1/3, 2/3, and end; include HTML comment speaking notes under each `###`; balance concept/reference/examples.
+- Follow `refs/instructions.md`: audience is beginner health data science students; 90-minute lectures with additional demo time at 1/3, 2/3, and end; balance concept/reference/examples; no inline HTML comment speaking notes in the lecture text.
 - **Notion format quirk**: Lectures served from Notion allow no page title and multiple H1s (`#`) in a single document.
+- **Lecture formatting**: title line is plain text (no leading `#`); main headings use a single `#` with real sub-sections via `##`/`###` (never bolded fake headings); prefer concise bullets over long prose with 4-space indents for nesting; each section combines brief intro, a visual/table/output or `#FIXME` placeholder, a `### Reference` table, and a short `### Code` snippet (demos carry the complexity); place visuals before code; mark demos only with `# LIVE DEMO!`; keep tone non-conversational; skip “Summary” sections; sprinkle comics spaced through the lecture (use existing assets).
 - New lecture: create in `lectures/0X/lecture_0X.md`, adapting from `lectures_25/` when applicable. YAML frontmatter: `lecture_number` and `pdf: true`. Keep `use_directory_urls: false` in mind when adding links.
 - Update `mkdocs.yml` nav when adding/moving lectures or course info pages.
 - Assets live alongside their lecture folder; fonts/images for theme live under `overrides/assets/`.
 - Exercises section in nav points to GitHub Classroom links; verify/update URLs each term.
-- Content style: each section/subsection should include (1) brief prose intro/explanation, (2) optional visual or `#FIXME` placeholder, (3) reference (function signature, common parameters), and (4) minimal code example. Demos should have more complexity with real/realistic data. Sprinkle humor/comics throughout (use existing assets—never invent links).
+- Content style: keep lecture code blocks brief and focused on single concepts; demos should add realistic health-data complexity and clear checkpoints.
 - Comics/visual sourcing: prefer images local to the lecture folder; if reusing from elsewhere, copy into the lecture’s `media/` subdir first. `all_xkcd.html` lists available XKCD panels—pick from there and copy locally instead of hotlinking.
 - XKCD helper: use `scripts/fetch_xkcd_2x.py` to download comics via explainxkcd file pages (2x "Original file" links). Usage: `./scripts/fetch_xkcd_2x.py 1597:Git 1722:Debugging:xkcd_debugging.png`
 
@@ -150,4 +151,3 @@ def test_has_logging():  # Too brittle!
 - **Testing/validation required**: never declare work done without actually running the code AND validating output. Run scripts (e.g., `./build.sh`), then verify outputs exist and are correct (e.g., check generated files, inspect content). If testing is impossible, document assumptions and provide user-run verification steps.
 - Environment discipline: prefer `uv` for speed, fallback to venv/conda; stable working dir, relative paths; avoid complex one-liners—script it instead.
 - Git hygiene: direct, professional commit messages—no cute co-author tags (e.g., "Co-Authored-By: Claude"), no emoji, no "Generated with" footers. Conventional commits preferred.
-

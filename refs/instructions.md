@@ -15,9 +15,9 @@
 - **Visual Organization:** Use consistent heading levels, bullet points, and white space
 
 Example section (complex topics may span multiple sections, only need the reference card/example at least once):
-#### Random forest
 
 """
+
 # Classifiers
 
 ## `RandomForestClassifier`
@@ -30,19 +30,18 @@ Each of the steps can be tweaked, but the general flow goes:
 2. **Grow trees** - individual decision trees are constructed by choosing the best features and cutpoints to separate the classes
 3. **Classify** - instances are run through all trees and assigned a class by majority vote
 
-
 ![Random Forest Visualization](media/random_forest.png)
 
 ### Reference Card: `RandomForestClassifier`
 
 - **Function:** `sklearn.ensemble.RandomForestClassifier()`
 - **Purpose:** Ensemble of decision trees for classification
-- **Key Parameters:** 
-  - `n_estimators`: (Optional, default=100) The number of trees in the forest. More trees generally improve performance but increase computation time
-  - `max_depth`: (Optional, default=None) The maximum depth of each tree. If `None`, nodes are expanded until all leaves are pure or contain less than `min_samples_split` samples. Deeper trees can capture more complex patterns but risk overfitting
-  - `random_state`: (Optional, default=None) Controls the randomness of the bootstrapping of the samples used when building trees and the sampling of the features to consider when looking for the best split at each node. Setting a specific number ensures reproducibility
-  - `parameter`: (Optional/Required, default=XXX) Brief summary of what `parameter` is and does in a sentence or two. No commentary.
-  
+- **Key Parameters:**
+    - `n_estimators`: (Optional, default=100) The number of trees in the forest. More trees generally improve performance but increase computation time
+    - `max_depth`: (Optional, default=None) The maximum depth of each tree. If `None`, nodes are expanded until all leaves are pure or contain less than `min_samples_split` samples. Deeper trees can capture more complex patterns but risk overfitting
+    - `random_state`: (Optional, default=None) Controls the randomness of the bootstrapping of the samples used when building trees and the sampling of the features to consider when looking for the best split at each node. Setting a specific number ensures reproducibility
+    - `parameter`: (Optional/Required, default=XXX) Brief summary of what `parameter` is and does in a sentence or two. No commentary.
+
 ### Code Snippet: `RandomForestClassifier`
 
 ```python

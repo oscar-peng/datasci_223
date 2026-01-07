@@ -174,26 +174,6 @@ git push
 
 # LIVE DEMO!
 
-Accept the Classroom invite, open locally or in Codespaces, install deps, and prove Run All works.
-
-### Reference: Starter repo steps
-
-| Step         | Command                                     |
-| ------------ | ------------------------------------------- |
-| Clone        | `gh repo clone <classroom-repo>`            |
-| Install deps | `pip install -r requirements.txt`           |
-| Smoke test   | `jupyter nbconvert --execute starter.ipynb` |
-
-### Code Snippet: Classroom smoke test
-
-```bash
-gh repo clone <classroom-repo>
-cd <classroom-repo>
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-jupyter nbconvert --execute starter.ipynb
-```
-
 # Defensive programming for data science
 
 ![Linter reminder](media/linter.png)
@@ -377,30 +357,6 @@ def redact_phi(row: dict) -> dict:
 ```
 
 # LIVE DEMO!!
-
-Make the notebook harder to break: add schema/bounds checks and logging, then rerun with bad inputs.
-
-### Reference: Hardening steps
-
-| Step             | Outcome                       |
-| ---------------- | ----------------------------- |
-| Add schema check | Fail fast on missing columns  |
-| Validate ranges  | Catch out-of-bounds values    |
-| Add logging      | Actionable errors without PHI |
-
-### Code Snippet: Validate bounds
-
-```python
-import pandas as pd
-
-def validate_values(df: pd.DataFrame) -> pd.DataFrame:
-    bounds = {"weight_kg": (30, 250), "height_cm": (120, 230)}
-    for col, (lower, upper) in bounds.items():
-        bad = ~df[col].between(lower, upper)
-        if bad.any():
-            raise ValueError(f"{col} out of bounds: {df.loc[bad, ['patient_id', col]]}")
-    return df
-```
 
 # Debugging in VS Code + Jupyter
 
@@ -618,48 +574,9 @@ def test_bmi_bounds():
     assert 15 < calculate_bmi(70, 1.75) < 50
 ```
 
-# LIVE DEMO!!!
-
-Walk through a VS Code debug session on the BMI script; fix the bug and rerun.
-
-### Reference: Debug walkthrough steps
-
-| Step              | Outcome           |
-| ----------------- | ----------------- |
-| Set breakpoint    | Pause inside loop |
-| Inspect variables | Spot bad values   |
-| Fix + rerun       | Clean Run All     |
-
-### Code Snippet: BMI debug run
-
-```python
-from demo.vscode_debug_sample import calculate_bmi
-
-breakpoint()
-print(calculate_bmi(70, 1.75))
-```
-
-# Assignment (auto-graded)
-
-![XKCD: New Bug](media/xkcd_new_bug.png)
-
-- Classroom repo scaffold mirrors datasci_217.
-- Focus: add logging/assertions + one VS Code debug walkthrough.
-- Actions run `.github/tests` on push.
-
-### Reference: Assignment artifacts
-
-| Artifact           | Purpose                 |
-| ------------------ | ----------------------- |
-| `.github/tests`    | Auto-grading via pytest |
-| `assignment.ipynb` | Main work               |
-| `requirements.txt` | Recreate env            |
-
-### Code Snippet: Run tests
-
-```bash
-pytest .github/tests -q
-```
+# Read the docs
 
 ![Read the docs](media/read-the-docs.jpeg)
 Rubber ducking is still undefeated for finding your own bugs.
+
+# LIVE DEMO!!!

@@ -1,7 +1,7 @@
 ## Meta-Instruction
 
 - **Audience Assessment:** Create content for health data science masters students who are beginners in programming (Python, git, shell commands)
-- **Continuous Evaluation:** Before generating each section, ensure content matches student level, balances concept / reference / example, and includes speaking notes
+- **Continuous Evaluation:** Before generating each section, ensure content matches student level, balances concept / reference / example, and adds speaking notes only when they provide extra value
 - **Time Structure:** Design for 90-minute lectures, with maximum 60 slides if using Marp. Otherwise, long-form Markdown.
 - **Demo Integration:** Include 3 hands-on demo breaks (at ⅓, ⅔, and end points)
 
@@ -10,7 +10,7 @@
 ### 1. Format & Structure
 
 - **Markdown Format:** Create lectures in long-form Markdown with valid markdownlint EXCEPT for Notion-specific quirks as noted in AGENTS.md . Only if requested, use marp markdown slide format (separated by `---`).
-- **Speaking Notes:** Talking points for each lecture should be placed in NOTES.md in the same directory and with matching section headings. The talking points should be supplemental content/context to each heading to sub-sub-heading (# -> ###), written to be helpful to students reading the lecture notes on their own. It should _NOT_ be instructions to the lecturer; e.g., "speak about X" or "mention relationship to Y". These notes should be concise and focused on the key points of the lecture and be created only after the lecture is complete.
+- **Speaking Notes (optional):** Talking points may be placed in NOTES.md when additional context would help students. Use the same section headings, keep notes supplemental (never “talk about X”), and add them after the lecture content stabilizes.
 - **Progressive Learning:** Structure content to build knowledge incrementally
 - **Visual Organization:** Use consistent heading levels, bullet points, and white space
 
@@ -67,7 +67,7 @@ print(model.predict([[2, 2]]))
 
 - **Beginner-Friendly:** Avoid jargon, explain terms when introduced
 - **Visual Learning:** Use diagrams, analogies, screenshots, and concrete examples/outputs
-- **Engagement:** Include comprehension checkpoints and practice opportunities
+
 - **Misconceptions:** Address common beginner mistakes in speaking notes
 
 ### 4. Tone & Style
@@ -83,4 +83,5 @@ print(model.predict([[2, 2]]))
 - **Progressive Difficulty:** Start simple, build complexity across demos. Difficulty should always stay accessibly understandable by students learning the topic.
 - **Clear Instructions:** Provide step-by-step guidance with expected outcomes
 - **Success Validation:** Include ways to confirm students completed tasks correctly, e.g., visual or tabular output after every code section.
-- **Markdown/Jupytext Format:** Most demos with by Jupyter notebooks, but we will write them using markdown and convert with `jupytext`.
+- **Markdown/Jupytext Format:** Most demos will be Jupyter notebooks, but we write them in markdown and convert with `jupytext`.
+- **Demo headings stay clean:** In the lecture, `# LIVE DEMO!` headings only mark the break—put the actual walkthrough steps inside `lectures/XX/demo/`.

@@ -87,15 +87,41 @@ Install these extensions if using local VS Code:
 - **Python** (Microsoft): Linting, debugging, IntelliSense
 - **Jupyter** (Microsoft): Notebook support in VS Code
 - **Pylance** (Microsoft): Fast type checking and autocomplete
+- **Ruff** (Astral): Fast Python linter and formatter (recommended)
 
 **Recommended settings:**
 - Format on save: `File → Preferences → Settings → "format on save"`
 - Auto-save: `File → Auto Save`
+- Default formatter: Select "Ruff" or "Black" in settings
 
 **Command Palette** (`Cmd+Shift+P` / `Ctrl+Shift+P`): Your best friend
 - `Python: Select Interpreter` → choose your `.venv`
 - `Format Document` → auto-format code
 - `Developer: Reload Window` → restart if things get weird
+
+## Part 5: Code Quality Tools
+
+Test your linter and formatter setup:
+
+```bash
+# Check code quality with ruff (fast linter)
+ruff check .
+
+# Auto-format code with ruff or black
+ruff format .
+# OR
+black .
+
+# Run tests (if any exist yet)
+pytest -q
+```
+
+**What these tools do:**
+- **ruff**: Catches common bugs, style issues, and unused imports
+- **black/ruff format**: Ensures consistent code formatting
+- **pytest**: Runs automated tests to verify your code works
+
+You'll use these throughout the course to keep code clean and catch bugs early.
 
 ## Success Checklist
 
@@ -105,6 +131,7 @@ Install these extensions if using local VS Code:
 - [ ] Starter notebook runs without errors
 - [ ] Test commit pushed to GitHub
 - [ ] VS Code extensions installed (if local)
+- [ ] Linter and formatter work (`ruff check .` runs without errors)
 
 ## Common Issues
 
@@ -126,7 +153,8 @@ Install these extensions if using local VS Code:
 Once your environment is verified:
 1. Clear test files (`git rm test.md && git commit -m "chore: remove test file"`)
 2. Keep this setup throughout the course—don't switch environments mid-semester
-3. Proceed to Demo 2 for defensive programming exercises
+3. Get comfortable with `ruff` and `black`—run them before committing code
+4. Proceed to Demo 2 for defensive programming exercises
 
 ## Resources
 

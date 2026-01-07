@@ -94,6 +94,10 @@ print(summary)
    - Error: `FileNotFoundError` with cryptic message
    - Problem: No existence check, no helpful error
 
+**Other issues:**
+- No logging means you can't trace execution or debug production issues
+- If you add print/logging later, be careful not to expose PHI (patient IDs, names, etc.)
+
 ---
 
 ## Your task (Demo 2b will show the solution)

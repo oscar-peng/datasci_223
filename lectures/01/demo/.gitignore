@@ -1,4 +1,0 @@
-# Generated from .md files
-*.ipynb
-
-# Exclude generated notebooks (keep .md source)

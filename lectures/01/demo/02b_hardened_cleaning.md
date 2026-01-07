@@ -219,6 +219,19 @@ if "results_df" in locals():
 3. **Logging for observability:** Trace execution, especially for long-running analyses
 4. **Pure functions:** No side effects = easier testing and debugging
 5. **Type hints:** Document expected inputs/outputs for functions
+6. **PHI safety:** Never log patient identifiers (patient_id, MRN, names, DOB)
+
+### PHI Safety Note
+
+Notice our logging statements avoid patient identifiers:
+- ✅ `logging.info("Loaded %d rows", len(df))` - aggregate count only
+- ✅ `logging.info("Bounds validation passed for %s", numeric_cols)` - column names
+- ❌ `logging.info("Processing patient %s", patient_id)` - **NEVER do this**
+
+**Error messages trade-off:** In this demo, validation errors show `patient_id` to help identify problem rows during development. In production with real PHI:
+- Use row numbers instead: `f"Problem rows at indices: {bad_indices}"`
+- Or log to secure audit trail with appropriate access controls
+- Never include PHI in logs that go to stdout or general log files
 
 **What changed from 02a?**
 - ❌ `df = pd.read_csv("data/patient_intake.csv")`

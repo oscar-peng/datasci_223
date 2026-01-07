@@ -4,11 +4,11 @@ Brief walkthrough for all three hands-on demos. Each demo corresponds to a major
 
 ---
 
-## Demo 1: Setup and Environment Verification (~30 min)
+## Demo 1: Setup and Environment Verification
 
 **File:** `01_setup_resources.md` (reference doc, not a notebook)
-**Lecture section:** Quick hits - setup + hygiene
-**Timing:** After first 30 minutes of lecture
+**Lecture section:** Command line quick hits + Workflow: local venv or Codespaces
+**Timing:** After initial setup and workflow sections (approximately 1/3 through lecture)
 
 ### Goal
 Verify students can:
@@ -64,19 +64,20 @@ Verify students can:
 
 ---
 
-## Demo 2: Defensive Programming (~60 min)
+## Demo 2: Defensive Programming
 
 **Files:** `02a_brittle_cleaning.md` (starter) → `02b_hardened_cleaning.md` (solution)
-**Lecture section:** Defensive programming for data science
-**Timing:** Around 60-minute mark
+**Lecture section:** Defensive programming for data science + Common failure modes
+**Timing:** After defensive programming sections (approximately 2/3 through lecture)
 **Prep:** Convert markdown to notebooks before class: `jupytext --to notebook 02*.md`
 
 ### Goal
 Show how defensive programming prevents silent failures:
 - Config-driven paths and bounds
 - Schema validation
-- Logging for observability
+- Logging for observability (without exposing PHI)
 - Informative error messages
+- Pure functions for testability
 
 ### Walkthrough
 
@@ -117,8 +118,8 @@ Show how defensive programming prevents silent failures:
    - Config file vs hardcoded values
    - Schema validation function
    - Bounds checking with clear error messages
-   - Logging throughout execution
-   - Pure functions (no side effects)
+   - Logging throughout execution (note: never log PHI like patient_id, names, dates)
+   - Pure functions (no side effects, easier to test)
 
 ### Success criteria
 - [ ] Students see brittle version fail silently or cryptically
@@ -126,27 +127,30 @@ Show how defensive programming prevents silent failures:
 - [ ] Students can add basic validation to their own notebooks
 
 ### Discussion points
-- "What happens if you skip validation?" → Silent bugs in production
+- "What happens if you skip validation?" → Silent bugs in production, wrong clinical decisions
 - "When is logging overkill?" → Never, for data analysis that runs more than once
-- "Why pure functions?" → Easier to test and debug
+- "Why pure functions?" → Easier to test and debug, no hidden side effects
+- "What about PHI in logs?" → Never log identifiable data (patient_id, MRN, names, DOB)
 
 ---
 
-## Demo 3: VS Code Debugging (~90 min)
+## Demo 3: VS Code Debugging
 
 **Files:** `03a_buggy_bmi.py` (script) and `03b_buggy_analysis.md` (notebook)
 **Lecture section:** Debugging in VS Code + Jupyter
-**Timing:** Final 30 minutes
+**Timing:** Final demonstration section
 **Prep:** Convert notebook: `jupytext --to notebook 03b_buggy_analysis.md`
 
 ### Goal
 Practice using VS Code debugger for both scripts and notebooks:
-- Set breakpoints
-- Inspect variables
-- Step through code
-- Fix bugs and verify
+- Set breakpoints in gutter (scripts) and cells (notebooks)
+- Use Variables panel to inspect state automatically
+- Use Watch panel to track custom expressions
+- Use Debug Console to evaluate code while paused
+- Step through code (Step Into vs Step Over)
+- Fix bugs and verify with clean restart
 
-### Part A: Script debugging (15 min)
+### Part A: Script debugging
 
 **File:** `03a_buggy_bmi.py`
 
@@ -189,7 +193,7 @@ Practice using VS Code debugger for both scripts and notebooks:
    - Remove breakpoints
    - Run script normally—should complete without errors
 
-### Part B: Notebook debugging (15 min)
+### Part B: Notebook debugging
 
 **File:** `03b_buggy_analysis.ipynb`
 
@@ -232,11 +236,49 @@ Practice using VS Code debugger for both scripts and notebooks:
    - Run All—should complete without errors
    - Check outputs make sense
 
+### Part C: Writing Tests After Debugging
+
+**File:** `test_03a_bmi.py`
+
+After fixing bugs, demonstrate writing tests to lock in fixes:
+
+1. **Show test file structure:**
+   - Open `test_03a_bmi.py` in VS Code
+   - Explain test naming: functions start with `test_`
+   - Show how to import functions to test
+
+2. **Run tests from command line:**
+   ```bash
+   pytest test_03a_bmi.py -v
+   ```
+   - All tests should pass after bugs are fixed
+   - Show test output with PASSED/FAILED status
+
+3. **Run tests in VS Code:**
+   - Open Testing panel (beaker icon)
+   - Configure pytest if needed
+   - Click play button to run tests
+   - Show green checkmarks for passing tests
+
+4. **Connect to assignment autograding:**
+   - Explain assignments use same pytest pattern
+   - GitHub Actions runs tests when you push
+   - Tests pass = assignment complete
+   - Show example: `.github/tests/test_*.py`
+
+5. **Demo writing a new test:**
+   - Pick a function from fixed code
+   - Write a simple test live
+   - Run it with pytest
+   - Show it passes
+
 ### Success criteria
 - [ ] Students can set breakpoints in scripts and notebooks
 - [ ] Students use Variables panel to inspect state
 - [ ] Students understand Step Into vs Step Over
 - [ ] All three bugs fixed in both script and notebook
+- [ ] Students can run pytest and understand test output
+- [ ] Students understand connection to assignment autograding
 
 ### Key debugging lessons
 
@@ -256,6 +298,12 @@ Practice using VS Code debugger for both scripts and notebooks:
 - See variables update in real-time as you step
 - Works identically for scripts and notebooks
 - Can inspect DataFrames interactively (`.shape`, `.dtypes`, `.head()`)
+
+**After debugging, write tests:**
+- Tests prevent regressions (bugs coming back)
+- Same pattern as assignment autograding
+- Run with `pytest test_file.py -v`
+- Green checkmarks = all tests pass = assignment complete
 
 ---
 
@@ -288,10 +336,10 @@ ls *.ipynb
 - **Demo 2:** Emphasize "fail fast with context" philosophy—better to crash with info than succeed with wrong results
 - **Demo 3:** Let students drive—ask them to predict what breakpoint will reveal before stepping
 
-**Time management:**
-- Demo 1: ~30 min (setup is critical, don't rush)
-- Demo 2: ~20 min (can show before/after quickly if time is tight)
-- Demo 3: ~25 min (most engaging, budget extra time for questions)
+**Pacing:**
+- Demo 1: Setup is critical, don't rush the environment verification
+- Demo 2: Can show before/after quickly if time is tight
+- Demo 3: Most engaging, allow time for questions about debugger features
 
 **Engagement hooks:**
 - "Raise hand if you've ever had code work once then mysteriously break" (before Demo 2)

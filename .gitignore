@@ -2,6 +2,7 @@
 .venv/
 data/
 .vscode/
+.zed/
 animals/
 models/
 checkpoints/
@@ -13,9 +14,7 @@ tmp/
 logs/
 .env
 nanoGPT/
-lectures/07/demo/02-model.pt
 downloads/
-gen-lang-client-0306464806-ee14603523e3.json
 *.pyc
 altair-data-*.json
 lectures/10/demo/patient_cohorts/

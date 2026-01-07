@@ -23,7 +23,6 @@ pdf: true
 
 - You already know Python, git/Markdown, and VS Code basics—this lecture focuses on reliability and debugging.
 - Pick one workflow (local venv or Codespaces) and stick with it to reduce surprises.
-- PHI reminder: never log or commit identifiable patient data.
 
 ### Reference: DS-217 carryovers
 
@@ -98,7 +97,7 @@ pip install -r requirements.txt
 
 - Run-all ready, deterministic, and no stray outputs or secrets.
 - Clear outputs before commits unless the output is the point.
-- Keep configs/paths in YAML or `.env`; avoid hardcoded secrets or PHI.
+- Keep configs/paths in YAML or `.env`
 
 ### Reference: Notebook hygiene
 
@@ -112,6 +111,56 @@ pip install -r requirements.txt
 
 ```bash
 jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace lecture.ipynb
+```
+
+## YAML essentials for config files 🧾
+
+- YAML = “Yet Another Markup Language,” but think “plain-English JSON” with indentation-based structure.
+- Use **spaces, not tabs**, and keep indentation consistent (two spaces is plenty).
+- Strings don’t need quotes unless they contain special characters; `#` starts a comment.
+- Great for centralizing run-time knobs like file paths, thresholds, or feature flags.
+
+### Reference Card: YAML building blocks
+
+| Concept          | YAML syntax example                      | Tip for beginners                        |
+| ---------------- | ---------------------------------------- | ---------------------------------------- |
+| Key/value        | `project: intake_audit`                  | Keys end with `:` followed by a value    |
+| Nested structure | `data:\n  input_file: data/patients.csv` | Indentation defines hierarchy            |
+| Lists            | `emails:\n  - alice@example.com`         | Dashes introduce list items              |
+| Inline objects   | `height_cm: { min: 120, max: 230 }`      | Use cautiously; easier to read multiline |
+
+### Code Snippet: Sample `config.yaml`
+
+```/dev/null/lecture_01_sample_config.yaml#L1-15
+data:
+    input_file: "data/patient_intake.csv"
+
+bounds:
+    weight_kg:
+        min: 30
+        max: 250
+    height_cm:
+        min: 120
+        max: 230
+
+bmi_thresholds:
+    underweight: 18.5
+    normal: 25
+    overweight: 30 # obese is anything above this
+```
+
+### Code Snippet: Load YAML safely
+
+```/dev/null/lecture_01_load_yaml.py#L1-10
+from pathlib import Path
+import yaml
+
+CONFIG_PATH = Path("config.yaml")
+
+with CONFIG_PATH.open() as f:
+    config = yaml.safe_load(f)  # safe_load avoids executing arbitrary code
+
+print("BMI thresholds:", config["bmi_thresholds"])
 ```
 
 ## Jupyter magics & shell in notebooks
@@ -254,7 +303,6 @@ def load_settings(config_path: Path) -> dict:
     return yaml.safe_load(config_path.read_text())
 ```
 
-
 ## Code quality tools (quick sweep)
 
 ![Linter reminder](media/linter.png)
@@ -308,29 +356,6 @@ def load_clean_data(path: str) -> list[dict]:
         raise FileNotFoundError(f"Missing input: {csv_path}")
     logging.info("Reading %s", csv_path)
     return csv_path.read_text().splitlines()
-```
-
-## Data security and ethics (quick hits)
-
-![XKCD: Data Trap](media/data_trap_2x.png)
-
-- No PHI in logs, screenshots, or public clouds; strip identifiers early.
-- Use least-privilege access; encrypt at rest if handling real data.
-- Keep audit trails for data pulls; document IRB/DUAs where relevant.
-
-### Reference: PHI/ethics
-
-| Risk                | Guardrail                                |
-| ------------------- | ---------------------------------------- |
-| PHI exposure        | De-identify; avoid logging identifiers   |
-| Unauthorized access | Least privilege; access reviews          |
-| Data copies         | Centralize storage; avoid ad-hoc exports |
-
-### Code Snippet: Redact PHI
-
-```python
-def redact_phi(row: dict) -> dict:
-    return {k: v for k, v in row.items() if k not in {"name", "mrn", "dob"}}
 ```
 
 # LIVE DEMO!!

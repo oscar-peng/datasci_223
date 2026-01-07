@@ -4,15 +4,65 @@
 Tests focus on behavior, execution, and artifacts rather than implementation details.
 """
 
-import pytest
-import pandas as pd
-from pathlib import Path
+import re
 import subprocess
 import sys
-import re
+from pathlib import Path
 
+import pandas as pd
+import pytest
 
 BASE_DIR = Path(__file__).parent.parent.parent
+
+
+def _collect_output_text(notebook_json):
+    """Concatenate plain-text outputs from an executed notebook."""
+    chunks = []
+    for cell in notebook_json.get("cells", []):
+        for output in cell.get("outputs", []):
+            if "text" in output:
+                text_content = output["text"]
+                if isinstance(text_content, list):
+                    chunks.append("".join(text_content))
+                else:
+                    chunks.append(str(text_content))
+            data = output.get("data", {})
+            if isinstance(data, dict) and "text/plain" in data:
+                text_data = data["text/plain"]
+                if isinstance(text_data, list):
+                    chunks.append("".join(text_data))
+                else:
+                    chunks.append(str(text_data))
+    return "\n".join(chunk.strip() for chunk in chunks if chunk)
+
+
+def _expected_glucose_metrics():
+    """Compute expected high-risk and priority counts from source data."""
+    data_path = BASE_DIR / "data" / "patient_intake.csv"
+    df = pd.read_csv(data_path)
+
+    df["glucose_mg_dl"] = (df["weight_kg"] * 1.2 + df["age"] * 0.3).round(0)
+    df["risk"] = pd.cut(
+        df["glucose_mg_dl"],
+        bins=[-float("inf"), 100, 126, float("inf")],
+        labels=[
+            "Low risk (normal)",
+            "High risk (prediabetes)",
+            "Very high risk (diabetes)",
+        ],
+        right=False,
+    )
+
+    high_risk_mask = df["risk"].isin([
+        "High risk (prediabetes)",
+        "Very high risk (diabetes)",
+    ])
+    high_risk_count = int(high_risk_mask.sum())
+
+    return {
+        "high_risk": high_risk_count,
+        "priority": high_risk_count,
+    }
 
 
 class TestPart1Email:
@@ -305,6 +355,29 @@ class TestPart3bDebugNotebook:
 
         assert has_outputs, \
             "Notebook should produce output (check that bugs are fixed)"
+
+        text_output = _collect_output_text(nb)
+        assert "Lab Results Analysis Complete" in text_output, \
+            "Summary banner missing from notebook output"
+        for label in ("High risk (prediabetes)", "Very high risk (diabetes)"):
+            assert label in text_output, \
+                f"Expected risk category '{label}' to appear in output"
+
+        expected = _expected_glucose_metrics()
+
+        high_risk_match = re.search(r"High-risk patients:\s+(\d+)", text_output)
+        assert high_risk_match, \
+            "Summary should include 'High-risk patients: <count>' line"
+        high_risk_count = int(high_risk_match.group(1))
+        assert high_risk_count == expected["high_risk"], \
+            f"Expected {expected['high_risk']} high-risk patients, got {high_risk_count}"
+
+        priority_match = re.search(r"Patients prioritized for intervention:\s+(\d+)", text_output)
+        assert priority_match, \
+            "Summary should include 'Patients prioritized for intervention: <count>' line"
+        priority_count = int(priority_match.group(1))
+        assert priority_count == expected["priority"], \
+            f"Expected {expected['priority']} priority patients, got {priority_count}"
 
 
 if __name__ == "__main__":

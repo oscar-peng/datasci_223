@@ -4,8 +4,6 @@
 **Points:** Pass/Fail (autograded)
 **Skills:** Environment setup, defensive programming, VS Code debugging
 
----
-
 ## Overview
 
 This assignment has **three parts** that build on Lecture 01 concepts:
@@ -15,8 +13,6 @@ This assignment has **three parts** that build on Lecture 01 concepts:
 3. **Debugging** - Fix bugs in script and notebook (1 script + 1 notebook)
 
 **All work is autograded** via GitHub Actions - push frequently to see test results!
-
----
 
 ## Assignment Structure
 
@@ -32,9 +28,7 @@ assignment/
 └── data/                            # Test data files
 ```
 
----
-
-## Part 1: Email Verification (10%)
+## Part 1: Email Verification
 
 **File:** `01_process_email.py`
 
@@ -43,33 +37,34 @@ Verify your UCSF email and that your environment works.
 ### Tasks
 
 1. Run the script with your UCSF email:
-   ```bash
-   python 01_process_email.py your.email@ucsf.edu
-   ```
+
+    ```bash
+    python3 01_process_email.py your.email@ucsf.edu
+    ```
 
 2. Verify output:
-   ```bash
-   cat processed_email.txt  # Should show a 64-character hash
-   ```
+
+    ```bash
+    cat processed_email.txt  # Should show a 64-character hash
+    ```
 
 3. Commit and push:
-   ```bash
-   git add processed_email.txt
-   git commit -m "feat: add email verification"
-   git push
-   ```
+    ```bash
+    git add processed_email.txt
+    git commit -m "feat: add email verification"
+    git push
+    ```
 
 ### Success Criteria
+
 - [ ] `processed_email.txt` exists with valid SHA256 hash
 - [ ] Hash matches course roster
 
----
-
-## Part 2: Defensive Programming (60%)
+## Part 2: Defensive Programming
 
 Convert brittle notebooks into robust, production-ready code through three progressive steps.
 
-### Part 2a: Add Logging (15%)
+### Part 2a: Add Logging
 
 **File:** `02a_logging.ipynb`
 
@@ -78,24 +73,24 @@ Convert brittle notebooks into robust, production-ready code through three progr
 **Your task:** Add logging to trace execution and help debug issues.
 
 **Requirements:**
+
 1. Import and configure logging at the top:
-   ```python
-   import logging
-   logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
-   ```
+
+    ```python
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
+    ```
 
 2. Add logging statements at key points:
-   - After loading data: `logging.info("Loaded %d patients", len(df))`
-   - Before calculations: `logging.info("Calculating BMI...")`
-   - After filtering: `logging.info("Found %d high-risk patients", count)`
+    - After loading data: `logging.info("Loaded %d patients", len(df))`
+    - Before calculations: `logging.info("Calculating BMI...")`
+    - After filtering: `logging.info("Found %d high-risk patients", count)`
 
 3. Run notebook - output should show execution trace
 
 **Test:** All logging tests pass in pytest
 
----
-
-### Part 2b: Add Validation (25%)
+### Part 2b: Add Validation
 
 **File:** `02b_validation.ipynb`
 
@@ -106,35 +101,35 @@ Convert brittle notebooks into robust, production-ready code through three progr
 **Requirements:**
 
 1. **Schema validation** - Check required columns exist:
-   ```python
-   required_cols = ["patient_id", "weight_kg", "height_cm", "age", "sex"]
-   missing = [c for c in required_cols if c not in df.columns]
-   if missing:
-       raise ValueError(f"Missing columns: {missing}")
-   ```
+
+    ```python
+    required_cols = ["patient_id", "weight_kg", "height_cm", "age"]
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing columns: {missing}")
+    ```
 
 2. **Bounds validation** - Check realistic value ranges:
-   ```python
-   bounds = {
-       "weight_kg": (30, 250),
-       "height_cm": (120, 230),
-       "age": (0, 110)
-   }
 
-   for col, (min_val, max_val) in bounds.items():
-       out_of_bounds = ~df[col].between(min_val, max_val)
-       if out_of_bounds.any():
-           bad_rows = df.loc[out_of_bounds, ["patient_id", col]]
-           raise ValueError(f"{col} out of bounds:\n{bad_rows}")
-   ```
+    ```python
+    bounds = {
+        "weight_kg": (30, 250),
+        "height_cm": (120, 230),
+        "age": (0, 110)
+    }
+
+    for col, (min_val, max_val) in bounds.items():
+        out_of_bounds = ~df[col].between(min_val, max_val)
+        if out_of_bounds.any():
+            bad_rows = df[out_of_bounds][["patient_id", col]]
+            raise ValueError(f"{col} out of bounds:\n{bad_rows}")
+    ```
 
 3. Test with bad data files (provided) - should fail with clear errors
 
 **Test:** Run notebook with `data/patient_intake_bad_values.csv` - should raise helpful ValueError
 
----
-
-### Part 2c: Config-Driven Development (20%)
+### Part 2c: Config-Driven Development
 
 **File:** `02c_config_driven.ipynb`
 
@@ -145,44 +140,45 @@ Convert brittle notebooks into robust, production-ready code through three progr
 **Requirements:**
 
 1. Create/update `config.yaml`:
-   ```yaml
-   data:
-     input_file: "data/patient_intake.csv"
 
-   bounds:
-     weight_kg: {min: 30, max: 250}
-     height_cm: {min: 120, max: 230}
-     age: {min: 0, max: 110}
+    ```yaml
+    data:
+        input_file: "data/patient_intake.csv"
 
-   bmi_thresholds:
-     overweight: 25
-     obese: 30
-   ```
+    bounds:
+        weight_kg: { min: 30, max: 250 }
+        height_cm: { min: 120, max: 230 }
+        age: { min: 0, max: 110 }
+
+    bmi_thresholds:
+        underweight: 18.5
+        normal: 25
+        overweight: 30 # obese is any value above this threshold
+    ```
 
 2. Load config in notebook:
-   ```python
-   import yaml
-   from pathlib import Path
 
-   with open("config.yaml") as f:
-       config = yaml.safe_load(f)
+    ```python
+    import yaml
+    from pathlib import Path
 
-   # Use config values
-   data_path = Path(config["data"]["input_file"])
-   bounds = config["bounds"]
-   ```
+    with open("config.yaml") as f:
+        config = yaml.safe_load(f)
+
+    # Use config values
+    data_path = Path(config["data"]["input_file"])
+    bounds = config["bounds"]
+    ```
 
 3. Replace ALL hardcoded values with config lookups
 
 **Test:** Change config values, rerun notebook - should use new values without code changes
 
----
-
-## Part 3: Debugging with VS Code (30%)
+## Part 3: Debugging with VS Code
 
 Practice systematic debugging for both scripts and notebooks.
 
-### Part 3a: Debug Python Script (15%)
+### Part 3a: Debug Python Script
 
 **File:** `03a_debug_script.py`
 
@@ -191,84 +187,60 @@ Practice systematic debugging for both scripts and notebooks.
 **Your task:** Use VS Code debugger to find and fix all bugs, documenting each fix.
 
 **Known bugs:**
+
 1. **Formula error** - BMI calculation missing exponent
-2. **NameError** - Variable typo (`catgory` vs `category`)
-3. **IndexError** - Off-by-one loop error
+2. **NameError** - Return statement references `risk_level` even though the variable is named `risk_lvl`
+3. **Loop bug** - `range(len(patients) - 1)` skips the final patient and leaves results incomplete
 
 **Debugging workflow:**
+
 1. Set breakpoint on line with bug
 2. Run debugger (Debug icon → Python File)
 3. When paused:
-   - Check **Variables panel** for unexpected values
-   - Add **Watch expression** to compare correct calculation
-   - Use **Debug Console** to test fixes
+    - Check **Variables panel** for unexpected values
+    - Add **Watch expression** to compare correct calculation
+    - Use **Debug Console** to test fixes
 4. Fix bug and add comment:
-   ```python
-   # BUG 1: Used weight/height instead of weight/(height**2)
-   # FIX: Added exponent for correct BMI formula
-   bmi = weight / (height ** 2)
-   ```
+    ```python
+    # BUG 1: Used weight/height instead of weight/(height**2)
+    # FIX: Added exponent for correct BMI formula
+    bmi = weight / (height ** 2)
+    ```
 
 **Test:** Script runs without errors and produces correct BMI values
 
----
-
-### Part 3b: Debug Notebook (15%)
+### Part 3b: Debug Notebook
 
 **File:** `03b_debug_notebook.ipynb`
 
-**Current state:** Notebook has THREE subtle bugs.
+**Current state:** The lab-results notebook estimates fasting glucose from intake data and assigns diabetes risk, but hidden issues in data typing, filtering, and scoring produce incorrect counts.
 
-**Your task:** Use VS Code notebook debugger to find and fix bugs.
+**Your task:** Use VS Code’s notebook debugger to uncover each issue, add concise `FIX:` comments beside your changes, then restart the kernel and Run All to confirm clean execution.
 
-**Known bugs:**
-1. **Type mismatch** - Age stored as string, comparison fails
-2. **Off-by-one** - Loop skips first patient and crashes on last
-3. **Logic error** - Risk categories inverted (high BMI = "low risk")
+**Investigation clues:**
+
+1. Glucose values get reformatted for display—watch how that affects comparisons in the risk categorization cell.
+2. The follow-up filter should capture both “High risk” and “Very high risk” labels; step through the string matching logic while paused.
+3. The intervention priority loop should compute a score for every high-risk patient exactly once—inspect the index math as you iterate.
 
 **Debugging workflow:**
-1. Click **debug icon** beside cell (bug/play button)
-2. Set breakpoint inside cell code
+
+1. Click the **debug icon** beside a cell (bug/play button).
+2. Set breakpoints inside the problematic cell.
 3. When paused:
-   - **Variables panel:** Expand DataFrames, check dtypes
-   - **Watch panel:** Add `df["age"].dtype` or `len(patients)`
-   - **Debug Console:** Test `df.head()`, `df.info()`
-4. Fix bug and add comment explaining the issue
+    - **Variables panel:** Inspect `patients["glucose_mg_dl"]` and `patients["age"]` dtypes/values.
+    - **Watch panel:** Track expressions like `len(high_risk)` or `records[i]`.
+    - **Debug Console:** Run snippets such as `patients.head()` or `high_risk[:3]`.
+4. Apply fixes, document them with comments, restart the kernel, and Run All to verify.
 
 **Test:** Restart kernel + Run All completes without errors
 
----
-
 ## Testing Your Work
 
-### Local Testing
-
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Test individual parts
-python 01_process_email.py your.email@ucsf.edu
-jupyter nbconvert --execute 02a_logging.ipynb
-jupyter nbconvert --execute 02b_validation.ipynb
-jupyter nbconvert --execute 02c_config_driven.ipynb
-python 03a_debug_script.py
-jupyter nbconvert --execute 03b_debug_notebook.ipynb
-
-# Run all tests
 pytest .github/tests/test_assignment.py -v
 ```
-
-### GitHub Actions (Automatic)
-
-Every push triggers autograding:
-1. Push your changes
-2. Go to **Actions** tab in GitHub
-3. Click latest workflow run
-4. Check which tests passed/failed
-5. Fix failures, push again
-
----
 
 ## Submission Checklist
 
@@ -279,48 +251,32 @@ Every push triggers autograding:
 - [ ] `03a_debug_script.py` all bugs fixed with comments
 - [ ] `03b_debug_notebook.ipynb` all bugs fixed with comments
 - [ ] All files pushed to GitHub
-- [ ] GitHub Actions tests pass
+- [ ] GitHub Actions tests pass 🤞
 
----
+## Grading
 
-## Grading Rubric
+**Pass/Fail** If autograding fails, then a human will review
 
-**Pass/Fail** based on autograding:
-
-| Part | Weight | Criteria |
-|------|--------|----------|
-| **1. Email** | 10% | Valid hash file exists |
-| **2a. Logging** | 15% | Logging configured and used throughout |
-| **2b. Validation** | 25% | Schema + bounds validation with clear errors |
-| **2c. Config** | 20% | All hardcoded values moved to config |
-| **3a. Debug Script** | 15% | All bugs fixed with explanation comments |
-| **3b. Debug Notebook** | 15% | All bugs fixed, notebook runs cleanly |
-
-**To pass:** All GitHub Actions tests must pass (green checkmark)
-
----
+| Part | Tests Must Pass |
+| - | |
+| **1. Email** | Valid hash file exists |
+| **2a. Logging** | Notebook executes, logging output present |
+| **2b. Validation** | Notebook runs with clean data, catches bad data |
+| **2c. Config** | Notebook uses config.yaml, modifying config changes behavior |
+| **3a. Debug Script** | Script runs without errors, BMI calculations correct |
+| **3b. Debug Notebook** | Notebook executes cleanly, produces expected output |
 
 ## Getting Help
 
-**Stuck?**
+### Stuck?
+
 1. Review demos in `lectures/01/demo/` - they show these patterns
 2. Read test output in GitHub Actions - tells you what's wrong
-3. Ask on Discord - share your approach (not full code)
+3. Ask in lab!
 
-**Tips:**
+### Tips:
+
 - **Part 2:** Look at `02b_hardened_cleaning.ipynb` demo for patterns
 - **Part 3a:** Similar bugs to `03a_buggy_bmi.py` demo
 - **Part 3b:** Review `03b_buggy_analysis.ipynb` demo for notebook debugging
 - **Git:** Commit after each part, push frequently to see test results
-
----
-
-## Advanced (Optional)
-
-Want more practice?
-- Add type hints to all functions
-- Create custom validation functions with unit tests
-- Add data visualization showing BMI distributions
-- Create a logging config file for different log levels
-
-Won't affect your grade but great for learning!

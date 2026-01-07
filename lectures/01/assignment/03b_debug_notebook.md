@@ -1,28 +1,26 @@
 ---
 jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-  kernelspec:
-    display_name: Python 3
-    language: python
-    name: python3
+    jupytext:
+        text_representation:
+            extension: .md
+            format_name: markdown
+            format_version: "1.3"
+    kernelspec:
+        display_name: Python 3
+        language: python
+        name: python3
 ---
 
-# Demo 3b: Buggy Patient Analysis Notebook (VS Code Notebook Debugging)
+# Assignment Part 3b: Debug Lab Results Analysis
 
-This notebook has subtle bugs that require using VS Code's notebook debugger to find. Practice:
-- Clicking the **debug icon** next to a cell
-- Setting breakpoints inside notebook cells
-- Using Variables panel to inspect DataFrames
-- Stepping through code to find logic errors
+This notebook analyzes patient glucose test results to identify diabetes risk. It contains hidden issues you need to uncover using VS Code's notebook debugger.
 
-**Known bugs:**
-1. Type mismatch when filtering by age (string vs int comparison)
-2. Off-by-one error in loop iteration
-3. Logic error in BMI risk categorization
+**Your task:**
+
+- Use the debug icon to run cells interactively
+- Set breakpoints and inspect variables
+- Fix the issues and add concise comments explaining each change
+- Restart the kernel + Run All to verify everything works
 
 ---
 
@@ -42,142 +40,121 @@ patients.head()
 
 ---
 
-## BUG 1: Filter elderly patients (age comparison issue)
+## Calculate fasting glucose estimates
 
 ```python
-# This cell has a BUG: ages might be stored as strings
-# Try debugging: click the debug icon on this cell, set a breakpoint,
-# and inspect patients["age"].dtype in the Variables panel
+print("Estimating fasting glucose from BMI and age...")
 
-print("Finding patients over 65...")
+# Simple glucose estimation for demonstration
+# (In reality, would come from lab tests)
+patients["glucose_mg_dl"] = (patients["weight_kg"] * 1.2 + patients["age"] * 0.3).round(0)
 
-# BUG: If age is string type, this comparison doesn't work as expected
-# "70" > 65 evaluates differently than int comparison
-elderly = patients[patients["age"] > 65].copy()
+# Convert to string for "display formatting"
+patients["glucose_mg_dl"] = patients["glucose_mg_dl"].astype(str)
 
-print(f"Found {len(elderly)} elderly patients")
-
-# If this is unexpectedly 0, the bug is likely a type issue
-if len(elderly) == 0:
-    print("⚠️ WARNING: No elderly patients found - check data types!")
+print(f"Glucose calculated for {len(patients)} patients")
+print(f"Sample values:")
+print(patients[["patient_id", "glucose_mg_dl"]].head())
 ```
 
 ---
 
-## Fix for BUG 1 (uncomment after finding the issue)
+## Categorize diabetes risk
 
 ```python
-# Ensure age is numeric
-# patients["age"] = pd.to_numeric(patients["age"], errors="coerce")
-# elderly = patients[patients["age"] > 65].copy()
-# print(f"After type fix: {len(elderly)} elderly patients")
-```
+print("\nCategorizing diabetes risk based on fasting glucose...")
 
----
-
-## BUG 2: Calculate summary statistics with off-by-one error
-
-```python
-# This cell has a BUG in the loop range
-# Set a breakpoint inside the loop and watch the 'i' variable
-
-print("\nPatient summaries:")
-patient_ids = patients["patient_id"].tolist()
-
-# BUG: range(1, len(patient_ids)) skips first patient and may exceed bounds
-# Should be range(len(patient_ids))
-for i in range(1, len(patient_ids)):
-    row = patients.iloc[i]
-    # When i equals len(patients)-1, this tries to access iloc[len(patients)]
-    next_row = patients.iloc[i + 1]  # IndexError on last iteration
-
-    print(f"Patient {row['patient_id']}: BMI trend analysis")
-```
-
----
-
-## Fix for BUG 2 (uncomment after finding the issue)
-
-```python
-# print("\nCorrected patient summaries:")
-# for i in range(len(patient_ids)):
-#     row = patients.iloc[i]
-#     print(f"Patient {row['patient_id']}: Age {row['age']}, BMI analysis")
-```
-
----
-
-## BUG 3: Categorize BMI risk (logic error)
-
-```python
-# This cell has a LOGIC BUG in the risk categorization
-# Debug: Set breakpoint in the function, step through with different BMI values
-
-def categorize_risk(bmi):
-    """Categorize health risk based on BMI."""
-    # BUG: Logic is reversed - high BMI should be high risk, not low
-    if bmi < 18.5:
-        return "High risk"
-    elif bmi < 25:
-        return "Moderate risk"
-    elif bmi < 30:
-        return "Low risk"
+def categorize_glucose(glucose_value):
+    """Categorize diabetes risk from fasting glucose (mg/dL)."""
+    if glucose_value < 100:
+        return "Low risk (normal)"
+    elif glucose_value < 126:
+        return "High risk (prediabetes)"
     else:
-        return "Very low risk"  # Should be "Very high risk"!
+        return "Very high risk (diabetes)"
 
-# Test the function
-test_cases = [17, 22, 28, 35]
-print("\nRisk categorization test:")
-for bmi in test_cases:
-    risk = categorize_risk(bmi)
-    print(f"BMI {bmi}: {risk}")
+patients["diabetes_risk"] = patients["glucose_mg_dl"].apply(categorize_glucose)
 
-# BUG: BMI of 35 should be "Very high risk", not "Very low risk"!
+print("Risk categories assigned:")
+print(patients[["patient_id", "glucose_mg_dl", "diabetes_risk"]].head(10))
 ```
 
 ---
 
-## Fix for BUG 3 (uncomment after finding the issue)
+## Filter high-risk patients
 
 ```python
-# def categorize_risk_fixed(bmi):
-#     """Corrected risk categorization."""
-#     if bmi < 18.5:
-#         return "Moderate risk (underweight)"
-#     elif bmi < 25:
-#         return "Low risk (normal)"
-#     elif bmi < 30:
-#         return "Moderate risk (overweight)"
-#     else:
-#         return "High risk (obese)"
-#
-# print("\nCorrected risk categorization:")
-# for bmi in test_cases:
-#     risk = categorize_risk_fixed(bmi)
-#     print(f"BMI {bmi}: {risk}")
+print("\nIdentifying patients needing follow-up...")
+
+# Find patients with elevated glucose
+high_risk = patients[
+    patients["diabetes_risk"].str.contains("High risk")
+].copy()
+
+print(f"Found {len(high_risk)} patients with elevated glucose")
+if len(high_risk) > 0:
+    print(f"Glucose range: {high_risk['glucose_mg_dl'].min()} to {high_risk['glucose_mg_dl'].max()}")
 ```
 
 ---
 
-## Debugging tips for notebooks
+## Calculate intervention priority scores
 
-1. **Use the debug icon:** Click the debug button beside a cell (looks like a bug icon)
-2. **Set breakpoints:** Click in the gutter beside code lines inside cells
-3. **Variables panel:** Inspect DataFrames, check `.dtype`, `.shape`, `.head()`
-4. **Step through:** Use Step Over (F10) to execute line-by-line
-5. **Restart kernel:** After fixing bugs, restart kernel and Run All to verify clean state
+```python
+print("\nCalculating intervention priority scores...")
+
+priority_patients = []
+records = high_risk.to_dict("records")
+
+# Calculate priority score for each high-risk patient
+for i in range(1, len(records) + 1):
+    patient = records[i]
+
+    # Priority score: higher glucose + older age = higher priority
+    glucose = float(patient["glucose_mg_dl"])
+    age = int(patient["age"])
+    priority_score = (glucose - 100) + (age * 0.5)
+
+    priority_patients.append({
+        "patient_id": patient["patient_id"],
+        "glucose": glucose,
+        "age": age,
+        "priority_score": round(priority_score, 1)
+    })
+
+# Sort by priority score
+priority_patients.sort(key=lambda x: x["priority_score"], reverse=True)
+
+print(f"Priority scores calculated for {len(priority_patients)} patients")
+if priority_patients:
+    print(f"\nTop 3 priority patients:")
+    for p in priority_patients[:3]:
+        print(f"  {p['patient_id']}: score {p['priority_score']} (glucose={p['glucose']}, age={p['age']})")
+```
 
 ---
 
-## Summary: What you should have found
+## Summary
 
-- **BUG 1:** Age column is string type, comparison `"70" > 65` behaves unexpectedly
-  - **Fix:** Convert to numeric with `pd.to_numeric()`
+```python
+print("\n" + "=" * 50)
+print("Lab Results Analysis Complete")
+print("=" * 50)
+print(f"Total patients analyzed: {len(patients)}")
+print(f"High-risk patients: {len(high_risk)}")
+print(f"Patients prioritized for intervention: {len(priority_patients)}")
+```
 
-- **BUG 2:** Loop starts at 1 (skips first patient) and accesses `i+1` (IndexError)
-  - **Fix:** Use `range(len(...))` and remove the `+1` offset
+---
 
-- **BUG 3:** Risk logic is inverted—high BMI labeled as "Very low risk"
-  - **Fix:** Reverse the risk labels or fix the conditional logic
+## Debugging Checklist
 
-**Key lesson:** Notebook debugging is just like script debugging, but you debug individual cells. Always restart kernel + Run All after fixes to ensure clean state!
+After fixing all bugs, verify:
+
+- [ ] Runs without errors end-to-end
+- [ ] Glucose values are reasonable numbers
+- [ ] Risk categories make sense (high glucose = high risk)
+- [ ] All high-risk patients are identified
+- [ ] Priority scores calculated correctly
+- [ ] Restart kernel + Run All completes successfully
+- [ ] Added comments explaining each fix

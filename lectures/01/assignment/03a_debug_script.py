@@ -1,90 +1,85 @@
 #!/usr/bin/env python3
 """
-Demo 3a: Buggy BMI Calculator for VS Code Debugging Practice
+Assignment 01 Part 3a: Debug BMI Health Risk Calculator
 
-This script has THREE intentional bugs to find using the VS Code debugger:
-1. Formula error in calculate_bmi()
-2. NameError in get_bmi_category()
-3. IndexError in print_recommendations()
+This script has THREE bugs to find and fix using VS Code debugger.
+Use breakpoints, Variables panel, Watch expressions, and Debug Console.
 
-Practice debugging workflow:
-- Set breakpoints and inspect variables
-- Use Step Into/Over to trace execution
-- Fix each bug and verify the fix works
+Add comments explaining each fix when you're done.
 """
 
 
-def calculate_bmi(weight, height):
-    """Calculate BMI from weight (kg) and height (m)."""
-    # BUG 1: Incorrect formula (missing square on height)
-    # Correct formula: weight / (height ** 2)
-    bmi = weight / height
+def calculate_bmi(weight_kg, height_cm):
+    """Calculate BMI from weight (kg) and height (cm)."""
+    height_m = height_cm / 100
+    bmi = weight_kg / height_m
     return bmi
 
 
-def get_bmi_category(bmi):
-    """Return the BMI category for a given BMI value."""
-    # BUG 2: Typo in variable name causes NameError
+def get_risk_level(bmi):
+    """Determine health risk level based on BMI."""
     if bmi < 18.5:
-        catgory = "Underweight"  # Should be 'category'
+        risk_lvl = "Moderate risk (underweight)"
     elif bmi < 25:
-        catgory = "Normal weight"
+        risk_lvl = "Low risk (normal)"
     elif bmi < 30:
-        catgory = "Overweight"
+        risk_lvl = "Moderate risk (overweight)"
     else:
-        catgory = "Obese"
+        risk_lvl = "High risk (obese)"
 
-    return category  # NameError: 'category' is not defined
+    return risk_level
 
 
-def print_recommendations(category_ids):
-    """Print health recommendations based on BMI categories."""
-    recommendations = [
-        "Consider consulting a nutritionist",
-        "Keep up the healthy habits",
-        "Focus on balanced diet and exercise",
-        "Consult healthcare provider for weight management",
-    ]
+def analyze_patient_data(patients):
+    """Analyze BMI and risk for multiple patients."""
+    print("\nPatient Analysis:")
+    print("-" * 60)
 
-    # BUG 3: Off-by-one error causes IndexError
-    # Loop starts at 1 (skips first) and tries to access i+1 (out of bounds)
-    print("\nRecommendations:")
-    for i in range(1, len(category_ids)):
-        print(f"{i}. {recommendations[i+1]}")
+    results = []
+
+    for i in range(len(patients) - 1):
+        name, weight, height = patients[i]
+        bmi = calculate_bmi(weight, height)
+        risk = get_risk_level(bmi)
+
+        results.append({
+            "name": name,
+            "bmi": round(bmi, 1),
+            "risk": risk
+        })
+
+        print(f"{name:15} | BMI: {bmi:5.1f} | Risk: {risk}")
+
+    return results
 
 
 def main():
-    """Main function to calculate and display BMI information."""
-    print("=" * 50)
-    print("BMI Calculator - VS Code Debugging Demo")
-    print("=" * 50)
+    """Main function to run patient analysis."""
+    print("=" * 60)
+    print("BMI Health Risk Calculator - Assignment 01")
+    print("=" * 60)
 
-    # Test with sample data instead of user input for reproducible debugging
+    # Test data: (name, weight_kg, height_cm)
     test_patients = [
-        ("Alice", 70, 1.75),  # Should be normal weight
-        ("Bob", 90, 1.80),    # Should be overweight
-        ("Carol", 55, 1.60),  # Should be normal weight
+        ("Patient A", 68, 170),   # Should be ~23.5 BMI (normal)
+        ("Patient B", 95, 180),   # Should be ~29.3 BMI (overweight)
+        ("Patient C", 52, 160),   # Should be ~20.3 BMI (normal)
+        ("Patient D", 102, 175),  # Should be ~33.3 BMI (obese)
     ]
 
-    print("\nProcessing patients...")
-    for name, weight, height in test_patients:
-        print(f"\nPatient: {name}")
-        print(f"Weight: {weight} kg, Height: {height} m")
+    print(f"\nAnalyzing {len(test_patients)} patients...")
+    results = analyze_patient_data(test_patients)
 
-        # BUG 1 will cause wrong BMI values
-        bmi = calculate_bmi(weight, height)
-        print(f"BMI: {bmi:.1f}")
+    print("\n" + "=" * 60)
+    print(f"Analysis complete: {len(results)} patients processed")
+    print("=" * 60)
 
-        # BUG 2 will cause NameError here
-        category = get_bmi_category(bmi)
-        print(f"Category: {category}")
+    # Summary statistics
+    avg_bmi = sum(r["bmi"] for r in results) / len(results)
+    print(f"\nAverage BMI: {avg_bmi:.1f}")
 
-    # BUG 3 will cause IndexError here
-    print_recommendations([1, 2, 3, 4])
-
-    print("\n" + "=" * 50)
-    print("Analysis complete!")
-    print("=" * 50)
+    high_risk = sum(1 for r in results if "High" in r["risk"])
+    print(f"High risk patients: {high_risk}")
 
 
 if __name__ == "__main__":

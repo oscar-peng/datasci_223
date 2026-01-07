@@ -38,8 +38,9 @@ git status && git commit -am "chore: warm up"
 Explain that choosing a single environment reduces friction. Encourage Codespaces for consistency, local venv for performance/PHI. Mention WSL briefly for Windows. For Windows activation: `.venv\Scripts\activate` instead of `source .venv/bin/activate`.
 --->
 
-Pick one workflow (local venv or Codespaces) and stick to it for predictable grading and fewer surprises.
+Try the different ways of doing things and pick one workflow (local venv or Codespaces) and stick to it for fewer surprises.
 Visual: ![Codespaces debug icon](media/debug-icon.png)
+![Python import tips](media/python_import.webp)
 Signature: `codespace.create(repo, machine="small")`
 Example:
 
@@ -63,7 +64,8 @@ Highlight “run-all ready” notebooks, cleared outputs on commit, deterministi
 --->
 
 Summary: Notebooks must be run-all ready, deterministic, and free of stray outputs or secret paths.
-Visual: ![XKCD: Data Trap](media/data_trap_2x.png)
+Visual: ![Notebook cleared outputs](media/jupyter_clear.png)
+![XKCD: Data Trap](media/data_trap_2x.png)
 Signature: `def run_all(notebook_path: Path) -> None`
 Example:
 
@@ -84,7 +86,7 @@ Offer the minimal command set and when to use GUI. Encourage short commits and d
 --->
 
 Summary: Minimal git/Markdown toolkit for fast, clean commits and readable docs.
-Visual: ![XKCD: Git Commit](media/xkcd_git_commit.png)
+Visual: ![Git branches at a glance](media/git_branches.png)
 Signature: `git commit -m "feat: summary"`
 Example:
 
@@ -215,7 +217,7 @@ except FileNotFoundError as err:
     logging.error("Check your path or fetch the sample data: %s", err)
 ```
 
-## Demo (~60 min): Make the notebook harder to break
+## Demo: Make the notebook harder to break
 
 <!---
 Practice adding assertions, config loading, and logging to an existing notebook. Show before/after of a failing cell now giving actionable errors. Encourage students to try with bad input.
@@ -419,7 +421,7 @@ except Exception as err:
 - Add assertions and logging near the failure; rerun with breakpoints to inspect.
 - Once fixed, add a minimal test or notebook cell that proves the fix stays fixed.
 
-## Demo (~90 min): Walk through a VS Code debug session
+## Demo: Walk through a VS Code debug session
 
 <!---
 Guide students through setting a breakpoint, stepping through a loop, and fixing a logic bug. Use a BMI calculator or similar from lecture_02. End by rerunning tests/notebook.

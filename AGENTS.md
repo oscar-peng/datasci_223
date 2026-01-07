@@ -9,6 +9,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 **IDE**: VS Code is the common IDE for this class.
 
 ## Repository layout
+
 - `lectures/`: Current year's content (MkDocs source). Being built out to 11 lectures. `index.md` symlinks to repo `README.md`.
 - `lectures_25/`: Last year's content (10 lectures). Reference material to adapt/update from.
 - `docs/`: MkDocs build output (generated, gitignored for local dev but used for GitHub Pages).
@@ -22,6 +23,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 - `all_xkcd.html` / `all_xkcd.csv`: Index of available XKCD comics for reference.
 
 ## Build and preview
+
 - Python 3.11/3.12. **Prefer `uv`** for local dev (`uv venv .venv && uv pip install -r requirements.txt`); student default is `python -m venv`.
 - `pip install -r requirements.txt` (mkdocs-material stack + exporter).
 - Local preview: `mkdocs serve -f mkdocs.yml`.
@@ -29,6 +31,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 - Deploy: `mkdocs gh-deploy --force` (CI auto-deploys on push to main via `.github/workflows/deploy.yml`).
 
 ## Authoring workflow
+
 - Follow `refs/instructions.md`: audience is beginner health data science students; 90-minute lectures with additional demo time at 1/3, 2/3, and end; balance concept/reference/examples; no inline HTML comment speaking notes in the lecture text.
 - **Notion format quirk**: Lectures served from Notion allow no page title and multiple H1s (`#`) in a single document.
 - **Lecture formatting**: title line is plain text (no leading `#`); main headings use a single `#` with real sub-sections via `##`/`###` (never bolded fake headings); prefer concise bullets over long prose with 4-space indents for nesting; each section combines brief intro, a visual/table/output or `#FIXME` placeholder, a `### Reference` table, and a short `### Code` snippet (demos carry the complexity); place visuals before code; mark demos only with `# LIVE DEMO!`; keep tone non-conversational; skip “Summary” sections; sprinkle comics spaced through the lecture (use existing assets).
@@ -37,6 +40,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 - Assets live alongside their lecture folder; fonts/images for theme live under `overrides/assets/`.
 - Exercises section in nav points to GitHub Classroom links; verify/update URLs each term.
 - Content style: keep lecture code blocks brief and focused on single concepts; demos should add realistic health-data complexity and clear checkpoints.
+- Time cues: do not include time estimates for sections, demos, or assignments. It is okay to note approximate runtime for specific code examples that may take a long time.
 - Comics/visual sourcing: prefer images local to the lecture folder; if reusing from elsewhere, copy into the lecture’s `media/` subdir first. `all_xkcd.html` lists available XKCD panels—pick from there and copy locally instead of hotlinking.
 - XKCD helper: use `scripts/fetch_xkcd_2x.py` to download comics via explainxkcd file pages (2x "Original file" links). Usage: `./scripts/fetch_xkcd_2x.py 1597:Git 1722:Debugging:xkcd_debugging.png`
 
@@ -45,17 +49,20 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 Lectures include 3 hands-on demos at ~1/3, ~2/3, and end of 90-minute session. Demos build on lecture content with realistic complexity.
 
 **Content philosophy:**
+
 - **Lecture code blocks:** Short, simple, minimal examples demonstrating single concepts
 - **Demo code:** Realistic complexity with health data, multiple steps, edge cases—mirrors real-world usage
 - Demos should be completable in 10-15 minutes with clear success checkpoints
 
 **File naming convention:** `0Xy_description.suffix`
+
 - `X` = demo number (1, 2, 3)
 - `y` = order within demo (a, b, c, ...; omit if single file)
 - `description` = very short descriptor (1-3 words)
 - `suffix` = file type (`.md`, `.py`, `.ipynb`, `.yaml`, etc.)
 
 **Examples:**
+
 ```
 demo/
 ├── DEMO_GUIDE.md              # Brief walkthrough for all demos
@@ -69,11 +76,13 @@ demo/
 ```
 
 **Markdown → Jupyter conversion:**
+
 - Write demos as `.md` files (easier to review, git-friendly)
 - Convert with `jupytext --to notebook demo/*.md` before class
 - Use jupytext percent format (`#%%`) or markdown format for cells
 
 ## Assignment structure
+
 Weekly assignments are **pass/fail** and should be straightforward for students who understand the lecture content. Coursework uses GitHub Classroom with pytest-based autograding via GitHub Actions.
 
 ```
@@ -91,12 +100,14 @@ lectures/XX/assignment/
 **Test behaviors and artifacts, not implementation details.** Students may solve problems in many valid ways (Gödel incompleteness applies to grading too).
 
 **Good tests check:**
+
 1. **Code execution**: Does the code run without errors?
 2. **Artifacts generated**: Are output files created with correct format/content?
 3. **Function behavior**: Do imported functions produce correct results with known inputs?
 4. **Known input/output pairs**: Test with fixtures, verify expected outputs
 
 **Bad tests check:**
+
 - Specific code patterns ("import logging" string matching)
 - Function names or variable names (students may name differently)
 - Code structure or style (unless that's the learning objective)
@@ -130,20 +141,24 @@ def test_has_logging():  # Too brittle!
 ```
 
 **For notebooks:**
+
 - Execute with `nbconvert --execute` and check exit code
 - Read outputs from executed notebook cells
 - Or import functions from converted `.py` and test directly
 
 **References:**
+
 - `lectures_25/06/assignment/` - last year's multi-part notebook assignment example
 - `../datasci_217/07/assignment/.github` - grading workflow examples from prerequisite course
 
 ## Dependencies and data
+
 - Core deps: mkdocs >=1.6, mkdocs-material >=9.6, mkdocs-exporter (PDF), mkdocs-callouts, mkdocs-charts, mkdocs-minify, mkdocs-macros.
 - Optional/demo deps: pandas, numpy, altair, dash/plotly, selenium + webdriver-manager, Playwright. Install Playwright browsers before exporting PDF.
 - No large datasets committed; see `refs/physionet.md` and other `refs/` docs for data sources used in examples.
 
 ## Engineering guardrails (per ~/.claude/CLAUDE.md)
+
 - Configuration-first: do not hardcode values that belong in config; prefer centralized settings and utility modules over duplication.
 - DRY and separation of concerns: extract shared logic into helpers; keep orchestration separate from business logic and from data/visual layers.
 - Simplicity and clear data flow: favor explicit, minimal abstractions with named inputs/outputs; avoid hidden side effects.

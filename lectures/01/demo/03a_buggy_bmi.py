@@ -26,15 +26,15 @@ def get_bmi_category(bmi):
     """Return the BMI category for a given BMI value."""
     # BUG 2: Typo in variable name causes NameError
     if bmi < 18.5:
-        catgory = "Underweight"  # Should be 'category'
+        category = "Underweight" 
     elif bmi < 25:
-        catgory = "Normal weight"
+        category = "Normal weight"
     elif bmi < 30:
-        catgory = "Overweight"
+        category = "Overweight"
     else:
-        catgory = "Obese"
+        category = "Obese"
 
-    return category  # NameError: 'category' is not defined
+    return catgory  # NameError: 'catgory' is not defined
 
 
 def print_recommendations(category_ids):
@@ -58,6 +58,7 @@ def main():
     print("=" * 50)
     print("BMI Calculator - VS Code Debugging Demo")
     print("=" * 50)
+    # breakpoint() # Opens pdb, gutter bullet for VS Code debugging
 
     # Test with sample data instead of user input for reproducible debugging
     test_patients = [

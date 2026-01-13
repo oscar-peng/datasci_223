@@ -1,0 +1,18 @@
+# Config for 03a_batch_report.py
+# Run from lectures/02/demo/
+
+inputs:
+  sensor_parquet: "data/sensor_hrv/*.parquet"
+  sleep_parquet: "data/sleep_diary.parquet"
+  users_parquet: "data/user_profile.parquet"
+
+filters:
+  start_date: "2024-01-15"
+  missingness_max: 0.35
+  night_hours:
+    start: 22
+    end: 6
+
+outputs:
+  report_parquet: "outputs/sleep_hrv_report.parquet"
+  report_csv: "outputs/sleep_hrv_report.csv"

@@ -2,7 +2,7 @@
 
 Goal: generate a realistic (but synthetic) wearable dataset and use Polars *lazy scans* to filter and aggregate without ever materializing the full table in memory.
 
-This demo is intentionally boring-data-science: scan → filter → select → group_by → collect(streaming=True) → write Parquet.
+This demo is intentionally boring-data-science: scan → filter → select → group_by → collect(engine="streaming") → write Parquet.
 
 ## Prereqs
 
@@ -108,7 +108,78 @@ print(result.head())
 - `result.height > 0`
 - `num_segments` looks like "a day of 5-min windows" (usually a couple hundred)
 
-## Stretch (optional)
+## 4) Polars vs pandas (same task)
 
-- Change the filter to keep only nighttime segments and compare `mean_sdnn`.
-- Try `.collect()` without `streaming=True` and watch memory/time differences on `--size large`.
+We’ll compute the *same* daily summary in two ways:
+
+- **Polars**: scan Parquet parts lazily, then `collect(engine="streaming")`
+- **pandas**: read Parquet via `pyarrow` (with pushdown) and groupby in memory
+
+This isn’t to “dunk on pandas” — it’s to show what changes when you move from eager, row-wise CSV workflows to columnar scans + query planning.
+
+### 4a) Polars timing (Parquet scan → streaming aggregate)
+
+```python
+import time
+import polars as pl
+
+polars_t0 = time.perf_counter()
+polars_out = daily.collect(engine="streaming")
+polars_t1 = time.perf_counter()
+
+print(f"polars: {polars_out.height:,} rows in {polars_t1 - polars_t0:.2f}s")
+print(f"polars result size (estimated): {polars_out.estimated_size('mb'):.2f} MB")
+```
+
+### 4b) pandas timing (Parquet read via pyarrow → in-memory groupby)
+
+This shows what pandas can do today when it uses `pyarrow` for Parquet I/O:
+
+- **projection pushdown** via `columns=[...]`
+- **predicate pushdown** via `filters=[...]`
+
+…but once the filtered data is in a pandas `DataFrame`, the groupby is still an in-memory operation.
+
+```python
+import time
+import pandas as pd
+
+pd_t0 = time.perf_counter()
+
+# Note: pandas delegates Parquet reading to pyarrow.
+# Using filters/columns keeps the materialized pandas DataFrame smaller.
+df = pd.read_parquet(
+    "data/sensor_hrv",
+    engine="pyarrow",
+    columns=["device_id", "ts_start", "heart_rate", "hrv_sdnn", "steps", "missingness_score"],
+    filters=[
+        ("missingness_score", "<=", 0.35),
+        ("ts_start", ">=", pd.Timestamp("2024-01-15")),
+    ],
+)
+
+df["date"] = df["ts_start"].dt.date
+
+pd_out = (
+    df
+    .groupby(["device_id", "date"], as_index=False)
+    .agg(
+        num_segments=("heart_rate", "size"),
+        mean_hr=("heart_rate", "mean"),
+        mean_sdnn=("hrv_sdnn", "mean"),
+        steps_sum=("steps", "sum"),
+    )
+    .sort_values(["device_id", "date"])
+)
+
+pd_t1 = time.perf_counter()
+
+print(f"pandas: {len(pd_out):,} rows in {pd_t1 - pd_t0:.2f}s")
+print(f"pandas input memory: {df.memory_usage(deep=True).sum() / (1024**2):.2f} MB")
+```
+
+## Checkpoints
+
+- You can explain why Polars reads Parquet parts efficiently (`scan_parquet` + pushdown)
+- You can explain why pandas-on-CSV is inherently eager (must materialize rows)
+- The two outputs agree on shape/columns (minor float differences are fine)

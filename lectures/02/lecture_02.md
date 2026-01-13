@@ -133,6 +133,14 @@ polars_result = (
 )
 ```
 
+### Does pandas support larger-than-memory data now?
+
+Core pandas is still fundamentally in-memory for operations like groupby, joins, sorts, etc.
+
+- What has improved a lot is I/O and dtypes via `pyarrow` (projection/predicate pushdown at read time; Arrow-backed strings/types).
+- For larger-than-RAM pipelines, common tools include DuckDB, Polars, Dask/Modin, Vaex, or PyArrow dataset/compute (depending on the task).
+- pandas is catching up on Parquet I/O via `pyarrow` (projection/predicate pushdown), but most pandas transforms (groupby/join/sort) still run in-memory.
+
 ### Columnar hand-off
 
 Oak log CSVs once in Parquet, then stay there:
@@ -150,6 +158,29 @@ print(f"{csv_mb:.1f} MB → {parquet_mb:.1f} MB ({csv_mb / parquet_mb:.2f}x smal
 ```
 
 Use `.schema` to confirm dtypes, and partition long histories by `year` or `facility` so streaming scans stay sub-gigabyte.
+
+### Data model for today’s work
+
+The demos and assignment use “health-data-shaped” tables: multiple sources, repeated measurements, and joins that can accidentally multiply rows.
+
+| Table | Grain | Join key(s) | Typical use |
+| ----- | ----- | ----------- | ----------- |
+| `user_profile` (demo) | 1 row per `user_id` | `user_id` | Demographics / grouping |
+| `sleep_diary` (demo) | 1 row per `user_id` per day | `user_id`, `date` | Nightly outcomes |
+| `sensor_hrv` (demo) | many rows per device in 5-min windows | derive `user_id` from `device_id`; also `date` from `ts_start` | High-volume physiology |
+| `encounters` (assignment) | many rows per `patient_id` | `patient_id` | Events/visits to count/stratify |
+| `vitals` (assignment) | many rows per `patient_id` | `patient_id` (+ time filter) | Measurements to summarize |
+
+Two practical rules:
+
+- Know the *grain* before you join (one-to-many joins are normal; many-to-many joins often explode row counts).
+- Decide early whether you want “per-patient”, “per-encounter”, or “per-month” outputs, and aggregate to that grain before expensive joins.
+
+### Advanced aside: Parquet layout (why it affects speed)
+
+- Parquet stores data in **row groups**; each row group contains per-column chunks plus min/max stats that enable predicate pushdown.
+- If you frequently filter on `facility` or `year`, consider **partitioning** your dataset by those columns (fewer bytes scanned).
+- Avoid thousands of tiny Parquet files (metadata overhead); prefer fewer, reasonably sized files with consistent schema.
 
 ![Health data reality check](02/media/xkcd_health_data.png)
 
@@ -172,6 +203,22 @@ Lazy plans shine once you chain multiple operations: the engine reorders filters
 - `query.explain()` outlines scan → filter → join → aggregate so you can spot expensive steps.
 - `query.collect(engine="streaming")` opts into streaming; Polars swaps to an in-memory engine only when necessary (e.g., global sorts).
 - `.sink_parquet("outputs/summary.parquet")` writes directly to disk without materializing the DataFrame in Python.
+
+### Streaming limits (when streaming won’t help)
+
+Streaming is powerful, but not magic. Some operations force large shuffles or require global state.
+
+Common “streaming-hostile” patterns:
+
+- Global sorts and “top-k” style operations that need to see all rows.
+- Many-to-many joins (or joins after a key exploded) that produce huge intermediate tables.
+- Some window functions / rolling calculations that need overlapping history.
+- Wide reshapes like pivots that increase the number of columns dramatically.
+
+When this happens:
+
+- Reduce columns early (projection), filter early (predicate), and aggregate to the target grain before joins.
+- Write intermediate outputs (Parquet) at stable checkpoints so you don’t recompute expensive steps.
 
 ### Reference Card: Lazy vs eager
 
@@ -230,6 +277,13 @@ Put the pieces together: start lazy, keep everything parameterized, and stream t
 - **Collect with streaming** or `.sink_parquet()` to avoid materializing giant tables.
 - **Emit artifacts + logs** (row counts, durations) for reproducibility.
 
+### Methodology (what we’ll do in Demo 03 + HW02)
+
+- **Config-driven**: all file globs, filters, and output paths live in YAML.
+- **Three phases**: load (scan + cast) → transform (joins + groupby) → materialize (write artifacts).
+- **Artifacts**: always write both Parquet (for downstream pipelines) and CSV (for quick inspection).
+- **Sanity checks**: row counts, schema, and “does the output look plausible?” before you ship results.
+
 ### Reference Card: Pipeline ergonomics
 
 | Task | Command | Why |
@@ -261,12 +315,12 @@ query = (
     .filter(pl.col("timestamp") >= pl.datetime(2023, 1, 1))
     .group_by("patient_id")
     .agg([
-        pl.count().alias("num_measurements"),
+        pl.len().alias("num_measurements"),
         pl.median("heart_rate").alias("median_hr"),
     ])
 )
 
-result = query.collect(streaming=args.engine == "streaming")
+result = query.collect(engine=args.engine)
 Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 result.write_parquet(args.output)
 logging.info("Wrote %s rows to %s", result.height, args.output)
@@ -274,4 +328,4 @@ logging.info("Wrote %s rows to %s", result.height, args.output)
 
 # LIVE DEMO!!!
 
-See [`demo/03a_batch_report.md`](./demo/03a_batch_report.md) plus the optional validator companion for scripted batch runs.
+See [`demo/03a_batch_report.md`](./demo/03a_batch_report.md) for a config-driven batch run with validation checkpoints.

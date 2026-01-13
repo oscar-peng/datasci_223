@@ -20,7 +20,7 @@ pdf: true
 
 ![Dataset vs laptop memory](02/media/memory_vs_dataset.png)
 
-#FIXME Ensure this graphic matches the text/table: clarify whether bars show on-disk size vs in-memory size (or split into two visuals/series).
+# FIXME Ensure this graphic matches the text/table: clarify whether bars show on-disk size vs in-memory size (or split into two visuals/series).
 
 Health datasets outgrow laptop RAM quickly: a handful of CSVs with vitals, labs, and encounters can exceed 16 GB once loaded. Attempting to "just read the file" leads to system thrash, swap usage, and eventually Python `MemoryError`s that interrupt the workflow.
 
@@ -28,7 +28,7 @@ Health datasets outgrow laptop RAM quickly: a handful of CSVs with vitals, labs,
 
 | Dataset | Typical raw size | In-memory pandas size | Fits on 16 GB laptop? |
 | ------- | ---------------- | --------------------- | --------------------- |
-| Intake forms (CSV) | 250 MB | ~1.2 GB (due to dtype inflation) | ✅ | 
+| Intake forms (CSV) | 250 MB | ~1.2 GB (due to dtype inflation) | ✅ |
 | Longitudinal vitals (CSV) | 6 GB | ~14 GB | ⚠️ borderline |
 | EHR encounter log (CSV) | 18 GB | ~42 GB | ❌ |
 | Imaging metadata (Parquet) | 9 GB | ~9 GB | ⚠️ if other apps closed |
@@ -75,18 +75,18 @@ This is the moment to stop fighting pandas and switch strategies (column pruning
 
 # Polars Essentials
 
-#FIXME Pedagogical visual: reinforce *why* columnar formats matter.
-#FIXME Add `02/media/row_vs_column.png` here and explicitly tie it to:
-#FIXME - projection pushdown (read only needed columns)
-#FIXME - predicate pushdown (skip whole row groups / chunks)
-#FIXME - compression benefits from same-typed contiguous values
-#FIXME Prompt: "If you only need `patient_id` + `heart_rate`, what does a columnar engine read vs a CSV reader?"
+# FIXME Pedagogical visual: reinforce *why* columnar formats matter.
+# FIXME Add `02/media/row_vs_column.png` here and explicitly tie it to:
+# FIXME - projection pushdown (read only needed columns)
+# FIXME - predicate pushdown (skip whole row groups / chunks)
+# FIXME - compression benefits from same-typed contiguous values
+# FIXME Prompt: "If you only need `patient_id` + `heart_rate`, what does a columnar engine read vs a CSV reader?"
 
 ![Row vs column layout](02/media/row_vs_column.png)
 
 ![Polars vs pandas runtime](02/media/polars_vs_pandas.png)
 
-#FIXME Add benchmark context (machine/dataset) or replace with a table; avoid implying the exact ratios generalize.
+# FIXME Add benchmark context (machine/dataset) or replace with a table; avoid implying the exact ratios generalize.
 
 pandas is ubiquitous and a great default; Polars is often adopted case-by-case when you hit real constraints (runtime, memory, I/O).
 
@@ -108,6 +108,22 @@ Polars is pandas without the hidden index and with a Rust engine under the hood.
 | `df.groupby("cohort").agg(...)` | `.group_by("cohort").agg([...])` |
 | `df.merge(dim, on="id")` | `.join(dim, on="id")` |
 | *(n/a)* | `.collect(engine="streaming")` |
+
+### Common methods (used in demos + HW02)
+
+Most of this lecture uses a `LazyFrame` pipeline (`pl.scan_* → ... → collect/sink`). If you learn these methods, you can read almost every Polars example we write this quarter.
+
+| Goal | Method | Notes |
+| ---- | ------ | ----- |
+| Inspect columns + dtypes | `.collect_schema()` | Preferred for `LazyFrame`; avoids the “resolving schema is expensive” warning |
+| See the query plan | `.explain()` | Helps you spot joins/sorts and confirm pushdown |
+| Keep only columns you need | `.select([...])` | Enables projection pushdown |
+| Filter rows early | `.filter(...)` | Enables predicate pushdown |
+| Create/transform columns | `.with_columns(...)` | Use expressions (`pl.col(...)`, `pl.when(...)`) instead of Python loops |
+| Aggregate to a target grain | `.group_by(...).agg([...])` | Often do this *before* joining large tables |
+| Combine tables | `.join(other, on=..., how=...)` | Know the grain to avoid many-to-many explosions |
+| Materialize results | `.collect(engine="streaming")` | Streaming helps when the pipeline is streamable |
+| Write without materializing | `.sink_parquet("...")` | Writes directly to disk from the lazy pipeline |
 
 ### Code Snippet: pandas vs Polars
 
@@ -143,7 +159,7 @@ Core pandas is still fundamentally in-memory for operations like groupby, joins,
 
 ### Columnar hand-off
 
-Oak log CSVs once in Parquet, then stay there:
+Convert each raw CSV to Parquet once, then keep everything columnar:
 
 ```python
 import os
@@ -157,7 +173,7 @@ parquet_mb = os.path.getsize("data/patient_vitals.parquet") / 1024**2
 print(f"{csv_mb:.1f} MB → {parquet_mb:.1f} MB ({csv_mb / parquet_mb:.2f}x smaller)")
 ```
 
-Use `.schema` to confirm dtypes, and partition long histories by `year` or `facility` so streaming scans stay sub-gigabyte.
+Use `LazyFrame.collect_schema()` (not `lazyframe.schema`) to confirm dtypes, and partition long histories by `year` or `facility` so streaming scans stay sub-gigabyte.
 
 ### Data model for today’s work
 
@@ -192,7 +208,7 @@ See [`demo/01a_streaming_filter.md`](./demo/01a_streaming_filter.md) for the Pol
 
 ![Lazy query plan sketch](02/media/lazy_plan.png)
 
-#FIXME Add a concrete `query.explain()` output screenshot/snippet so students recognize the real plan format.
+# FIXME Add a concrete `query.explain()` output screenshot/snippet so students recognize the real plan format.
 
 ![Flawed data](02/media/flawed_data.png)
 
@@ -255,11 +271,10 @@ result = query.collect(engine="streaming")
 
 See [`demo/02a_lazy_join.md`](./demo/02a_lazy_join.md) for the lazy-plan deep dive.
 
-
 # Building a Polars Pipeline
 
-#FIXME Decide if `02/media/resource_monitor.png` is pedagogically helpful; consider replacing with a simple "memory stays bounded" plot (plateau + 16GB line) or a short table of peak RSS.
-#FIXME Pedagogical visual: pipeline anatomy (inputs/config → transforms → outputs/logs/artifacts), maybe as a small diagram.
+# FIXME Decide if `02/media/resource_monitor.png` is pedagogically helpful; consider replacing with a simple "memory stays bounded" plot (plateau + 16GB line) or a short table of peak RSS.
+# FIXME Pedagogical visual: pipeline anatomy (inputs/config → transforms → outputs/logs/artifacts), maybe as a small diagram.
 
 ![Resource monitoring dashboard](02/media/resource_monitor.png)
 

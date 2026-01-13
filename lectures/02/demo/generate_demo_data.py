@@ -32,11 +32,16 @@ DATA_DICT_PATH = Path(__file__).parent / "data_dictionary.yaml"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate wearable HRV demo data")
-    parser.add_argument(
+    size_group = parser.add_mutually_exclusive_group()
+    size_group.add_argument(
         "--size",
         choices=["small", "large"],
-        default="small",
-        help="Dataset size (small=1M rows, large=10M rows)",
+        help="Dataset size preset (small=1M rows, large=10M rows)",
+    )
+    size_group.add_argument(
+        "--rows",
+        type=int,
+        help="Exact number of sensor rows to generate (overrides --size)",
     )
     parser.add_argument(
         "--seed",
@@ -56,7 +61,13 @@ def parse_args() -> argparse.Namespace:
         default=200_000,
         help="Rows per chunk when writing sensor parquet",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    
+    # Set default if neither size nor rows is specified
+    if args.size is None and args.rows is None:
+        args.size = "small"
+    
+    return args
 
 
 def load_data_dictionary() -> dict:
@@ -161,13 +172,100 @@ def write_sensor_hrv_parts(
     rng = np.random.default_rng(seed)
 
     num_users = users_df.height
-    ages = users_df.get_column("age").to_numpy()
+    user_age_years = users_df.get_column("age").to_numpy()
+    user_weight_kg = users_df.get_column("weight_kg").to_numpy()
+    user_exercise_freq = users_df.get_column("exercise_freq_weekly").to_numpy()
     device_ids = np.array([f"DEV-{i:05d}" for i in range(num_users)], dtype=object)
 
     start = np.datetime64(start_date.replace(hour=0, minute=0, second=0, microsecond=0))
     total_segments = duration_days * 288
 
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- Per-user parameters (adds realistic between-person variability) ---
+    #
+    # Demos compute aggregates like mean_hr/night_mean_hr. If every row is drawn
+    # from the same distribution, device-level summaries look too similar.
+    # Here we introduce:
+    # - between-person baseline differences (resting HR)
+    # - between-person variability differences (some "stable", some "noisy")
+    # - within-person day-to-day drift (so daily means aren't flat lines)
+    user_hr_rest = (
+        62.0
+        + 0.22 * (user_age_years.astype(float) - 30.0)
+        + 0.08 * (user_weight_kg.astype(float) - 70.0)
+        - 1.4 * user_exercise_freq.astype(float)
+        + rng.normal(0.0, 5.5, size=num_users)
+    )
+    user_hr_rest = np.clip(user_hr_rest, 45.0, 105.0)
+
+    hr_var_class = rng.choice(
+        np.array(["low", "medium", "high"], dtype=object),
+        size=num_users,
+        p=[0.25, 0.55, 0.20],
+    )
+    user_hr_segment_sigma = np.empty(num_users, dtype=float)
+    user_hr_daily_sigma = np.empty(num_users, dtype=float)
+
+    low_mask = hr_var_class == "low"
+    med_mask = hr_var_class == "medium"
+    high_mask = hr_var_class == "high"
+
+    user_hr_segment_sigma[low_mask] = rng.uniform(2.0, 5.0, size=int(low_mask.sum()))
+    user_hr_segment_sigma[med_mask] = rng.uniform(5.0, 10.0, size=int(med_mask.sum()))
+    user_hr_segment_sigma[high_mask] = rng.uniform(
+        10.0, 18.0, size=int(high_mask.sum())
+    )
+
+    user_hr_daily_sigma[low_mask] = rng.uniform(0.5, 2.0, size=int(low_mask.sum()))
+    user_hr_daily_sigma[med_mask] = rng.uniform(2.0, 5.0, size=int(med_mask.sum()))
+    user_hr_daily_sigma[high_mask] = rng.uniform(5.0, 10.0, size=int(high_mask.sum()))
+
+    # Activity propensity: affects steps distribution and therefore daily mean HR.
+    user_activity_scale = rng.lognormal(mean=0.0, sigma=0.35, size=num_users)
+    user_activity_scale = user_activity_scale * (0.9 + 0.04 * user_exercise_freq)
+    user_activity_scale = np.clip(user_activity_scale, 0.6, 2.2)
+
+    # Sensitivity of HR to step counts (some people spike more than others).
+    user_hr_step_sensitivity = rng.uniform(0.06, 0.14, size=num_users)
+
+    # Day-to-day drift around the resting baseline (drives per-device mean_hr spread).
+    daily_hr_offset = rng.normal(
+        loc=0.0,
+        scale=user_hr_daily_sigma[:, None],
+        size=(num_users, duration_days),
+    )
+
+    # Simple circadian effect (lower at night, slightly higher in evening).
+    circadian_hr_by_hour = np.array(
+        [
+            -10.0,  # 00
+            -10.0,  # 01
+            -10.0,  # 02
+            -10.0,  # 03
+            -9.0,  # 04
+            -8.0,  # 05
+            -6.0,  # 06
+            -4.0,  # 07
+            -2.0,  # 08
+            0.0,  # 09
+            0.0,  # 10
+            0.0,  # 11
+            1.0,  # 12
+            1.0,  # 13
+            0.0,  # 14
+            0.0,  # 15
+            0.0,  # 16
+            0.0,  # 17
+            2.0,  # 18
+            2.0,  # 19
+            2.0,  # 20
+            1.0,  # 21
+            0.0,  # 22
+            -2.0,  # 23
+        ],
+        dtype=float,
+    )
 
     rows_written = 0
     part_idx = 0
@@ -177,6 +275,7 @@ def write_sensor_hrv_parts(
 
         user_idx = rng.integers(0, num_users, size=n)
         segment_idx = rng.integers(0, total_segments, size=n)
+        day_idx = (segment_idx // 288).astype(int)
 
         ts_start = start + (segment_idx.astype("timedelta64[m]") * 5)
         ts_end = ts_start + np.timedelta64(5, "m")
@@ -185,13 +284,16 @@ def write_sensor_hrv_parts(
             ts_start.astype("datetime64[h]") - ts_start.astype("datetime64[D]")
         ).astype(int)
 
-        age = ages[user_idx].astype(float)
+        age = user_age_years[user_idx].astype(float)
 
         activity_factor = np.ones(n, dtype=float)
         day_mask = (hour >= 9) & (hour <= 17)
         eve_mask = (hour >= 18) & (hour <= 22)
         activity_factor[day_mask] = rng.uniform(1.2, 2.0, size=int(day_mask.sum()))
         activity_factor[eve_mask] = rng.uniform(1.0, 1.5, size=int(eve_mask.sum()))
+
+        activity_factor = activity_factor * user_activity_scale[user_idx]
+        activity_factor = np.clip(activity_factor, 0.6, 3.0)
 
         steps = (rng.uniform(0, 50, size=n) * activity_factor).astype(int)
         acc_magnitude = rng.uniform(0.05, 0.5, size=n) * activity_factor
@@ -201,12 +303,24 @@ def write_sensor_hrv_parts(
             steps[charging_mask] = (steps[charging_mask] * 0.2).astype(int)
             acc_magnitude[charging_mask] = acc_magnitude[charging_mask] * 0.5
 
-        base_hr = 60 + (age - 18) * 0.3
-        hr = base_hr + rng.uniform(-20, 40, size=n) + steps * 0.1
+        hr = (
+            user_hr_rest[user_idx]
+            + daily_hr_offset[user_idx, day_idx]
+            + circadian_hr_by_hour[hour]
+            + 4.0 * (activity_factor - 1.0)
+            + steps * user_hr_step_sensitivity[user_idx]
+            + rng.normal(0.0, user_hr_segment_sigma[user_idx], size=n)
+        )
         hr = np.clip(hr, 40, 220).round().astype(int)
 
         base_sdnn = 100 - (age - 18) * 0.5
-        sdnn = np.clip(base_sdnn + rng.uniform(-30, 30, size=n), 20, 200)
+        sdnn = np.clip(
+            base_sdnn
+            + rng.uniform(-30, 30, size=n)
+            - 0.10 * (hr.astype(float) - user_hr_rest[user_idx]),
+            20,
+            200,
+        )
         rmssd = np.clip(sdnn * 0.7 + rng.uniform(-10, 10, size=n), 10, 150)
         lf_hf = np.clip(1.0 + rng.uniform(-0.7, 1.0, size=n), 0.3, 3.0)
 
@@ -257,30 +371,61 @@ def write_sensor_hrv_parts(
     return rows_written
 
 
-def main() -> None:
-    args = parse_args()
-
+def generate_dataset(
+    size: str | None = None,
+    rows: int | None = None,
+    output_dir: Path | str = Path("data"),
+    seed: int = 42,
+    chunk_rows: int = 200_000,
+) -> dict:
+    """Generate wearable HRV demo dataset.
+    
+    Args:
+        size: Size preset - 'small' (1M rows) or 'large' (10M rows). Ignored if rows is set.
+        rows: Exact number of sensor rows to generate. Overrides size if provided.
+        output_dir: Directory for output Parquet files
+        seed: Random seed for reproducibility
+        chunk_rows: Rows per chunk when writing sensor parquet
+        
+    Returns:
+        dict: Generation metadata including file paths and sizes
+    """
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
     logger = logging.getLogger(__name__)
 
     faker = Faker()
-    faker.seed_instance(args.seed)
+    faker.seed_instance(seed)
 
     data_dict = load_data_dictionary()
-    size_config = data_dict["tables"]["sensor_hrv"]["row_count_target"]
-    target_sensor_rows = int(size_config[args.size])
+    
+    if rows is not None:
+        target_sensor_rows = rows
+        size_label = f"{rows:,} rows"
+    else:
+        if size is None:
+            size = "small"
+        size_config = data_dict["tables"]["sensor_hrv"]["row_count_target"]
+        target_sensor_rows = int(size_config[size])
+        size_label = size
 
-    num_users = 150 if args.size == "small" else 1000
+    # Scale users based on target rows
+    if target_sensor_rows >= 5_000_000:
+        num_users = 1000
+    elif target_sensor_rows >= 1_000_000:
+        num_users = 150
+    else:
+        num_users = max(50, int(target_sensor_rows / 10_000))
+    
     duration_days = 35
 
-    logger.info("Generating %s dataset:", args.size)
+    logger.info("Generating %s dataset:", size_label)
     logger.info("  - Users: %d", num_users)
     logger.info("  - Duration: %d days", duration_days)
     logger.info("  - Target sensor rows: %s", f"{target_sensor_rows:,}")
 
-    output_dir: Path = args.output_dir
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     start_date = datetime(2024, 1, 1)
@@ -298,8 +443,8 @@ def main() -> None:
         duration_days=duration_days,
         target_rows=target_sensor_rows,
         out_dir=sensor_dir,
-        seed=args.seed,
-        chunk_rows=args.chunk_rows,
+        seed=seed,
+        chunk_rows=chunk_rows,
         logger=logger,
     )
 
@@ -330,8 +475,8 @@ def main() -> None:
 
     metadata = {
         "generation_timestamp": datetime.now().isoformat(),
-        "size": args.size,
-        "seed": args.seed,
+        "size": size_label,
+        "seed": seed,
         "target_sensor_rows": target_sensor_rows,
         "actual_sensor_rows": sensor_rows,
         "num_users": num_users,
@@ -353,6 +498,19 @@ def main() -> None:
         yaml.dump(metadata, f, default_flow_style=False)
 
     logger.info("Metadata written to: %s", metadata_path)
+    
+    return metadata
+
+
+def main() -> None:
+    args = parse_args()
+    generate_dataset(
+        size=args.size,
+        rows=args.rows,
+        output_dir=args.output_dir,
+        seed=args.seed,
+        chunk_rows=args.chunk_rows,
+    )
 
 
 if __name__ == "__main__":

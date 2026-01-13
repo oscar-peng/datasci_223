@@ -9,7 +9,7 @@ tables:
     description: 5-minute aggregated sensor and HRV measurements
     row_count_target:
       small: 1_000_000
-      large: 10_000_000
+      large: 100_000_000
     columns:
       device_id:
         type: string

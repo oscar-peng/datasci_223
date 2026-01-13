@@ -59,7 +59,7 @@ sensor = pl.scan_parquet(cfg["inputs"]["sensor_parquet"])
 sleep = pl.scan_parquet(cfg["inputs"]["sleep_parquet"])
 users = pl.scan_parquet(cfg["inputs"]["users_parquet"])
 
-sensor.schema
+sensor.collect_schema()
 ```
 
 ## 3) Transform phase (keys → aggregate → joins)

@@ -14,18 +14,18 @@ We’ll create `data/` and `outputs/`, then generate the synthetic dataset if it
 
 ```python
 from pathlib import Path
-import subprocess
-import sys
+import polars as pl
+import pandas as pd
+import altair as alt
+import time
+from generate_demo_data import generate_dataset
 
 Path("data").mkdir(parents=True, exist_ok=True)
 Path("outputs").mkdir(parents=True, exist_ok=True)
 
 sensor_dir = Path("data/sensor_hrv")
 if not sensor_dir.exists() or not list(sensor_dir.glob("*.parquet")):
-    subprocess.run(
-        [sys.executable, "generate_demo_data.py", "--size", "small", "--output-dir", "data"],
-        check=True,
-    )
+    generate_dataset(rows=1_000_000, output_dir="data")
 ```
 
 You should now have:
@@ -60,10 +60,8 @@ if missing_files or not sensor_parts:
 ### 1) Scan the big table lazily
 
 ```python
-import polars as pl
-
 sensor = pl.scan_parquet("data/sensor_hrv/*.parquet")
-print(sensor.schema)
+print(sensor.collect_schema())
 ```
 
 Key point: `scan_parquet` builds a query plan; it does not load the full table.
@@ -73,8 +71,6 @@ We’ll start with a quick schema preview and then immediately move into a lazy 
 ### 2) Filter + project early (predicate/projection pushdown)
 
 ```python
-import polars as pl
-
 query = (
     pl.scan_parquet("data/sensor_hrv/*.parquet")
     .filter(pl.col("missingness_score") <= 0.35)
@@ -94,9 +90,6 @@ print(query.explain())
 ### 3) Aggregate to a daily summary and stream the collect
 
 ```python
-import polars as pl
-from pathlib import Path
-
 daily = (
     query
     .group_by(["device_id", "date"])
@@ -126,7 +119,6 @@ result.head()
 A quick inline plot makes the aggregation feel real. We’ll look at one device’s daily `mean_hr`.
 
 ```python
-import altair as alt
 
 one = (
     result
@@ -154,9 +146,6 @@ We’ll time a *real action* (filter + groupby) on the same dataset.
 ### 4a) Polars timing (Parquet scan → streaming aggregate)
 
 ```python
-import time
-import polars as pl
-
 polars_t0 = time.perf_counter()
 polars_out = daily.collect(engine="streaming")
 polars_t1 = time.perf_counter()
@@ -176,9 +165,6 @@ This shows what pandas can do today when it uses `pyarrow` for Parquet I/O:
 …but once the filtered data is in a pandas `DataFrame`, the groupby is still an in-memory operation.
 
 ```python
-import time
-import pandas as pd
-
 pd_t0 = time.perf_counter()
 
 # Note: pandas delegates Parquet reading to pyarrow.
@@ -218,21 +204,25 @@ print(f"pandas input memory: {pandas_mem_mb:.2f} MB")
 ## Visual: timing comparison
 
 ```python
-import altair as alt
-import pandas as pd
-
-bench = pd.DataFrame(
+bench = pl.DataFrame(
     {
         "engine": ["polars (streaming)", "pandas (pyarrow + in-mem groupby)"],
         "seconds": [polars_seconds, pandas_seconds],
-        "pandas_input_mem_mb": [None, pandas_mem_mb],
+        "memory_mb": [polars_out.estimated_size('mb'), pandas_mem_mb],
     }
 )
 
-alt.Chart(bench).mark_bar().encode(
+time_chart = alt.Chart(bench).mark_bar().encode(
     x=alt.X("engine:N", title=None),
-    y=alt.Y("seconds:Q", title="Seconds"),
-).properties(width=650, height=250)
+    y=alt.Y("seconds:Q", title="Time (seconds)"),
+).properties(width=320, height=250, title="Execution Time")
+
+mem_chart = alt.Chart(bench).mark_bar().encode(
+    x=alt.X("engine:N", title=None),
+    y=alt.Y("memory_mb:Q", title="Memory (MB)"),
+).properties(width=320, height=250, title="Memory Usage")
+
+time_chart | mem_chart
 ```
 
 ## Checkpoints

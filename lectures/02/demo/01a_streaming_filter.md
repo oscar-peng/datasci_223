@@ -10,11 +10,22 @@ This demo is intentionally boring-data-science: scan → filter → select → g
 
 ## Data setup
 
-From `lectures/02/demo/`:
+We’ll create `data/` and `outputs/`, then generate the synthetic dataset if it’s missing.
 
-```bash
-mkdir -p data outputs
-uv run python generate_demo_data.py --size small --output-dir data
+```python
+from pathlib import Path
+import subprocess
+import sys
+
+Path("data").mkdir(parents=True, exist_ok=True)
+Path("outputs").mkdir(parents=True, exist_ok=True)
+
+sensor_dir = Path("data/sensor_hrv")
+if not sensor_dir.exists() or not list(sensor_dir.glob("*.parquet")):
+    subprocess.run(
+        [sys.executable, "generate_demo_data.py", "--size", "small", "--output-dir", "data"],
+        check=True,
+    )
 ```
 
 You should now have:
@@ -56,6 +67,8 @@ print(sensor.schema)
 ```
 
 Key point: `scan_parquet` builds a query plan; it does not load the full table.
+
+We’ll start with a quick schema preview and then immediately move into a lazy filter + aggregation so we can keep memory bounded.
 
 ### 2) Filter + project early (predicate/projection pushdown)
 
@@ -99,7 +112,7 @@ daily = (
 result = daily.collect(engine="streaming")
 Path("outputs").mkdir(parents=True, exist_ok=True)
 result.write_parquet("outputs/daily_device_summary.parquet")
-print(result.head())
+result.head()
 ```
 
 ## Checkpoints
@@ -108,6 +121,25 @@ print(result.head())
 - `result.height > 0`
 - `num_segments` looks like "a day of 5-min windows" (usually a couple hundred)
 
+## Visual: a single device over time
+
+A quick inline plot makes the aggregation feel real. We’ll look at one device’s daily `mean_hr`.
+
+```python
+import altair as alt
+
+one = (
+    result
+    .filter(result["device_id"] == result["device_id"][0])
+    .select(["date", "mean_hr"])
+)
+
+alt.Chart(one.to_pandas()).mark_line().encode(
+    x="date:T",
+    y=alt.Y("mean_hr:Q", title="Daily mean HR"),
+).properties(width=700, height=250)
+```
+
 ## 4) Polars vs pandas (same task)
 
 We’ll compute the *same* daily summary in two ways:
@@ -115,7 +147,9 @@ We’ll compute the *same* daily summary in two ways:
 - **Polars**: scan Parquet parts lazily, then `collect(engine="streaming")`
 - **pandas**: read Parquet via `pyarrow` (with pushdown) and groupby in memory
 
-This isn’t to “dunk on pandas” — it’s to show what changes when you move from eager, row-wise CSV workflows to columnar scans + query planning.
+This isn’t to “dunk on pandas” — it’s to show what changes when you move from eager, row-wise workflows to columnar scans + query planning.
+
+We’ll time a *real action* (filter + groupby) on the same dataset.
 
 ### 4a) Polars timing (Parquet scan → streaming aggregate)
 
@@ -127,7 +161,8 @@ polars_t0 = time.perf_counter()
 polars_out = daily.collect(engine="streaming")
 polars_t1 = time.perf_counter()
 
-print(f"polars: {polars_out.height:,} rows in {polars_t1 - polars_t0:.2f}s")
+polars_seconds = polars_t1 - polars_t0
+print(f"polars: {polars_out.height:,} rows in {polars_seconds:.2f}s")
 print(f"polars result size (estimated): {polars_out.estimated_size('mb'):.2f} MB")
 ```
 
@@ -174,12 +209,34 @@ pd_out = (
 
 pd_t1 = time.perf_counter()
 
-print(f"pandas: {len(pd_out):,} rows in {pd_t1 - pd_t0:.2f}s")
-print(f"pandas input memory: {df.memory_usage(deep=True).sum() / (1024**2):.2f} MB")
+pandas_seconds = pd_t1 - pd_t0
+pandas_mem_mb = df.memory_usage(deep=True).sum() / (1024**2)
+print(f"pandas: {len(pd_out):,} rows in {pandas_seconds:.2f}s")
+print(f"pandas input memory: {pandas_mem_mb:.2f} MB")
+```
+
+## Visual: timing comparison
+
+```python
+import altair as alt
+import pandas as pd
+
+bench = pd.DataFrame(
+    {
+        "engine": ["polars (streaming)", "pandas (pyarrow + in-mem groupby)"],
+        "seconds": [polars_seconds, pandas_seconds],
+        "pandas_input_mem_mb": [None, pandas_mem_mb],
+    }
+)
+
+alt.Chart(bench).mark_bar().encode(
+    x=alt.X("engine:N", title=None),
+    y=alt.Y("seconds:Q", title="Seconds"),
+).properties(width=650, height=250)
 ```
 
 ## Checkpoints
 
-- You can explain why Polars reads Parquet parts efficiently (`scan_parquet` + pushdown)
-- You can explain why pandas-on-CSV is inherently eager (must materialize rows)
-- The two outputs agree on shape/columns (minor float differences are fine)
+- Polars and pandas produce the same number of output rows.
+- You can explain why Polars stays lazy until `.collect(...)`.
+- You can explain why pandas must materialize a DataFrame before groupby (even if Parquet pushdown reduces the amount it reads).

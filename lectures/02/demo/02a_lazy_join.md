@@ -7,13 +7,26 @@ Data relationships:
 - `user_profile.user_id` joins to `sleep_diary.user_id`
 - `sensor_hrv.device_id` encodes the user id suffix (e.g., `DEV-00012` → `USER-00012`)
 
+We’ll build a nightly physiology table first (aggregate the large table), then join to the smaller tables. This keeps the join grain under control.
+
 ## Data setup
 
-From `lectures/02/demo/`:
+We’ll create `data/` and `outputs/`, then generate the synthetic dataset if it’s missing.
 
-```bash
-mkdir -p data outputs
-uv run python generate_demo_data.py --size small --output-dir data
+```python
+from pathlib import Path
+import subprocess
+import sys
+
+Path("data").mkdir(parents=True, exist_ok=True)
+Path("outputs").mkdir(parents=True, exist_ok=True)
+
+sensor_dir = Path("data/sensor_hrv")
+if not sensor_dir.exists() or not list(sensor_dir.glob("*.parquet")):
+    subprocess.run(
+        [sys.executable, "generate_demo_data.py", "--size", "small", "--output-dir", "data"],
+        check=True,
+    )
 ```
 
 ## Steps
@@ -47,6 +60,10 @@ import polars as pl
 users = pl.scan_parquet("data/user_profile.parquet")
 sleep = pl.scan_parquet("data/sleep_diary.parquet")
 sensor = pl.scan_parquet("data/sensor_hrv/*.parquet")
+
+# Small previews (these stay lazy until collected)
+users.head().collect()
+sleep.head().collect()
 ```
 
 ### 2) Normalize keys (derive `user_id` from `device_id`)
@@ -107,11 +124,36 @@ summary = (
 print(summary.explain())
 out = summary.collect(engine="streaming")
 out.write_parquet("outputs/sleep_hrv_by_group.parquet")
-print(out)
+out
+
+# A small inline table helps in the notebook
+out.head(10)
+```
+
+## Visual: sleep efficiency vs nightly HRV (sample)
+
+We’ll plot a sample of joined nights to see the shape of the relationship.
+
+```python
+import altair as alt
+
+sample = joined.select([
+    "sleep_efficiency",
+    "night_mean_sdnn",
+    "occupation",
+    "gender",
+]).collect(engine="streaming").sample(n=2000, shuffle=True)
+
+alt.Chart(sample.to_pandas()).mark_circle(opacity=0.25).encode(
+    x=alt.X("sleep_efficiency:Q", title="Sleep efficiency"),
+    y=alt.Y("night_mean_sdnn:Q", title="Night mean SDNN"),
+    color="gender:N",
+    tooltip=["occupation", "gender"],
+).properties(width=650, height=300)
 ```
 
 ## Checkpoints
 
 - `outputs/sleep_hrv_by_group.parquet` exists
 - `summary.explain()` shows projection/predicate pushdown before joins
-- You can explain *why* we derived `user_id` from `device_id`
+- Deriving `user_id` from `device_id` makes the join possible

@@ -142,6 +142,33 @@ print(sensor.collect_schema())
 print(vitals.collect_schema())
 ```
 
+## `pl.DataFrame()`
+
+Use `pl.DataFrame()` to build small in-memory tables for benchmarks, checks, or plotting.
+
+### Reference Card: `pl.DataFrame`
+
+- **Function:** `pl.DataFrame(...)`
+- **Purpose:** Create a Polars `DataFrame` from Python data
+- **Key Parameters:**
+    - `data`: dict of columns or list of rows
+    - `schema`: optional column names/types
+- **Returns:** `DataFrame`
+
+### Code Snippet: Small benchmark table
+
+```python
+import polars as pl
+
+bench = pl.DataFrame(
+    {
+        "engine": ["polars (streaming)", "pandas (pyarrow + in-mem groupby)"],
+        "seconds": [19.7, 318.0],
+        "memory_mb": [0.82, 52051.3],
+    }
+)
+```
+
 ## `select()` and `filter()`
 
 `select()` chooses columns (or expressions); `filter()` keeps rows that match a boolean expression. Use both early for pushdown.
@@ -401,7 +428,7 @@ check.describe()
 
 Sometimes the fastest path to compatibility is converting to pandas for plotting or library support.
 
-> "~AK-47~ pandas. ~The very best there is.~ When you absolutely, positively got to ~kill every motherfucker in the room~ be compatible with everything, accept no substitutes." - *Jackie Brown*
+> "~~AK-47~~ pandas. ~~The very best there is.~~ When you absolutely, positively got to ~~kill every motherfucker in the room~~ be compatible with everything, accept no substitutes." - *Jackie Brown*
 
 ### Reference Card: `to_pandas`
 

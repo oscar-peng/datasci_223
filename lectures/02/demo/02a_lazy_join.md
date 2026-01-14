@@ -60,15 +60,15 @@ if missing_files or not sensor_parts:
 ```python
 users = pl.scan_parquet("data/user_profile.parquet")
 sleep = pl.scan_parquet("data/sleep_diary.parquet")
-sensor = pl.scan_parquet("data/sensor_hrv/*.parquet")
+sensor_raw = pl.scan_parquet("data/sensor_hrv/*.parquet")
 
 # These are LazyFrame objects—no data loaded yet
 print(f"users type: {type(users)}")
-print(f"sensor type: {type(sensor)}")
+print(f"sensor type: {type(sensor_raw)}")
 
 # Schema preview without triggering expensive resolution
 print("\nSensor schema:")
-print(sensor.collect_schema())
+print(sensor_raw.collect_schema())
 ```
 
 **Optional performance tip: providing schema for CSV scans**
@@ -85,6 +85,35 @@ For Parquet files, schema is embedded (no need to specify). For CSV files, provi
 #     # ... etc
 # }
 # sensor_csv = pl.scan_csv("data/sensor_hrv/*.csv", schema=schema)
+```
+
+### 1b) SQL vs Polars expressions (equivalent prefilter)
+
+Same idea, two syntaxes. Both produce the same lazy result.
+
+```python
+sensor_expr = (
+    sensor_raw
+    .filter(pl.col("missingness_score") <= 0.35)
+    .select(["device_id", "ts_start", "hrv_sdnn", "hrv_rmssd", "heart_rate", "steps"])
+)
+
+ctx = pl.SQLContext()
+ctx.register("sensor_raw", sensor_raw)
+
+sensor_sql = ctx.execute(
+    """
+    SELECT device_id, ts_start, hrv_sdnn, hrv_rmssd, heart_rate, steps
+    FROM sensor_raw
+    WHERE missingness_score <= 0.35
+    """
+)
+
+print(sensor_expr.explain())
+print(sensor_sql.explain())
+
+# Use either version; both are lazy and equivalent.
+sensor = sensor_sql
 ```
 
 ### 2) Build a lazy query (no execution until `.collect()`)
@@ -104,7 +133,6 @@ sensor_keyed = sensor.with_columns(
 # Filter nighttime windows (10pm - 6am) and good-quality data
 night_segments = (
     sensor_keyed
-    .filter(pl.col("missingness_score") <= 0.35)
     .filter(
         pl.col("ts_start").dt.hour().is_between(22, 23) |
         pl.col("ts_start").dt.hour().is_between(0, 6)

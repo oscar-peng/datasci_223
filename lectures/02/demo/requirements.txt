@@ -4,3 +4,4 @@ polars
 faker
 altair
 pyarrow
+numpy

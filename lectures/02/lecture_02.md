@@ -99,8 +99,6 @@ SIMD works best when values are contiguous in memory, which columnar layouts ena
 
 pandas is ubiquitous and a great default; Polars is often adopted case-by-case when you hit real constraints (runtime, memory, I/O).
 
-![Data pipeline](media/xkcd_data_pipeline.png)
-
 Polars is pandas without the hidden index and with a Rust engine under the hood. Two mindshifts:
 
 - **Everything is explicit columns**—no surprise index alignment.
@@ -208,6 +206,23 @@ vitals = (
 )
 ```
 
+### Data model for health-data workflows
+
+Many health-data pipelines involve multiple sources, repeated measurements, and joins that can accidentally multiply rows. *Grain* = the unit of observation in a table.
+
+| Table | Grain | Join key(s) | Typical use |
+| ----- | ----- | ----------- | ----------- |
+| `user_profile` | 1 row per `user_id` | `user_id` | Demographics / grouping |
+| `sleep_diary` | 1 row per `user_id` per day | `user_id`, `date` | Nightly outcomes |
+| `sensor_hrv` | many rows per device in 5-min windows | derive `user_id` from `device_id`; also `date` from `ts_start` | High-volume physiology |
+| `encounters` | many rows per `patient_id` | `patient_id` | Events/visits to count/stratify |
+| `vitals` | many rows per `patient_id` | `patient_id` (+ time filter) | Measurements to summarize |
+
+Two practical rules:
+
+- Know the *grain* before you join (one-to-many joins are normal; many-to-many joins often explode row counts).
+- Decide early whether you want “per-patient”, “per-encounter”, or “per-month” outputs, and aggregate to that grain before expensive joins.
+
 ## `group_by` + `agg` + `join`
 
 Aggregations and joins are the core of most tabular pipelines. Keep joins at the right grain, then summarize.
@@ -311,23 +326,6 @@ print(f"{csv_mb:.1f} MB → {parquet_mb:.1f} MB ({csv_mb / parquet_mb:.2f}x smal
 
 Use `LazyFrame.collect_schema()` (not `lazyframe.schema`) to confirm dtypes, and partition long histories by `year` or `facility` so streaming scans stay sub-gigabyte.
 
-### Data model for health-data workflows
-
-Many health-data pipelines involve multiple sources, repeated measurements, and joins that can accidentally multiply rows. *Grain* = the unit of observation in a table.
-
-| Table | Grain | Join key(s) | Typical use |
-| ----- | ----- | ----------- | ----------- |
-| `user_profile` | 1 row per `user_id` | `user_id` | Demographics / grouping |
-| `sleep_diary` | 1 row per `user_id` per day | `user_id`, `date` | Nightly outcomes |
-| `sensor_hrv` | many rows per device in 5-min windows | derive `user_id` from `device_id`; also `date` from `ts_start` | High-volume physiology |
-| `encounters` | many rows per `patient_id` | `patient_id` | Events/visits to count/stratify |
-| `vitals` | many rows per `patient_id` | `patient_id` (+ time filter) | Measurements to summarize |
-
-Two practical rules:
-
-- Know the *grain* before you join (one-to-many joins are normal; many-to-many joins often explode row counts).
-- Decide early whether you want “per-patient”, “per-encounter”, or “per-month” outputs, and aggregate to that grain before expensive joins.
-
 ### Advanced aside: Parquet layout (why it affects speed)
 
 - Parquet stores data in **row groups**; each row group contains per-column chunks plus min/max stats that enable predicate pushdown.
@@ -341,6 +339,8 @@ Two practical rules:
 See [`demo/01a_streaming_filter.md`](./demo/01a_streaming_filter.md) for the Polars basics walkthrough.
 
 # Lazy Execution & Streaming Patterns
+
+![Data pipeline](media/xkcd_data_pipeline.png)
 
 ![Lazy query plan sketch](media/lazy_plan.png)
 
@@ -395,6 +395,32 @@ query.sink_parquet("outputs/summary_sink.parquet")
 
 check = pl.read_parquet("outputs/summary.parquet")
 check.describe()
+```
+
+## `to_pandas()`
+
+Sometimes the fastest path to compatibility is converting to pandas for plotting or library support.
+
+> "~AK-47~ pandas. ~The very best there is.~ When you absolutely, positively got to ~kill every motherfucker in the room~ be compatible with everything, accept no substitutes." - *Jackie Brown*
+
+### Reference Card: `to_pandas`
+
+- **Method:** `.to_pandas()`
+- **Purpose:** Convert a Polars `DataFrame` to pandas for compatibility
+- **Note:** Use after filtering/aggregating to keep the pandas DataFrame small
+
+### Code Snippet: Convert for plotting
+
+```python
+import altair as alt
+
+df = query.collect(engine="streaming")
+plot_df = df.to_pandas()
+
+alt.Chart(plot_df).mark_line().encode(
+    x="timestamp:T",
+    y="avg_hr:Q",
+).properties(width=600, height=250)
 ```
 
 ## SQL with `SQLContext`
@@ -502,19 +528,31 @@ See [`demo/02a_lazy_join.md`](./demo/02a_lazy_join.md) for the lazy-plan deep di
 
 # Building a Polars Pipeline
 
+Good pipelines make the flow obvious: inputs -> transforms -> outputs. The visuals below map to that flow.
+
+## Pipeline anatomy: inputs -> transforms -> outputs
+
+![Pipeline anatomy](media/pipeline_anatomy.svg)
+
+- Inputs + config define what to scan and how to filter.
+- Transforms are lazy expressions that stay pushdown-friendly.
+- Outputs + logs make results reproducible.
+
+## Memory profile: streaming vs eager
+
 ![Streaming keeps memory bounded](media/memory_plateau.svg)
 
 *Streaming stays bounded; eager loads can spike past RAM.*
 
-![Pipeline anatomy](media/pipeline_anatomy.svg)
+## Monitor early runs
 
 ![Resource monitoring dashboard](media/resource_monitor.png)
 
-*Optional: a real monitor helps confirm the memory curve above.*
+*Optional: a real monitor helps confirm the memory curve above and catch runaway steps.*
 
 ![Workflow empathy](media/xkcd_workflow.png)
 
-![Datacenter scale](media/xkcd_datacenter.png)
+Pipelines are as much about reproducibility and debugging as raw speed.
 
 Put the pieces together: start lazy, keep everything parameterized, and stream the final collect.
 
@@ -532,6 +570,10 @@ Put the pieces together: start lazy, keep everything parameterized, and stream t
 - **Three phases**: load (scan + cast) → transform (joins + groupby) → write artifacts.
 - **Artifacts**: always write both Parquet (for downstream pipelines) and CSV (for quick inspection).
 - **Sanity checks**: row counts, schema, and “does the output look plausible?” before you ship results.
+
+![Datacenter scale](media/xkcd_datacenter.png)
+
+The same flow scales up; the orchestration just gets bigger.
 
 ### Reference Card: Pipeline ergonomics
 

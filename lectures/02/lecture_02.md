@@ -106,15 +106,15 @@ Polars is pandas without the hidden index and with a Rust engine under the hood.
 
 ### Reference Card: pandas → Polars translation
 
-| You know this in pandas         | Do this in Polars                                          |
-| ------------------------------- | ---------------------------------------------------------- |
-| `pd.read_csv("file.csv")`       | `pl.read_csv("file.csv")` _(eager preview)_                |
-| _(no equivalent)_ lazy scan     | `pl.scan_csv("file.csv")` _(build plan, nothing runs yet)_ |
-| `df[df.age > 65]`               | `.filter(pl.col("age") > 65)`                              |
-| `df.assign(bmi=...)`            | `.with_columns(pl.col("weight") / pl.col("height")**2)`    |
-| `df.groupby("cohort").agg(...)` | `.group_by("cohort").agg([...])`                           |
-| `df.merge(dim, on="id")`        | `.join(dim, on="id")`                                      |
-| _(n/a)_                         | `.collect(engine="streaming")`                             |
+| To do this              | You know this in pandas         | Do this in Polars                                          |
+| ----------------------- | ------------------------------- | ---------------------------------------------------------- |
+| Load a CSV              | `pd.read_csv("file.csv")`       | `pl.read_csv("file.csv")` _(eager preview)_                |
+| Lazy scan (build plan)  | _(no equivalent)_               | `pl.scan_csv("file.csv")` _(build plan, nothing runs yet)_ |
+| Filter rows             | `df[df.age > 65]`               | `.filter(pl.col("age") > 65)`                              |
+| Add/transform columns   | `df.assign(bmi=...)`            | `.with_columns(pl.col("weight") / pl.col("height")**2)`    |
+| Aggregate by group      | `df.groupby("cohort").agg(...)` | `.group_by("cohort").agg([...])`                           |
+| Join tables             | `df.merge(dim, on="id")`        | `.join(dim, on="id")`                                      |
+| Stream-collect results  | _(n/a)_                         | `.collect(engine="streaming")`                             |
 
 ## `scan_csv` and `scan_parquet`
 
@@ -141,6 +141,16 @@ vitals = pl.scan_csv("data/vitals/*.csv", try_parse_dates=True)
 print(sensor.collect_schema())
 print(vitals.collect_schema())
 ```
+
+### Reference Card: `collect_schema()`
+
+- **Method:** `LazyFrame.collect_schema()`
+- **Purpose:** Retrieve column names and data types without executing the full query
+- **Returns:** `Schema` (dict-like mapping of column names → dtypes)
+- **Why use it:**
+    - Avoids the "resolving schema is expensive" warning you get from `.schema` on a `LazyFrame`
+    - Fast introspection—validates your pipeline before collecting
+    - Confirms dtypes after casts or transforms
 
 ## `pl.DataFrame()`
 
@@ -287,22 +297,6 @@ summary = (
 )
 ```
 
-## `LazyFrame` methods
-
-Most of this lecture uses a `LazyFrame` pipeline (`pl.scan_* → ... → collect/sink`). If you learn these methods, you can read almost every Polars example we write this quarter.
-
-| Goal                              | Method                          | Notes                                                                         |
-| --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------- |
-| Inspect columns + dtypes          | `.collect_schema()`             | Preferred for `LazyFrame`; avoids the “resolving schema is expensive” warning |
-| See the query plan                | `.explain()`                    | Helps you spot joins/sorts and confirm pushdown                               |
-| Keep only columns you need        | `.select([...])`                | Enables projection pushdown                                                   |
-| Filter rows early                 | `.filter(...)`                  | Enables predicate pushdown                                                    |
-| Create/transform columns          | `.with_columns(...)`            | Use expressions (`pl.col(...)`, `pl.when(...)`) instead of Python loops       |
-| Aggregate to a target grain       | `.group_by(...).agg([...])`     | Often do this _before_ joining large tables                                   |
-| Combine tables                    | `.join(other, on=..., how=...)` | Know the grain to avoid many-to-many explosions                               |
-| Collect results                   | `.collect(engine="streaming")`  | Streaming helps when the plan supports it                                     |
-| Write without loading into Python | `.sink_parquet("...")`          | Writes directly to disk from the lazy pipeline                                |
-
 ### Code Snippet: pandas vs Polars
 
 ```python
@@ -367,7 +361,21 @@ See [`demo/01a_streaming_filter.md`](./demo/01a_streaming_filter.md) for the Pol
 
 # Lazy Execution & Streaming Patterns
 
-![Data pipeline](media/xkcd_data_pipeline.png)
+## `LazyFrame` methods
+
+Most of this lecture uses a `LazyFrame` pipeline (`pl.scan_* → ... → collect/sink`). If you learn these methods, you can read almost every Polars example we write this quarter.
+
+| Goal                              | Method                          | Notes                                                                         |
+| --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------- |
+| Inspect columns + dtypes          | `.collect_schema()`             | Preferred for `LazyFrame`; avoids the "resolving schema is expensive" warning |
+| See the query plan                | `.explain()`                    | Helps you spot joins/sorts and confirm pushdown                               |
+| Keep only columns you need        | `.select([...])`                | Enables projection pushdown                                                   |
+| Filter rows early                 | `.filter(...)`                  | Enables predicate pushdown                                                    |
+| Create/transform columns          | `.with_columns(...)`            | Use expressions (`pl.col(...)`, `pl.when(...)`) instead of Python loops       |
+| Aggregate to a target grain       | `.group_by(...).agg([...])`     | Often do this _before_ joining large tables                                   |
+| Combine tables                    | `.join(other, on=..., how=...)` | Know the grain to avoid many-to-many explosions                               |
+| Collect results                   | `.collect(engine="streaming")`  | Streaming helps when the plan supports it                                     |
+| Write without loading into Python | `.sink_parquet("...")`          | Writes directly to disk from the lazy pipeline                                |
 
 ![Lazy query plan sketch](media/lazy_plan.png)
 
@@ -484,9 +492,10 @@ result = query.collect(engine="streaming")
 result.describe()
 ```
 
-## `sort()` and `sample()` (watch streaming)
+## `sort()` and `sample()`
 
-Sorting can force a full in-memory load. Sampling is cheap after collection and helps with quick visuals.
+> [!warning]
+> Sorting can force a full in-memory load. Sampling is cheap after collection and helps with quick visuals.
 
 ### Reference Card: Ordering + quick checks
 
@@ -502,7 +511,7 @@ sample = df.sample(n=2000, shuffle=True).sort("timestamp")
 print(sample.estimated_size("mb"))
 ```
 
-### Streaming limits (when streaming won’t help)
+## Streaming limits (when streaming won't help)
 
 Streaming is powerful, but not magic. Some operations force large shuffles or require global state.
 
@@ -555,15 +564,44 @@ See [`demo/02a_lazy_join.md`](./demo/02a_lazy_join.md) for the lazy-plan deep di
 
 # Building a Polars Pipeline
 
+![Data pipeline](media/xkcd_data_pipeline.png)
+
 Good pipelines make the flow obvious: inputs -> transforms -> outputs. The visuals below map to that flow.
 
 ## Pipeline anatomy: inputs -> transforms -> outputs
 
-![Pipeline anatomy](media/pipeline_anatomy.svg)
+```mermaid
+flowchart LR
+    subgraph inputs["Inputs"]
+        config["config.yaml<br/>paths, filters, params"]
+        sources["Raw Files<br/>CSV / Parquet / glob"]
+    end
 
-- Inputs + config define what to scan and how to filter.
-- Transforms are lazy expressions that stay pushdown-friendly.
-- Outputs + logs make results reproducible.
+    subgraph transforms["Transforms (Lazy)"]
+        scan["scan_*()<br/>build LazyFrame"]
+        filter["filter()<br/>predicate pushdown"]
+        select["select()<br/>projection pushdown"]
+        join["join()<br/>combine tables"]
+        agg["group_by().agg()<br/>aggregate"]
+    end
+
+    subgraph outputs["Outputs"]
+        parquet["Parquet<br/>downstream pipelines"]
+        csv["CSV<br/>quick inspection"]
+        logs["Logs<br/>row counts, timing"]
+    end
+
+    config --> scan
+    sources --> scan
+    scan --> filter --> select --> join --> agg
+    agg --> parquet
+    agg --> csv
+    agg --> logs
+```
+
+- **Inputs + config**: define what to scan, which columns to keep, and filter criteria.
+- **Transforms**: lazy expressions that stay pushdown-friendly—nothing executes until collect.
+- **Outputs + logs**: always emit both Parquet (for downstream) and CSV (for quick checks), plus row counts and timing for reproducibility.
 
 ## Memory profile: streaming vs eager
 
@@ -583,20 +621,109 @@ Pipelines are as much about reproducibility and debugging as raw speed.
 
 Put the pieces together: start lazy, keep everything parameterized, and stream the final collect.
 
-### Checklist: from pandas crash to Polars pipeline
+## Checklist: from pandas crash to Polars pipeline
 
-- **Define inputs & outputs** in a config (`config/pipeline.yaml`) instead of hardcoding paths.
-- **Scan sources lazily** (`pl.scan_parquet`) and push filters (`pl.col("timestamp") >= ...`).
-- **Join dimensions** only after pruning columns so keys stay small.
-- **Collect with streaming** or `.sink_parquet()` to avoid loading giant tables into memory.
-- **Emit artifacts + logs** (row counts, durations) for reproducibility.
+- [ ] **Define inputs & outputs** in a config (`config/pipeline.yaml`) instead of hardcoding paths.
+- [ ] **Scan sources lazily** (`pl.scan_parquet`) and push filters (`pl.col("timestamp") >= ...`).
+- [ ] **Join dimensions** only after pruning columns so keys stay small.
+- [ ] **Collect with streaming** or `.sink_parquet()` to avoid loading giant tables into memory.
+- [ ] **Emit artifacts + logs** (row counts, durations) for reproducibility.
 
-### Methodology: config-driven pipeline
+## Methodology: config-driven pipeline
 
 - **Config-driven**: all file globs, filters, and output paths live in YAML.
 - **Three phases**: load (scan + cast) → transform (joins + groupby) → write artifacts.
 - **Artifacts**: always write both Parquet (for downstream pipelines) and CSV (for quick inspection).
-- **Sanity checks**: row counts, schema, and “does the output look plausible?” before you ship results.
+- **Sanity checks**: row counts, schema, and "does the output look plausible?" before you ship results.
+
+### Code Snippet: yaml-driven pipeline
+
+```yaml
+# config/vitals_pipeline.yaml
+name: Vitals Summary Pipeline
+description: Aggregate patient vitals by facility and month
+
+inputs:
+  vitals:
+    path: "data/vitals/*.parquet"
+    columns: ["patient_id", "facility", "timestamp", "heart_rate", "bmi"]
+  encounters:
+    path: "data/encounters/*.parquet"
+    columns: ["patient_id", "facility", "encounter_date"]
+
+filters:
+  facilities: ["UCSF", "ZSFG"]
+  date_range:
+    start: "2024-01-01"
+    end: null  # no upper bound
+
+transforms:
+  - id: join_encounters
+    type: join
+    left: vitals
+    right: encounters
+    on: ["patient_id"]
+    how: inner
+  - id: aggregate
+    type: group_by
+    keys: ["facility", "year", "month"]
+    aggregations:
+      - column: heart_rate
+        function: mean
+        alias: avg_hr
+      - column: bmi
+        function: mean
+        alias: avg_bmi
+      - column: patient_id
+        function: count
+        alias: num_patients
+
+outputs:
+  parquet: "outputs/vitals_summary.parquet"
+  csv: "outputs/vitals_summary.csv"
+  log: "outputs/vitals_summary.log"
+
+settings:
+  engine: streaming
+  compression: zstd
+```
+
+```python
+# pipeline.py - loads config and executes
+import yaml
+import polars as pl
+from pathlib import Path
+
+def run_pipeline(config_path: str):
+    config = yaml.safe_load(Path(config_path).read_text())
+
+    # Load inputs as lazy frames
+    vitals = pl.scan_parquet(config["inputs"]["vitals"]["path"])
+    encounters = pl.scan_parquet(config["inputs"]["encounters"]["path"])
+
+    # Apply filters from config
+    facilities = config["filters"]["facilities"]
+    start_date = config["filters"]["date_range"]["start"]
+
+    query = (
+        vitals
+        .filter(pl.col("facility").is_in(facilities))
+        .filter(pl.col("timestamp") >= pl.datetime.fromisoformat(start_date))
+        .join(encounters, on="patient_id", how="inner")
+        .group_by(["facility", pl.col("timestamp").dt.year().alias("year"),
+                   pl.col("timestamp").dt.month().alias("month")])
+        .agg([
+            pl.mean("heart_rate").alias("avg_hr"),
+            pl.mean("bmi").alias("avg_bmi"),
+            pl.len().alias("num_patients"),
+        ])
+    )
+
+    result = query.collect(engine=config["settings"]["engine"])
+    result.write_parquet(config["outputs"]["parquet"])
+    result.write_csv(config["outputs"]["csv"])
+    return result
+```
 
 ![Datacenter scale](media/xkcd_datacenter.png)
 

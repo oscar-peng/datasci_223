@@ -1,0 +1,20 @@
+# Assignment 02 Dependencies
+# All packages needed for assignment and tests
+
+# Core data processing
+polars>=1.0.0
+numpy>=1.24.0
+pyyaml>=6.0
+
+# Testing
+pytest>=7.4.0
+
+# Notebook support
+jupyter>=1.0.0
+jupytext>=1.15.0
+
+# Data generation (for generate_test_data.py - optional for students)
+faker>=20.0.0
+
+# Optional: for chart generation (not required for assignment)
+altair>=5.0.0

@@ -1,30 +1,36 @@
 # Assignment 02 Hints
 
-## Data sizing
+## Lazy scans
 
-- Start with a subset of CSVs (copy a few files into `data/sample/`) to iterate quickly.
-- Once the pipeline works, point config back to the full glob.
+- Use `pl.scan_parquet(config["data"]["events_path"])` for events.
+- Call `.collect_schema()` to verify columns without loading data.
 
-## Polars tips
+## Distinct patients by site
 
-- Use `pl.scan_csv(..., dtypes={"patient_id": pl.Int32})` to control parsing.
-- Chain `.select()` immediately to limit columns; the rest stay untouched.
-- Call `.explain()` on the LazyFrame to ensure filters appear before joins.
-- Use `.collect_schema()` to preview dtypes without triggering an expensive scan.
+```python
+patients_by_site = (
+    events_filtered
+    .select(["site_id", "patient_id"])
+    .unique()
+    .group_by("site_id")
+    .agg(pl.len().alias("patients_seen"))
+)
+```
 
-## Streaming behavior
+## Diabetes filter
 
-- `.collect(engine="streaming")` supports aggregations and joins but not sorts that require full materialization. If you must sort, do it on a reduced dataset.
-- When streaming, avoid `.with_columns(pl.col("..."))` that depend on entire table (e.g., cumulative sums) unless necessary.
+```python
+prefix = config["data"]["diabetes_prefix"]
+dx_diabetes = dx_events.filter(pl.col("code").str.starts_with(prefix))
+```
 
-## Testing strategy
+## Procedure summary
 
-1. `load_data` should not materialize anything—use `.head().collect()` only within tests.
-2. `build_summary` can be validated by checking `.collect_schema()` and `.explain()`.
-3. `materialize` should be idempotent; you can delete outputs and rerun without stale state.
+```python
+proc_with_group = proc_events.join(hcpcs.select(["code", "group"]), on="code", how="left")
+```
 
-## Debugging failures
+## Output writing
 
-- If tests complain about missing columns, print `LazyFrame.collect_schema()` to confirm names.
-- For date filters, ensure they are parsed as `Datetime` (use `pl.datetime` helper or string parsing).
-- Altair export requires `altair` + a renderer (vega-lite). If missing, wrap in try/except (already done in starter).
+- Create `outputs/` before writing.
+- Use config paths so tests can find files.

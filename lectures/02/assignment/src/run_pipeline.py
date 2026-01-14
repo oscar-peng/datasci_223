@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-from pathlib import Path
 
 from . import pipeline
 
@@ -21,14 +20,14 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.info("Loading data")
-    encounters_lf, vitals_lf = pipeline.load_data(cfg)
+    data = pipeline.load_data(cfg)
 
-    logging.info("Building summary LazyFrame")
-    summary_lf = pipeline.build_summary(encounters_lf, vitals_lf, cfg)
+    logging.info("Building summaries")
+    dx_summary, hcpcs_summary = pipeline.build_summaries(data, cfg)
 
     logging.info("Materializing outputs")
-    df = pipeline.materialize(summary_lf, cfg)
-    logging.info("Wrote %s rows", df.height)
+    pipeline.materialize(dx_summary, hcpcs_summary, cfg)
+    logging.info("Outputs written")
 
 
 if __name__ == "__main__":  # pragma: no cover

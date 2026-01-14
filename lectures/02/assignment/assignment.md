@@ -1,113 +1,142 @@
-# Assignment 02: Out-of-Core Analytics with Polars (Notebook)
+# Assignment 02: Polars on EHR Event Logs
 
-This notebook walks you through the same workflow as `README.md`, but in a notebook-friendly format.
-You will still implement the core logic in `src/pipeline.py`.
-
-## Goals
-
-- Build a lazy Polars pipeline over CSV inputs
-- Join encounters + vitals and compute monthly summaries
-- Materialize outputs with streaming and export Parquet/CSV
-- Confirm outputs and pass the tests
+Build a Polars pipeline that summarizes diagnosis prevalence and procedure activity from synthetic EHR events. Use lazy scans, filtering, joins, and group-bys.
 
 ## Setup
 
-If the `data/` folder is missing, generate the synthetic dataset from the assignment root:
-
-```bash
-uv run python generate_assignment_data.py --size small --output-dir data
-```
-
-If you want to scale up later, rerun with `--size large`.
-
-```python
-from src import pipeline
-
-cfg = pipeline.load_config("config.yaml")
-cfg
-```
-
-## Part 1: Configure the Pipeline
-
-Open `config.yaml` and confirm these sections are filled out:
-
-- `data.encounters_glob`
-- `data.vitals_glob`
-- `data.start_date`
-- `data.facilities`
-- `outputs.summary_parquet`
-- `outputs.summary_csv`
-- (optional) `outputs.chart_png`
-
-Keep paths relative so the autograder can run anywhere.
-
-## Part 2: Implement `pipeline.py`
-
-Open `src/pipeline.py` and complete the TODOs for:
-
-- `load_data(cfg)`
-- `build_summary(encounters_lf, vitals_lf, cfg)`
-- `materialize(summary_lf, cfg)`
-
-Return to this notebook after you implement each section.
-
-### Checkpoint: load_data
-
-```python
-encounters_lf, vitals_lf = pipeline.load_data(cfg)
-encounters_lf.collect_schema()
-```
-
-```python
-vitals_lf.collect_schema()
-```
-
-### Checkpoint: build_summary
-
-```python
-summary_lf = pipeline.build_summary(encounters_lf, vitals_lf, cfg)
-summary_lf.collect_schema()
-```
-
-```python
-summary_lf.explain()
-```
-
-### Checkpoint: materialize
-
-```python
-df = pipeline.materialize(summary_lf, cfg)
-df.head()
-```
-
-## Part 3: Validate Outputs
-
-```python
-from pathlib import Path
-
-output_parquet = Path(cfg["outputs"]["summary_parquet"])
-output_csv = Path(cfg["outputs"]["summary_csv"])
-
-output_parquet.exists(), output_csv.exists()
-```
-
 ```python
 import polars as pl
+import yaml
+from pathlib import Path
+from datetime import datetime
 
-parquet_df = pl.read_parquet(output_parquet)
-csv_df = pl.read_csv(output_csv)
-parquet_df.height, csv_df.height
+print(f"Polars version: {pl.__version__}")
+print("Environment ready!")
 ```
 
-## Part 4: Tests (run in terminal)
+## Generate data
 
-```bash
-uv run pytest .github/tests -q
+```python
+import sys
+import subprocess
+
+subprocess.run(
+    [sys.executable, "generate_test_data.py", "--size", "small", "--output-dir", "data"],
+    check=True,
+)
 ```
 
-## Submission Checklist
+## Configuration
 
-- `src/pipeline.py` TODOs completed
-- `outputs/README.md` documents artifacts
-- Parquet + CSV created in `outputs/`
-- All tests pass locally
+```python
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+
+print("Config loaded:")
+print(f"  Patients: {config['data']['patients_path']}")
+print(f"  Sites: {config['data']['sites_path']}")
+print(f"  Events: {config['data']['events_path']}")
+print(f"  ICD-10 lookup: {config['data']['icd10_path']}")
+print(f"  HCPCS lookup: {config['data']['hcpcs_path']}")
+```
+
+## Part 1: Lazy Data Loading
+
+Use `pl.scan_parquet()` to create LazyFrames without loading data into memory.
+
+```python
+# TODO: Scan patients, sites, events, and code lookups
+patients = None
+sites = None
+events = None
+icd10 = None
+hcpcs = None
+
+# Check schemas (fast, still lazy)
+if patients is not None:
+    print("Patients schema:")
+    print(patients.collect_schema())
+
+if events is not None:
+    print("Events schema:")
+    print(events.collect_schema())
+```
+
+## Part 2: Filter and Prep Events
+
+Filter to the assignment date window and split ICD-10 vs HCPCS events.
+
+```python
+start_date = datetime.fromisoformat(config["data"]["start_date"])
+
+# TODO: parse event_ts to Datetime
+# TODO: filter events to event_ts >= start_date
+# TODO: split into dx_events and proc_events by record_type
+
+events_filtered = None
+
+dx_events = None
+proc_events = None
+```
+
+## Part 3: Diagnosis Prevalence by Site
+
+Compute the percent of patients per site with a type 2 diabetes diagnosis.
+
+```python
+prefix = config["data"]["diabetes_prefix"]
+
+# TODO: Filter dx_events to ICD-10 codes starting with prefix
+# TODO: total patients per site (unique patient_id from events_filtered)
+# TODO: diabetes patients per site (unique patient_id from filtered dx)
+# TODO: join counts + site names, calculate prevalence
+
+dx_summary = None
+
+if dx_summary is not None:
+    print(dx_summary.collect_schema())
+```
+
+## Part 4: Procedure Activity by Site and Group
+
+Summarize HCPCS procedures by site and DHS group.
+
+```python
+# TODO: join proc_events to hcpcs lookup on code
+# TODO: group by site_id + group, count procedures
+# TODO: join site names
+
+hcpcs_summary = None
+```
+
+## Part 5: Collect and Export
+
+```python
+# TODO: collect both summaries using streaming engine
+# TODO: create outputs directory
+# TODO: write Parquet + CSV outputs using config paths
+
+if dx_summary is not None and hcpcs_summary is not None:
+    print("Outputs ready")
+```
+
+## Validation
+
+```python
+outputs = [
+    config["outputs"]["dx_summary_parquet"],
+    config["outputs"]["dx_summary_csv"],
+    config["outputs"]["hcpcs_summary_parquet"],
+    config["outputs"]["hcpcs_summary_csv"],
+]
+
+missing = [path for path in outputs if not Path(path).exists()]
+if missing:
+    print("Missing outputs:", missing)
+else:
+    print("All outputs created")
+```
+
+## Next Steps
+
+Run `python -m pytest .github/tests/test_assignment.py -v` in your terminal.

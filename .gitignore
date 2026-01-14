@@ -27,3 +27,4 @@ docs/
 .cache/
 outputs/
 __pycache__/
+.tmp/

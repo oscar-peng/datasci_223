@@ -257,7 +257,7 @@ Aggregations and joins are the core of most tabular pipelines. Keep joins at the
 ### Reference Card: `group_by`, `agg`, `join`, `sort`
 
 - **Group + aggregate:** `.group_by([...]).agg([...])`
-- **Common aggregations:** `pl.count()`, `pl.len()`, `pl.mean(...)`, `pl.median(...)`, `pl.sum(...)`, `pl.corr(...)`
+- **Common aggregations:** `pl.len()`, `pl.mean(...)`, `pl.median(...)`, `pl.sum(...)`, `pl.corr(...)`
 - **Join:** `.join(other, on=..., how=...)` (know the join grain)
 - **Order:** `.sort([...])` (global sort can break streaming)
 
@@ -279,7 +279,7 @@ summary = (
         pl.col("timestamp").dt.month().alias("month"),
     ])
     .agg([
-        pl.count().alias("num_vitals"),
+        pl.len().alias("num_vitals"),
         pl.mean("heart_rate").alias("avg_hr"),
         pl.mean("bmi").alias("avg_bmi"),
     ])

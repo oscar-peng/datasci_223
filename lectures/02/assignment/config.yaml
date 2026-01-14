@@ -12,4 +12,3 @@ outputs:
 processing:
   bmi_floor: 12
   bmi_ceiling: 70
-  rolling_window_days: 30

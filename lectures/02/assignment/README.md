@@ -15,10 +15,14 @@ This assignment extends Lecture 02 demos. You will:
 
 All tests live under `.github/tests` inside this folder. Push frequently to see GitHub Classroom feedback.
 
+Starter code is intentionally incomplete. You will fill in TODOs in `src/pipeline.py`.
+
 ## Assignment Structure
 
 ```
 assignment/
+├── assignment.md                 # Notebook-friendly instructions
+├── assignment.ipynb              # Generated from assignment.md
 ├── config.yaml                     # Centralized settings
 ├── src/
 │   ├── __init__.py
@@ -35,6 +39,16 @@ assignment/
     ├── tests/test_pipeline.py      # Autograder tests
     └── workflows/classroom.yml     # Do not modify
 ```
+
+## Data setup
+
+If `data/` is missing, generate the synthetic dataset:
+
+```bash
+uv run python generate_assignment_data.py --size small --output-dir data
+```
+
+For faster iteration you can regenerate a smaller dataset by adjusting `--size` and re-running the command above.
 
 ## Part 1: Configure the Pipeline
 
@@ -57,7 +71,6 @@ outputs:
 processing:
   bmi_floor: 12
   bmi_ceiling: 70
-  rolling_window_days: 30
 ```
 
 You may expand the config with additional knobs (columns to keep, chart titles, etc.). Autograder reads file paths from here.
@@ -75,15 +88,22 @@ Provide three key functions:
 2. `build_summary(encounters_lf, vitals_lf, cfg) -> pl.LazyFrame`
    - Filter by facility + `start_date`
    - Join on `patient_id`
-   - Compute monthly aggregates (count encounters, mean/median vitals, rolling BMI if desired)
+   - Compute monthly aggregates (counts + means)
    - Return a lazy frame ready for collection
 
 3. `materialize(summary_lf, cfg) -> pl.DataFrame`
-   - Execute with `.collect(streaming=True)`
+   - Execute with `.collect(engine="streaming")`
    - Write Parquet + CSV paths from config
    - Optionally emit a quick Altair/Matplotlib visualization (save to `chart_png`)
 
 Keep functions pure (inputs → outputs). Logging lives in the CLI wrapper.
+
+**Required methods (from lecture):**
+
+- `pl.scan_csv`, `.select`, `.filter`, `.with_columns`, `.cast`
+- `.group_by(...).agg([...])`, `.join(...)`
+- `.collect(engine="streaming")`, `.write_parquet(...)`, `.write_csv(...)`
+- Optional: `.to_pandas()` for chart export
 
 ## Part 3: CLI Wrapper
 
@@ -109,6 +129,19 @@ Populate `outputs/README.md` with:
 - Any caveats (e.g., data simulated, chart uses aggregated data)
 
 Ensure generated files are ignored appropriately (add to `.gitignore` under this folder if needed) **but** autograder expects them present when tests run locally.
+
+## Assignment notebook (optional)
+
+This assignment is also authored as a notebook-friendly Markdown file:
+
+- `assignment.md` (source)
+- `assignment.ipynb` (generated via jupytext)
+
+To regenerate the notebook:
+
+```bash
+uv run python -m jupytext --to notebook assignment.md -o assignment.ipynb
+```
 
 ## Tests
 

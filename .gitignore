@@ -26,3 +26,4 @@ site/
 docs/
 .cache/
 outputs/
+__pycache__/

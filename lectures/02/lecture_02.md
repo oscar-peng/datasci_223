@@ -18,9 +18,9 @@ pdf: true
 
 # Why Memory Limits Sneak Up On Us
 
-![Dataset vs laptop memory](02/media/memory_vs_dataset.png)
+![Dataset vs laptop memory](media/memory_vs_dataset.png)
 
-# FIXME Ensure this graphic matches the text/table: clarify whether bars show on-disk size vs in-memory size (or split into two visuals/series).
+# FIXME Ensure this graphic matches the text/table: clarify whether bars show on-disk size vs in-memory size (or split into two visuals/series)
 
 Health datasets outgrow laptop RAM quickly: a handful of CSVs with vitals, labs, and encounters can exceed 16 GB once loaded. Attempting to "just read the file" leads to system thrash, swap usage, and eventually Python `MemoryError`s that interrupt the workflow.
 
@@ -41,7 +41,7 @@ Health datasets outgrow laptop RAM quickly: a handful of CSVs with vitals, labs,
 - OS kills kernel/terminal; `MemoryError` or `Killed: 9` messages
 - Notebook kernel restarts when running seemingly "simple" cells
 
-![Data quality fire drill](02/media/xkcd_data_quality.png)
+![Data quality fire drill](media/xkcd_data_quality.png)
 
 *If the rows are literally on fire, start fixing quality before scaling anything else.*
 
@@ -75,22 +75,27 @@ This is the moment to stop fighting pandas and switch strategies (column pruning
 
 # Polars Essentials
 
-# FIXME Pedagogical visual: reinforce *why* columnar formats matter.
-# FIXME Add `02/media/row_vs_column.png` here and explicitly tie it to:
+# FIXME Pedagogical visual: reinforce *why* columnar formats matter
+
+# FIXME Add `02/media/row_vs_column.png` here and explicitly tie it to
+
 # FIXME - projection pushdown (read only needed columns)
+
 # FIXME - predicate pushdown (skip whole row groups / chunks)
+
 # FIXME - compression benefits from same-typed contiguous values
+
 # FIXME Prompt: "If you only need `patient_id` + `heart_rate`, what does a columnar engine read vs a CSV reader?"
 
-![Row vs column layout](02/media/row_vs_column.png)
+![Row vs column layout](media/row_vs_column.png)
 
-![Polars vs pandas runtime](02/media/polars_vs_pandas.png)
+![Polars vs pandas runtime](media/polars_vs_pandas.png)
 
-# FIXME Add benchmark context (machine/dataset) or replace with a table; avoid implying the exact ratios generalize.
+# FIXME Add benchmark context (machine/dataset) or replace with a table; avoid implying the exact ratios generalize
 
 pandas is ubiquitous and a great default; Polars is often adopted case-by-case when you hit real constraints (runtime, memory, I/O).
 
-![Data pipeline](02/media/xkcd_data_pipeline.png)
+![Data pipeline](media/xkcd_data_pipeline.png)
 
 Polars is pandas without the hidden index and with a Rust engine under the hood. Two mindshifts:
 
@@ -198,19 +203,19 @@ Two practical rules:
 - If you frequently filter on `facility` or `year`, consider **partitioning** your dataset by those columns (fewer bytes scanned).
 - Avoid thousands of tiny Parquet files (metadata overhead); prefer fewer, reasonably sized files with consistent schema.
 
-![Health data reality check](02/media/xkcd_health_data.png)
+![Health data reality check](media/xkcd_health_data.png)
 
-# LIVE DEMO!
+# LIVE DEMO
 
 See [`demo/01a_streaming_filter.md`](./demo/01a_streaming_filter.md) for the Polars basics walkthrough.
 
 # Lazy Execution & Streaming Patterns
 
-![Lazy query plan sketch](02/media/lazy_plan.png)
+![Lazy query plan sketch](media/lazy_plan.png)
 
-# FIXME Add a concrete `query.explain()` output screenshot/snippet so students recognize the real plan format.
+# FIXME Add a concrete `query.explain()` output screenshot/snippet so students recognize the real plan format
 
-![Flawed data](02/media/flawed_data.png)
+![Flawed data](media/flawed_data.png)
 
 Lazy plans shine once you chain multiple operations: the engine reorders filters, drops unused columns, and chooses whether to stream.
 
@@ -267,20 +272,21 @@ query = (
 result = query.collect(engine="streaming")
 ```
 
-# LIVE DEMO!!
+# LIVE DEMO
 
 See [`demo/02a_lazy_join.md`](./demo/02a_lazy_join.md) for the lazy-plan deep dive.
 
 # Building a Polars Pipeline
 
-# FIXME Decide if `02/media/resource_monitor.png` is pedagogically helpful; consider replacing with a simple "memory stays bounded" plot (plateau + 16GB line) or a short table of peak RSS.
-# FIXME Pedagogical visual: pipeline anatomy (inputs/config → transforms → outputs/logs/artifacts), maybe as a small diagram.
+# FIXME Decide if `02/media/resource_monitor.png` is pedagogically helpful; consider replacing with a simple "memory stays bounded" plot (plateau + 16GB line) or a short table of peak RSS
 
-![Resource monitoring dashboard](02/media/resource_monitor.png)
+# FIXME Pedagogical visual: pipeline anatomy (inputs/config → transforms → outputs/logs/artifacts), maybe as a small diagram
 
-![Workflow empathy](02/media/xkcd_workflow.png)
+![Resource monitoring dashboard](media/resource_monitor.png)
 
-![Datacenter scale](02/media/xkcd_datacenter.png)
+![Workflow empathy](media/xkcd_workflow.png)
+
+![Datacenter scale](media/xkcd_datacenter.png)
 
 Put the pieces together: start lazy, keep everything parameterized, and stream the final collect.
 
@@ -341,6 +347,6 @@ result.write_parquet(args.output)
 logging.info("Wrote %s rows to %s", result.height, args.output)
 ```
 
-# LIVE DEMO!!!
+# LIVE DEMO
 
 See [`demo/03a_batch_report.md`](./demo/03a_batch_report.md) for a config-driven batch run with validation checkpoints.

@@ -38,6 +38,13 @@ print(f"  ICD-10 lookup: {config['data']['icd10_path']}")
 print(f"  HCPCS lookup: {config['data']['hcpcs_path']}")
 ```
 
+## Hints (optional)
+
+- Distinct patient counts: call `.unique()` before `group_by()`.
+  - Example: `events.select(["site_id", "patient_id"]).unique()`
+- Prefix filter for ICD-10: `pl.col("code").str.starts_with(prefix)`
+- Optional polish: `.fill_null(0)` after a left join, and `.round(3)` on prevalence
+
 ## Part 1: Lazy Data Loading
 
 Use `pl.scan_parquet()` to create LazyFrames without loading data into memory.

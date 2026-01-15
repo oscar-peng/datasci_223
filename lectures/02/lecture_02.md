@@ -243,6 +243,39 @@ vitals = (
 )
 ```
 
+## Distinct counts and prefix filters
+
+When you summarize events by site, you often want distinct patients and a quick way to filter code prefixes. Polars gives you both with `unique()` and string expressions.
+
+| code  | starts_with("E11") |
+| ----- | ------------------- |
+| E11.9 | True                |
+| E11.65| True                |
+| I10   | False               |
+
+### Reference Card: Distinct + prefix helpers
+
+- **Distinct rows:** `.select([...]).unique()` (keeps one row per key combo)
+- **Distinct counts:** `.group_by("site_id").agg(pl.n_unique("patient_id"))`
+- **Prefix filter:** `pl.col("code").str.starts_with("E11")`
+- **Null fill:** `.with_columns(pl.col("diabetes_patients").fill_null(0))`
+- **Rounding:** `.with_columns(pl.col("diabetes_prevalence").round(3))`
+
+### Code Snippet: Distinct patients + prefix filter
+
+```python
+import polars as pl
+
+dx_diabetes = dx_events.filter(pl.col("code").str.starts_with(prefix))
+
+patients_by_site = (
+    events_filtered.select(["site_id", "patient_id"])
+    .unique()
+    .group_by("site_id")
+    .agg(pl.len().alias("patients_seen"))
+)
+```
+
 ### Aside: Data model for health-data workflows
 
 Many health-data pipelines involve multiple sources, repeated measurements, and joins that can accidentally multiply rows. _Grain_ = the unit of observation in a table.

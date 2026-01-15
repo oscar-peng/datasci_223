@@ -17,13 +17,11 @@ print("Environment ready!")
 ## Generate data
 
 ```python
-import sys
-import subprocess
+from pathlib import Path
 
-subprocess.run(
-    [sys.executable, "generate_test_data.py", "--size", "small", "--output-dir", "data"],
-    check=True,
-)
+from generate_test_data import generate_test_data
+
+generate_test_data(size="small", output_dir=Path("data"))
 ```
 
 ## Configuration

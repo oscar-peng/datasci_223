@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from . import pipeline
+import pipeline
 
 
 def parse_args() -> argparse.Namespace:

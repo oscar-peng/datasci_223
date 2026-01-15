@@ -54,23 +54,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-
+def generate_test_data(
+    size: str = "small", output_dir: Path = Path("data"), seed: int = 42
+) -> None:
     size_config = {
         "small": {"patients": 200, "events": (8, 15)},
         "medium": {"patients": 1000, "events": (10, 18)},
         "large": {"patients": 5000, "events": (12, 22)},
     }
 
-    config = size_config[args.size]
+    if size not in size_config:
+        raise ValueError(f"Unsupported size: {size}")
+
+    config = size_config[size]
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
     faker = Faker()
-    faker.seed_instance(args.seed)
-    rng = np.random.default_rng(args.seed)
+    faker.seed_instance(seed)
+    rng = np.random.default_rng(seed)
 
-    refs_dir = Path(__file__).parent / "refs"
+    refs_dir = Path(__file__).parent / "refs" / "raw"
     icd10_path = refs_dir / "icd10cm-order-2026.txt"
     hcpcs_path = refs_dir / "2026_DHS_Code_List_Addendum_12_01_2025.txt"
 
@@ -99,12 +102,17 @@ def main() -> None:
         max_events=config["events"][1],
     )
 
-    write_outputs(args.output_dir, patients_df, sites_df, events_df, icd10_df, hcpcs_df)
+    write_outputs(output_dir, patients_df, sites_df, events_df, icd10_df, hcpcs_df)
 
     logging.info("Wrote %s patients", patients_df.height)
     logging.info("Wrote %s sites", sites_df.height)
     logging.info("Wrote %s events", events_df.height)
-    logging.info("Output directory: %s", args.output_dir)
+    logging.info("Output directory: %s", output_dir)
+
+
+def main() -> None:
+    args = parse_args()
+    generate_test_data(args.size, args.output_dir, args.seed)
 
 
 if __name__ == "__main__":

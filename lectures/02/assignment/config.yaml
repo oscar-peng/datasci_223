@@ -3,15 +3,12 @@ data:
   sites_path: "data/sites.parquet"
   events_path: "data/events.parquet"
   icd10_path: "data/icd10_codes.parquet"
-  hcpcs_path: "data/hcpcs_codes.parquet"
   start_date: "2023-01-01"
   diabetes_prefix: "E11"
 
 outputs:
   dx_summary_parquet: "outputs/site_dx_prevalence.parquet"
   dx_summary_csv: "outputs/site_dx_prevalence.csv"
-  hcpcs_summary_parquet: "outputs/site_hcpcs_summary.parquet"
-  hcpcs_summary_csv: "outputs/site_hcpcs_summary.csv"
 
 processing:
   min_patients_per_site: 5

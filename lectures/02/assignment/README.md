@@ -10,13 +10,10 @@ You will analyze synthetic EHR events for a type 2 diabetes-focused population. 
 
 - **Patients** (demographics + home site)
 - **Sites** (clinics/hospitals)
-- **Events** (ICD-10 diagnoses and HCPCS procedures)
-- **Code lookups** (ICD-10 + HCPCS dictionaries)
+- **Events** (ICD-10 diagnoses)
+- **Code lookups** (ICD-10 dictionary)
 
-Your task is to build lazy Polars pipelines that:
-
-1. Summarize **diabetes diagnosis prevalence** by site.
-2. Summarize **procedure activity** by site and DHS group.
+Your task is to build a lazy Polars pipeline that summarizes **diabetes diagnosis prevalence** by site.
 
 ## Assignment Structure
 
@@ -55,9 +52,8 @@ This creates:
 - `data/sites.parquet`
 - `data/events.parquet`
 - `data/icd10_codes.parquet`
-- `data/hcpcs_codes.parquet`
 
-The generator reads source dictionaries from `refs/` (included in the repo).
+The generator reads source dictionaries from `refs/raw/` (included in the repo).
 
 ### 3. Open the notebook
 
@@ -69,11 +65,10 @@ jupyter notebook assignment.ipynb
 
 Complete all cells marked `# TODO` in `assignment.ipynb`:
 
-1. **Lazy scans** for patients, sites, events, and lookups
+1. **Lazy scans** for patients, sites, events, and ICD-10 lookup
 2. **Filtering** to the date window and ICD-10 diabetes codes
 3. **Joining + aggregation** to compute site-level prevalence
-4. **Procedure summary** by site and HCPCS group
-5. **Streaming export** to Parquet + CSV outputs
+4. **Streaming export** to Parquet + CSV outputs
 
 ## Testing
 

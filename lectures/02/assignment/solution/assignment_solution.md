@@ -1,6 +1,6 @@
 # Assignment 02: Polars on EHR Event Logs - SOLUTION
 
-Build a Polars pipeline that summarizes diagnosis prevalence and procedure activity from synthetic EHR events.
+Build a Polars pipeline that summarizes diagnosis prevalence from synthetic EHR events. Use lazy scans, filtering, joins, and group-bys to compute site-level diabetes prevalence.
 
 ## Setup
 
@@ -35,30 +35,26 @@ print(f"  Patients: {config['data']['patients_path']}")
 print(f"  Sites: {config['data']['sites_path']}")
 print(f"  Events: {config['data']['events_path']}")
 print(f"  ICD-10 lookup: {config['data']['icd10_path']}")
-print(f"  HCPCS lookup: {config['data']['hcpcs_path']}")
 ```
 
+## Hints (optional)
+
+- Distinct patient counts: call `.unique()` before `group_by()`.
+  - Example: `events.select(["site_id", "patient_id"]).unique()`
+- Prefix filter for ICD-10: `pl.col("code").str.starts_with(prefix)`
+- Optional polish: `.fill_null(0)` after a left join, and `.round(3)` on prevalence
+
 ## Part 1: Lazy Data Loading
+
+Use `pl.scan_parquet()` to create LazyFrames without loading data into memory.
 
 ```python
 patients = pl.scan_parquet(config["data"]["patients_path"])
 sites = pl.scan_parquet(config["data"]["sites_path"])
+events = pl.scan_parquet(config["data"]["events_path"])
+icd10 = pl.scan_parquet(config["data"]["icd10_path"])
 
-events = (
-    pl.scan_parquet(config["data"]["events_path"])
-    .with_columns(
-        pl.col("event_ts").str.strptime(pl.Datetime, strict=False).alias("event_ts")
-    )
-)
-
-icd10 = pl.scan_parquet(config["data"]["icd10_path"]).select(
-    ["code", "short_desc", "category"]
-)
-
-hcpcs = pl.scan_parquet(config["data"]["hcpcs_path"]).select(
-    ["code", "short_desc", "group"]
-)
-
+# Check schemas (fast, still lazy)
 print("Patients schema:")
 print(patients.collect_schema())
 
@@ -68,91 +64,89 @@ print(events.collect_schema())
 
 ## Part 2: Filter and Prep Events
 
+Filter to the assignment date window and extract ICD-10 diagnosis events.
+
 ```python
 start_date = datetime.fromisoformat(config["data"]["start_date"])
 
-events_filtered = events.filter(pl.col("event_ts") >= pl.lit(start_date))
+# Parse event_ts to Datetime and filter
+events_filtered = (
+    events
+    .with_columns(pl.col("event_ts").str.strptime(pl.Datetime, strict=False))
+    .filter(pl.col("event_ts") >= start_date)
+)
 
-dx_events = events_filtered.filter(pl.col("record_type") == "ICD10")
-proc_events = events_filtered.filter(pl.col("record_type") == "HCPCS")
+# Filter to ICD-10-CM diagnosis events only
+dx_events = events_filtered.filter(pl.col("record_type") == "ICD-10-CM")
 ```
 
 ## Part 3: Diagnosis Prevalence by Site
 
+Compute the percent of patients per site with a type 2 diabetes diagnosis.
+
 ```python
 prefix = config["data"]["diabetes_prefix"]
 
+# Filter to diabetes codes
 dx_diabetes = dx_events.filter(pl.col("code").str.starts_with(prefix))
 
+# Total patients per site (from all filtered events)
 patients_by_site = (
-    events_filtered.select(["site_id", "patient_id"])
+    events_filtered
+    .select(["site_id", "patient_id"])
     .unique()
     .group_by("site_id")
     .agg(pl.len().alias("patients_seen"))
 )
 
-dx_patients_by_site = (
-    dx_diabetes.select(["site_id", "patient_id"])
+# Diabetes patients per site
+diabetes_by_site = (
+    dx_diabetes
+    .select(["site_id", "patient_id"])
     .unique()
     .group_by("site_id")
     .agg(pl.len().alias("diabetes_patients"))
 )
 
+# Join counts and calculate prevalence
 dx_summary = (
     patients_by_site
-    .join(dx_patients_by_site, on="site_id", how="left")
+    .join(diabetes_by_site, on="site_id", how="left")
     .with_columns(pl.col("diabetes_patients").fill_null(0))
     .with_columns(
-        (pl.col("diabetes_patients") / pl.col("patients_seen"))
-        .round(3)
-        .alias("diabetes_prevalence")
+        (pl.col("diabetes_patients") / pl.col("patients_seen")).alias("diabetes_prevalence")
     )
     .join(sites.select(["site_id", "site_name", "site_type"]), on="site_id", how="left")
-    .select(
-        [
-            "site_id",
-            "site_name",
-            "site_type",
-            "patients_seen",
-            "diabetes_patients",
-            "diabetes_prevalence",
-        ]
-    )
-    .sort("diabetes_prevalence", descending=True)
+    .select([
+        "site_id",
+        "site_name",
+        "site_type",
+        "patients_seen",
+        "diabetes_patients",
+        "diabetes_prevalence",
+    ])
+    .sort("site_id")
 )
+
+print(dx_summary.collect_schema())
 ```
 
-## Part 4: Procedure Activity by Site and Group
+## Part 4: Collect and Export
 
 ```python
-hcpcs_summary = (
-    proc_events
-    .join(hcpcs.select(["code", "group"]), on="code", how="left")
-    .group_by(["site_id", "group"])
-    .agg(pl.len().alias("procedure_count"))
-    .join(sites.select(["site_id", "site_name"]), on="site_id", how="left")
-    .select(["site_id", "site_name", "group", "procedure_count"])
-    .sort(["site_id", "procedure_count"], descending=[False, True])
-)
-```
+# Collect with streaming
+summary_df = dx_summary.collect(engine="streaming")
 
-## Part 5: Collect and Export
+# Create output directory
+output_dir = Path(config["outputs"]["dx_summary_parquet"]).parent
+output_dir.mkdir(parents=True, exist_ok=True)
 
-```python
-dx_df = dx_summary.collect(engine="streaming")
-hcpcs_df = hcpcs_summary.collect(engine="streaming")
+# Write outputs
+summary_df.write_parquet(config["outputs"]["dx_summary_parquet"])
+summary_df.write_csv(config["outputs"]["dx_summary_csv"])
 
-Path("outputs").mkdir(exist_ok=True)
-
-dx_df.write_parquet(config["outputs"]["dx_summary_parquet"])
-dx_df.write_csv(config["outputs"]["dx_summary_csv"])
-
-hcpcs_df.write_parquet(config["outputs"]["hcpcs_summary_parquet"])
-hcpcs_df.write_csv(config["outputs"]["hcpcs_summary_csv"])
-
-print("Outputs written:")
-print(dx_df.head())
-print(hcpcs_df.head())
+print("Outputs ready")
+summary_df
 ```
 
 ## Validation
@@ -161,8 +155,6 @@ print(hcpcs_df.head())
 outputs = [
     config["outputs"]["dx_summary_parquet"],
     config["outputs"]["dx_summary_csv"],
-    config["outputs"]["hcpcs_summary_parquet"],
-    config["outputs"]["hcpcs_summary_csv"],
 ]
 
 missing = [path for path in outputs if not Path(path).exists()]
@@ -171,3 +163,7 @@ if missing:
 else:
     print("All outputs created")
 ```
+
+## Next Steps
+
+Run `python -m pytest .github/tests/test_assignment.py -v` in your terminal.

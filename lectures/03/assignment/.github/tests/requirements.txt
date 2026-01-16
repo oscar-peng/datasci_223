@@ -1,0 +1,5 @@
+pytest
+papermill
+jupysql
+sqlalchemy
+prettytable

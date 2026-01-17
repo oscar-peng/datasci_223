@@ -9,19 +9,10 @@ import polars as pl
 import yaml
 from pathlib import Path
 from datetime import datetime
+from generate_test_data import generate_test_data
 
 print(f"Polars version: {pl.__version__}")
 print("Environment ready!")
-```
-
-## Generate data
-
-```python
-from pathlib import Path
-
-from generate_test_data import generate_test_data
-
-generate_test_data(size="small", output_dir=Path("data"))
 ```
 
 ## Configuration
@@ -35,6 +26,16 @@ print(f"  Patients: {config['data']['patients_path']}")
 print(f"  Sites: {config['data']['sites_path']}")
 print(f"  Events: {config['data']['events_path']}")
 print(f"  ICD-10 lookup: {config['data']['icd10_path']}")
+```
+
+## Generate data
+
+```python
+SIZE = config["data"]["size"]
+DATA_DIR = Path(config["data"]["dir"])
+
+# Generate data - "medium" takes ~10 seconds on my laptop
+generate_test_data(size=SIZE, output_dir=DATA_DIR)
 ```
 
 ## Hints (optional)
@@ -125,6 +126,7 @@ else:
     print("All outputs created")
 ```
 
-## Next Steps
+## Next Steps (Optional)
 
-Run `python -m pytest .github/tests/test_assignment.py -v` in your terminal.
+1. Run `python -m pytest .github/tests/test_assignment.py -v` in your terminal.
+2. Use exploratory data analysis (EDA) or visualization techniques to get a feel for the dataset

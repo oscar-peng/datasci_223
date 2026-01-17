@@ -1,4 +1,6 @@
 data:
+  size: "medium"
+  dir: "data"
   patients_path: "data/patients.parquet"
   sites_path: "data/sites.parquet"
   events_path: "data/events.parquet"

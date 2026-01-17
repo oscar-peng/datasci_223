@@ -9,19 +9,10 @@ import polars as pl
 import yaml
 from pathlib import Path
 from datetime import datetime
+from generate_test_data import generate_test_data
 
 print(f"Polars version: {pl.__version__}")
 print("Environment ready!")
-```
-
-## Generate data
-
-```python
-from pathlib import Path
-
-from generate_test_data import generate_test_data
-
-generate_test_data(size="small", output_dir=Path("data"))
 ```
 
 ## Configuration
@@ -37,10 +28,20 @@ print(f"  Events: {config['data']['events_path']}")
 print(f"  ICD-10 lookup: {config['data']['icd10_path']}")
 ```
 
+## Generate data
+
+```python
+SIZE = config["data"]["size"]
+DATA_DIR = Path(config["data"]["dir"])
+
+# Generate data - "medium" takes ~10 seconds on my laptop
+generate_test_data(size=SIZE, output_dir=DATA_DIR)
+```
+
 ## Hints (optional)
 
 - Distinct patient counts: call `.unique()` before `group_by()`.
-  - Example: `events.select(["site_id", "patient_id"]).unique()`
+    - Example: `events.select(["site_id", "patient_id"]).unique()`
 - Prefix filter for ICD-10: `pl.col("code").str.starts_with(prefix)`
 - Optional polish: `.fill_null(0)` after a left join, and `.round(3)` on prevalence
 

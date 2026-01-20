@@ -5,7 +5,7 @@ pdf: true
 
 03: SQL for Health Data
 
-- hw03 - #FIXME add GitHub Classroom link once ready
+- [hw03](https://classroom.github.com/a/Rn7-jPaj)
 
 # Links & Self-Guided Review
 

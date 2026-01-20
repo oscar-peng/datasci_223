@@ -89,9 +89,9 @@ plugins:
 nav:
   - Home: index.md
   - Lectures:
-      - '01. Setup + Debugging': 01/lecture_01.md
-      - '02. Pandas': 02/lecture_02.md
-      # - '03. SQL': 03/lecture_03.md
+      - '01. Debugging': 01/lecture_01.md
+      - '02. Polars': 02/lecture_02.md
+      - '03. SQL': 03/lecture_03.md
       # - '04. NLP Foundations': 04/lecture_04.md
       # - '05. Classification': 05/lecture_05.md
       # - '06. Neural Networks': 06/lecture_06.md
@@ -101,7 +101,9 @@ nav:
       # - '10. Time Series': 10/lecture_10.md
       # - '11. TBD': 11/lecture_11.md
   - Exercises:
-      - '01. Setup + Debugging': https://classroom.github.com/a/UIovekSt
+      - '01. Debugging': https://classroom.github.com/a/UIovekSt
+      - '02. Polars': https://classroom.github.com/a/fgf2ebz9
+      - '03. SQL': https://classroom.github.com/a/Rn7-jPaj
       # Add exercise links as assignments are created
   - Course Info:
       - Lecture Plan: planned_lectures.md

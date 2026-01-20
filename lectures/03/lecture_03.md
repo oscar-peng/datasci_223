@@ -3,7 +3,7 @@ lecture_number: 03
 pdf: true
 ---
 
-03: SQL for Health Data
+03: Join the DISTINCT with SQL
 
 - [hw03](https://classroom.github.com/a/Rn7-jPaj)
 
@@ -126,9 +126,10 @@ SHOW TABLES FROM chinook;
 | --- | --- |
 | Install | `pip install duckdb duckdb-engine jupysql pandas` |
 | Load magic | `%load_ext sql` |
-| Connect (DuckDB) | `%sql duckdb:///clinic.db` |
-| Connect (SQLite) | `%sql sqlite:///clinic.db` |
+| Connect (DuckDB) | `%sql duckdb:///clinic.duckdb` |
+| Connect (SQLite) | `%sql sqlite:///clinic.sqlite` |
 | Return DataFrame | `result = %sql SELECT * FROM table` |
+| Capture to variable | `%%sql result << SELECT * FROM table` |
 
 ### Code Snippet: Minimal setup
 
@@ -141,6 +142,52 @@ import duckdb
 %%sql
 SELECT * FROM demographics
 LIMIT 5;
+```
+
+### Code Snippet: Return DataFrame (assignment)
+
+```python
+result = %sql SELECT * FROM demographics LIMIT 5
+```
+
+### Code Snippet: Return DataFrame (variable capture)
+
+```python
+%%sql invoice_counts <<
+SELECT BillingCountry, COUNT(*) AS invoice_count
+FROM invoices
+GROUP BY BillingCountry
+ORDER BY invoice_count DESC
+```
+
+## Querying DataFrames with SQL
+
+DuckDB can query pandas DataFrames directly using replacement scans: use the DataFrame variable name in your SQL query. **Replacement scans must be enabled** when using SQLAlchemy connections (which JupySQL uses with connection strings).
+
+### Reference Card: DataFrame queries
+
+| Pattern | Usage |
+| --- | --- |
+| Enable scans (required) | `%sql SET python_scan_all_frames=true` |
+| Query DataFrame | `%sql SELECT * FROM df WHERE x >= 5` |
+| Capture result | `%%sql result << SELECT * FROM df` |
+
+### Code Snippet: Query a DataFrame
+
+```python
+# Assume we already have duckdb connected and pandas imported
+# Enable DataFrame replacement scans (required for SQLAlchemy connections)
+%sql SET python_scan_all_frames=true
+
+# Create a DataFrame
+df = pd.DataFrame({
+    'patient_id': [1, 2, 3, 4, 5],
+    'age': [25, 30, 35, 40, 45],
+    'department': ['Cardio', 'Neuro', 'Cardio', 'Neuro', 'Cardio']
+})
+
+# Query it with SQL (now works because replacement scans are enabled)
+%sql SELECT department, COUNT(*) AS count FROM df GROUP BY department
 ```
 
 # SQL basics

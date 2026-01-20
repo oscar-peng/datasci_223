@@ -4,7 +4,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 
 **Course structure**: Applied survey course—each week covers a single topic, either standalone (e.g., SQL) or as part of a series building complexity (classification → neural networks → LLMs → LLM API/agentic/workflows).
 
-**GitHub Pages site URL**: `https://christopherseaman.github.io/datasci_223/` (configured in `mkdocs.yml` as `site_url`; images use relative paths like `01/media/...` WITHOUT leading slash so MkDocs prepends site_url correctly)
+**GitHub Pages site URL**: `https://christopherseaman.github.io/datasci_223/` (configured in `mkdocs.yml` as `site_url`; images use relative paths from the referring document, e.g., `media/xkcd_selection_bias.png` from `lectures/03/lecture_03.md`)
 
 **IDE**: VS Code is the common IDE for this class.
 
@@ -64,7 +64,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 ### Assets and links
 
 - Assets live alongside their lecture folder (e.g., `lectures/01/media/...`).
-- Images use relative paths like `01/media/...` WITHOUT leading slash so MkDocs prepends site_url correctly.
+- Images use relative paths from the referring document (e.g., `media/xkcd_selection_bias.png` from `lectures/03/lecture_03.md`), NOT absolute paths like `03/media/...`.
 - Prefer local comics/images. If reusing from elsewhere, copy into the lecture’s `media/` subdir first.
 - XKCD helper: `scripts/fetch_xkcd_2x.py` downloads comics via explainxkcd file pages (2x "Original file" links). Usage: `./scripts/fetch_xkcd_2x.py 1597:Git 1722:Debugging:xkcd_debugging.png`
 

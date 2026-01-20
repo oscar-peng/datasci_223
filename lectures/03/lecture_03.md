@@ -40,7 +40,7 @@ SQL is how data teams ask precise questions of large relational datasets. In hea
 | Research datasets | Cleaning, joining, aggregating |
 | Analytics stacks | ELT pipelines (extract → load → transform), dashboards, scheduled reports |
 
-![XKCD: Data Point](03/media/xkcd_data_point.png)
+![XKCD: Data Point](media/xkcd_data_point.png)
 
 ### Reference Card: Why SQL matters
 
@@ -118,7 +118,7 @@ ATTACH 'chinook.sqlite' AS chinook (TYPE SQLITE);
 SHOW TABLES FROM chinook;
 ```
 
-![SQL to pandas flow](03/media/sql_to_pandas.png)
+![SQL to pandas flow](media/sql_to_pandas.png)
 
 ### Reference Card: Notebook setup
 
@@ -580,7 +580,7 @@ FROM encounters
 GROUP BY department;
 ```
 
-![XKCD: Selection Bias](03/media/xkcd_selection_bias.png)
+![XKCD: Selection Bias](media/xkcd_selection_bias.png)
 
 # Joins: combine tables safely
 
@@ -608,7 +608,7 @@ FROM encounters;
 
 Join type determines which rows survive when keys are missing or unmatched.
 
-![Join types](03/media/join_types.png)
+![Join types](media/join_types.png)
 
 ### Reference Card: Join types
 
@@ -701,7 +701,7 @@ WHERE age >= 18;
 
 Execution happens from `FROM`/`JOIN` to `WHERE` to `GROUP BY`, then `SELECT` and `ORDER BY`, which explains why aliases are sometimes unavailable in `WHERE`.
 
-![SQL execution order](03/media/reading_sql.png)
+![SQL execution order](media/reading_sql.png)
 
 Read a query top to bottom in this order:
 
@@ -834,7 +834,7 @@ FROM encounters
 ORDER BY patient_id, encounter_date;
 ```
 
-![XKCD: Proxy Variable](03/media/xkcd_proxy_variable.png)
+![XKCD: Proxy Variable](media/xkcd_proxy_variable.png)
 
 # Data modification (INSERT, UPDATE, DELETE)
 
@@ -1022,7 +1022,7 @@ flowchart LR
     C --> D[Optimize: filter, index, join]
 ```
 
-![XKCD: Complexity Analysis](03/media/xkcd_complexity_analysis.png)
+![XKCD: Complexity Analysis](media/xkcd_complexity_analysis.png)
 
 ### Reference Card: Performance checklist
 

@@ -97,6 +97,27 @@ Both use lightweight file-based databases, so connection strings point to a loca
 %sql duckdb:///clinic.db
 ```
 
+## DuckDB + SQLite attachments
+
+DuckDB can attach a SQLite database directly so you can query it without conversion. This is DuckDB-specific.
+
+### Reference Card: DuckDB SQLite attach
+
+| Step | Purpose | Example |
+| --- | --- | --- |
+| Install scanner | Load SQLite extension | `INSTALL sqlite_scanner` |
+| Attach DB | Connect file | `ATTACH 'chinook.sqlite' AS chinook (TYPE SQLITE)` |
+| List tables | Inspect schema | `SHOW TABLES FROM chinook` |
+
+### Code Snippet: Attach SQLite in DuckDB
+
+```sql
+INSTALL sqlite_scanner;
+LOAD sqlite_scanner;
+ATTACH 'chinook.sqlite' AS chinook (TYPE SQLITE);
+SHOW TABLES FROM chinook;
+```
+
 ![SQL to pandas flow](03/media/sql_to_pandas.png)
 
 ### Reference Card: Notebook setup
@@ -210,6 +231,107 @@ ORDER BY total_cost DESC
 LIMIT 5;
 ```
 
+## CASE WHEN
+
+Use `CASE WHEN` to create conditional categories inside a query.
+
+### Reference Card: CASE WHEN
+
+| Pattern | Purpose | Example |
+| --- | --- | --- |
+| `CASE WHEN ... THEN ... END` | Conditional logic | `CASE WHEN age >= 65 THEN 'senior' ELSE 'adult' END` |
+
+### Code Snippet: Conditional labels
+
+```sql
+SELECT patient_id,
+    CASE
+        WHEN age >= 65 THEN 'senior'
+        WHEN age >= 18 THEN 'adult'
+        ELSE 'minor'
+    END AS age_group
+FROM demographics;
+```
+
+## COUNT(DISTINCT ...)
+
+Use `COUNT(DISTINCT ...)` to count unique values instead of rows.
+
+### Reference Card: COUNT DISTINCT
+
+| Pattern | Purpose | Example |
+| --- | --- | --- |
+| `COUNT(DISTINCT col)` | Unique count | `COUNT(DISTINCT patient_id)` |
+
+### Code Snippet: Unique patients per department
+
+```sql
+SELECT department, COUNT(DISTINCT patient_id) AS unique_patients
+FROM encounters
+GROUP BY department;
+```
+
+## DISTINCT vs GROUP BY
+
+Use `DISTINCT` for unique row combinations and `GROUP BY` when you need aggregates.
+
+### Reference Card: DISTINCT vs GROUP BY
+
+| Tool | Best for | Example |
+| --- | --- | --- |
+| `DISTINCT` | Unique rows | `SELECT DISTINCT department FROM encounters` |
+| `GROUP BY` | Aggregation | `SELECT department, COUNT(*) FROM encounters GROUP BY department` |
+
+### Code Snippet: Unique departments
+
+```sql
+SELECT DISTINCT department
+FROM encounters
+ORDER BY department;
+```
+
+## IN vs EXISTS
+
+Use `IN` for small sets and `EXISTS` for correlated subqueries.
+
+### Reference Card: IN vs EXISTS
+
+| Tool | Best for | Example |
+| --- | --- | --- |
+| `IN` | Small list or subquery | `WHERE id IN (SELECT ...)` |
+| `EXISTS` | Correlated checks | `WHERE EXISTS (SELECT 1 ...)` |
+
+### Code Snippet: EXISTS pattern
+
+```sql
+SELECT d.patient_id, d.age
+FROM demographics AS d
+WHERE EXISTS (
+    SELECT 1
+    FROM labs AS l
+    WHERE l.patient_id = d.patient_id
+);
+```
+
+## LIKE vs ILIKE
+
+Use `LIKE` for case-sensitive matching and `ILIKE` for case-insensitive matching when supported.
+
+### Reference Card: LIKE vs ILIKE
+
+| Tool | Purpose | Example |
+| --- | --- | --- |
+| `LIKE` | Case-sensitive match | `test_name LIKE '%A1C%'` |
+| `ILIKE` | Case-insensitive match | `test_name ILIKE '%a1c%'` |
+
+### Code Snippet: Pattern matching
+
+```sql
+SELECT patient_id, test_name
+FROM labs
+WHERE test_name ILIKE '%a1c%';
+```
+
 # LIVE DEMO!
 
 # Importing data and defining tables
@@ -272,6 +394,27 @@ Use `COPY` when you need to ingest a large file quickly into a table.
 COPY demographics
 FROM 'demographics.csv'
 (FORMAT CSV, HEADER true);
+```
+
+## COPY for exports
+
+Use `COPY ... TO` when you want to write query results to CSV or Parquet.
+
+### Reference Card: COPY TO
+
+| Format | Example | Notes |
+| --- | --- | --- |
+| CSV | `COPY (...) TO 'file.csv' (HEADER)` | Easy to inspect |
+| Parquet | `COPY (...) TO 'file.parquet' (FORMAT PARQUET)` | Efficient analytics |
+
+### Code Snippet: Export to CSV and Parquet
+
+```sql
+COPY (SELECT * FROM demographics LIMIT 100)
+TO 'demographics_sample.csv' (HEADER, DELIMITER ',');
+
+COPY (SELECT * FROM demographics LIMIT 100)
+TO 'demographics_sample.parquet' (FORMAT PARQUET);
 ```
 
 ## CREATE TABLE AS COPY
@@ -372,6 +515,24 @@ GROUP BY department
 ORDER BY avg_cost DESC;
 ```
 
+## ROUND
+
+Use `ROUND` to tidy numeric summaries for reporting after you aggregate.
+
+### Reference Card: ROUND
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `ROUND` | Set decimal places | `ROUND(AVG(total_cost), 2)` |
+
+### Code Snippet: Rounded averages
+
+```sql
+SELECT department, ROUND(AVG(total_cost), 2) AS avg_cost
+FROM encounters
+GROUP BY department;
+```
+
 ![XKCD: Selection Bias](03/media/xkcd_selection_bias.png)
 
 # Joins: combine tables safely
@@ -444,6 +605,25 @@ USING (patient_id);
 flowchart LR
     A[encounters.patient_id] -->|ON e.patient_id = d.patient_id| C[Join]
     B[demographics.patient_id] -->|USING (patient_id)| C
+```
+
+## UNION ALL
+
+Use `UNION ALL` to stack compatible result sets without de-duplicating rows.
+
+### Reference Card: UNION ALL
+
+| Operator | Purpose | Example |
+| --- | --- | --- |
+| `UNION ALL` | Stack results | `SELECT ... UNION ALL SELECT ...` |
+
+### Code Snippet: Stack row counts
+
+```sql
+SELECT 'encounters' AS table_name, COUNT(*) AS rows FROM encounters
+UNION ALL
+SELECT 'labs', COUNT(*) FROM labs
+ORDER BY table_name;
 ```
 
 # SQL statement structure and execution order
@@ -676,6 +856,63 @@ DELETE FROM encounters
 WHERE encounter_date < '2010-01-01';
 ```
 
+# CAST
+
+Use `CAST` to convert types explicitly before comparisons or aggregations.
+
+### Reference Card: CAST
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `CAST` | Convert types | `CAST(encounter_date AS DATE)` |
+
+### Code Snippet: Cast to DATE
+
+```sql
+SELECT CAST(encounter_date AS DATE) AS visit_date, COUNT(*) AS visits
+FROM encounters
+GROUP BY CAST(encounter_date AS DATE)
+ORDER BY visit_date;
+```
+
+# date_part
+
+Use `date_part` to extract date pieces for grouping and filtering.
+
+### Reference Card: date_part
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `date_part` | Extract date parts | `date_part('month', encounter_date)` |
+
+### Code Snippet: Group by month
+
+```sql
+SELECT date_part('month', encounter_date) AS month, COUNT(*) AS visits
+FROM encounters
+GROUP BY month
+ORDER BY month;
+```
+
+# DATE_TRUNC
+
+Use `DATE_TRUNC` to bucket timestamps into consistent time windows.
+
+### Reference Card: DATE_TRUNC
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `DATE_TRUNC` | Time buckets | `DATE_TRUNC('month', encounter_date)` |
+
+### Code Snippet: Monthly buckets
+
+```sql
+SELECT DATE_TRUNC('month', encounter_date) AS month, COUNT(*) AS visits
+FROM encounters
+GROUP BY month
+ORDER BY month;
+```
+
 # Views and materialized views
 
 Views save a query definition. Materialized views store a cached snapshot of results, which can speed up dashboards at the cost of refresh time.
@@ -863,3 +1100,100 @@ print(report.head())
 ```
 
 # LIVE DEMO!!!
+
+# Advanced SQL patterns (optional)
+
+These patterns are useful in production analytics but are not required for the demos.
+
+## NULLIF for safe division
+
+Use `NULLIF` to avoid divide-by-zero errors in ratios.
+
+### Reference Card: NULLIF
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `NULLIF` | Return NULL on match | `NULLIF(denominator, 0)` |
+
+### Code Snippet: Safe rate
+
+```sql
+SELECT numerator / NULLIF(denominator, 0) AS rate
+FROM metrics;
+```
+
+## ORDER BY NULLS FIRST/LAST
+
+Some dialects let you control where NULLs appear in sorted results.
+
+### Reference Card: NULL ordering
+
+| Clause | Purpose | Example |
+| --- | --- | --- |
+| `NULLS FIRST` | NULLs at top | `ORDER BY lab_value NULLS FIRST` |
+| `NULLS LAST` | NULLs at end | `ORDER BY lab_value NULLS LAST` |
+
+### Code Snippet: Explicit NULL ordering
+
+```sql
+SELECT patient_id, lab_value
+FROM labs
+ORDER BY lab_value NULLS LAST;
+```
+
+## LIMIT and OFFSET
+
+Use pagination to fetch results in smaller chunks.
+
+### Reference Card: Pagination
+
+| Clause | Purpose | Example |
+| --- | --- | --- |
+| `LIMIT` | Cap rows | `LIMIT 50` |
+| `OFFSET` | Skip rows | `OFFSET 100` |
+
+### Code Snippet: Page through results
+
+```sql
+SELECT encounter_id, patient_id
+FROM encounters
+ORDER BY encounter_id
+LIMIT 50 OFFSET 100;
+```
+
+## INSERT ... SELECT
+
+Use query results to populate another table.
+
+### Reference Card: INSERT SELECT
+
+| Pattern | Purpose | Example |
+| --- | --- | --- |
+| `INSERT ... SELECT` | Load from query | `INSERT INTO t SELECT ...` |
+
+### Code Snippet: Insert cohort
+
+```sql
+INSERT INTO high_cost_encounters
+SELECT * FROM encounters
+WHERE total_cost >= 1000;
+```
+
+## UPDATE ... FROM
+
+Use joins to update rows based on another table.
+
+### Reference Card: UPDATE FROM
+
+| Pattern | Purpose | Example |
+| --- | --- | --- |
+| `UPDATE ... FROM` | Join-based update | `UPDATE t SET ... FROM s WHERE ...` |
+
+### Code Snippet: Update with join
+
+```sql
+UPDATE encounters AS e
+SET department = d.department
+FROM departments AS d
+WHERE e.department_id = d.department_id;
+```

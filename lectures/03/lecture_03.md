@@ -38,7 +38,7 @@ SQL is how data teams ask precise questions of large relational datasets. In hea
 | EHR reporting | Cohorts, encounters, lab results |
 | Claims data | Cost summaries, utilization, billing audits |
 | Research datasets | Cleaning, joining, aggregating |
-| Analytics stacks | ELT pipelines, dashboards, scheduled reports |
+| Analytics stacks | ELT pipelines (extract → load → transform), dashboards, scheduled reports |
 
 ![XKCD: Data Point](03/media/xkcd_data_point.png)
 
@@ -61,9 +61,43 @@ LIMIT 5;
 
 # SQL in notebooks (JupySQL + DuckDB/SQLite)
 
-DuckDB is an embedded analytics database that feels like SQLite but is optimized for analytics. JupySQL lets you run SQL directly in notebooks using `%sql` for single-line and `%%sql` for multi-line queries, and it works with any SQLAlchemy-supported engine.
+DuckDB is an embedded analytics database that feels like SQLite but is optimized for analytics. JupySQL lets you run SQL directly in notebooks using `%sql` for single-line and `%%sql` for multi-line queries, and it works with any SQLAlchemy-supported engine (SQLAlchemy is a Python toolkit for database connections).
 
-#FIXME: add a visual showing SQL to pandas flow
+## JupySQL magics
+
+Use `%sql` for quick, single-line queries and `%%sql` for multi-line blocks you want to read like a full query.
+
+### Reference Card: JupySQL magics
+
+| Magic | Use case | Example |
+| --- | --- | --- |
+| `%sql` | Single-line query | `%sql SELECT COUNT(*) FROM labs` |
+| `%%sql` | Multi-line query | `%%sql` (cell header) |
+
+### Code Snippet: One-line query
+
+```python
+%sql SELECT COUNT(*) FROM labs
+```
+
+## DuckDB and SQLite connections
+
+Both use lightweight file-based databases, so connection strings point to a local file and keep everything reproducible.
+
+### Reference Card: Local connections
+
+| Engine | Connection string | Notes |
+| --- | --- | --- |
+| DuckDB | `duckdb:///clinic.db` | Fast analytics on local files |
+| SQLite | `sqlite:///clinic.db` | Portable file-based database |
+
+### Code Snippet: Connect to DuckDB
+
+```python
+%sql duckdb:///clinic.db
+```
+
+![SQL to pandas flow](03/media/sql_to_pandas.png)
 
 ### Reference Card: Notebook setup
 
@@ -88,7 +122,11 @@ SELECT * FROM demographics
 LIMIT 5;
 ```
 
-# SQL basics: comments, semicolons, and NULLs
+# SQL basics
+
+These are the building blocks of most queries. Treat them as a checklist when reading or writing SQL.
+
+## Comments, semicolons, and NULLs
 
 SQL statements end with semicolons, and comments start with `--`. NULL means missing, so comparisons need `IS NULL` rather than `=`.
 
@@ -115,7 +153,24 @@ WHERE value IS NOT NULL
 ORDER BY test_name;
 ```
 
-# SQL basics: SELECT, WHERE, ORDER BY, LIMIT, DISTINCT
+## COALESCE
+
+Use `COALESCE` to replace missing values with a default during queries.
+
+### Reference Card: COALESCE
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `COALESCE` | Fill NULLs | `COALESCE(lab_value, 0)` |
+
+### Code Snippet: Fill NULLs
+
+```sql
+SELECT patient_id, COALESCE(lab_value, 0) AS lab_value_filled
+FROM labs;
+```
+
+## SELECT, WHERE, ORDER BY, LIMIT, DISTINCT
 
 This is the core of most queries: choose columns, filter rows, and order the output. Learn these first and most day-to-day SQL becomes readable.
 
@@ -157,41 +212,89 @@ LIMIT 5;
 
 # LIVE DEMO!
 
-# SQL statement structure and execution order
-
-SQL reads like English, but it executes in a specific order. When a query is confusing, rewrite it as a pipeline: join tables, filter rows, group, compute, then sort.
-
-#FIXME: add execution order diagram
-
-### Reference Card: Execution order (simplified)
-
-| Order | Clause |
-| --- | --- |
-| 1 | `FROM` + `JOIN` |
-| 2 | `WHERE` |
-| 3 | `GROUP BY` |
-| 4 | `HAVING` |
-| 5 | `SELECT` |
-| 6 | `ORDER BY` |
-| 7 | `LIMIT` |
-
-### Code Snippet: Readable query template
-
-```sql
-SELECT department, COUNT(*) AS visit_count
-FROM encounters
-WHERE total_cost > 500
-GROUP BY department
-HAVING COUNT(*) >= 3
-ORDER BY visit_count DESC
-LIMIT 5;
-```
-
 # Importing data and defining tables
 
-Real projects start with files. You can load CSVs directly, scan Parquet for columnar files, or create tables with explicit types for safer analysis.
+Real projects start with files. You can load CSVs directly, scan Parquet for columnar files (columnar means values are stored by column for faster analytics), or create tables with explicit types for safer analysis.
 
-#FIXME: add data import diagram or screenshot
+```mermaid
+flowchart LR
+    A[Raw CSV/Parquet files] --> B[Ingest (read_csv_auto / read_parquet)]
+    B --> C[Typed table]
+    C --> D[Query and reuse]
+```
+
+## DuckDB `read_csv_auto`
+
+`read_csv_auto` is DuckDB-specific and auto-detects column types for quick exploration.
+
+### Reference Card: `read_csv_auto` (DuckDB)
+
+| Feature | Benefit | Example |
+| --- | --- | --- |
+| Auto schema | Fast exploration | `SELECT * FROM read_csv_auto('file.csv')` |
+
+### Code Snippet: Quick CSV scan
+
+```sql
+SELECT * FROM read_csv_auto('demographics.csv');
+```
+
+## DuckDB `read_parquet`
+
+`read_parquet` is DuckDB-specific and reads columnar Parquet files efficiently.
+
+### Reference Card: `read_parquet` (DuckDB)
+
+| Feature | Benefit | Example |
+| --- | --- | --- |
+| Columnar reads | Faster analytics | `SELECT * FROM read_parquet('file.parquet')` |
+
+### Code Snippet: Parquet scan
+
+```sql
+SELECT * FROM read_parquet('encounters.parquet');
+```
+
+## COPY for bulk load
+
+Use `COPY` when you need to ingest a large file quickly into a table.
+
+### Reference Card: COPY
+
+| Option | Purpose | Example |
+| --- | --- | --- |
+| `HEADER` | Skip header row | `HEADER true` |
+| `DELIMITER` | Customize separator | `DELIMITER ','` |
+
+### Code Snippet: COPY from CSV
+
+```sql
+COPY demographics
+FROM 'demographics.csv'
+(FORMAT CSV, HEADER true);
+```
+
+## CREATE TABLE AS COPY
+
+Create and populate a table in one step when you want an explicit schema.
+
+### Reference Card: CREATE TABLE AS COPY
+
+| Benefit | Use case |
+| --- | --- |
+| Single step | Reproducible loads |
+| Explicit types | Safer analysis |
+
+### Code Snippet: Create table + load
+
+```sql
+CREATE TABLE demographics (
+    patient_id INTEGER,
+    age INTEGER,
+    sex TEXT
+) AS COPY FROM 'demographics.csv'
+WITH (FORMAT CSV, HEADER true);
+```
 
 ### Reference Card: Common import patterns
 
@@ -213,7 +316,35 @@ SELECT * FROM read_csv_auto('demographics.csv');
 
 Filtering shrinks the data to what you need. Aggregation summarizes it to the level you want to report. Use `WHERE` to filter rows before grouping and `HAVING` to filter groups after aggregation; if you are unsure, start with `WHERE`.
 
-#FIXME: add a WHERE vs HAVING diagram
+## WHERE vs HAVING
+
+`WHERE` filters raw rows, and `HAVING` filters aggregated groups after `GROUP BY`.
+
+### Reference Card: WHERE vs HAVING
+
+| Clause | Applies to | Example |
+| --- | --- | --- |
+| `WHERE` | Rows before grouping | `WHERE total_cost > 500` |
+| `HAVING` | Groups after `GROUP BY` | `HAVING COUNT(*) > 3` |
+
+## GROUP BY and aggregates
+
+Aggregates like `COUNT` and `AVG` summarize each group into a single row of results.
+
+### Reference Card: Aggregates
+
+| Function | Purpose | Example |
+| --- | --- | --- |
+| `COUNT` | Row counts | `COUNT(*)` |
+| `AVG` | Mean | `AVG(total_cost)` |
+| `SUM` | Totals | `SUM(total_cost)` |
+
+```mermaid
+flowchart LR
+    A[Raw rows] --> B[WHERE filters rows]
+    B --> C[GROUP BY aggregates]
+    C --> D[HAVING filters groups]
+```
 
 | Department | Visit count | Avg cost |
 | --- | --- | --- |
@@ -247,7 +378,29 @@ ORDER BY avg_cost DESC;
 
 Joins connect demographics, encounters, and lab results. Always join on keys and check for row explosion (many-to-many joins can multiply rows).
 
-#FIXME: add join types diagram
+## Joins
+
+Plan joins like data links: define the primary key, check duplicates, and test row counts before and after.
+
+### Reference Card: Join checks
+
+| Check | Why it matters | Quick test |
+| --- | --- | --- |
+| Key uniqueness | Prevent row explosion | `COUNT(*) vs COUNT(DISTINCT key)` |
+| Row counts | Detect unexpected growth | Compare counts pre/post join |
+
+### Code Snippet: Pre-join key check
+
+```sql
+SELECT COUNT(*) AS rows, COUNT(DISTINCT patient_id) AS patients
+FROM encounters;
+```
+
+## Join types
+
+Join type determines which rows survive when keys are missing or unmatched.
+
+![Join types](03/media/join_types.png)
 
 ### Reference Card: Join types
 
@@ -267,13 +420,139 @@ LEFT JOIN demographics AS d
     ON e.patient_id = d.patient_id;
 ```
 
+## ON vs USING
+
+Use `ON` when columns differ in name or you need a more complex condition. Use `USING` when column names match and you want a cleaner query.
+
+### Reference Card: ON vs USING
+
+| Syntax | Best for | Example |
+| --- | --- | --- |
+| `ON` | Different column names or conditions | `ON e.patient_id = d.patient_id` |
+| `USING` | Same column name in both tables | `USING (patient_id)` |
+
+### Code Snippet: USING clause
+
+```sql
+SELECT *
+FROM encounters
+INNER JOIN demographics
+USING (patient_id);
+```
+
+```mermaid
+flowchart LR
+    A[encounters.patient_id] -->|ON e.patient_id = d.patient_id| C[Join]
+    B[demographics.patient_id] -->|USING (patient_id)| C
+```
+
+# SQL statement structure and execution order
+
+SQL reads like English, but it executes in a specific order. When a query is confusing, rewrite it as a pipeline: join tables, filter rows, group, compute, then sort.
+
+## Statement structure
+
+Write SQL in the order you want it to read: `SELECT` what you want, `FROM` where it lives, and `WHERE` how you filter.
+
+### Reference Card: Readable structure
+
+| Step | Purpose | Example |
+| --- | --- | --- |
+| `SELECT` | Choose columns | `SELECT patient_id, age` |
+| `FROM` | Pick table | `FROM demographics` |
+| `WHERE` | Filter rows | `WHERE age >= 18` |
+
+### Code Snippet: Skeleton query
+
+```sql
+SELECT patient_id, age
+FROM demographics
+WHERE age >= 18;
+```
+
+## Execution order
+
+Execution happens from `FROM`/`JOIN` to `WHERE` to `GROUP BY`, then `SELECT` and `ORDER BY`, which explains why aliases are sometimes unavailable in `WHERE`.
+
+![SQL execution order](03/media/reading_sql.png)
+
+Read a query top to bottom in this order:
+
+1. Build tables with `FROM` + `JOIN`
+2. Filter rows with `WHERE`
+3. Aggregate with `GROUP BY` and filter groups with `HAVING`
+4. Compute output with `SELECT`
+5. Sort and trim with `ORDER BY` + `LIMIT`
+
+### Reference Card: Execution order (simplified)
+
+| Order | Clause |
+| --- | --- |
+| 1 | `FROM` + `JOIN` |
+| 2 | `WHERE` |
+| 3 | `GROUP BY` |
+| 4 | `HAVING` |
+| 5 | `SELECT` |
+| 6 | `ORDER BY` |
+| 7 | `LIMIT` |
+
+### Code Snippet: Readable query template
+
+```sql
+SELECT department, COUNT(*) AS visit_count
+FROM encounters
+WHERE total_cost > 500
+GROUP BY department
+HAVING COUNT(*) >= 3
+ORDER BY visit_count DESC
+LIMIT 5;
+```
+
 # LIVE DEMO!!
 
 # Subqueries and CTEs
 
-Subqueries let you nest logic. CTEs (`WITH`) make that logic readable and reusable, which matters for multi-step cohort definitions.
+Subqueries let you nest logic. CTEs (`WITH`) make that logic readable and reusable, which matters for multi-step cohort definitions (a cohort is a defined group of patients).
 
-#FIXME: add subquery vs CTE comparison visual
+## Subqueries
+
+Use a subquery when you need a compact, one-off filter or calculation inside a larger query.
+
+### Reference Card: Subqueries
+
+| Pattern | Use case | Example |
+| --- | --- | --- |
+| `IN (SELECT ...)` | Filter by a derived set | `WHERE id IN (SELECT ...)` |
+| Scalar subquery | Single value in `SELECT` | `(SELECT MAX(...))` |
+
+### Code Snippet: Subquery filter
+
+```sql
+SELECT patient_id, age
+FROM demographics
+WHERE patient_id IN (
+    SELECT patient_id
+    FROM labs
+    WHERE test_name = 'A1C' AND value >= 7.0
+);
+```
+
+## CTEs
+
+Use a CTE when the logic has multiple steps or needs to stay readable across several joins or filters.
+
+### Reference Card: CTEs
+
+| Feature | Benefit | Example |
+| --- | --- | --- |
+| `WITH name AS (...)` | Reuse readable steps | `WITH cohort AS (...)` |
+
+```mermaid
+flowchart LR
+    A[Main query] --> B[Inline subquery]
+    A --> C[CTE: WITH cohort AS (...)]
+    C --> D[Main query uses cohort]
+```
 
 ### Reference Card: Subqueries vs CTEs
 
@@ -334,7 +613,12 @@ ORDER BY patient_id, encounter_date;
 
 These statements change data in place. Use them sparingly in analytics and favor scratch databases when you need to write.
 
-#FIXME: add data modification workflow visual
+```mermaid
+flowchart LR
+    A[SELECT preview] --> B[INSERT/UPDATE/DELETE]
+    B --> C[Validate row counts]
+    C --> D[Commit or rollback]
+```
 
 ### Reference Card: Data modification statements
 
@@ -344,6 +628,10 @@ These statements change data in place. Use them sparingly in analytics and favor
 | `UPDATE` | Edit rows | Always include a `WHERE` |
 | `DELETE` | Remove rows | Preview with `SELECT` first |
 
+## INSERT
+
+Use explicit column lists and treat inserts as append-only in analytics workflows.
+
 ### Code Snippet: Safe insert
 
 ```sql
@@ -351,18 +639,75 @@ INSERT INTO solution (id, name)
 VALUES (1, 'Ada Lovelace');
 ```
 
+## UPDATE
+
+Always include a `WHERE` and check the affected rows before committing the change.
+
+### Reference Card: UPDATE
+
+| Guardrail | Why it helps |
+| --- | --- |
+| `WHERE` required | Prevents full-table edits |
+| Preview first | Confirms target rows |
+
+### Code Snippet: Safe update
+
+```sql
+UPDATE encounters
+SET total_cost = total_cost * 0.9
+WHERE department = 'Cardiology';
+```
+
+## DELETE
+
+Preview the rows with a `SELECT` first, then delete with the same `WHERE` filter.
+
+### Reference Card: DELETE
+
+| Guardrail | Why it helps |
+| --- | --- |
+| Preview with `SELECT` | Validate target rows |
+| Limit scope | Avoid accidental full delete |
+
+### Code Snippet: Targeted delete
+
+```sql
+DELETE FROM encounters
+WHERE encounter_date < '2010-01-01';
+```
+
 # Views and materialized views
 
 Views save a query definition. Materialized views store a cached snapshot of results, which can speed up dashboards at the cost of refresh time.
 
-#FIXME: add view vs materialized view visual
+## Views
+
+Use views to keep a canonical definition of common queries without duplicating SQL logic.
 
 ### Reference Card: Views
 
-| Type | Stored data? | Use case |
-| --- | --- | --- |
-| View | No | Reusable logic, always current |
-| Materialized view | Yes | Faster reads, scheduled refresh |
+| Property | Notes |
+| --- | --- |
+| Stored data | No |
+| Refresh | Always current |
+
+## Materialized views
+
+Use materialized views when you can afford scheduled refreshes in exchange for faster reads.
+
+### Reference Card: Materialized views
+
+| Property | Notes |
+| --- | --- |
+| Stored data | Yes |
+| Refresh | Manual or scheduled |
+
+```mermaid
+flowchart LR
+    A[Query definition] --> B[View (no stored data)]
+    A --> C[Materialized view (stored snapshot)]
+    C --> D[Refresh schedule]
+```
 
 ### Code Snippet: Create a view
 
@@ -373,11 +718,25 @@ FROM encounters
 WHERE total_cost >= 1000;
 ```
 
+### Code Snippet: Create a materialized view
+
+```sql
+CREATE MATERIALIZED VIEW high_cost_encounters_mv AS
+SELECT encounter_id, patient_id, total_cost
+FROM encounters
+WHERE total_cost >= 1000;
+```
+
 # Performance basics
 
 Performance depends on reading less data and doing work once. A query plan is the database's step-by-step execution order; start with filters and clear joins before reaching for complex optimizations.
 
-#FIXME: add query plan or performance visual
+```mermaid
+flowchart LR
+    A[Query] --> B[EXPLAIN plan]
+    B --> C[Find slow step]
+    C --> D[Optimize: filter, index, join]
+```
 
 ![XKCD: Complexity Analysis](03/media/xkcd_complexity_analysis.png)
 
@@ -402,6 +761,65 @@ GROUP BY department;
 # SQL + Python workflows
 
 SQL is great for filtering and aggregation; Python is great for modeling and visualization. Use SQL to reduce the dataset, then load the result into pandas for analysis. DuckDB and SQLite are easy local options; for external databases, connect via SQLAlchemy and reuse the same query strings.
+
+## SQL for reduction
+
+Use SQL to filter to cohorts, aggregate to reporting levels, and shrink the data before it hits memory.
+
+### Reference Card: Reduction patterns
+
+| Pattern | Goal | Example |
+| --- | --- | --- |
+| Filter | Keep cohort | `WHERE age >= 18` |
+| Aggregate | Summarize | `GROUP BY department` |
+
+### Code Snippet: Reduce before pandas
+
+```sql
+SELECT department, COUNT(*) AS visit_count
+FROM encounters
+WHERE encounter_date >= '2024-01-01'
+GROUP BY department;
+```
+
+## Python for analysis
+
+Load the reduced dataset into pandas for plots, modeling, and downstream feature engineering.
+
+### Reference Card: pandas entry points
+
+| Method | When to use |
+| --- | --- |
+| `pd.read_sql` | SQLAlchemy connections |
+| `fetch_df` | DuckDB result to DataFrame |
+
+### Code Snippet: pandas from SQLAlchemy
+
+```python
+report = pd.read_sql(query, engine)
+```
+
+## SQLite connections
+
+Use SQLite for lightweight, file-based workflows that still support standard SQL.
+
+### Reference Card: SQLite
+
+| Tool | Usage |
+| --- | --- |
+| `sqlite3.connect` | `sqlite3.connect("clinic.db")` |
+| `pd.read_sql_query` | `pd.read_sql_query(query, conn)` |
+
+### Code Snippet: SQLite to pandas
+
+```python
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect("clinic.db")
+query = "SELECT department, COUNT(*) AS visit_count FROM encounters GROUP BY department"
+report = pd.read_sql_query(query, conn)
+```
 
 | Step | Tool | Output |
 | --- | --- | --- |

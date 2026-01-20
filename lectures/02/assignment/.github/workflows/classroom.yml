@@ -26,9 +26,14 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Generate test data
+      - name: Download latest test files
         run: |
-          python generate_test_data.py --size small --output-dir data
+          mkdir -p .github/test
+          curl -o .github/test/test_assignment.py \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw02/refs/heads/main/.github/test/test_assignment.py
+          curl -o .github/test/requirements.txt \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw02/refs/heads/main/requirements.txt
+          pip install -r .github/test/requirements.txt
 
       - name: Execute assignment notebook
         run: |
@@ -37,14 +42,4 @@ jobs:
       - name: Run tests
         run: |
           pytest .github/tests/test_assignment.py -v
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            assignment.ipynb
-            outputs/*.parquet
-            outputs/*.csv
-            .pytest_cache/
+          

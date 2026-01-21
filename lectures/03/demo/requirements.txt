@@ -3,3 +3,4 @@ duckdb-engine
 jupysql
 pandas
 altair
+plotly

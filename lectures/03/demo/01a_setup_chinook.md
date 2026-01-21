@@ -14,7 +14,7 @@ Install packages from `lectures/03/demo/requirements.txt` in your terminal, then
 
 ```python
 %load_ext sql
-%sql duckdb:///demo_chinook.duckdb
+%sql duckdb:///demo_chinook.duckdb?access_mode=read_only
 ```
 
 ## Step 2: Attach the Chinook SQLite database
@@ -24,7 +24,19 @@ Install packages from `lectures/03/demo/requirements.txt` in your terminal, then
 INSTALL sqlite_scanner;
 LOAD sqlite_scanner;
 ATTACH 'chinook.sqlite' AS chinook (TYPE SQLITE);
-SHOW TABLES FROM chinook;
+```
+
+```python
+%%sql
+SHOW TABLES;
+-- This should work but doesn't :(
+```
+
+```python
+%%sql
+-- We can always use the duckdb information schema
+SELECT table_name FROM information_schema.tables 
+WHERE table_catalog = 'chinook';
 ```
 
 Checkpoint: you should see tables like `Albums`, `Artists`, `Tracks`, `Customers`, `Invoices`, and `Invoice_Items`.
@@ -44,6 +56,7 @@ Example output (table names will match, counts not shown yet):
 
 ```python
 %%sql
+-- Drop existing tables if they exist to avoid errors on re-running
 DROP TABLE IF EXISTS artists;
 DROP TABLE IF EXISTS albums;
 DROP TABLE IF EXISTS tracks;

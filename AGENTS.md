@@ -59,13 +59,44 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
   - a short `### Code Snippet: ...`
 - Place visuals before code.
 - Mark demo breaks only with `# LIVE DEMO!`, `# LIVE DEMO!!`, `# LIVE DEMO!!!` (first/second/third demo). Each marker should correspond to a concrete walkthrough in `lectures/XX/demo/`.
-- Skip “Summary” sections.
+- Skip "Summary" sections.
+
+### Reference card formats
+
+Two standard formats for reference cards:
+
+**Multi-method reference table** — for related methods that don't need dedicated subsections:
+
+```markdown
+### Reference Card: spaCy Basics
+
+| Category | Method / Attribute | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Setup** | `spacy.load("model_name")` | Loads a language pipeline (e.g., `"en_core_web_sm"`). | Language object (`nlp`) |
+| **Process** | `nlp("Text string")` | Processes text through the pipeline. | `Doc` object |
+| **Tokenization** | `[token.text for token in doc]` | Breaks `Doc` into individual words/punctuation. | `List[str]` |
+| **Linguistic** | `token.pos_` | Returns the Part-of-Speech tag (e.g., NOUN, VERB). | `String` |
+| **Entities** | `doc.ents` | Accesses named entities found in the text. | `Span` objects |
+```
+
+**Single-function deep-dive** — for complex functions needing detailed documentation:
+
+```markdown
+### Reference Card: `spacy.load()`
+
+| Component | Details |
+| :--- | :--- |
+| **Signature** | `spacy.load(name, *, vocab=True, disable=[], exclude=[], config={})` |
+| **Purpose** | Loads a trained pipeline package by name and returns a `Language` object. |
+| **Parameters** | • **name** (str): The package name or path to data directory.<br>• **disable** (list): Names of pipeline components to ignore (e.g., `['tagger', 'parser']`).<br>• **exclude** (list): Pipeline components to skip entirely and never load.<br>• **config** (dict): Overrides for model configuration. |
+| **Returns** | `Language`: A stateful container that processes text and returns `Doc` objects. |
+```
 
 ### Assets and links
 
 - Assets live alongside their lecture folder (e.g., `lectures/01/media/...`).
 - Images use relative paths from the referring document (e.g., `media/xkcd_selection_bias.png` from `lectures/03/lecture_03.md`), NOT absolute paths like `03/media/...`.
-- Prefer local comics/images. If reusing from elsewhere, copy into the lecture’s `media/` subdir first.
+- Prefer local comics/images. If reusing from elsewhere, copy into the lecture's `media/` subdir first.
 - XKCD helper: `scripts/fetch_xkcd_2x.py` downloads comics via explainxkcd file pages (2x "Original file" links). Usage: `./scripts/fetch_xkcd_2x.py 1597:Git 1722:Debugging:xkcd_debugging.png`
 
 ### Notes
@@ -148,7 +179,7 @@ Do not declare work complete without validation.
 - Demos run end-to-end without errors unless an error is explicitly introduced for pedagogy.
 - For intentionally buggy demos:
   - document the expected failure mode clearly in the demo guide/walkthrough (what error, where it happens, what students should learn)
-  - keep the “buggy” artifact and the “fixed” artifact side-by-side (e.g., `02a_*.md` and `02b_*.md`).
+  - keep the "buggy" artifact and the "fixed" artifact side-by-side (e.g., `02a_*.md` and `02b_*.md`).
 
 **Minimum validation for a demo change:**
 
@@ -187,6 +218,6 @@ Test what a student does from a clean copy of the assignment folder.
 - DRY and separation of concerns: extract shared logic into helpers; keep orchestration separate from business logic and from data/visual layers.
 - Simplicity and clear data flow: favor explicit, minimal abstractions with named inputs/outputs; avoid hidden side effects.
 - Naming and comments: descriptive function/variable names; brief contextual comments only when logic is non-obvious.
-- **Testing/validation required**: never declare work done without actually running the code AND validating output. Run the lecture/demo/assignment validation appropriate to what changed (see “Validation protocol (agent checklist)” above). If testing is impossible, document assumptions and provide user-run verification steps.
+- **Testing/validation required**: never declare work done without actually running the code AND validating output. Run the lecture/demo/assignment validation appropriate to what changed (see "Validation protocol (agent checklist)" above). If testing is impossible, document assumptions and provide user-run verification steps.
 - Environment discipline: prefer `uv` for speed, fallback to venv/conda; stable working dir, relative paths; avoid complex one-liners—script it instead.
 - Git hygiene: direct, professional commit messages—no cute co-author tags (e.g., "Co-Authored-By: Claude"), no emoji, no "Generated with" footers. Conventional commits preferred.

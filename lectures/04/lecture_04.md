@@ -100,7 +100,7 @@ Two Python libraries dominate classical NLP work.
 
 | Tool | Install | First-time Setup |
 |------|---------|------------------|
-| NLTK | `pip install nltk` | `nltk.download('punkt')`, `nltk.download('stopwords')` |
+| NLTK | `pip install nltk` | `nltk.download('punkt_tab')`, `nltk.download('stopwords')` |
 | spaCy | `pip install spacy` | `python -m spacy download en_core_web_sm` |
 | scikit-learn | `pip install scikit-learn` | (none required) |
 
@@ -196,7 +196,7 @@ import string
 import nltk
 from nltk.corpus import stopwords
 
-nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 
 text = "The Patient, age 45, presents WITH chest pain."
@@ -572,6 +572,8 @@ $$\text{TF-IDF}(word, doc) = \text{TF}(word, doc) \times \text{IDF}(word)$$
 - **TF (Term Frequency)** — how often the word appears in this document
 - **IDF (Inverse Document Frequency)** — how rare the word is across all documents: $\log(\text{total docs} / \text{docs containing word})$
 
+> **Note:** scikit-learn's `TfidfVectorizer` uses a smoothed IDF formula by default: $\log((n+1)/(df+1)) + 1$, where $n$ is the total number of documents and $df$ is the document frequency. This prevents division by zero and slightly different values than the standard formula.
+
 **Example:** "diabetes" appears in 10 of 1000 documents → high IDF (distinctive). "patient" appears in 900 of 1000 → low IDF (common).
 
 ### Reference Card: `TfidfVectorizer`
@@ -656,6 +658,7 @@ spaCy's medium and large models (`en_core_web_md`, `en_core_web_lg`) include pre
 
 ```python
 import spacy
+# Note: en_core_web_sm has no vectors; use _md or _lg for word vectors
 nlp = spacy.load("en_core_web_md")  # medium model has vectors
 doc = nlp("diabetes hypertension")
 print(doc[0].vector.shape)          # (300,) - 300-dimensional vector
@@ -741,7 +744,7 @@ General NLP tools struggle with clinical text:
 
 **Abbreviations** — "pt c/o SOB" = "patient complains of shortness of breath". Same abbreviation, different meanings: "MS" = multiple sclerosis OR mental status OR morphine sulfate.
 
-**Negation** — "Patient denies chest pain" means chest pain is ABSENT. Simple keyword extraction misses this.
+**Negation** — "Patient denies chest pain" means chest pain is ABSENT. Simple keyword extraction misses this. Basic negation detection looks for negation words ("no", "denies", "without") within a few words of the finding: `re.search(r'\b(no|denies?|without)\s+\w+\s+chest\s+pain', text, re.I)` would catch this pattern.
 
 **Uncertainty** — "possible pneumonia" ≠ "confirmed pneumonia". "rule out MI" = suspicion, not diagnosis.
 
@@ -832,14 +835,14 @@ def spacy_pipeline(text):
         'blood_pressure': re.findall(r'\d{2,3}/\d{2,3}', text)
     }
 
-note = "Patient John Smith, age 45, presents with BP 140/90 and chest pain."
+note = "Dr. Martinez at UCSF prescribed Metformin 500mg on 01/15/2025. Patient reports improved glucose control."
 result = spacy_pipeline(note)
 print(f"Nouns: {result['nouns']}")
 print(f"Entities: {result['entities']}")
 print(f"BP: {result['blood_pressure']}")
-# Nouns: ['Patient', 'age', 'chest', 'pain']
-# Entities: [('John Smith', 'PERSON'), ('45', 'DATE'), ('140/90', 'CARDINAL')]
-# BP: ['140/90']
+# Nouns: ['Dr.', 'UCSF', 'Metformin', 'glucose', 'control']
+# Entities: [('Dr. Martinez', 'PERSON'), ('UCSF', 'ORG'), ('01/15/2025', 'DATE')]
+# BP: []
 ```
 
 ### Reference Card: spaCy Pipeline

@@ -734,72 +734,113 @@ General NLP tools struggle with clinical text:
 
 Putting it all together: combine preprocessing, analysis, and extraction into reusable pipelines.
 
-## spaCy: Integrated Processing
+## NLTK Pipeline
 
-spaCy processes text through a unified pipeline—tokenization, POS tagging, lemmatization, and NER in one pass.
+NLTK requires manual assembly—each step is explicit and configurable.
+
+### Code Snippet: NLTK Pipeline
+
+```python
+import nltk
+import string
+import re
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+def nltk_pipeline(text):
+    # Step 1: Tokenize
+    tokens = nltk.word_tokenize(text.lower())
+    
+    # Step 2: Remove punctuation and stopwords
+    stop_words = set(stopwords.words('english')) - {'no', 'not'}  # keep negations
+    tokens = [t for t in tokens if t not in string.punctuation and t not in stop_words]
+    
+    # Step 3: Lemmatize
+    lemmatizer = WordNetLemmatizer()
+    tokens = [lemmatizer.lemmatize(t) for t in tokens]
+    
+    # Step 4: POS tag
+    tagged = nltk.pos_tag(tokens)
+    
+    # Step 5: Extract named entities
+    entities = nltk.ne_chunk(tagged)
+    
+    # Step 6: Extract patterns with regex
+    bp = re.findall(r'\d{2,3}/\d{2,3}', text)
+    
+    return {
+        'tokens': tokens,
+        'pos_tags': tagged,
+        'nouns': [word for word, tag in tagged if tag.startswith('NN')],
+        'entities': entities,
+        'blood_pressure': bp
+    }
+
+note = "Patient John Smith, age 45, presents with BP 140/90 and chest pain."
+result = nltk_pipeline(note)
+print(f"Tokens: {result['tokens']}")
+print(f"Nouns: {result['nouns']}")
+print(f"BP: {result['blood_pressure']}")
+# Tokens: ['patient', 'john', 'smith', 'age', '45', 'present', 'bp', '140/90', 'chest', 'pain']
+# Nouns: ['patient', 'john', 'smith', 'age', 'bp', 'chest', 'pain']
+# BP: ['140/90']
+```
+
+## spaCy Pipeline
+
+spaCy's pipeline is integrated—one call processes everything.
+
+### Code Snippet: spaCy Pipeline
+
+```python
+import spacy
+import re
+
+def spacy_pipeline(text):
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(text)
+    
+    # All analysis available on doc object
+    return {
+        'tokens': [token.text for token in doc],
+        'lemmas': [token.lemma_ for token in doc if not token.is_punct],
+        'nouns': [token.lemma_ for token in doc if token.pos_ == "NOUN"],
+        'entities': [(ent.text, ent.label_) for ent in doc.ents],
+        'blood_pressure': re.findall(r'\d{2,3}/\d{2,3}', text)
+    }
+
+note = "Patient John Smith, age 45, presents with BP 140/90 and chest pain."
+result = spacy_pipeline(note)
+print(f"Nouns: {result['nouns']}")
+print(f"Entities: {result['entities']}")
+print(f"BP: {result['blood_pressure']}")
+# Nouns: ['Patient', 'age', 'chest', 'pain']
+# Entities: [('John Smith', 'PERSON'), ('45', 'DATE'), ('140/90', 'CARDINAL')]
+# BP: ['140/90']
+```
 
 ### Reference Card: spaCy Pipeline
 
 | Category | Method / Attribute | Purpose & Arguments | Typical Output |
 | :--- | :--- | :--- | :--- |
 | **Setup** | `spacy.load("en_core_web_sm")` | Loads English pipeline model. | `Language` (`nlp`) |
-| **Process** | `nlp(text)` | Processes text through full pipeline. | `Doc` object |
-| **Token** | `token.text` | Original token text. | `str` |
-| **Token** | `token.lower_` | Lowercased form. | `str` |
+| **Process** | `nlp(text)` | Runs full pipeline in one call. | `Doc` object |
 | **Token** | `token.lemma_` | Dictionary base form. | `str` |
 | **Token** | `token.pos_` | Part-of-speech tag. | `str` (`"NOUN"`, `"VERB"`) |
-| **Token** | `token.dep_` | Syntactic dependency role. | `str` (`"nsubj"`, `"ROOT"`) |
+| **Token** | `token.is_stop`, `token.is_punct` | Boolean filters. | `bool` |
 | **Doc** | `doc.ents` | Named entities found. | `tuple[Span]` |
-
-### Code Snippet: spaCy Pipeline
-
-```python
-import spacy
-
-nlp = spacy.load("en_core_web_sm")
-doc = nlp("The patient was diagnosed with Type 2 diabetes.")
-
-for token in doc:
-    print(f"{token.text:12} {token.pos_:6} {token.lemma_:12} {token.dep_}")
-
-# The          DET    the          det
-# patient      NOUN   patient      nsubjpass
-# was          AUX    be           auxpass
-# diagnosed    VERB   diagnose     ROOT
-# with         ADP    with         prep
-# Type         PROPN  Type         compound
-# 2            NUM    2            compound
-# diabetes     NOUN   diabetes     pobj
-```
 
 ![XKCD: Python Environment](media/xkcd_python_environment.png)
 
-## Combining spaCy + Regex
+## Comparing the Approaches
 
-spaCy handles linguistic analysis; regex handles pattern extraction. Combining them creates a practical clinical NLP pipeline.
-
-### Code Snippet: Combined Pipeline
-
-```python
-import spacy
-import re
-
-def process_note(note):
-    nlp = spacy.load("en_core_web_sm")
-    doc = nlp(note)
-
-    return {
-        'entities': [(ent.text, ent.label_) for ent in doc.ents],
-        'blood_pressure': re.findall(r'\d{2,3}/\d{2,3}', note),
-        'nouns': [token.lemma_ for token in doc if token.pos_ == "NOUN"]
-    }
-
-note = "Patient John Smith, age 45, presents with BP 140/90 and chest pain."
-print(process_note(note))
-# {'entities': [('John Smith', 'PERSON'), ('45', 'DATE')],
-#  'blood_pressure': ['140/90'],
-#  'nouns': ['patient', 'age', 'chest', 'pain']}
-```
+| Aspect | NLTK Pipeline | spaCy Pipeline |
+|--------|---------------|----------------|
+| Assembly | Manual, step-by-step | Automatic, one call |
+| Customization | Full control at each step | Configure via `nlp.disable()` |
+| Stopwords | Explicit filtering | `token.is_stop` attribute |
+| NER quality | Basic | Better out-of-box |
+| Speed | Slower | Faster |
 
 # LIVE DEMO!!!
 

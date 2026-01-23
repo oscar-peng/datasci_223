@@ -226,7 +226,7 @@ Word          Stemmer Output    Lemmatizer Output
 "running"     "run"             "run"
 "studies"     "studi"           "study"
 "better"      "better"          "good" (with POS=adj)
-"universities""univers"         "university"
+"universities" "univers"        "university"
 ```
 
 ### Reference Card: Stemming & Lemmatization
@@ -253,6 +253,8 @@ words = ["running", "studies", "better", "caring"]
 for word in words:
     print(f"{word}: stem={stemmer.stem(word)}, lemma={lemmatizer.lemmatize(word, pos='v')}")
 ```
+
+![XKCD: Synonym Date](media/xkcd_synonym_date.png)
 
 # LIVE DEMO!
 
@@ -435,7 +437,7 @@ for ent in doc.ents:
 
 # Text Extraction
 
-Beyond NER, we often need to extract specific patterns from text—vitals, dosages, dates, and other structured information.
+Beyond NER, we often need to extract specific patterns from text—vitals, dosages, dates, and other structured information. Regex is the workhorse for syntactic patterns; for more complex extraction, consider rule-based systems (spaCy's `Matcher`) or template filling.
 
 ## Regex Patterns
 
@@ -563,8 +565,6 @@ print(X.toarray())
 
 **TF-IDF (Term Frequency–Inverse Document Frequency)** improves on raw counts by weighting words based on how distinctive they are. Words that appear in every document get downweighted; rare, specific terms get upweighted.
 
-<!-- #FIXME: tfidf_weights.png needs fixing - "Common words"/"Distinctive words" labels hard to read, arrows point at nothing (should be horizontal), horizontal gridlines behind bars obscure values -->
-
 ![TF-IDF Weights](media/tfidf_weights.png)
 
 $$\text{TF-IDF}(word, doc) = \text{TF}(word, doc) \times \text{IDF}(word)$$
@@ -572,7 +572,7 @@ $$\text{TF-IDF}(word, doc) = \text{TF}(word, doc) \times \text{IDF}(word)$$
 - **TF (Term Frequency)** — how often the word appears in this document
 - **IDF (Inverse Document Frequency)** — how rare the word is across all documents: $\log(\text{total docs} / \text{docs containing word})$
 
-**Example:** "diabetes" appears in 10 of 1000 documents → IDF ≈ 2.0 (distinctive). "patient" appears in 900 of 1000 → IDF ≈ 0.05 (common).
+**Example:** "diabetes" appears in 10 of 1000 documents → high IDF (distinctive). "patient" appears in 900 of 1000 → low IDF (common).
 
 ### Reference Card: `TfidfVectorizer`
 
@@ -644,11 +644,23 @@ print(vectorizer.get_feature_names_out())
 #  'patient', 'patient denies', 'patient reports', 'reports', 'reports chest']
 ```
 
+![XKCD: Automation](media/xkcd_automation.png)
+
 ## Word Vectors
 
 The representations above treat each word independently—"diabetes" and "hypertension" are just as different as "diabetes" and "pizza." **Word vectors** (embeddings) capture semantic similarity: related words have similar vectors.
 
 spaCy's medium and large models (`en_core_web_md`, `en_core_web_lg`) include pre-computed word vectors. We'll cover how embeddings work in Lecture 07.
+
+### Code Snippet: Word Vectors
+
+```python
+import spacy
+nlp = spacy.load("en_core_web_md")  # medium model has vectors
+doc = nlp("diabetes hypertension")
+print(doc[0].vector.shape)          # (300,) - 300-dimensional vector
+print(doc[0].similarity(doc[1]))    # ~0.5 - related medical terms
+```
 
 For classical NLP, TF-IDF is your go-to representation: interpretable, effective, and doesn't require special models.
 
@@ -656,7 +668,7 @@ For classical NLP, TF-IDF is your go-to representation: interpretable, effective
 
 # Document Similarity
 
-With text represented as vectors, we can measure how similar documents are. This enables search, clustering, and recommendation systems.
+With text represented as vectors, we can measure how similar documents are. This enables search, clustering, and recommendation systems. Cosine similarity is the standard choice for text; alternatives include Jaccard similarity (for sets of words) and Euclidean distance (sensitive to document length).
 
 ## Cosine Similarity
 
@@ -677,6 +689,7 @@ $$\cos(\theta) = \frac{A \cdot B}{\|A\| \times \|B\|}$$
 | **Pairwise** | `cosine_similarity(X)` | Similarity between all row pairs in X. | `ndarray` (n×n) |
 | **Compare** | `cosine_similarity(X, Y)` | Similarity between rows of X and Y. | `ndarray` |
 | **Distance** | `spatial.distance.cosine(u, v)` | Cosine distance (1 - similarity). | `float` |
+| **Jaccard** | `jaccard_score(set1, set2)` | Intersection/union of word sets. | `float` (0-1) |
 
 ### Code Snippet: Document Similarity
 
@@ -699,6 +712,12 @@ print(similarities)
 #  [0.35 1.   0.11]
 #  [0.11 0.11 1.  ]]
 # Docs 0 and 1 are most similar (both about chest/breathing)
+
+# Jaccard: compare word sets (ignores frequency)
+words0 = set(docs[0].lower().split())
+words1 = set(docs[1].lower().split())
+jaccard = len(words0 & words1) / len(words0 | words1)
+print(f"Jaccard: {jaccard:.2f}")  # 0.31
 ```
 
 # Specialized Tools
@@ -729,6 +748,8 @@ General NLP tools struggle with clinical text:
 **Temporality** — "History of diabetes" (past) vs "Patient has diabetes" (current) vs "Risk of diabetes" (future).
 
 **Variations** — "hypertention", "htn", "HTN", "high blood pressure" all mean the same thing.
+
+![XKCD: Easily Confused Acronyms](media/xkcd_confused_acronyms.png)
 
 # Pipelines
 
@@ -786,6 +807,8 @@ print(f"BP: {result['blood_pressure']}")
 # BP: ['140/90']
 ```
 
+![XKCD: Python Environment](media/xkcd_python_environment.png)
+
 ## spaCy Pipeline
 
 spaCy's pipeline is integrated—one call processes everything.
@@ -829,8 +852,6 @@ print(f"BP: {result['blood_pressure']}")
 | **Token** | `token.pos_` | Part-of-speech tag. | `str` (`"NOUN"`, `"VERB"`) |
 | **Token** | `token.is_stop`, `token.is_punct` | Boolean filters. | `bool` |
 | **Doc** | `doc.ents` | Named entities found. | `tuple[Span]` |
-
-![XKCD: Python Environment](media/xkcd_python_environment.png)
 
 ## Comparing the Approaches
 

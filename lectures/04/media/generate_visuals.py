@@ -56,37 +56,41 @@ def generate_tfidf_barchart():
     feature_names = vectorizer.get_feature_names_out()
     idf_values = vectorizer.idf_
 
-    # Sort by IDF value
-    sorted_indices = np.argsort(idf_values)[::-1]
+    # Sort by IDF value (low to high for bottom-to-top display)
+    sorted_indices = np.argsort(idf_values)
     sorted_names = feature_names[sorted_indices]
     sorted_idf = idf_values[sorted_indices]
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    # Color bars by IDF value (higher = more distinctive)
-    colors = plt.cm.RdYlGn(np.linspace(0.2, 0.8, len(sorted_idf)))
+    # Color bars by IDF value (green = common/low, red = distinctive/high)
+    colors = plt.cm.RdYlGn_r(np.linspace(0.2, 0.8, len(sorted_idf)))
 
-    bars = ax.barh(sorted_names, sorted_idf, color=colors)
+    bars = ax.barh(sorted_names, sorted_idf, color=colors, edgecolor='white', linewidth=0.5)
 
-    # Add value labels
+    # Add value labels inside bars
     for bar, val in zip(bars, sorted_idf):
-        ax.text(val + 0.02, bar.get_y() + bar.get_height()/2,
-                f'{val:.2f}', va='center', fontsize=10)
+        ax.text(val - 0.05, bar.get_y() + bar.get_height()/2,
+                f'{val:.2f}', va='center', ha='right', fontsize=10,
+                color='white', fontweight='bold')
 
-    ax.set_xlabel('IDF Weight (higher = more distinctive)', fontsize=11)
+    ax.set_xlabel('IDF Weight', fontsize=11)
     ax.set_ylabel('Term', fontsize=11)
     ax.set_title('Inverse Document Frequency (IDF) Weights', fontsize=14, fontweight='bold')
 
-    # Add annotation
-    ax.annotate('Common words\n(low IDF)', xy=(1.0, 0), xytext=(1.2, 1),
-                fontsize=9, color='gray',
-                arrowprops=dict(arrowstyle='->', color='gray', lw=0.5))
-    ax.annotate('Distinctive words\n(high IDF)', xy=(1.7, 4), xytext=(1.5, 3),
-                fontsize=9, color='gray',
-                arrowprops=dict(arrowstyle='->', color='gray', lw=0.5))
+    # Clean up - remove gridlines
+    ax.grid(False)
+    ax.set_axisbelow(True)
+
+    # Add text labels (no arrows)
+    ax.text(1.75, 0.5, 'Common words\n(low IDF)', fontsize=10, color='#2ecc71',
+            ha='center', va='center', fontweight='bold')
+    ax.text(1.75, len(sorted_names) - 1.5, 'Distinctive words\n(high IDF)', fontsize=10,
+            color='#e74c3c', ha='center', va='center', fontweight='bold')
 
     ax.set_xlim(0, 2.0)
-    ax.invert_yaxis()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
 
     plt.tight_layout()
     plt.savefig('tfidf_weights.png', dpi=150, bbox_inches='tight', facecolor='white')

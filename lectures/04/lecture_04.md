@@ -2,6 +2,9 @@ Natural Language Processing
 
 # Links & Self-Guided Review
 
+- TB Hack Day on Feb 11th! Register at https://seatrac.uw.edu/training/i4tbworkinggroup
+
+![](media/tb_hack_day.png)
 - [Speech and Language Processing](https://web.stanford.edu/~jurafsky/slp3/) — Jurafsky & Martin, comprehensive NLP textbook (free online, chapters 2-6 cover this lecture)
 - [NLTK Book](https://www.nltk.org/book/) — official tutorial with exercises (chapters 1-7)
 - [spaCy 101](https://spacy.io/usage/spacy-101) — core concepts and usage patterns

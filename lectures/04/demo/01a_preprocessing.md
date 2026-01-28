@@ -63,7 +63,13 @@ with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
 
 DATA_DIR = DEMO_DIR / CONFIG["data"]["dir"]
-nlp = spacy.load(CONFIG["spacy"]["model"])
+# Download and load spacy model CONFIG["spacy"]["model"]="en_core_web_sm"
+try:
+    nlp = spacy.load(CONFIG["spacy"]["model"])
+except OSError:
+    spacy.cli.download(CONFIG["spacy"]["model"])
+    nlp = spacy.load(CONFIG["spacy"]["model"])
+
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 ```

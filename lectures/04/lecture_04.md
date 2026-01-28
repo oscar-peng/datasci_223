@@ -21,7 +21,7 @@ Reading Rocks!
 
 ## What is NLP?
 
-![Clinical Entities](media/clinical_ent.png)
+![Clinical Entities](media/clinical_ent.webp)
 
 Humans communicate in natural language—English, Spanish, clinical shorthand. Computers need structure—numbers, categories, defined relationships. Natural language processing (NLP) bridges this gap, transforming free-form text into data that algorithms can analyze.
 

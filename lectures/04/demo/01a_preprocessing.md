@@ -30,6 +30,10 @@ We're practicing on Alice in Wonderland because it's clean, well-known text that
 
 The pitfalls we'll see—punctuation attached to words, abbreviations split incorrectly, negation words stripped—are exactly what breaks clinical NLP pipelines. Master them on simple text first.
 
+```python
+%pip install -q -r requirements.txt
+```
+
 ## Setup: all imports and NLTK/spaCy
 
 Run this cell first. All libraries and the spaCy model are loaded here so later cells focus on the analysis. Paths and the spaCy model name come from `config.yaml` so you can point at another data dir or model without editing code.
@@ -62,6 +66,17 @@ DATA_DIR = DEMO_DIR / CONFIG["data"]["dir"]
 nlp = spacy.load(CONFIG["spacy"]["model"])
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
+```
+
+```python
+# Run `prepare_data.py` if needed
+
+# Check if the data files are present config['data']['files'] in DATA_DIR
+for file_name in CONFIG["data"]["files"].values():
+    file_path = DATA_DIR / file_name
+    if not file_path.exists():
+        import prepare_data  # noqa: F401
+        prepare_data.main()
 ```
 
 ## Load Alice excerpt

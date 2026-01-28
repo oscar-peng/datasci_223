@@ -1,6 +1,8 @@
 Reading Rocks!
 
-Natural Language Processing
+(Natural Language Processing)
+
+- ![](https://classroom.github.com/a/78aoV6u5)
 
 # Links & Self-Guided Review
 

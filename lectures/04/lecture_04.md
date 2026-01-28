@@ -2,9 +2,10 @@ Natural Language Processing
 
 # Links & Self-Guided Review
 
-- TB Hack Day on Feb 11th! Register at https://seatrac.uw.edu/training/i4tbworkinggroup
+- TB Hack Day on Feb 11th! Register at <https://seatrac.uw.edu/training/i4tbworkinggroup>
 
 ![](media/tb_hack_day.png)
+
 - [Speech and Language Processing](https://web.stanford.edu/~jurafsky/slp3/) — Jurafsky & Martin, comprehensive NLP textbook (free online, chapters 2-6 cover this lecture)
 - [NLTK Book](https://www.nltk.org/book/) — official tutorial with exercises (chapters 1-7)
 - [spaCy 101](https://spacy.io/usage/spacy-101) — core concepts and usage patterns
@@ -16,7 +17,7 @@ Natural Language Processing
 
 ## What is NLP?
 
-<!-- #FIXME: Visual showing NLP transforming text to structured data - search: "NLP natural language processing diagram text to structured data" -->
+![Clinical Entities](media/clinical_ent.png)
 
 Humans communicate in natural language—English, Spanish, clinical shorthand. Computers need structure—numbers, categories, defined relationships. Natural language processing (NLP) bridges this gap, transforming free-form text into data that algorithms can analyze.
 
@@ -113,7 +114,7 @@ Before analysis, we transform raw text into a consistent format. These preproces
 
 ## Tokenization
 
-<!-- #FIXME: Visual showing tokenization process - search: "tokenization NLP word splitting diagram" -->
+![Tokenization](media/tokenization.webp)
 
 Tokenization splits text into individual units called **tokens**—usually words, but sometimes punctuation, numbers, or subwords. Every subsequent NLP step operates on tokens.
 
@@ -145,6 +146,7 @@ spaCy tokenizer:    ["Dr.", "Smith", "prescribed", "500", "mg", "ibuprofen", "."
 | **Basic** | `text.split()` | Splits on whitespace only. | `list[str]` |
 | **NLTK** | `nltk.word_tokenize(text)` | Tokenizes handling punctuation and abbreviations. | `list[str]` |
 | **NLTK** | `nltk.sent_tokenize(text)` | Splits text into sentences. | `list[str]` |
+| **NLTK** | `RegexpTokenizer(pattern)` | Custom tokenizer using regex pattern (e.g., `r'\w+'` for words only). | `list[str]` via `.tokenize(text)` |
 | **spaCy** | `for token in doc` | Iterates tokens after `doc = nlp(text)`. | `Token` objects |
 
 ### Code Snippet: Tokenization
@@ -170,7 +172,7 @@ print(nltk.sent_tokenize(text))
 
 ## Normalization
 
-<!-- #FIXME: Visual showing normalization pipeline - search: "text normalization NLP preprocessing pipeline lowercase stopwords" -->
+![Normalization Pipeline](media/preprocess.png)
 
 Normalization transforms tokens into a consistent form.
 
@@ -259,7 +261,7 @@ for word in words:
 
 ![XKCD: Synonym Date](media/xkcd_synonym_date.png)
 
-# LIVE DEMO!
+# LIVE DEMO
 
 # Part-of-Speech Tagging
 
@@ -267,7 +269,7 @@ Part-of-speech (POS) tagging labels each token with its grammatical role: noun, 
 
 ## Concepts
 
-<!-- #FIXME: Visual showing POS tagged sentence with color-coded tags - search: "part of speech tagging visualization color coded sentence" -->
+![POS Tagging](media/pos_tag.png)
 
 POS tagging enables:
 
@@ -366,7 +368,7 @@ Named Entity Recognition (NER) identifies and classifies specific entities in te
 
 ## Concepts
 
-<!-- #FIXME: Replace with image - search: "named entity recognition NER clinical text visualization highlighted entities" -->
+![Clinical NER](media/named_entity.png)
 
 **Example:** "Dr. Smith at UCSF prescribed Metformin 500mg on January 15."
 
@@ -444,7 +446,14 @@ Beyond NER, we often need to extract specific patterns from text—vitals, dosag
 
 ## Regex Patterns
 
-Regular expressions (regex) are pattern-matching tools. Where NER identifies semantic entities, regex extracts syntactic patterns.
+Regular expressions (regex, `import re`) are pattern-matching tools for extracting text that follows predictable formats. Use regex when:
+
+- **NER doesn't cover your pattern** — vitals like "120/80" or dosages like "500mg" aren't standard NER types
+- **You need exact format control** — dates in "MM/DD/YYYY" vs "Month DD, YYYY" vs "DD-Mon-YY"
+- **The pattern is syntactic, not semantic** — phone numbers, IDs, lab values follow structural rules
+- **You're building a preprocessing pipeline** — clean or normalize text before further analysis
+
+NER identifies *what something means* (this is a person, this is a date). Regex extracts *what something looks like* (three digits, slash, three digits).
 
 ```
 Pattern     Matches                Example
@@ -473,33 +482,41 @@ Clinical patterns:
 | **Extract** | `match.group()` | Returns the matched text. | `str` |
 | **Groups** | `match.groups()` | Returns all captured groups. | `tuple[str]` |
 
-### Code Snippet: Clinical Text Extraction
+### Code Snippet: Regex in the `re` Module
 
 ```python
 import re
 
-note = """
-Patient vitals: BP 120/80, HR 72, Temp 98.6F
-Medications: Metformin 500mg twice daily, Lisinopril 10mg daily
-Lab results from 01/15/2025: HbA1c 7.2%
-"""
+note = "BP 120/80, Metformin 500mg, Lab 01/15/2025"
 
-# Extract blood pressure
-bp_readings = re.findall(r'\d{2,3}/\d{2,3}', note)
-print(f"BP: {bp_readings}")  # ['120/80']
+bp = re.findall(r'\d{2,3}/\d{2,3}', note)                 # ['120/80']
+meds = re.findall(r'(\w+)\s+(\d+)(mg|ml)', note)          # [('Metformin', '500', 'mg')]
+cleaned = re.sub(r'\d{2}/\d{2}/\d{4}', '[DATE]', note)    # redact dates
+```
 
-# Extract medication dosages
-medications = re.findall(r'(\w+)\s+(\d+)\s?(mg|ml)', note)
-print(f"Meds: {medications}")  # [('Metformin', '500', 'mg'), ('Lisinopril', '10', 'mg')]
+## Regex Across NLP Tools
 
-# Extract dates
-dates = re.findall(r'\d{1,2}/\d{1,2}/\d{4}', note)
-print(f"Dates: {dates}")  # ['01/15/2025']
+Regex patterns appear throughout the NLP toolkit—not just in the `re` module. Learning regex syntax pays off because you'll reuse it in many contexts.
+
+```python
+# TOKENIZATION: RegexpTokenizer uses regex to define what counts as a token
+from nltk.tokenize import RegexpTokenizer
+tokenizer = RegexpTokenizer(r'\w+')           # words only, no punctuation
+tokenizer.tokenize("Hello, world!")           # ['Hello', 'world']
+
+# PANDAS: .str methods accept regex for text columns
+import pandas as pd
+df = pd.DataFrame({'notes': ['BP 120/80', 'BP 130/85']})
+df['systolic'] = df['notes'].str.extract(r'(\d+)/\d+')   # extract first number
+
+# SPACY MATCHER: pattern-based matching (not regex, but similar concept)
+# from spacy.matcher import Matcher
+# matcher.add("BP_PATTERN", [[{"SHAPE": "ddd"}, {"TEXT": "/"}, {"SHAPE": "dd"}]])
 ```
 
 ![XKCD: Regex Golf](media/xkcd_regex_golf.png)
 
-# LIVE DEMO!!
+# LIVE DEMO
 
 # Text Representation
 
@@ -585,8 +602,8 @@ $$\text{TF-IDF}(word, doc) = \text{TF}(word, doc) \times \text{IDF}(word)$$
 | :--- | :--- | :--- | :--- |
 | **Create** | `TfidfVectorizer(max_df=0.9, min_df=2)` | Tokenizes + applies TF-IDF. `max_df`/`min_df` filter by doc frequency. | `TfidfVectorizer` |
 | **Fit** | `.fit_transform(docs)` | Learns vocabulary and transforms to TF-IDF weights. | Sparse matrix |
+| **Transform** | `.transform(new_docs)` | Transforms new text using learned vocabulary (no refitting). | Sparse matrix |
 | **Inspect** | `.idf_` | Learned IDF weights for each term. | `ndarray[float]` |
-| **Alternative** | `TfidfTransformer().fit_transform(count_matrix)` | Apply TF-IDF to existing count matrix. | Sparse matrix |
 
 ### Code Snippet: TF-IDF
 
@@ -611,7 +628,7 @@ for word, idf in zip(vectorizer.get_feature_names_out(), vectorizer.idf_):
 
 ## N-grams
 
-<!-- #FIXME: Visual showing unigrams vs bigrams vs trigrams - search: "n-gram bigram trigram NLP example visualization" -->
+![N-grams Diagram](media/n-grams.webp)
 
 Single words (**unigrams**) lose context. **N-grams** capture sequences of N consecutive words.
 
@@ -741,7 +758,9 @@ General NLP tools work well for common text, but clinical language requires spec
 
 # Challenges
 
-<!-- #FIXME: Visual showing clinical NLP challenges - search: "clinical NLP challenges negation abbreviation diagram" -->
+![Clinical NLP Challenges](media/clinical_negation.jpg)
+
+![Clinical Negation](media/clinical_extract.png)
 
 General NLP tools struggle with clinical text:
 
@@ -869,6 +888,6 @@ print(f"BP: {result['blood_pressure']}")
 | NER quality | Basic | Better out-of-box |
 | Speed | Slower | Faster |
 
-# LIVE DEMO!!!
+# LIVE DEMO
 
 ![XKCD: Machine Learning](media/xkcd_machine_learning.png)

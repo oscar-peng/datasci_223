@@ -1,0 +1,60 @@
+name: Autograding
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install jupytext papermill nbformat pytest
+
+      - name: Download spaCy model
+        run: |
+          python -m spacy download en_core_web_sm
+
+      - name: Download NLTK data
+        run: |
+          python -c "import nltk; nltk.download('punkt_tab'); nltk.download('stopwords')"
+
+      - name: Convert markdown to notebook (if needed)
+        run: |
+          if [ -f BOOK_REPORT.md ] && [ ! -f BOOK_REPORT.ipynb ]; then
+            jupytext --to notebook BOOK_REPORT.md
+          fi
+
+      - name: Execute assignment notebook
+        run: |
+          papermill BOOK_REPORT.ipynb executed_notebook.ipynb -k python3
+        continue-on-error: true
+
+      - name: Download latest test files
+        run: |
+          mkdir -p .github/tests
+          curl -o .github/tests/test_assignment.py \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw04/refs/heads/main/.github/tests/test_assignment.py || true
+          curl -o .github/tests/requirements.txt \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw04/refs/heads/main/.github/tests/requirements.txt || true
+          pip install -r .github/tests/requirements.txt || true
+
+      - name: Run tests
+        run: |
+          pytest .github/tests/test_assignment.py -v

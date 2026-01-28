@@ -2,7 +2,7 @@ Reading Rocks!
 
 (Natural Language Processing)
 
-- ![](https://classroom.github.com/a/78aoV6u5)
+- [https://classroom.github.com/a/78aoV6u5](https://classroom.github.com/a/78aoV6u5)
 
 # Links & Self-Guided Review
 

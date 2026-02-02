@@ -3,6 +3,7 @@
 ## Learning Objectives 🎯
 
 By the end of this demo, you will be able to:
+
 1. Generate and visualize synthetic health data
 2. Compare different classification algorithms
 3. Evaluate model performance using various metrics
@@ -102,23 +103,28 @@ plt.show()
 
 ## 2. Prepare Data for Modeling 📊
 
+Split first to avoid data leakage, then fit the scaler only on the training set. Use `stratify=y` so both splits keep similar class proportions.
+
 ```python
 # Split features and target
 X = df.drop('DiabetesRisk', axis=1)
 y = df['DiabetesRisk']
 
-# Scale features first (following the recommended order)
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
-
-# Then split into train and test sets
-X_train_scaled, X_test_scaled, y_train, y_test = train_test_split(
-    X_scaled_df, y, test_size=0.2, random_state=42
+# Split FIRST (before scaling)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-print("Training set shape:", X_train_scaled.shape)
-print("Test set shape:", X_test_scaled.shape)
+# Fit scaler on training data only, then transform both train and test
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+X_train_scaled_df = pd.DataFrame(X_train_scaled, columns=X.columns, index=X_train.index)
+X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=X.columns, index=X_test.index)
+
+print("Training set shape:", X_train_scaled_df.shape)
+print("Test set shape:", X_test_scaled_df.shape)
 ```
 
 ## 3. Train and Compare Models 🤖
@@ -139,11 +145,11 @@ plt.figure(figsize=(10, 8))
 
 for name, model in models.items():
     # Train model
-    model.fit(X_train_scaled, y_train)
+    model.fit(X_train_scaled_df, y_train)
     
     # Get predictions and probabilities
-    y_pred = model.predict(X_test_scaled)
-    y_prob = model.predict_proba(X_test_scaled)[:, 1]
+    y_pred = model.predict(X_test_scaled_df)
+    y_prob = model.predict_proba(X_test_scaled_df)[:, 1]
     
     # Calculate ROC curve
     fpr, tpr, _ = roc_curve(y_test, y_prob)
@@ -241,16 +247,4 @@ predict_diabetes_risk(
 )
 ```
 
-## 🧠 Comprehension Check
-
-1. Which model performed best? Why might that be?
-2. What are the most important features for predicting diabetes risk?
-3. How would you improve this model for real-world use?
-
-## 🚀 Next Steps
-
-1. Try different feature combinations
-2. Experiment with model hyperparameters
-3. Add more health-related features
-4. Implement cross-validation
-5. Add confidence intervals to predictions
+The ROC curves and classification reports show how each model trades off true positives and false positives; the feature-importance plots show which inputs (e.g. glucose, BMI) the model relied on most. For real-world use, you could try different feature sets, tune hyperparameters, add cross-validation, or add confidence intervals to predictions.

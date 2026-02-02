@@ -320,7 +320,7 @@ Logistic regression works similarly to linear regression but uses a sigmoid curv
 
 ![Linear vs logistic regression](media/lin_vs_log.png)
 
-Additionally, it uses **log loss** in place of our usual mean-squared error cost function. This provides a convex curve for approximating variable weights using gradient descent.
+Additionally, it uses **log loss** (also called **cross-entropy loss**: a cost that measures how far predicted probabilities are from the true labels and penalizes confident wrong predictions more than uncertain ones) in place of our usual mean-squared error cost function. This provides a convex curve for approximating variable weights using gradient descent.
 
 ![Approximation optimization](media/approx_optimization.png)
 
@@ -577,7 +577,8 @@ shap.summary_plot(shap_values, X, plot_type="bar")
 
 | Component | Details |
 |:---|:---|
-| **`show_weights()`** | Display feature importances |
+| **`show_weights()`** | Display feature importances (for notebooks/HTML) |
+| **`explain_weights()`** | Return explanation object for programmatic use (e.g. `format_as_html()`) |
 | **`show_prediction()`** | Explain a single prediction |
 | **Key Parameters** | • `estimator`: Trained model<br>• `feature_names`: List of feature names<br>• `top`: Number of top features to show |
 | **Install** | `pip install eli5` |

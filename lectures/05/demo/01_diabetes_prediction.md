@@ -20,11 +20,6 @@ This demo introduces binary classification using one of the simplest yet effecti
 
 ## 0. Setup: Install Required Packages 📦
 
-<!---
-Make sure all required packages are installed before running the notebook.
-The --quiet flag reduces output noise during installation.
---->
-
 ```python
 %pip install -r requirements.txt --quiet
 ```
@@ -37,6 +32,7 @@ when to use which library. Emphasize that these are standard tools in the data s
 --->
 
 We start by importing the necessary Python libraries.
+
 - `numpy` for numerical operations.
 - `pandas` for data manipulation (DataFrames).
 - `matplotlib.pyplot` and `seaborn` for plotting.
@@ -76,6 +72,7 @@ Explain why we're using synthetic data:
 Real health data is complex and often restricted by privacy regulations (HIPAA). For this introductory demo, we'll use `make_classification` to generate synthetic data that mimics a diabetes prediction scenario.
 
 > 🔬 **Clinical Features**: In real diabetes screening, key indicators include:
+>
 > - Fasting blood glucose levels
 > - Body Mass Index (BMI)
 > - Age
@@ -83,6 +80,7 @@ Real health data is complex and often restricted by privacy regulations (HIPAA).
 > - Cholesterol levels
 
 We create:
+
 - `X`: Features (e.g., simulated glucose level, BMI, age). We'll create 1000 samples with 5 features.
 - `y`: Target variable (0 for no diabetes, 1 for diabetes).
 We specify `n_informative=3` meaning only 3 out of 5 features actually help predict the outcome, adding some realism. `flip_y=0.05` introduces a small amount of label noise (5% incorrect labels), also common in real datasets.
@@ -124,6 +122,7 @@ Data exploration is crucial in healthcare:
 --->
 
 Before modeling, it's crucial to understand our data. In healthcare, this step is especially important as it can reveal:
+
 - Potential biases in patient demographics
 - Clinically meaningful relationships between health indicators
 - Data quality issues that could affect patient care
@@ -150,10 +149,12 @@ Emphasize why proper validation is crucial in healthcare:
 --->
 
 In healthcare applications, we must be especially careful to validate our models properly - they may eventually influence clinical decisions. We split our dataset into:
+
 - Training set (80%): Used to train the Logistic Regression model
 - Testing set (20%): Simulates using the model on new, unseen patients
 
 > ⚕️ **Clinical Practice**: In real clinical validation, we often want to test models across different:
+>
 > - Hospitals/clinics
 > - Patient demographics
 > - Time periods
@@ -187,6 +188,7 @@ Key points about logistic regression in healthcare:
 --->
 
 Logistic Regression is an excellent starting point for clinical prediction models because:
+
 - It's interpretable (clinicians can understand how it makes decisions)
 - It outputs probabilities (useful for risk assessment)
 - It's computationally efficient (can be quickly updated with new data)
@@ -215,11 +217,13 @@ Discuss the importance of prediction thresholds:
 --->
 
 With our trained model, we can now predict diabetes risk for new patients. In clinical practice, we might:
+
 - Use different probability thresholds for screening vs. diagnosis
 - Consider the cost of false positives (unnecessary tests) vs. false negatives (missed cases)
 - Combine model predictions with clinical judgment
 
 > ⚖️ **Clinical Trade-off**: Setting a lower probability threshold catches more potential cases but generates more false alarms. The right balance depends on:
+>
 > - Available healthcare resources
 > - Cost and invasiveness of follow-up tests
 > - Severity of missing a diagnosis
@@ -246,11 +250,13 @@ Emphasize healthcare-specific evaluation:
 In healthcare, model evaluation goes beyond simple accuracy. We need to consider:
 
 **Clinical Impact Metrics:**
+
 - **Sensitivity/Recall**: How many actual diabetes cases do we catch?
 - **Specificity**: How well do we identify healthy patients?
 - **Positive Predictive Value**: How reliable are our "high risk" flags?
 
 > 🎯 **Target Metrics**: For diabetes screening, we might prioritize:
+>
 > - High sensitivity (>90%) to catch most cases
 > - Acceptable specificity (>70%) to limit unnecessary testing
 > - Good calibration of risk probabilities
@@ -305,47 +311,6 @@ plt.show()
 
 ## 8. Interpretation & Conclusion 🔬
 
-<!---
-Key takeaways for healthcare applications:
-1. Importance of model transparency
-2. Need for clinical validation
-3. Role of models in clinical workflow
-4. Limitations and next steps
---->
+Splitting data into training and testing sets ensures the model will work reliably on new patients, not just the ones it was trained on. In diabetes screening, false negatives (missing actual cases) are often more concerning than false positives, because delayed diagnosis can lead to serious complications; the confusion matrix’s bottom-left cell shows how many high-risk patients we would miss. AUC measures how well the model ranks positive vs. negative cases—e.g. an AUC of 0.9 means it correctly orders a random diabetic above a random non-diabetic about 90% of the time.
 
-Let's analyze our results from a healthcare perspective:
-
-- **Model Performance**: How does it compare to:
-  - Current clinical practice
-  - Published diabetes prediction models
-  - Minimum performance requirements for screening tools
-
-- **Clinical Utility**: Consider:
-  - Would this help identify high-risk patients earlier?
-  - Could it reduce unnecessary testing?
-  - How would it fit into clinical workflow?
-
-- **Limitations & Next Steps**:
-  - Need for external validation
-  - Importance of diverse patient populations
-  - Integration with electronic health records
-  - Regulatory considerations
-
-> 🔄 **Continuous Improvement**: Clinical models should be:
-> - Regularly validated on new patient data
-> - Updated as population characteristics change
-> - Monitored for performance drift
-> - Assessed for fairness across patient subgroups
-
-**🧠 Comprehension Checkpoint:**
-
-1. Why is splitting data into training and testing sets important in clinical applications?
-2. In diabetes screening, which is typically more concerning: false positives or false negatives? Why?
-3. What does an AUC of 0.9 tell us about our model's ability to identify diabetes cases?
-4. Looking at the confusion matrix, how many high-risk patients would we miss with this model?
-
-Answers:
-1. To ensure the model will work reliably on new patients, not just the ones it was trained on.
-2. False negatives (missing actual diabetes cases) are often more concerning because delayed diagnosis can lead to serious complications.
-3. An AUC of 0.9 indicates excellent discrimination - the model correctly ranks a random person with diabetes above a random person without diabetes 90% of the time.
-4. The false negatives (bottom-left cell of confusion matrix) represent missed diabetes cases - each one is a patient who needs medical attention but might not receive it.
+In practice, model performance should be compared to current clinical practice and minimum requirements for screening tools. Clinical models should be validated on new data, updated as populations change, and assessed for fairness across subgroups.

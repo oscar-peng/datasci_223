@@ -1,792 +1,776 @@
----
-lecture_number: 08
-pdf: false
----
+LLM Applications & Workflows
 
-# Computer Vision
+- When to Use LLMs
+- Common Failure Modes and Mitigations
+- Embeddings for Semantic Search
+- Retrieval-Augmented Generation (RAG)
+- Agentic LLMs
+- Workflow Orchestration Patterns
+- Model Context Protocol (MCP)
 
-## Outline
+# When to Use LLMs
 
-1. **Introduction to Computer Vision & Image Data**
-    * What is computer vision and its applications in healthcare
-    * Digital image representation (pixels, resolution, color spaces)
-    * Medical image formats (DICOM, PNG, JPEG)
-    * Python libraries for image processing
+Building on our understanding of transformers and LLM APIs from last week, we now focus on practical applications. Knowing **when** to use LLMs is just as important as knowing **how**.
 
-2. **Convolutional Neural Networks (CNNs)**
-    * Why CNNs are effective for image analysis
-    * Core components: convolutional layers, pooling, activation functions
-    * Hierarchical feature learning
-    * CNN architectures and implementation
+![LLM tools landscape](media/mediaagents_landscape.png)
 
-3. **Demo 1: Image Loading, Preprocessing & Basic CNN**
+*The LLM application landscape includes agents, RAG systems, workflow orchestrators, and more.*
 
-4. **Key Computer Vision Tasks**
-    * Image classification
-    * Transfer learning for medical images
-    * Object detection
-    * Image segmentation with U-Net
+## Good Fits for LLMs
 
-5. **Demo 2: Transfer Learning for Medical Image Classification**
+**Text summarization and transformation**: Condense documents while preserving key information
 
-6. **Advanced Topics**
-    * Video analysis and tracking
-    * Vision Transformers
-    * Generative models
-    * Explainable AI for medical imaging
-    * Self-supervised learning
-7. **Demo 3: Pre-trained Object Detection or Segmentation**
+**Structured data extraction**: Convert unstructured text to structured formats (JSON, tables)
 
-8. **Resources for Further Learning**
-    * Datasets, tools, and references
-9. **Mini-Demo: Video Object Tracking**
+**Content classification**: Categorize by type, topic, sentiment
 
-## 1. Introduction to Computer Vision & Image Data
+**Question answering over documents**: Answer questions based on provided context
 
-### A. What is Computer Vision?
+**Draft generation with review**: First drafts that humans refine
 
-**Computer Vision (CV)** is a field of artificial intelligence that enables computers to interpret and understand visual information from the world. It involves extracting meaningful information from digital images or videos and making decisions based on that information.
+## Poor Fits for LLMs
 
-Computer vision systems can:
+**Precise calculations**: Use tools (calculators, code) instead
 
-* Detect and classify objects in images
-* Track movement across video frames
-* Measure features and extract quantitative data
-* Recognize patterns and anomalies
-* Process visual information at scale
+**Factual retrieval without verification**: LLMs may hallucinate
 
-![Chest X-ray with Nodule Highlighted](media/xray_nodule_example.png)
+**Real-time data without external connection**: Models have knowledge cutoffs
 
-Computer vision has applications across many domains, from facial recognition in smartphones to autonomous vehicles. In data science, it enables the extraction of structured information from unstructured visual data, turning images into actionable insights.
+**High-stakes autonomous decisions**: Require human oversight
 
-![Digital Pathology Slide with Cell Classification](media/pathology_slide_example.png)
+**Deterministic logic**: Use rule engines instead
 
-The field combines techniques from image processing, pattern recognition, and deep learning to achieve increasingly sophisticated visual understanding capabilities.
+### Decision Framework
 
-![Robotic Surgery with Computer Vision Assistance](media/robotic_surgery.webp)
+Ask yourself:
 
-### B. Digital Image Representation
+- Can you describe the task clearly?
+- Are errors catchable?
+- Can you validate outputs?
 
-Images are represented as numerical data that computers can process:
+If "yes" to all three, LLMs may be a good fit. If "no" to any, consider alternatives or add safeguards.
 
-* **Pixels**: The fundamental units of digital images
-    * Grid of values representing color or intensity
-    * Each pixel has specific coordinates (x, y)
-    * Images are stored as 2D arrays (or 3D for color)
-  
-  ![Zoomed-in view of an image showing pixels](media/pixel_grid_example.png)
+# Common Failure Modes
 
-* **Resolution**: Number of pixels in an image
-    * Expressed as width × height (e.g., 1920×1080)
-    * Higher resolution = more detail but larger file size
-  
-  ![Low Resolution vs. High Resolution](media/resolution_comparison.png)
+Understanding how LLMs fail helps you design better systems and set appropriate expectations.
 
-* **Color Spaces**:
-    * **Grayscale**: Single intensity value per pixel (0-255 for 8-bit)
-        * Used in many medical images (X-rays, CT scans)
-        * 0 = black, 255 = white
+## Hallucinations
 
-    ![Grayscale X-ray and Pixel Intensity Values](media/grayscale_example.png)
+**What**: Fabricated citations, confident incorrect answers, plausible-sounding but false information
 
-    * **RGB**: Three values per pixel (Red, Green, Blue)
-        * Each channel typically ranges from 0-255
-        * Combines to create full color spectrum
-        * Example: (255,0,0) = red, (0,255,0) = green, (255,255,255) = white
+**Why**: Models generate statistically likely continuations, not verified facts
 
-    ![RGB Image Decomposed into Red, Green, and Blue Channels](media/rgb_channels_example.png)
+**Mitigation strategies**:
 
-### C. Medical Image Formats
+- RAG (Retrieval-Augmented Generation) - ground responses in retrieved documents
+- Fact-checking pipelines
+- Require citations with verification
+- Use lower temperature for factual tasks
 
-Medical imaging uses specialized formats beyond standard JPEGs and PNGs:
+### Reference Card: Hallucination Mitigation
 
-* **DICOM (Digital Imaging and Communications in Medicine)**
-    * Standard format for medical imaging
-    * Contains both pixel data AND metadata
-    * Metadata includes:
-        * Patient information (ID, name, demographics)
-        * Acquisition parameters (modality, date, equipment settings)
-        * Organizational hierarchy (study, series, instance)
-     
-  ![Pydicom Conceptual Logo](media/pydicom_logo.png)
-  
-  ![DICOM Viewer with Image and Metadata](media/dicom_viewer_metadata.png)
+| Strategy | Description | When to Use |
+|:---|:---|:---|
+| **RAG** | Ground responses in retrieved documents | Document-based Q&A |
+| **Fact-checking** | Verify claims against trusted sources | High-stakes applications |
+| **Citation requirement** | Ask model to cite sources | Research assistance |
+| **Temperature=0** | Reduce randomness | Extraction tasks |
 
-* **Other Common Formats**
-    * **PNG**: Lossless compression, preserves details
-    * **JPEG**: Lossy compression, smaller files but may lose detail
-    * **TIFF**: Flexible format, supports multiple layers and high bit depths
+## Prompt Injection
 
-[![Image Formats XKCD](media/file_extensions_2x.png)](https://xkcd.com/1301/)
+**What**: User input overrides system instructions, causing unintended behavior
 
-### D. Essential Python Libraries for Imaging
+**Why**: Models may treat user content as instructions
 
-Key Python libraries for working with images:
+**Mitigation strategies**:
 
-* **Pillow (PIL Fork)**: Basic image manipulation
-    * Loading, saving, resizing, cropping, color conversion
-    * Simple API for common tasks
-    * `from PIL import Image`
-  
-  ![Pillow Logo](media/pillow_logo.png)
+- Separate user content from system instructions clearly
+- Input sanitization
+- Output filtering
+- Use delimiters to mark user content (e.g., `"""User input: {input}"""` or XML tags like `<user_input>...</user_input>`)
 
-* **OpenCV**: Comprehensive computer vision library
-    * Advanced image processing algorithms
-    * Feature detection, object tracking, video analysis
-    * High-performance C++ backend with Python bindings
-    * `import cv2`
-  
-  ![OpenCV Logo](media/opencv_logo.png)
+## Inconsistency
 
-* **Pydicom**: Specialized for DICOM files
-    * Read/write DICOM files and access metadata
-    * `import pydicom`
+**What**: Same input produces different outputs (when temperature > 0)
 
-* **SimpleITK**: Medical image analysis toolkit
-    * Registration, segmentation, filtering
-    * Python interface to ITK
-    * `import SimpleITK as sitk`
-  
-  ![SimpleITK Logo](media/simpleitk_logo.png)
+**Why**: Sampling introduces randomness
 
-* **Matplotlib**: Visualization
-    * Display images in notebooks with `plt.imshow()`
-    * `import matplotlib.pyplot as plt`
-  
-  ![Matplotlib Logo](media/matplotlib_logo.png)
+**Mitigation strategies**:
 
-### E. Reference Card: Basic Image Operations
+- Set `temperature=0` for extraction tasks
+- Use seeded random states where supported
+- Implement validation and retry logic
+
+## Context Overflow
+
+**What**: Important information at edges of context gets lost or ignored
+
+**Why**: Attention mechanisms may not weight all positions equally
+
+**Mitigation strategies**:
+
+- Place critical information at start and end
+- Chunk long documents strategically
+- Use hierarchical summarization for very long inputs
+
+## Task/Expertise Mismatch
+
+**What**: User lacks domain knowledge to identify LLM errors
+
+**Why**: LLMs are confident even when wrong
+
+**Mitigation strategies**:
+
+- Require expert review for domain-specific outputs
+- Provide reference materials
+- Limit autonomous decisions
+
+# LIVE DEMO!
+
+Embedding similarity search for semantic document retrieval.
+
+See: [demo/01_embedding_search.md](demo/01_embedding_search.md)
+
+# Embeddings in Practice
+
+Building on the embedding concepts from last week, let's see how they enable powerful applications.
+
+## Embedding Use Cases
+
+- **Semantic search**: Find similar documents by meaning, not just keywords
+- **Document clustering**: Group related documents automatically
+- **Similarity matching**: Find duplicates, related items, or anomalies
+- **Anomaly detection**: Identify outliers in embedding space
+- **Classification**: Use embeddings as features for downstream models
+
+## Creating and Using Embeddings
+
+### Reference Card: Sentence Transformers
+
+| Component | Details |
+|:---|:---|
+| **Library** | `sentence-transformers` |
+| **Purpose** | Generate dense vector embeddings for sentences and documents |
+| **Popular Models** | `all-MiniLM-L6-v2`, `all-mpnet-base-v2` |
+| **Output** | NumPy array of shape (n_sentences, embedding_dim) |
+| **Install** | `pip install sentence-transformers` |
+
+### Code Snippet: Embedding Documents
 
 ```python
- Pillow
-from PIL import Image
-img = Image.open("image.png")           # Load image
-img.save("output.jpg")                  # Save image
-width, height = img.size                # Get dimensions
-mode = img.mode                         # Get color mode ('RGB', 'L', etc.)
-img_array = np.array(img)               # Convert to NumPy array
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
- OpenCV
-import cv2
-img = cv2.imread("image.png")           # Load image (BGR format)
-img_gray = cv2.imread("image.png", cv2.IMREAD_GRAYSCALE)  # Load as grayscale
-cv2.imwrite("output.png", img)          # Save image
-h, w, c = img.shape                     # Get dimensions and channels
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+# Load model
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
- Pydicom
-import pydicom
-ds = pydicom.dcmread("file.dcm")        # Load DICOM file
-pixel_array = ds.pixel_array            # Get pixel data
-patient_name = ds.PatientName           # Access metadata
+# Your documents
+documents = [
+    "Patient presents with chest pain and shortness of breath",
+    "Lab results show elevated troponin levels",
+    "Recommend cardiac catheterization",
+    "Patient reports headache and nausea"
+]
+
+# Generate embeddings
+embeddings = model.encode(documents)
+
+# Find similar documents to a query
+query = "cardiac symptoms"
+query_embedding = model.encode([query])
+
+# Calculate similarity
+similarities = cosine_similarity(query_embedding, embeddings)[0]
+most_similar_idx = np.argmax(similarities)
+print(f"Most similar: {documents[most_similar_idx]}")
 ```
 
-## 2. Convolutional Neural Networks (CNNs) for Image Analysis
+## Vector Databases
 
-Building on the neural network concepts from Lecture 6, CNNs are specialized architectures designed specifically for image data.
+For production applications with many documents, you'll want a vector database:
 
-### A. Why CNNs for Images?
+### Reference Card: Vector Database Options
 
-Standard neural networks struggle with images for two key reasons:
+| Database | Type | Strengths |
+|:---|:---|:---|
+| **ChromaDB** | In-memory/persistent | Simple API, good for prototyping |
+| **FAISS** | In-memory | Fast, scalable, from Facebook AI |
+| **Pinecone** | Cloud service | Managed, production-ready |
+| **Weaviate** | Self-hosted/cloud | Full-text + vector search |
+| **pgvector** | PostgreSQL extension | Integrate with existing DB |
 
-* **Parameter Explosion**: A 224×224×3 RGB image has 150,528 input features. With 1000 neurons in the first hidden layer, that's 150+ million weights!
+### Reference Card: ChromaDB API
 
-* **Loss of Spatial Information**: Flattening an image loses the 2D structure and relationships between neighboring pixels
+| Method | Purpose | Key Parameters |
+|:---|:---|:---|
+| `chromadb.Client()` | Create in-memory client | — |
+| `client.create_collection(name)` | Create a new collection | `name` (str), `metadata` (dict) |
+| `collection.add()` | Add documents | `documents`, `ids`, `embeddings`, `metadatas` |
+| `collection.query()` | Search similar documents | `query_embeddings`, `n_results`, `include` |
+| `collection.count()` | Get document count | — |
 
-CNNs solve these problems through three key innovations:
-
-1. **Local Connectivity**: Neurons connect only to small regions of input (receptive fields)
-2. **Parameter Sharing**: Same filter weights applied across the entire image
-3. **Hierarchical Feature Learning**: Progressively more complex features at deeper layers
-
-[![XKCD: Machine Learning](https://imgs.xkcd.com/comics/machine_learning.png)](https://xkcd.com/1838/)
-
-### What is a Filter in a CNN?
-
-A **filter** (also called a kernel) is a small matrix of weights that slides over the input image. At each position, it multiplies its weights with the underlying pixel values and sums them up to produce a single output value. This process is called **convolution**.
-
-- Each filter is designed to detect a specific pattern, such as an edge, corner, or texture.
-- In early layers, filters might detect simple features (like vertical or horizontal edges).
-- In deeper layers, filters can detect more complex patterns (like shapes or objects).
-
-**Example:**  
-A 3×3 filter moves across the image, looking for a specific pattern everywhere. The same filter (with the same weights) is used at every location—this is called **parameter sharing**.
-
-![Convolutional Filter Operation](media/convolution_filter_static.gif)
-
-### B. Core CNN Components
-
-1. **Convolutional Layer:**
-    * Applies learnable filters across the input image
-    * Each filter detects specific patterns (edges, textures, etc.)
-    * Key parameters: filter size, number of filters, stride, padding
-
-   ![Convolutional Filter Operation](media/convolution_filter_static.png)
-
-2. **Transformation Terms:**
-    * **Feature Maps:** Output of applying filters
-    * **Stride:** Step size when sliding filter (affects output size)
-    * **Padding:** Adding pixels around border to preserve dimensions
-
-   ![Input Image and Resulting Feature Maps](media/feature_maps_example.png)
-
-3. **Activation Functions:**
-    * Add non-linearity to the model
-    * **ReLU:** Most common, f(x) = max(0, x)
-    * Simple, efficient, helps with vanishing gradient problem
-
-4. **Pooling Layer:**
-    * Reduces spatial dimensions (downsampling)
-    * **Max Pooling:** Takes maximum value in each window
-    * Reduces computation and provides translation invariance
-
-   ![Max Pooling Operation](media/max_pooling_example.png)
-
-5. **Fully Connected Layer:**
-    * Used at the end of the CNN for classification
-    * Each neuron connects to all outputs from previous layer
-    * Final layer uses softmax (multi-class) or sigmoid (binary) activation
-
-### C. Hierarchical Feature Learning
-
-CNNs automatically learn features at different levels of abstraction:
-
-* **Early Layers:** Simple features like edges, corners, and textures
-  ![Features Learned by Early CNN Layers](media/cnn_early_features.png)
-
-* **Middle Layers:** More complex patterns like parts of objects
-
-* **Deep Layers:** High-level concepts and complete objects
-  ![Features Learned by Deep CNN Layers](media/cnn_deep_features.png)
-
-This automatic feature hierarchy eliminates the need for manual feature engineering that was required in traditional computer vision.
-
-### D. CNN Architecture
-
-A typical CNN architecture follows this pattern:
-
-```
-INPUT → [[CONV → ReLU] → POOL] → [[CONV → ReLU] → POOL] → FLATTEN → FC → OUTPUT
-```
-
-* Number of filters typically increases in deeper layers
-* Spatial dimensions decrease through pooling layers
-* Final layers convert spatial features to classification outputs
-
-![Typical CNN Architecture Diagram](media/cnn_architecture_diagram.png)
-
-### E. Reference Card: CNN Layers in PyTorch and TensorFlow
-
-**PyTorch:**
+### Code Snippet: ChromaDB for Vector Search
 
 ```python
- Convolutional Layer
-nn.Conv2d(
-    in_channels=3,            # Number of input channels
-    out_channels=32,          # Number of output channels
-    kernel_size=3,            # Size of convolution window
-    stride=1,                 # Step size of the filter
-    padding=0                 # Amount of padding (0=valid, 1=same for 3x3)
+import chromadb
+from sentence_transformers import SentenceTransformer
+
+# Initialize ChromaDB
+client = chromadb.Client()
+collection = client.create_collection("clinical_notes")
+
+# Add documents with embeddings
+model = SentenceTransformer('all-MiniLM-L6-v2')
+documents = ["Note 1...", "Note 2...", "Note 3..."]
+
+collection.add(
+    documents=documents,
+    ids=[f"doc_{i}" for i in range(len(documents))],
+    embeddings=model.encode(documents).tolist()
 )
 
- Activation Function
-nn.ReLU()                     # Applied as separate layer
-
- Pooling Layer
-nn.MaxPool2d(
-    kernel_size=2,            # Size of pooling window
-    stride=2                  # Step size
-)
-
- Flatten Layer
-nn.Flatten()                  # Converts 2D feature maps to 1D vector
-
- Fully Connected Layer
-nn.Linear(
-    in_features=32*28*28,     # Input size
-    out_features=128          # Number of neurons
+# Query
+results = collection.query(
+    query_embeddings=model.encode(["chest pain symptoms"]).tolist(),
+    n_results=3
 )
 ```
 
-**TensorFlow/Keras:**
+# Retrieval-Augmented Generation (RAG)
 
-```python
- Convolutional Layer
-tf.keras.layers.Conv2D(
-    filters=32,               # Number of output filters
-    kernel_size=(3,3),        # Size of convolution window
-    strides=(1,1),            # Step size of the filter
-    padding='valid',          # 'valid' (no padding) or 'same' (preserve dimensions)
-    activation='relu'         # Activation function
-)
+RAG combines the power of retrieval systems with generative models, grounding LLM responses in actual documents.
 
- Pooling Layer
-tf.keras.layers.MaxPooling2D(
-    pool_size=(2,2),          # Size of pooling window
-    strides=None              # Step size (defaults to pool_size)
-)
+## Why RAG?
 
- Flatten Layer
-tf.keras.layers.Flatten()     # Converts 2D feature maps to 1D vector
+- **Reduces hallucinations**: Responses grounded in retrieved documents
+- **Provides sources**: Can cite specific documents
+- **Keeps information current**: Update documents without retraining
+- **Domain adaptation**: Use your own documents without fine-tuning
 
- Fully Connected Layer
-tf.keras.layers.Dense(
-    units=128,                # Number of neurons
-    activation='relu'         # Activation function
-)
+## RAG Pipeline
+
+![RAG pipeline diagram](media/rag_pipeline.png)
+
+```
+Query → Embed → Retrieve Similar Chunks → Add to Prompt → Generate Response
 ```
 
-### F. Minimal CNN Examples
+### Reference Card: RAG Components
 
-**PyTorch Example:**
+| Component | Purpose | Tools |
+|:---|:---|:---|
+| **Document Loader** | Ingest documents | LangChain loaders, PyPDF |
+| **Text Splitter** | Chunk documents | Manual slicing, LangChain splitters |
+| **Embedding Model** | Vectorize chunks | Sentence Transformers, OpenAI |
+| **Vector Store** | Store and retrieve | ChromaDB, FAISS, Pinecone |
+| **LLM** | Generate response | OpenAI, Anthropic, local models |
+
+> **Chunking tip**: For simple cases, split on paragraph boundaries or fixed character counts. Libraries like LangChain provide `RecursiveCharacterTextSplitter` for smarter splitting that respects sentence boundaries.
+
+## Building a RAG Pipeline
+
+### Code Snippet: Simple RAG
 
 ```python
-import torch.nn as nn
+from sentence_transformers import SentenceTransformer
+import chromadb
+from openai import OpenAI
 
-class SimpleCNN(nn.Module):
-    def __init__(self, num_classes):
-        super(SimpleCNN, self).__init__()
-        # First convolutional block
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.relu1 = nn.ReLU()
-        self.pool1 = nn.MaxPool2d(kernel_size=2)
+# Setup
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+llm_client = OpenAI()
+db = chromadb.Client()
+collection = db.create_collection("docs")
+
+# Index documents
+def index_documents(documents):
+    embeddings = embedding_model.encode(documents).tolist()
+    collection.add(
+        documents=documents,
+        embeddings=embeddings,
+        ids=[f"doc_{i}" for i in range(len(documents))]
+    )
+
+# RAG query
+def rag_query(question, n_results=3):
+    # Retrieve relevant chunks
+    query_embedding = embedding_model.encode([question]).tolist()
+    results = collection.query(query_embeddings=query_embedding, n_results=n_results)
+    
+    # Build context
+    context = "\n\n".join(results['documents'][0])
+    
+    # Generate response with context
+    response = llm_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": f"Answer based on this context:\n{context}"},
+            {"role": "user", "content": question}
+        ]
+    )
+    return response.choices[0].message.content
+```
+
+## RAG Best Practices
+
+1. **Chunk size matters**: Balance between context and specificity (typically 500-1000 tokens)
+2. **Overlap chunks**: Include overlap to avoid splitting important information
+3. **Metadata**: Store document source, date, and other metadata for filtering
+4. **Hybrid search**: Combine semantic search with keyword search
+5. **Reranking**: Use a reranker model to improve retrieval quality
+
+# LIVE DEMO!!
+
+Building a simple RAG pipeline for clinical document Q&A.
+
+See: [demo/02_rag_pipeline.md](demo/02_rag_pipeline.md)
+
+# Model Context Protocol (MCP)
+
+MCP provides a standardized way to connect LLMs to external data sources and tools. Instead of writing custom integrations for each tool, MCP offers plug-and-play servers that expose capabilities in a consistent format.
+
+## Why MCP?
+
+- **Standardization**: Same interface for files, databases, APIs, web scraping
+- **Reusability**: Pre-built servers for common tools (GitHub, Slack, Postgres, etc.)
+- **Security**: Consistent authentication and permission model
+- **Discovery**: LLMs can discover available tools dynamically
+
+## How MCP Works
+
+```
+┌─────────────┐    MCP Protocol    ┌─────────────┐
+│  LLM/Agent  │ ◄───────────────► │  MCP Server │ ◄──► External Service
+└─────────────┘                    └─────────────┘
+     Your code connects here            Pre-built or custom
+```
+
+1. **MCP Server** exposes tools and resources via a standard protocol
+2. **Your code** connects to the server and discovers available capabilities
+3. **LLM** receives tool definitions and can invoke them through your code
+
+### Reference Card: MCP Concepts
+
+| Concept | Description |
+|:---|:---|
+| **Server** | Process that exposes tools/resources (e.g., filesystem server, database server) |
+| **Tool** | Function the LLM can invoke (e.g., `read_file`, `query_database`) |
+| **Resource** | Data the LLM can read (e.g., file contents, API responses) |
+| **Transport** | How client and server communicate (stdio, HTTP) |
+
+### Code Snippet: Using MCP with OpenAI
+
+```python
+import asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from openai import OpenAI
+
+client = OpenAI()
+
+async def get_mcp_tools():
+    """Connect to MCP server and get tool definitions."""
+    # Connect to the filesystem MCP server
+    server = StdioServerParameters(
+        command="npx",
+        args=["-y", "@modelcontextprotocol/server-filesystem", "/path/to/data"]
+    )
+    
+    async with stdio_client(server) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            
+            # Get available tools in OpenAI format
+            mcp_tools = await session.list_tools()
+            return [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema
+                    }
+                }
+                for tool in mcp_tools.tools
+            ]
+
+# Tools from MCP can be passed directly to OpenAI
+# tools = asyncio.run(get_mcp_tools())
+# response = client.chat.completions.create(model="gpt-4o", tools=tools, ...)
+```
+
+## Common MCP Servers
+
+| Category | Server | Use Cases |
+|:---|:---|:---|
+| **File systems** | `@modelcontextprotocol/server-filesystem` | Read/write local files |
+| **Databases** | `@modelcontextprotocol/server-postgres` | Query databases |
+| **Web** | `@modelcontextprotocol/server-puppeteer` | Browser automation |
+| **Code** | `@modelcontextprotocol/server-github` | Repository operations |
+
+**Resources:**
+- [MCP Documentation](https://modelcontextprotocol.io)
+- [Pre-built servers](https://github.com/modelcontextprotocol/servers)
+- [Python SDK](https://github.com/modelcontextprotocol/python-sdk)
+
+# Agentic LLMs
+
+Moving beyond single request-response patterns, agentic LLMs can autonomously plan and execute multi-step tasks.
+
+## Traditional vs Agentic LLM Use
+
+| Traditional | Agentic |
+|-------------|---------|
+| Single request → single response | Multi-turn, self-guided iterations |
+| User provides all context | Agent gathers information as needed |
+| Fixed output | Iterates until task complete |
+| No tool access | Can invoke external functions |
+
+## Key Characteristics of Agents
+
+- **Autonomy**: Agent decides next steps based on observations
+- **Tool use**: Can invoke external functions (search, database queries, calculators)
+- **Iteration**: Loops until task complete or max steps reached
+- **State management**: Maintains context across multiple actions
+
+## Example Agent Flow
+
+```
+Task: "Find recent papers on treatment X and summarize findings"
+    ↓
+1. Agent searches literature database (tool call)
+    ↓
+2. Agent reads top 3 papers (tool call)
+    ↓
+3. Agent synthesizes findings
+    ↓
+4. Agent checks if answer is complete
+    ↓
+   If not, searches for more specific info
+    ↓
+5. Returns final summary
+```
+
+### Reference Card: Agent Components
+
+| Component | Purpose |
+|:---|:---|
+| **Planner** | Breaks task into steps |
+| **Memory** | Stores conversation and results |
+| **Tools** | External functions the agent can call |
+| **Executor** | Runs tools and collects results |
+| **Reflector** | Evaluates progress and adjusts |
+
+### Code Snippet: Simple Agent Loop
+
+```python
+def agent_loop(task, tools, max_steps=10):
+    """Simple agent loop with tool calling."""
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant with tool access."},
+        {"role": "user", "content": task}
+    ]
+    
+    for step in range(max_steps):
+        response = llm_client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            tools=tools,
+            tool_choice="auto"
+        )
         
-        # Second convolutional block
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.relu2 = nn.ReLU()
-        self.pool2 = nn.MaxPool2d(kernel_size=2)
+        message = response.choices[0].message
+        messages.append(message)
         
-        # Classification head
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(64 * (height//4) * (width//4), 128)
-        self.relu3 = nn.ReLU()
-        self.fc2 = nn.Linear(128, num_classes)
+        # Check if done
+        if message.tool_calls is None:
+            return message.content
         
-    def forward(self, x):
-        # First block
-        x = self.conv1(x)
-        x = self.relu1(x)
-        x = self.pool1(x)
-        
-        # Second block
-        x = self.conv2(x)
-        x = self.relu2(x)
-        x = self.pool2(x)
-        
-        # Classification
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.relu3(x)
-        x = self.fc2(x)
-        return x
+        # Execute tool calls
+        for tool_call in message.tool_calls:
+            result = execute_tool(tool_call, tools)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": str(result)
+            })
+    
+    return "Max steps reached"
 ```
 
-**TensorFlow/Keras Example:**
+## Prompting Techniques for Agents
+
+![Agentic prompting patterns](media/agentic_prompting.png)
+
+### Reference Card: Advanced Prompting Patterns
+
+| Pattern | Description | Use Case |
+|:---|:---|:---|
+| **Chain-of-thought** | Make reasoning explicit step-by-step | Multi-step reasoning |
+| **Self-consistency** | Generate multiple reasoning paths, vote | Improved accuracy |
+| **ReAct** | Interleave reasoning and tool actions | Agent workflows |
+| **Reflection** | Surface uncertainty and assumptions | Complex decisions |
+| **Decision trees** | Explicit conditional logic | Structured workflows |
+
+**Important Note**: LLM "reasoning" is not the same as thinking and does NOT always achieve better results or fewer hallucinations. It IS always more expensive. Use judiciously.
+
+# Workflow Orchestration Patterns
+
+Real tasks often span multiple steps and decision points. Workflows provide structure for complex LLM applications.
+
+## Why Workflows?
+
+- **Sequencing**: Chain LLM calls with conditional logic
+- **State management**: Maintain context, handle partial failures
+- **Tool integration**: Connect LLMs to databases, APIs, validation rules
+- **Error handling**: Retries, fallbacks, human-in-the-loop checkpoints
+- **Observability**: Track which step failed, inspect intermediate outputs
+
+## Pattern: Prompt Chaining
+
+**Concept**: Each LLM call processes output from previous call
+
+**Benefits**: Each step is simple, testable, debuggable
+
+### Code Snippet: Prompt Chain with OpenAI
 
 ```python
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from openai import OpenAI
 
-model = Sequential([
-  # First convolutional block
-  Conv2D(32, (3,3), activation='relu', input_shape=(height, width, channels), padding='same'),
-  MaxPooling2D((2,2)),
-  
-  # Second convolutional block
-  Conv2D(64, (3,3), activation='relu', padding='same'),
-  MaxPooling2D((2,2)),
-  
-  # Classification head
-  Flatten(),
-  Dense(128, activation='relu'),
-  Dense(num_classes, activation='softmax')  # For multi-class output
-])
+client = OpenAI()
+
+def llm_call(prompt: str) -> str:
+    """Simple wrapper for OpenAI chat completion."""
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content
+
+def extract_classify_summarize(document: str) -> dict:
+    """Chain of LLM calls: extract → classify → summarize."""
+    # Step 1: Extract entities
+    entities = llm_call(f"Extract all medical entities from this text. Return as a list:\n{document}")
+    
+    # Step 2: Classify entities
+    classified = llm_call(f"Classify these medical entities by type (condition, medication, procedure):\n{entities}")
+    
+    # Step 3: Generate summary
+    summary = llm_call(f"Write a brief clinical summary based on:\n{classified}")
+    
+    return {"entities": entities, "classified": classified, "summary": summary}
 ```
 
-Both examples follow the same architecture pattern with increasing filter counts in deeper layers.
+## Pattern: Parallelization
 
-## 3. Demo 1: Image Loading, Preprocessing & Basic CNN
+**Concept**: Run independent LLM tasks simultaneously for speed
 
-Let's put theory into practice! 🛠️
+**Use cases**:
 
-**File:** [`lectures/08/demo/01_image_cnn_basics.md`](lectures/08/demo/01_image_cnn_basics.md)
+- **Divide-and-conquer**: Split document into sections, analyze in parallel
+- **Multi-perspective**: Get different analyses of same content
+- **Batch processing**: Process multiple items at once
 
-**What we'll cover:**
+> **Note**: `asyncio` is Python's built-in library for asynchronous programming. It lets you run multiple tasks concurrently without threads. `AsyncOpenAI` is the async version of the OpenAI client.
 
-* Loading images in DICOM and standard formats using Pydicom, Pillow, and OpenCV
-* Inspecting image properties and metadata
-* Preprocessing: resizing, normalization, color space conversion
-* Visualization with Matplotlib
-* Building a simple CNN structure (without training)
-
-**Let's switch to the demo notebook!**
-
-## 4. Key Computer Vision Tasks & Techniques
-
-With our understanding of images and CNNs, let's explore the major computer vision tasks:
-
-* Image classification
-* Transfer learning
-* Object detection
-* Image segmentation
-
-### A. Image Classification
-
-**Task:** Assigning a single label to an entire image
-
-![X-ray Classification Example](media/xray_classification_example.png)
-![Dermoscopy Classification Example](media/dermoscopy_classification_example.png)
-
-**CNN Architecture for Classification:**
-
-* Convolutional layers extract features
-* Flatten layer converts 2D features to 1D vector
-* Dense layers perform final classification
-* Output layer uses softmax (multi-class) or sigmoid (binary)
-
-**Key CNN Architectures:**
-
-| Architecture | Year | Key Innovation |
-|--------------|------|----------------|
-| LeNet-5      | 1990s| First successful CNN for digit recognition |
-| AlexNet      | 2012 | Deeper network, ReLU, dropout, GPU training |
-| VGG          | 2014 | Deeper networks with small (3×3) filters |
-| Inception    | 2014 | Parallel filters at multiple scales |
-| ResNet       | 2015 | Skip connections enabling very deep networks |
-| MobileNet    | 2017 | Efficient models for mobile devices |
-
-### B. Transfer Learning for Medical Image Classification
-
-**Problem:** Medical imaging datasets are often too small to train deep CNNs from scratch
-
-**Solution:** Transfer learning - reuse models pre-trained on large datasets (like ImageNet)
-
-![Transfer Learning Concept Diagram](media/transfer_learning_diagram.png)
-
-**Two Main Approaches:**
-
-1. **Feature Extraction**
-    * Use pre-trained CNN as a fixed feature extractor
-    * Remove classification layers and add new ones for your task
-    * Only train the new classification layers
-    * Best for: Small medical datasets very different from original data
-
-2. **Fine-Tuning**
-    * Start with feature extraction approach
-    * Then unfreeze some later layers of the base model
-    * Continue training with very small learning rate
-    * Best for: Larger medical datasets with some similarity to original data
-
-   ![Fine-Tuning with Transfer Learning](media/feature_extraction_vs_fine_tuning2.png)
-
-**Implementation (TensorFlow/Keras):**
+### Code Snippet: Parallel LLM Calls with asyncio
 
 ```python
- 1. Load pre-trained model without top layers
-base_model = tf.keras.applications.ResNet50(
-    weights='imagenet',
-    include_top=False,
-    input_shape=(224, 224, 3)
-)
+import asyncio
+from openai import AsyncOpenAI
 
- 1. Freeze base model
-base_model.trainable = False
+client = AsyncOpenAI()
 
- 1. Add new classification head
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-x = Dense(128, activation='relu')(x)
-outputs = Dense(num_classes, activation='softmax')(x)
-model = Model(inputs=base_model.input, outputs=outputs)
+async def analyze_section(section: str, focus: str) -> dict:
+    """Analyze one section with a specific focus."""
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": f"Analyze this for {focus}:\n{section}"}]
+    )
+    return {"focus": focus, "analysis": response.choices[0].message.content}
 
- 1. Train only the new layers
-model.compile(optimizer='adam', loss='categorical_crossentropy')
-model.fit(train_data, epochs=10)
+async def parallel_analysis(document: str) -> list:
+    """Analyze document from multiple perspectives in parallel."""
+    tasks = [
+        analyze_section(document, "diagnoses"),
+        analyze_section(document, "medications"),
+        analyze_section(document, "procedures"),
+    ]
+    results = await asyncio.gather(*tasks)
+    return results
 
- 1. Optional: Fine-tuning
- Unfreeze some layers and train with small learning rate
+# Run with: results = asyncio.run(parallel_analysis(document))
 ```
 
-We'll implement transfer learning in Demo 2!
+## Pattern: Guardrails
 
-### C. Object Detection
+**Concept**: Input/output monitors that enforce safety and compliance rules
 
-**Task:** Identify *what* objects are in an image AND *where* they are located
+### Reference Card: Common Guardrails
 
-![Object Detection Example with Bounding Boxes](media/object_detection_example.png)
+| Guardrail | Purpose |
+|:---|:---|
+| **PII/PHI detection** | Flag or redact Protected Health Information (PHI) or Personally Identifiable Information (PII) |
+| **Hallucination detection** | Check if claims are grounded in source text |
+| **Jailbreak detection** | Identify prompt injection attempts |
+| **Format validation** | Ensure structured outputs meet schema |
+| **Content filtering** | Block inappropriate content |
 
-**Medical Applications:**
+### Code Snippet: Input/Output Guardrails
 
-* Nodule detection in lung scans
-* Cell counting in microscopy
-* Surgical instrument tracking
-* Polyp detection in colonoscopy
+```python
+import re
+from openai import OpenAI
 
-**Key Concepts:**
+client = OpenAI()
 
-1. **Bounding Boxes**
-    * Rectangles defining object location: `(x_min, y_min, x_max, y_max)` or `(x, y, width, height)`
-
-2. **Anchor Boxes**
-    * Predefined box templates at different locations, sizes, and aspect ratios
-    * Model predicts offsets from these templates rather than absolute coordinates
-
-   ![Anchor Boxes Example](media/anchor_boxes_example.png)
-
-3. **Non-Maximum Suppression (NMS)**
-    * Post-processing to remove redundant overlapping detections
-    * Keeps highest confidence detection when multiple boxes overlap
-
-   ![Non-Maximum Suppression (NMS) Example](media/nms_example.png)
-
-**Detection Approaches:**
-
-| Two-Stage Detectors (R-CNN family) | One-Stage Detectors (YOLO, SSD) |
-|-----------------------------------|--------------------------------|
-| 1. Generate region proposals      | Predict boxes and classes in one pass |
-| 2. Classify each region           | Faster but sometimes less accurate |
-| More accurate but slower          | Better for real-time applications |
-
-**Evaluation: Intersection over Union (IoU)**
-
-* Measures overlap between predicted and ground-truth boxes
-* IoU = Area of Overlap / Area of Union
-* Detection considered correct when IoU > threshold (typically 0.5)
-
-![Intersection over Union (IoU) Diagram](media/iou_diagram.png)
-
-## 5. Demo 2: Transfer Learning for Medical Image Classification
-
-Let's apply transfer learning to a medical image classification task!
-
-**File:** [`lectures/08/demo/02_transfer_learning_classification.md`](lectures/08/demo/02_transfer_learning_classification.md)
-
-**What we'll cover:**
-
-* Loading a medical dataset (MedMNIST)
-* Using a pre-trained model (MobileNetV2) as feature extractor
-* Adding and training a custom classification head
-* Evaluating model performance
-
-**Open the Demo 2 notebook to get started!**
-
-## 6. Image Segmentation
-
-**Task:** Classify every pixel in an image - the most detailed form of visual understanding
-
-![Image Segmentation Example: Input and Mask](media/segmentation_example.png)
-
-**Medical Applications:**
-
-* Organ segmentation for surgical planning and volume measurement
-  ![Organ Segmentation in MRI/CT](media/organ_segmentation.png)
-* Tumor delineation for treatment planning and monitoring
-  ![Tumor Delineation](media/tumor_segmentation.png)
-* Cell segmentation in microscopy images
-* Tissue type differentiation (gray/white matter, CSF)
-
-**Types:**
-
-* **Semantic Segmentation:** Labels all pixels of the same class identically
-* **Instance Segmentation:** Distinguishes between different instances of the same class
-  ![Semantic Segmentation Illustration](media/semantic_segmentation_illustration.png)
-
-**U-Net Architecture:**
-
-* Designed specifically for biomedical image segmentation
-* Excellent performance with limited training data
-* Key features:
-    * Encoder-decoder structure (U-shaped)
-    * Skip connections between corresponding encoder-decoder levels
-
-> tl;dr - For medical image segmentation, U-Net uses a U-shaped CNN. The encoder (left) extracts features at increasing granularities using convolutions and pooling. The decoder (right) then upsamples these features to recover the original image size with fine detail. Skip connections link encoder features to the decoder, combining "what" and "where" for precise segmentation.  
-
-![U-Net Architecture Diagram](media/unet_architecture_diagram.png)
-
-**Key Features of U-Net:**
-    1.  **Encoder-Decoder Structure (Symmetric):**
-    ***Contracting Path (Encoder):** This part is like a typical classification CNN. It consists of repeated blocks of convolutions and max pooling operations. Its purpose is to capture the context in the image and extract increasingly complex features while reducing spatial resolution. It learns "what" is in the image.
-    *   **Expanding Path (Decoder):** This part takes the low-resolution, high-level feature maps from the encoder and gradually upsamples them (using "up-convolutions" or "transposed convolutions") to recover the original image resolution. Its purpose is to precisely localize the features and produce a full-resolution segmentation mask. It learns "where" things are.
-
-1. **Skip Connections:** This is a crucial innovation of U-Net. The feature maps from the encoder path are concatenated (merged) with the corresponding feature maps in the decoder path at the same spatial resolution.
-    * **Why are skip connections important?** The encoder loses some spatial information during pooling. Skip connections allow the decoder to reuse these high-resolution features from the encoder, combining the "what" (semantic context from deep layers) with the "where" (fine-grained spatial detail from early layers). This helps in producing much more precise segmentation boundaries.
-
-* **Loss Functions for Segmentation:**
-    * While pixel-wise **Cross-Entropy** (used in classification) can be applied to segmentation (treating each pixel as a separate classification problem), it often struggles with class imbalance (e.g., when the object to be segmented is very small compared to the background).
-    * **Dice Loss (or Dice Coefficient based loss):**
-        * The Dice Coefficient is a measure of overlap, similar to IoU: `Dice = (2 * |X ∩ Y|) / (|X| + |Y|)`. It ranges from 0 to 1.
-        * Dice Loss is often defined as `1 - Dice Coefficient`.
-        * It's very popular for medical image segmentation because it's less sensitive to class imbalance and directly optimizes for overlap.
-    * **Jaccard Loss (or IoU Loss):**
-        * Based on the Jaccard Index (IoU): `Jaccard = |X ∩ Y| / |X ∪ Y|`.
-        * Jaccard Loss is often `1 - Jaccard Index`.
-        * Also good for handling class imbalance.
-    * Other variations and combinations exist (e.g., Focal Loss, Tversky Loss).
-
-* **Reference Card: U-Net Architecture (Conceptual Blocks)**
-    * **Encoder (Contracting Path):**
-        * Repeated Blocks: (Conv + ReLU) x2 -> MaxPool
-        * Number of filters typically doubles after each MaxPool.
-        * Spatial dimensions decrease, feature depth increases.
-    * **Bottleneck:**
-        * (Conv + ReLU) x2 at the lowest spatial resolution / deepest feature level.
-    * **Decoder (Expanding Path):**
-        * Repeated Blocks: Upsampling (Up-Convolution/Transposed Conv) -> Concatenate with corresponding Encoder features (Skip Connection) -> (Conv + ReLU) x2
-        * Number of filters typically halves after each upsampling block.
-        * Spatial dimensions increase, feature depth decreases.
-    * **Output Layer:**
-        * Final Convolution (e.g., 1x1 Conv) to map features to the desired number of classes.
-        * `Sigmoid` activation for binary segmentation (e.g., foreground/background).
-        * `Softmax` activation for multi-class segmentation.
-
-* **Minimal Example: Conceptual U-Net Structure (Keras-like)**
-
-    ```python
-    # Conceptual U-Net structure (highly simplified)
-    # inputs = Input(shape=(height, width, channels))
+def detect_phi(text: str) -> dict | None:
+    """Detect common PHI patterns in text."""
+    patterns = {
+        'ssn': r'\b\d{3}-\d{2}-\d{4}\b',
+        'phone': r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
+        'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+        'mrn': r'\b(MRN|Medical Record)[\s:#]*\d+\b'
+    }
     
-    # Encoder
-    c1 = Conv2D(64, (3,3), activation='relu', padding='same')(inputs)
-    c1 = Conv2D(64, (3,3), activation='relu', padding='same')(c1)
-    p1 = MaxPooling2D((2,2))(c1)
+    found = {}
+    for phi_type, pattern in patterns.items():
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        if matches:
+            found[phi_type] = matches
     
-    # ... more encoder blocks ...
+    return found if found else None
+
+def safe_llm_call(prompt: str) -> str:
+    """LLM call with input and output guardrails."""
+    # Input guardrail: check for PHI in prompt
+    phi_in_prompt = detect_phi(prompt)
+    if phi_in_prompt:
+        raise ValueError(f"PHI detected in input: {phi_in_prompt.keys()}")
     
-    # Bottleneck
-    bn = Conv2D(1024, (3,3), activation='relu', padding='same')(...)
-    bn = Conv2D(1024, (3,3), activation='relu', padding='same')(bn)
+    # Make LLM call
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    output = response.choices[0].message.content
     
-    # Decoder
-    u1 = Conv2DTranspose(512, (2,2), strides=(2,2), padding='same')(bn)
-    u1 = concatenate([u1, corresponding_encoder_output_c4]) # Skip connection
-    u1 = Conv2D(512, (3,3), activation='relu', padding='same')(u1)
-    u1 = Conv2D(512, (3,3), activation='relu', padding='same')(u1)
+    # Output guardrail: check for PHI in response
+    phi_in_output = detect_phi(output)
+    if phi_in_output:
+        raise ValueError(f"PHI detected in output: {phi_in_output.keys()}")
     
-    # ... more decoder blocks ...
+    return output
+```
+
+## Pattern: Deterministic Steps
+
+**Concept**: Integrate rule-based logic alongside LLM calls
+
+**Use cases where LLMs should NOT be used**:
+
+- Dose calculations (use formulas)
+- Date arithmetic
+- Database lookups
+- API calls with fixed parameters
+
+```python
+def process_patient_data(patient_info: str) -> dict:
+    """Combine LLM analysis with deterministic calculations."""
+    # LLM: Extract values from unstructured text
+    extracted = llm_call(f"Extract weight_kg and height_m as JSON: {patient_info}")
+    data = json.loads(extracted)
     
-    outputs = Conv2D(num_classes, (1,1), activation='softmax_or_sigmoid')(...)
-    model = Model(inputs=[inputs], outputs=[outputs])
-    ```
+    # DETERMINISTIC: Calculate BMI (never trust LLM for math!)
+    bmi = data['weight_kg'] / (data['height_m'] ** 2)
+    
+    # LLM: Generate interpretation
+    interpretation = llm_call(f"Interpret BMI of {bmi:.1f} for this patient context")
+    
+    return {"bmi": round(bmi, 1), "interpretation": interpretation}
+```
 
-## 7. Demo 3: Pre-trained Object Detection or Segmentation
+## Advanced Patterns (Further Reading)
 
-Let's explore how to use pre-trained models for complex vision tasks without training from scratch!
+For complex applications, additional patterns exist:
 
-**File:** [`lectures/08/demo/03_pretrained_detection_or_segmentation.md`](lectures/08/demo/03_pretrained_detection_or_segmentation.md)
+- **Orchestrator-Workers**: Central agent delegates to specialist workers
+- **Evaluator-Optimizer**: Generate → evaluate → refine loops
+- **Routing & Logic**: Conditional branching based on classification
+- **Human-in-the-loop**: Pause for review before high-stakes actions
 
-**Two options in this demo:**
+These are well-documented in the [Anthropic Cookbook](https://github.com/anthropics/anthropic-cookbook) and [OpenAI Cookbook](https://cookbook.openai.com/).
 
-1. **Object Detection with YOLO:**
-    * Use pre-trained YOLO model from ultralytics library
-    * Load model → feed image → visualize bounding boxes and labels
-    * Perfect for rapid prototyping
+# LIVE DEMO!!!
 
-2. **Image Segmentation with TensorFlow Hub:**
-    * Use pre-trained DeepLabV3 model
-    * Load model → prepare input → generate and visualize segmentation mask
+Building an agentic workflow with tool calling, plus a brief look at MCP integration.
 
-**Let's see these powerful pre-trained models in action!**
-
-## 8. Advanced Topics & Future Directions
-
-The field of computer vision continues to evolve rapidly. Here's a glimpse of emerging technologies:
-
-### Video Analysis
-
-* Analyzing sequences of images with temporal relationships
-* Applications: Gait analysis, surgical skill assessment, patient monitoring
-* Challenges: Motion tracking, appearance changes, computational demands
-
-### Vision Transformers (ViTs)
-
-* Applying transformer architecture from NLP to images
-* Images split into patches treated as "tokens"
-* Better at capturing global relationships than CNNs
-  
-![Vision Transformer (ViT) Diagram](media/vit_diagram.png)
-
-### Generative Models
-
-* **GANs**: Generator and discriminator networks in adversarial training
-* **Diffusion Models**: Gradual denoising process for high-quality generation
-* Medical applications: Synthetic data generation, image enhancement, modality translation
-  
-![Generative Model Concept](media/generative_model_concept.png)
-
-### Explainable AI (XAI)
-
-* Making "black box" models interpretable for clinical trust
-* Methods: Grad-CAM, LIME, SHAP, attention maps
-* Critical for clinical adoption and regulatory approval
-  
-![Grad-CAM Example](media/grad_cam_example.png)
-
-### Self-Supervised Learning
-
-* Learning from unlabeled data using pretext tasks
-* Reduces dependency on expensive annotations
-* Particularly valuable for medical imaging
-  
-![Self-Supervised Learning Concept](media/self_supervised_learning.png)
-
-### Data Augmentation
-
-* Creating modified copies of training images
-* Techniques: Rotation, scaling, flipping, color adjustments
-* Libraries: Albumentations, TensorFlow preprocessing layers
-  
-![Data Augmentation Examples](media/data_augmentation_examples.png)
-
-### Specialized Medical Imaging Libraries
-
-* **MONAI**: PyTorch-based framework for healthcare imaging
-* **SimpleITK**: Advanced registration and segmentation tools
-  
-![MONAI Logo](media/monai_logo.png)
-
-## 9. Mini-Demo: Video Object Tracking
-
-Let's briefly explore how computer vision extends to video data!
-
-**File:** [`lectures/08/demo/04_video_object_tracking_mini_demo.md`](lectures/08/demo/04_video_object_tracking_mini_demo.md)
-
-**Two tracking approaches:**
-
-1. **Detection-based Tracking:**
-    * Run object detector (YOLO) on each video frame
-    * Link detections across frames to maintain identity
-
-2. **Optical Flow Tracking:**
-    * Track feature points between frames using Lucas-Kanade algorithm
-    * Follow motion without needing full object detection
-
-**Let's see tracking in action!**
-
-## 10. Resources for Further Learning
-
-### Textbooks
-
-* ["Computer Vision: Algorithms and Applications (2nd Edition)" by Richard Szeliski](https://szeliski.org/Book/)
-* ["Foundations of Computer Vision" by Toralba, Isola, and Freeman](https://visionbook.mit.edu)
-* 
+See: [demo/03_agentic_workflow.md](demo/03_agentic_workflow.md)
 
 
-### Datasets
+# Practical Recommendations
 
-* **General:** ImageNet, COCO, MNIST, CIFAR
-* **Medical:**
-    * [MedMNIST](https://medmnist.com/) - Standardized biomedical datasets
-    * [TCIA](https://www.cancerimagingarchive.net/) - Cancer imaging archive
-    * [Grand Challenge](https://grand-challenge.org/) - Biomedical challenges
-    * NIH ChestX-ray, LIDC-IDRI, BraTS
+## Start Small
 
-### Annotation Tools
+**"Baby" models** (low cost, quick):
 
-* [ITK-SNAP](https://www.itksnap.org/) - 3D medical image segmentation
-* [3D Slicer](https://www.slicer.org/) - Medical image analysis platform
-* LabelMe, LabelImg, CVAT - General annotation tools
+- Mini/Nano tiers from major providers
+- ~10x cheaper than flagship models
+- Good for well-defined tasks
 
-### Conferences & Journals
+**Self-hosted options** (free, private):
 
-* **Conferences:** MICCAI, CVPR, ICCV, ECCV, RSNA, NeurIPS
-* **Journals:** IEEE TMI, MedIA, TPAMI, IJCV
+- Ollama (desktop)
+- PocketPal (iOS)
+- No API costs, no usage limits
+- Ideal for sensitive data prototyping
+
+## Testing & Validation
+
+**Start simple**:
+
+- Test on 5-10 representative examples first
+- Manually review outputs
+- Try edge cases (missing data, unusual formats)
+- Incorporate failures into few-shot examples
+
+**Red flags to watch for**:
+
+- Inconsistent outputs for similar inputs
+- Made-up citations or facts
+- Missing required information
+- Wrong format or structure
+
+**Remember**: Choose tasks that you can meaningfully oversee. Think of LLMs as prolific interns—productive but requiring supervision.
+
+# Resources
+
+## Prompt Engineering Guides
+
+- **Anthropic**: [docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **OpenAI**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
+
+## Workflow Tools
+
+- **OpenAI Workflows**: [platform.openai.com/workflows](https://platform.openai.com/workflows)
+- **LangChain**: [python.langchain.com/docs](https://python.langchain.com/docs)
+- **LangGraph**: [langchain.com/langgraph](https://www.langchain.com/langgraph)
+
+## Agent Frameworks
+
+- **OpenAI Agents**: [platform.openai.com/docs/guides/agents](https://platform.openai.com/docs/guides/agents)
+- **AutoGen**: [microsoft.github.io/autogen](https://microsoft.github.io/autogen)
+- **smolagents**: [huggingface.co/docs/smolagents](https://huggingface.co/docs/smolagents)
+
+## Self-Hosting
+
+- **Ollama**: [ollama.com](https://ollama.com)
+- **PocketPal**: [github.com/a-ghorbani/pocketpal-ai](https://github.com/a-ghorbani/pocketpal-ai)
+
+## Academic Discounts
+
+- **GitHub Education**: [github.com/education](https://github.com/education) - Free Pro with Copilot
+- **ChatGPT for Teachers**: [openai.com/index/chatgpt-for-teachers](https://openai.com/index/chatgpt-for-teachers)
+- **Claude for Education**: [claude.com/solutions/education](https://www.claude.com/solutions/education)
+- **Gemini for Students**: [gemini.google/students](https://gemini.google/students/)

@@ -1,0 +1,16 @@
+data:
+  size: "medium"
+  dir: "data"
+  patients_path: "data/patients.parquet"
+  sites_path: "data/sites.parquet"
+  events_path: "data/events.parquet"
+  icd10_path: "data/icd10_codes.parquet"
+  start_date: "2023-01-01"
+  diabetes_prefix: "E11"
+
+outputs:
+  dx_summary_parquet: "outputs/site_dx_prevalence.parquet"
+  dx_summary_csv: "outputs/site_dx_prevalence.csv"
+
+processing:
+  min_patients_per_site: 5

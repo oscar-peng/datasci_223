@@ -3,19 +3,15 @@
 This demo addresses a common challenge in health data: **imbalanced classes**. Often, the condition we want to predict (e.g., a rare disease) is much less frequent than the negative case. Standard models trained on imbalanced data tend to perform poorly on the minority class because they can achieve high accuracy simply by predicting the majority class most of the time.
 
 We will:
+
 1. Generate synthetic imbalanced data mimicking a rare disease prediction task, including a categorical feature.
 2. Handle the categorical feature using `OneHotEncoder`.
 3. Apply **SMOTE** (Synthetic Minority Over-sampling Technique) to balance the *training* data.
 4. Train a classifier (RandomForest) on the balanced training data.
 5. Evaluate the model, focusing on metrics sensitive to imbalance (Recall, F1-score, AUC).
-6. Use **eli5** and **SHAP** to interpret the model's feature importances.
+6. Use **eli5** to interpret the model's feature importances.
 
 ## 0. Setup: Install Required Packages 📦
-
-<!---
-Make sure all required packages are installed before running the notebook.
-The --quiet flag reduces output noise during installation.
---->
 
 ```python
 %pip install -r requirements.txt --quiet
@@ -24,6 +20,7 @@ The --quiet flag reduces output noise during installation.
 ## 1. Setup: Import Libraries
 
 We import necessary libraries:
+
 - Standard data science tools: `numpy`, `pandas`, `matplotlib`, `seaborn`.
 - `sklearn.datasets`: To generate synthetic data.
 - `sklearn.model_selection`: For splitting data.
@@ -104,55 +101,62 @@ plt.show()
 
 ## 3. Split Data into Training and Testing Sets
 
-**Crucially**, we split the data *before* applying SMOTE or encoding. This prevents "data leakage," where information from the test set inadvertently influences the training process (e.g., SMOTE creating synthetic samples based on test data patterns, or the encoder learning categories only present in the test set). The test set must remain completely unseen until final evaluation.
+**Crucially**, we split the data *before* applying any preprocessing (encoding or SMOTE). This prevents "data leakage," where information from the test set inadvertently influences the training process. The test set must remain completely unseen until final evaluation. We use `stratify=y` so both splits keep similar class proportions.
 
 ```python
 # Separate features (X) and target (y)
 X = df.drop('RareDisease', axis=1)
 y = df['RareDisease']
 
-## 4. Preprocessing: One-Hot Encode Categorical Feature FIRST
+# Split FIRST (before encoding or SMOTE)
+X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y  # Essential for imbalanced data!
+)
 
-Machine learning models need numerical input. We convert the 'Region' column into numerical format using `OneHotEncoder` BEFORE splitting the data, following the recommended order.
+display("Training set shape:", X_train_raw.shape)
+display("Testing set shape:", X_test_raw.shape)
+display("\nTraining set class distribution:")
+display(y_train.value_counts(normalize=True))
+display("\nTesting set class distribution:")
+display(y_test.value_counts(normalize=True))
+```
+
+## 4. Preprocessing: One-Hot Encode Categorical Feature (Fit on Train Only)
+
+Machine learning models need numerical input. We convert the 'Region' column using `OneHotEncoder`. **Fit the encoder only on the training data**, then transform both train and test. That way the model never sees test-set categories during training.
 
 ```python
 # Identify categorical and numerical columns
 categorical_cols = ['Region']
 numerical_cols = [col for col in X.columns if col not in categorical_cols]
 
-# Initialize OneHotEncoder
+# Initialize OneHotEncoder and fit on TRAINING data only
 encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
+encoder.fit(X_train_raw[categorical_cols])
 
-# Fit and transform on the ENTIRE dataset
-encoder.fit(X[categorical_cols])
 encoded_feature_names = encoder.get_feature_names_out(categorical_cols)
-X_encoded_array = encoder.transform(X[categorical_cols])
-X_encoded = pd.DataFrame(X_encoded_array, columns=encoded_feature_names, index=X.index)
+
+# Transform both train and test using the same fitted encoder
+X_train_encoded = encoder.transform(X_train_raw[categorical_cols])
+X_test_encoded = encoder.transform(X_test_raw[categorical_cols])
+
+X_train_encoded_df = pd.DataFrame(X_train_encoded, columns=encoded_feature_names, index=X_train_raw.index)
+X_test_encoded_df = pd.DataFrame(X_test_encoded, columns=encoded_feature_names, index=X_test_raw.index)
 
 # Combine numerical and encoded categorical features
-X_processed = pd.concat([X[numerical_cols], X_encoded], axis=1)
+X_train_processed = pd.concat([X_train_raw[numerical_cols].reset_index(drop=True), X_train_encoded_df.reset_index(drop=True)], axis=1)
+X_test_processed = pd.concat([X_test_raw[numerical_cols].reset_index(drop=True), X_test_encoded_df.reset_index(drop=True)], axis=1)
 
-# Store final feature names
-final_feature_names = list(X_processed.columns)
+# Store final feature names for eli5 later
+final_feature_names = list(X_train_processed.columns)
 
-display("Processed features shape:", X_processed.shape)
-display("\nFirst 5 rows of processed data:")
-display(X_processed.head())
-
-# NOW split the processed data
-X_train_processed, X_test_processed, y_train, y_test = train_test_split(
-    X_processed, y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y # Essential for imbalanced data!
-)
-
-display("Processed Training set shape:", X_train_processed.shape)
-display("Processed Testing set shape:", X_test_processed.shape)
-display("\nTraining set class distribution:")
-display(y_train.value_counts(normalize=True))
-display("\nTesting set class distribution:")
-display(y_test.value_counts(normalize=True))
+display("Processed training shape:", X_train_processed.shape)
+display("Processed testing shape:", X_test_processed.shape)
+display("\nFirst 5 rows of processed training data:")
+display(X_train_processed.head())
 ```
 
 ## 5. Handle Imbalance with SMOTE (on Training Data Only!)
@@ -217,6 +221,7 @@ display("Model training complete.")
 We evaluate the model trained on balanced data using the **original, processed test set** (`X_test_processed`, `y_test`). This reflects real-world performance on unseen, imbalanced data.
 
 Pay close attention to:
+
 - **Confusion Matrix:** How many actual rare disease cases (True Positives) did we catch? How many did we miss (False Negatives)?
 - **Classification Report:** Specifically, look at the **Recall** for the minority class (RareDisease=1). High recall here means the model is good at identifying the rare cases, which is often the primary goal in imbalanced health problems. Also check the F1-score for a balance between precision and recall.
 - **AUC & ROC Curve:** Provide threshold-independent measures of model separability.
@@ -297,21 +302,9 @@ display(HTML(styled_html))
 ## 9. Interpretation & Conclusion
 
 Let's analyze the results:
+
 - **Impact of SMOTE:** Compare the recall for the 'Rare Disease (1)' class in the classification report to what you might expect without SMOTE (likely much lower). SMOTE significantly improves the model's ability to detect the minority class, even if overall accuracy doesn't change much (or even slightly decreases). The scatter plots visually demonstrate how SMOTE adds synthetic minority samples to balance the feature space representation in the training data.
 - **Evaluation Metrics:** For imbalanced problems, focus on Recall (Sensitivity) for the minority class, F1-score, and AUC/ROC curve. High recall means fewer missed cases of the rare disease. The ROC curve visually confirms the model's ability to separate classes better than random guessing.
-- **eli5 Interpretation:** The `show_weights` output reveals which features contributed most to the RandomForest's predictions. This could highlight key continuous variables or even indicate if certain regions (from the one-hot encoded features) were associated with the rare disease in our synthetic data. Understanding feature importance is vital for validating if the model is learning meaningful patterns or relying on artifacts.
+- **eli5 Interpretation:** The eli5 feature-weights output (from `show_weights` or `explain_weights`) reveals which features contributed most to the RandomForest's predictions. This could highlight key continuous variables or even indicate if certain regions (from the one-hot encoded features) were associated with the rare disease in our synthetic data. Understanding feature importance is vital for validating if the model is learning meaningful patterns or relying on artifacts.
 
-This demo showed how to handle categorical features and class imbalance—two critical steps in real-world health data modeling. Applying SMOTE correctly (only on training data) and interpreting the model helps build effective and trustworthy classifiers.
-
-**🧠 Comprehension Checkpoint:**
-
-1.  Why is it crucial to apply SMOTE *only* to the training data?
-2.  Why might accuracy be a misleading metric for highly imbalanced datasets? Which metrics are often more informative?
-3.  What kind of information does `eli5.show_weights` provide about the RandomForest model?
-4.  If a feature like `Region_East` appeared high in the eli5 importance list, what might that suggest in the context of this synthetic dataset?
-
-Answers:
-1. To prevent data leakage. Applying SMOTE before splitting would mean synthetic samples based on test set information could end up in the training set, artificially inflating performance on the test set. The test set must represent unseen, real-world (imbalanced) data.
-2. A model can achieve high accuracy by simply predicting the majority class all the time. Metrics like Recall (for the minority class), F1-score, Precision-Recall curves, and AUC/ROC are more informative as they assess the model's ability to handle the minority class.
-3. It ranks the features based on how much they contribute to the model's predictions (e.g., based on how much they reduce impurity across all trees in the forest). It shows which features the model found most useful for classification.
-4. It would suggest that belonging to the 'East' region was found by the model to be a relatively strong predictor (either positively or negatively associated) of the 'RareDisease' outcome in this synthetic data, compared to other features.
+Applying SMOTE only on the training data prevents data leakage: if we applied it before splitting, synthetic samples could reflect test-set information and inflate reported performance; the test set should represent unseen, imbalanced data. Accuracy can be misleading when classes are imbalanced because a model can achieve high accuracy by always predicting the majority class; recall for the minority class, F1-score, and AUC/ROC are more informative. The eli5 feature-weights output ranks features by how much they contribute to predictions (e.g. impurity reduction across trees); if a feature like `Region_East` appears high, it was a relatively strong predictor of the outcome in this synthetic data.

@@ -1,1252 +1,897 @@
----
-lecture_number: 04
-pdf: true
----
+Reading Rocks!
 
-# Time Series & Regression: Predicting the Future 📈⌛
+(Natural Language Processing)
 
-!!! bug "`pywt` PyWavelets"
-    The `pywt` is very difficult to use. Update the lecture and assignment to work around this issue by substituting with a different package.
+- [https://classroom.github.com/a/78aoV6u5](https://classroom.github.com/a/78aoV6u5)
 
-<!---
-This lecture covers time series analysis with a focus on healthcare applications. Key points to emphasize:
-- Time series data is everywhere in healthcare (vital signs, lab results, disease progression)
-- Understanding patterns over time is crucial for patient care and resource planning
-- We'll build from basic concepts to advanced methods and dense data analysis
-- Focus on practical applications and common pitfalls
---->
+# Links & Self-Guided Review
 
-> "The best thing about the future is that it comes one data point at a time." 
-> — Abraham Lincoln (if he was a data scientist)
+- TB Hack Day on Feb 11th! Register at <https://seatrac.uw.edu/training/i4tbworkinggroup>
 
-![XKCD Extrapolating](media/extrapolating.png)
-*Source: [XKCD 605](https://xkcd.com/605/) - A cautionary tale about extrapolation*
+![](media/tb_hack_day.png)
 
-<!---
-This comic perfectly illustrates the dangers of naive extrapolation. Just because you can fit a line to data doesn't mean you should extend it indefinitely. In healthcare, this might mean:
-- Not assuming a patient's improvement will continue linearly
-- Being cautious about extending seasonal patterns too far
-- Considering biological and physical limits
---->
+- [Speech and Language Processing](https://web.stanford.edu/~jurafsky/slp3/) — Jurafsky & Martin, comprehensive NLP textbook (free online, chapters 2-6 cover this lecture)
+- [NLTK Book](https://www.nltk.org/book/) — official tutorial with exercises (chapters 1-7)
+- [spaCy 101](https://spacy.io/usage/spacy-101) — core concepts and usage patterns
+- [Real Python: NLP with spaCy](https://realpython.com/natural-language-processing-spacy-python/) — hands-on tutorial
+- [Regex101](https://regex101.com/) — interactive regex tester with explanation
+- [scispaCy](https://allenai.github.io/scispacy/) — biomedical NLP models
 
-## Lecture Overview
+# Natural Language Processing
 
-This lecture is divided into four main parts:
+## What is NLP?
 
-1. **Conceptual Overview** (10 minutes)
-   - Introduction to time series in healthcare
-   - Key applications and importance
-   - Visual introduction to patterns in time series
+![Clinical Entities](media/clinical_ent.webp)
 
-2. **Time Series Basics** (30 minutes)
-   - Types of healthcare time series
-   - Components and visualization
-   - Common challenges
-   - Basic analysis techniques
-   - **Demo**: Exploring heart rate patterns during meditation
+Humans communicate in natural language—English, Spanish, clinical shorthand. Computers need structure—numbers, categories, defined relationships. Natural language processing (NLP) bridges this gap, transforming free-form text into data that algorithms can analyze.
 
-3. **ARIMA Models** (25 minutes)
-   - Introduction to forecasting
-   - Understanding ARIMA components
-   - Model selection and evaluation
-   - Healthcare applications
-   - **Demo**: Sleep quality prediction
+NLP powers everyday tools:
 
-4. **Sensor Data Analysis** (25 minutes)
-   - Characteristics of dense physiological data
-   - Signal processing techniques
-   - Feature extraction
-   - Pattern recognition in health monitoring
-   - **Demo**: Advanced sensor data analysis
+- **Search engines** understand queries and match relevant documents
+- **Translation services** convert between languages
+- **Voice assistants** interpret spoken commands
+- **Email filters** detect spam and categorize messages
 
-Let's begin with a conceptual overview of time series analysis!
+The core challenges:
 
-## 1. Conceptual Overview: Why Time Series Matter in Healthcare 🏥
+- **Ambiguity** — "bank" means river bank or financial bank?
+- **Context** — "not bad" means good
+- **Variation** — "BP", "blood pressure", "b.p." all mean the same thing
+- **Implicit knowledge** — "take with food" implies meals
 
-<!---
-Time series data in healthcare is like a Netflix series - it's all about the patterns and plot twists:
-- Each vital sign tells a story (heart rate is the action sequence, temperature is the dramatic tension)
-- Missing data is like missing episodes - you need to figure out what happened
-- Seasonality is the show's recurring themes
-- Anomalies are the plot twists you need to catch
---->
+## Why NLP for Health Data?
 
-### The Three Laws of Time Series 🤖
+Electronic health records contain vast amounts of free-text data: physician notes, discharge summaries, radiology reports, pathology findings. Surveys and patient-reported outcomes add more unstructured text. NLP lets you:
 
-1. **A time series may not harm a patient, or through inaction, allow a patient to come to harm**
-    - Monitoring systems must be reliable
-    - Alerts should minimize false alarms
-    - Models must be interpretable
+- **Extract diagnoses** from clinical notes that weren't coded
+- **Identify adverse events** mentioned in free text
+- **Analyze sentiment** (positive/negative tone) in patient feedback
+- **Build cohorts** from text descriptions that predate structured fields
 
-2. **A time series must be clean, except where such cleanliness conflicts with the First Law**
-    - Data quality is crucial
-    - But don't discard "messy" data that might be clinically relevant
-    - Document all preprocessing steps
+| Data Source | Example Text | What NLP Can Extract |
+|-------------|--------------|----------------------|
+| Progress notes | "Patient denies chest pain, reports mild fatigue" | Symptoms (negated and affirmed) |
+| Radiology reports | "No acute intracranial abnormality" | Findings, negation status |
+| Discharge summaries | "Follow up with cardiology in 2 weeks" | Care instructions, timing |
+| Patient surveys | "The wait time was frustrating" | Sentiment, specific complaints |
 
-3. **A time series must protect its integrity as long as such protection does not conflict with the First or Second Law**
-    - No data leakage from the future
-    - Respect temporal ordering
-    - Handle missing values appropriately
+## Classical vs LLM-based Approaches
 
-> **Check**: What's your favorite example of "garbage in, garbage out" with time series data?
+**Classical NLP** uses explicit pipelines: tokenize text, apply rules or statistics, convert to numerical features. **LLM-based NLP** uses neural networks trained on massive text corpora to learn representations end-to-end.
 
-### What is a Time Series?
+| Aspect | Classical NLP | LLM-based |
+|--------|---------------|-----------|
+| Text representation | Word counts, TF-IDF | Contextual embeddings |
+| Pipeline | Explicit stages (tokenize → analyze → vectorize) | Often end-to-end |
+| Interpretability | High—you can inspect features | Lower—embeddings are opaque |
+| Computational cost | Low | High |
+| Training data | Works with small labeled sets | Benefits from massive pretraining |
 
-A time series is a sequence of observations recorded at regular time intervals. In healthcare, time series data is ubiquitous:
+**When to use classical NLP:**
 
-- **Patient monitoring**: Vital signs, continuous glucose readings, ECG
-- **Treatment tracking**: Medication effects, therapy outcomes
-- **Disease progression**: Biomarker changes, symptom severity
-- **Healthcare operations**: Hospital admissions, resource utilization
+- You need interpretable features ("which words predict readmission?")
+- Computational resources are limited
+- You're building rule-based extraction
+- The task is well-defined and doesn't require deep understanding
 
-### Patterns in Time Series
+**When to use LLMs:**
 
-Time series can exhibit various patterns that provide valuable insights:
+- The task requires understanding context and nuance
+- You need text generation or summarization
+- Transfer learning from general knowledge helps your domain
 
-```mermaid
-graph TD
-    A[Time Series Patterns] --> B[Trend]
-    A --> C[Seasonality]
-    A --> D[Cyclical]
-    A --> E[Irregular]
-    B --> F[Upward/Downward]
-    B --> G[Changing Direction]
-    C --> H[Daily/Weekly]
-    C --> I[Monthly/Yearly]
-    D --> J[Business Cycles]
-    D --> K[Epidemic Waves]
-    E --> L[Random Variation]
+Most real-world clinical NLP systems combine both: classical techniques for structured extraction, LLMs for complex reasoning.
+
+## Tools: NLTK vs spaCy
+
+Two Python libraries dominate classical NLP work.
+
+**NLTK (Natural Language Toolkit)** is designed for learning and research. It offers many algorithms for each task, letting you explore different approaches. Processing is string-based—you work with lists of words and manual pipelines.
+
+**spaCy** is designed for production applications. It provides one optimized algorithm per task, prioritizing speed and ease of use. Processing is object-oriented—you work with `Doc`, `Token`, and `Span` objects that carry rich annotations.
+
+| Aspect | NLTK | spaCy |
+|--------|------|-------|
+| Philosophy | Educational, comprehensive | Production-ready, fast |
+| Algorithm choice | Many algorithms to choose | One best algorithm per task |
+| Processing style | String-based | Object-oriented (Doc, Token, Span) |
+| Pipeline | Manual assembly | Integrated pipeline |
+| Best for | Learning, research | Applications |
+
+**spaCy's object model:**
+
+- **Doc** — a processed document containing all tokens and annotations
+- **Token** — a single word or punctuation mark with attributes (text, POS, lemma)
+- **Span** — a slice of a Doc (like a substring, but with token information)
+
+### Installation
+
+| Tool | Install | First-time Setup |
+|------|---------|------------------|
+| NLTK | `pip install nltk` | `nltk.download('punkt_tab')`, `nltk.download('stopwords')` |
+| spaCy | `pip install spacy` | `python -m spacy download en_core_web_sm` |
+| scikit-learn | `pip install scikit-learn` | (none required) |
+
+# Text Processing Fundamentals
+
+Before analysis, we transform raw text into a consistent format. These preprocessing steps are foundational to nearly all NLP work.
+
+## Tokenization
+
+![Tokenization](media/tokenization.webp)
+
+Tokenization splits text into individual units called **tokens**—usually words, but sometimes punctuation, numbers, or subwords. Every subsequent NLP step operates on tokens.
+
+**Why tokenization matters:**
+
+- "500mg" as one token vs. "500" + "mg" affects downstream analysis
+- Abbreviations like "Dr." shouldn't be split at the period
+- Medical terms like "COVID-19" should stay together
+
+**Tokenization and NLP methods:** The choice of tokenization strategy depends on your downstream task. Classical NLP typically uses word-level tokenization. Modern LLMs use **subword tokenization** (BPE, WordPiece), which splits words into smaller pieces like "pre" + "process" + "ing"—this handles rare words better and creates a fixed vocabulary size. The tokenizer and model must match: you can't use a word tokenizer with a model trained on subwords.
+
+```
+Sentence: "Dr. Smith prescribed 500mg ibuprofen."
+
+Whitespace split:   ["Dr.", "Smith", "prescribed", "500mg", "ibuprofen."]
+                    ↑ keeps punctuation attached
+
+NLTK word_tokenize: ["Dr.", "Smith", "prescribed", "500mg", "ibuprofen", "."]
+                    ↑ handles abbreviations, splits final "."
+
+spaCy tokenizer:    ["Dr.", "Smith", "prescribed", "500", "mg", "ibuprofen", "."]
+                    ↑ splits numbers from units
 ```
 
-Let's look at some examples of different patterns in healthcare time series:
+### Reference Card: Tokenization
 
-- **Trend only**: Disease progression (e.g., gradual decline in lung function)
-- **Seasonality only**: Seasonal allergies or influenza cases
-- **Trend and seasonality**: Hospital admissions over multiple years
-- **Cyclical patterns**: Epidemic waves that don't follow fixed calendar patterns
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Basic** | `text.split()` | Splits on whitespace only. | `list[str]` |
+| **NLTK** | `nltk.word_tokenize(text)` | Tokenizes handling punctuation and abbreviations. | `list[str]` |
+| **NLTK** | `nltk.sent_tokenize(text)` | Splits text into sentences. | `list[str]` |
+| **NLTK** | `RegexpTokenizer(pattern)` | Custom tokenizer using regex pattern (e.g., `r'\w+'` for words only). | `list[str]` via `.tokenize(text)` |
+| **spaCy** | `for token in doc` | Iterates tokens after `doc = nlp(text)`. | `Token` objects |
 
-## 2. Time Series Basics
-
-### Types of Healthcare Time Series
-
-<!---
-Healthcare time series come in many forms, each with unique characteristics and challenges. Understanding these different types helps us apply the right analysis techniques and avoid common pitfalls.
---->
-
-#### 1. Regular vs. Irregular Time Series
-
-```mermaid
-graph LR
-    A[Time Series Types] --> B[Regular]
-    A --> C[Irregular]
-    B --> D[Fixed intervals<br>e.g., hourly vitals]
-    C --> E[Variable intervals<br>e.g., patient visits]
-```
-
-##### Regular Time Series
-- Fixed time intervals between observations
-- Examples: Hourly vital signs, daily lab values, continuous monitoring
-- Data from: [Heart Rate During Meditation](https://physionet.org/static/published-projects/meditation/heart-rate-oscillations-during-meditation-1.0.0.zip)
-
-##### Irregular Time Series
-- Variable time intervals between observations
-- Examples: Patient visits, symptom reports, medication changes
-- Data from: [MMASH Dataset](https://physionet.org/content/mmash/1.0.0/MMASH.zip)
-
-#### 2. Univariate vs. Multivariate Time Series
-
-##### Univariate Time Series
-- Single variable measured over time
-- Example: Blood glucose readings
-
-**Conceptual**: Univariate time series represent a single variable tracked over time. They're the simplest form of time series and allow us to focus on patterns in a single measurement.
-
-**Reference**: 
-- `pandas.Series`: Core data structure for univariate time series
-  - `index`: DatetimeIndex that holds the timestamps
-  - Common methods: `plot()`, `rolling()`, `resample()`
+### Code Snippet: Tokenization
 
 ```python
-# Example of univariate time series
+import nltk
+nltk.download('punkt_tab')
+
+text = "Dr. Smith prescribed 500mg ibuprofen. Take twice daily."
+
+# Naive split
+print(text.split())
+# ['Dr.', 'Smith', 'prescribed', '500mg', 'ibuprofen.', 'Take', 'twice', 'daily.']
+
+# NLTK word tokenize
+print(nltk.word_tokenize(text))
+# ['Dr.', 'Smith', 'prescribed', '500mg', 'ibuprofen', '.', 'Take', 'twice', 'daily', '.']
+
+# NLTK sentence tokenize
+print(nltk.sent_tokenize(text))
+# ['Dr. Smith prescribed 500mg ibuprofen.', 'Take twice daily.']
+```
+
+## Normalization
+
+![Normalization Pipeline](media/preprocess.png)
+
+Normalization transforms tokens into a consistent form.
+
+**Lowercasing** reduces vocabulary size by treating "Patient" and "patient" as the same word.
+
+> **Caveat:** Lowercasing can destroy useful information. "US" (United States) becomes "us" (pronoun). In clinical text, abbreviations often rely on case: "MS" could mean multiple sclerosis, mental status, or morphine sulfate.
+
+**Stopword removal** filters out common words like "the", "is", "and" that appear frequently but carry little meaning for many tasks. A **stopword list** is a predefined set of these common words.
+
+> **Caveat:** Stopwords aren't always useless. "No chest pain" loses critical meaning if you remove "no". For clinical text, be careful with negation words.
+
+**Punctuation removal** strips commas, periods, and other marks—unless they carry meaning (like hyphens in "COVID-19").
+
+### Reference Card: Normalization
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Case** | `text.lower()` | Converts string to lowercase. | `str` |
+| **Punctuation** | `text.translate(str.maketrans('', '', string.punctuation))` | Removes all punctuation characters. | `str` |
+| **Stopwords** | `stopwords.words('english')` | Returns NLTK's English stopword list. | `list[str]` (179 words) |
+
+### Code Snippet: Normalization
+
+```python
+import string
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+
+text = "The Patient, age 45, presents WITH chest pain."
+
+text = text.lower()
+text = text.translate(str.maketrans('', '', string.punctuation))
+tokens = nltk.word_tokenize(text)
+
+stop_words = set(stopwords.words('english'))
+tokens = [t for t in tokens if t not in stop_words]
+
+print(tokens)
+# ['patient', 'age', '45', 'presents', 'chest', 'pain']
+```
+
+## Stemming and Lemmatization
+
+Both techniques reduce words to a common base form, helping group related words together.
+
+**Stemming** chops off word endings using simple rules. It's fast but crude—"studies" becomes "studi" (not a real word).
+
+**Lemmatization** uses vocabulary and word structure analysis to find the actual dictionary form (the **lemma**). "studies" → "study", "better" → "good". More accurate but slower.
+
+```
+Word          Stemmer Output    Lemmatizer Output
+───────────────────────────────────────────────────
+"running"     "run"             "run"
+"studies"     "studi"           "study"
+"better"      "better"          "good" (with POS=adj)
+"universities" "univers"        "university"
+```
+
+### Reference Card: Stemming & Lemmatization
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Stemming** | `PorterStemmer().stem(word)` | Classic rule-based English stemmer. | `str` |
+| **Stemming** | `SnowballStemmer('english').stem(word)` | Improved Porter variant. | `str` |
+| **Lemmatization** | `WordNetLemmatizer().lemmatize(word, pos='v')` | Dictionary lookup. `pos`: 'n', 'v', 'a', 'r'. | `str` |
+| **Lemmatization** | `token.lemma_` | spaCy attribute, automatic in pipeline. | `str` |
+
+### Code Snippet: Stemming vs Lemmatization
+
+```python
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+import nltk
+nltk.download('wordnet')
+
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+
+words = ["running", "studies", "better", "caring"]
+
+for word in words:
+    print(f"{word}: stem={stemmer.stem(word)}, lemma={lemmatizer.lemmatize(word, pos='v')}")
+```
+
+![XKCD: Synonym Date](media/xkcd_synonym_date.png)
+
+# LIVE DEMO
+
+# Part-of-Speech Tagging
+
+Part-of-speech (POS) tagging labels each token with its grammatical role: noun, verb, adjective, etc.
+
+## Concepts
+
+![POS Tagging](media/pos_tag.png)
+
+POS tagging enables:
+
+- **Better lemmatization** — knowing "running" is a verb vs noun
+- **Information extraction** — find all nouns to identify topics
+- **Syntax analysis** — understand sentence structure
+
+```
+"The patient reported severe chest pain yesterday."
+
+The      → DT  (determiner)
+patient  → NN  (noun, singular)
+reported → VBD (verb, past tense)
+severe   → JJ  (adjective)
+chest    → NN  (noun, singular)
+pain     → NN  (noun, singular)
+```
+
+Tags follow standardized sets. **Penn Treebank** tags (NLTK) are the traditional English standard. **Universal Dependencies** tags (spaCy) work across languages.
+
+### Common POS Tags
+
+| Tag | Description | Example |
+|-----|-------------|---------|
+| NN | Noun, singular | patient, pain |
+| NNS | Noun, plural | patients, symptoms |
+| VB | Verb, base form | diagnose, treat |
+| VBD | Verb, past tense | diagnosed, treated |
+| VBG | Verb, gerund | diagnosing, running |
+| JJ | Adjective | severe, chronic |
+| RB | Adverb | quickly, very |
+| DT | Determiner | the, a, an |
+
+## NLTK
+
+### Reference Card: NLTK POS Tagging
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Tag** | `nltk.pos_tag(tokens)` | Tags list of tokens with POS. | `list[tuple[str, str]]` |
+| **Help** | `nltk.help.upenn_tagset('NN')` | Explains a Penn Treebank tag. | Printed description |
+
+### Code Snippet: NLTK POS Tagging
+
+```python
+import nltk
+nltk.download('averaged_perceptron_tagger_eng')
+
+text = "The patient reported severe chest pain."
+tokens = nltk.word_tokenize(text)
+tagged = nltk.pos_tag(tokens)
+
+print(tagged)
+# [('The', 'DT'), ('patient', 'NN'), ('reported', 'VBD'),
+#  ('severe', 'JJ'), ('chest', 'NN'), ('pain', 'NN'), ('.', '.')]
+
+# Find all nouns
+nouns = [word for word, tag in tagged if tag.startswith('NN')]
+print(nouns)  # ['patient', 'chest', 'pain']
+```
+
+## spaCy
+
+### Reference Card: spaCy POS Tagging
+
+| Category | Method / Attribute | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Coarse** | `token.pos_` | Universal Dependencies POS tag. | `str` (`"NOUN"`, `"VERB"`) |
+| **Fine** | `token.tag_` | Fine-grained Penn Treebank style tag. | `str` (`"NN"`, `"VBD"`) |
+| **Help** | `spacy.explain(tag)` | Explains any spaCy tag. | `str` |
+
+### Code Snippet: spaCy POS Tagging
+
+```python
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("The patient reported severe chest pain.")
+
+for token in doc:
+    print(f"{token.text:12} {token.pos_:6} {token.tag_}")
+
+# The          DET    DT
+# patient      NOUN   NN
+# reported     VERB   VBD
+# severe       ADJ    JJ
+# chest        NOUN   NN
+# pain         NOUN   NN
+```
+
+![XKCD: Language Acquisition](media/xkcd_language_acquisition.png)
+
+# Named Entity Recognition
+
+Named Entity Recognition (NER) identifies and classifies specific entities in text: people, organizations, locations, dates. For clinical text, specialized models can extract medications, dosages, diagnoses, and procedures.
+
+## Concepts
+
+![Clinical NER](media/named_entity.png)
+
+**Example:** "Dr. Smith at UCSF prescribed Metformin 500mg on January 15."
+
+| Text | Entity Type |
+|------|-------------|
+| Dr. Smith | PERSON |
+| UCSF | ORG (organization) |
+| Metformin | (needs medical NER model) |
+| 500mg | QUANTITY |
+| January 15 | DATE |
+
+**Standard NER entities:** PERSON, ORG, GPE (location), DATE, TIME, MONEY, PERCENT
+
+**Clinical NER entities** (specialized models): MEDICATION, DOSAGE, DIAGNOSIS, PROCEDURE, ANATOMY
+
+## NLTK
+
+NLTK's NER requires POS-tagged input and returns a tree structure.
+
+### Reference Card: NLTK NER
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Extract** | `nltk.ne_chunk(tagged)` | Extracts named entities from POS-tagged tokens. | `nltk.Tree` |
+| **Binary** | `nltk.ne_chunk(tagged, binary=True)` | Labels NE vs non-entity only. | `nltk.Tree` |
+
+### Code Snippet: NLTK NER
+
+```python
+import nltk
+nltk.download('maxent_ne_chunker_tab')
+nltk.download('words')
+
+text = "Dr. Smith at UCSF prescribed medication."
+tokens = nltk.word_tokenize(text)
+tagged = nltk.pos_tag(tokens)
+entities = nltk.ne_chunk(tagged)
+
+for chunk in entities:
+    if hasattr(chunk, 'label'):
+        print(f"{' '.join(c[0] for c in chunk)}: {chunk.label()}")
+# UCSF: ORGANIZATION
+```
+
+## spaCy
+
+### Reference Card: spaCy NER
+
+| Category | Method / Attribute | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Access** | `doc.ents` | All named entities in document. | `tuple[Span]` |
+| **Text** | `ent.text` | The entity's text content. | `str` |
+| **Type** | `ent.label_` | Entity classification. | `str` (`"PERSON"`, `"ORG"`) |
+| **Position** | `ent.start`, `ent.end` | Token indices of entity span. | `int` |
+
+### Code Snippet: spaCy NER
+
+```python
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("Dr. Smith at UCSF prescribed medication on January 15.")
+
+for ent in doc.ents:
+    print(f"{ent.text}: {ent.label_}")
+
+# Dr. Smith: PERSON
+# UCSF: ORG
+# January 15: DATE
+```
+
+# Text Extraction
+
+Beyond NER, we often need to extract specific patterns from text—vitals, dosages, dates, and other structured information. Regex is the workhorse for syntactic patterns; for more complex extraction, consider rule-based systems (spaCy's `Matcher`) or template filling.
+
+## Regex Patterns
+
+Regular expressions (regex, `import re`) are pattern-matching tools for extracting text that follows predictable formats. Use regex when:
+
+- **NER doesn't cover your pattern** — vitals like "120/80" or dosages like "500mg" aren't standard NER types
+- **You need exact format control** — dates in "MM/DD/YYYY" vs "Month DD, YYYY" vs "DD-Mon-YY"
+- **The pattern is syntactic, not semantic** — phone numbers, IDs, lab values follow structural rules
+- **You're building a preprocessing pipeline** — clean or normalize text before further analysis
+
+NER identifies *what something means* (this is a person, this is a date). Regex extracts *what something looks like* (three digits, slash, three digits).
+
+```
+Pattern     Matches                Example
+────────────────────────────────────────────────────────
+\d          digit                  "5" in "500mg"
+\d+         one or more digits     "500" in "500mg"
+\w+         word characters        "patient" in "patient:"
+[A-Z]+      uppercase letters      "BP" in "BP: 120/80"
+\s          whitespace             spaces, tabs, newlines
+(...)       capture group          extract matched portion
+|           OR                     "mg|ml|mcg"
+
+Clinical patterns:
+• Vitals:  \d{2,3}/\d{2,3}        →  "120/80"
+• Dosage:  \d+\s?(mg|ml|mcg)      →  "500 mg", "10ml"
+• Date:    \d{1,2}/\d{1,2}/\d{4}  →  "01/15/2025"
+```
+
+### Reference Card: Python `re` Module
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Search** | `re.search(pattern, text)` | Finds first match in text. | `Match` or `None` |
+| **Find All** | `re.findall(pattern, text)` | Finds all non-overlapping matches. | `list[str]` |
+| **Replace** | `re.sub(pattern, repl, text)` | Replaces matches with `repl` string. | `str` |
+| **Extract** | `match.group()` | Returns the matched text. | `str` |
+| **Groups** | `match.groups()` | Returns all captured groups. | `tuple[str]` |
+
+### Code Snippet: Regex in the `re` Module
+
+```python
+import re
+
+note = "BP 120/80, Metformin 500mg, Lab 01/15/2025"
+
+bp = re.findall(r'\d{2,3}/\d{2,3}', note)                 # ['120/80']
+meds = re.findall(r'(\w+)\s+(\d+)(mg|ml)', note)          # [('Metformin', '500', 'mg')]
+cleaned = re.sub(r'\d{2}/\d{2}/\d{4}', '[DATE]', note)    # redact dates
+```
+
+## Regex Across NLP Tools
+
+Regex patterns appear throughout the NLP toolkit—not just in the `re` module. Learning regex syntax pays off because you'll reuse it in many contexts.
+
+```python
+# TOKENIZATION: RegexpTokenizer uses regex to define what counts as a token
+from nltk.tokenize import RegexpTokenizer
+tokenizer = RegexpTokenizer(r'\w+')           # words only, no punctuation
+tokenizer.tokenize("Hello, world!")           # ['Hello', 'world']
+
+# PANDAS: .str methods accept regex for text columns
 import pandas as pd
-dates = pd.date_range(start='2024-01-01', periods=10, freq='D')
-glucose = pd.Series([95, 100, 92, 98, 105, 110, 102, 95, 99, 97], index=dates)
+df = pd.DataFrame({'notes': ['BP 120/80', 'BP 130/85']})
+df['systolic'] = df['notes'].str.extract(r'(\d+)/\d+')   # extract first number
+
+# SPACY MATCHER: pattern-based matching (not regex, but similar concept)
+# from spacy.matcher import Matcher
+# matcher.add("BP_PATTERN", [[{"SHAPE": "ddd"}, {"TEXT": "/"}, {"SHAPE": "dd"}]])
 ```
 
-##### Multivariate Time Series
-- Multiple variables measured over time
-- Example: Vital signs (heart rate, blood pressure, temperature)
+![XKCD: Regex Golf](media/xkcd_regex_golf.png)
 
-**Conceptual**: Multivariate time series track multiple variables simultaneously. They allow us to analyze relationships between different measurements and how they evolve together over time.
+# LIVE DEMO
 
-**Reference**:
-- `pandas.DataFrame`: Core data structure for multivariate time series
-  - Each column represents a different variable
-  - Shared DatetimeIndex across all variables
+# Text Representation
 
-```python
-# Example of multivariate time series
-vitals = pd.DataFrame({
-    'heart_rate': [72, 75, 71, 74, 77, 80, 76, 73, 75, 74],
-    'systolic_bp': [120, 122, 119, 121, 125, 128, 124, 120, 122, 121],
-    'temperature': [98.6, 98.7, 98.5, 98.6, 98.8, 99.0, 98.7, 98.6, 98.7, 98.6]
-}, index=dates)
+To use text in machine learning, we need numerical representations. These classical approaches convert documents into vectors (lists of numbers).
+
+## Bag of Words
+
+**Bag of Words (BoW)** counts how many times each word appears, ignoring order. The result is a **document-term matrix** where each row is a document and each column is a word from the **vocabulary** (all unique words across documents).
+
+![Document-Term Matrix Heatmap](media/bow_heatmap.png)
+
+```
+Documents:
+1. "patient reports chest pain"
+2. "patient denies chest pain"
+3. "patient reports headache"
+
+Vocabulary: [chest, denies, headache, pain, patient, reports]
+
+Document-Term Matrix:
+           chest  denies  headache  pain  patient  reports
+Doc 1        1       0        0       1       1        1
+Doc 2        1       1        0       1       1        0
+Doc 3        0       0        1       0       1        1
 ```
 
-#### 3. Dense vs. Sparse Time Series
+**Limitations:**
 
-##### Dense Time Series
-- High-frequency data collection
-- Examples: ECG (250+ Hz), accelerometer data, continuous glucose monitoring
-- Challenges: Storage, processing, feature extraction
+- Ignores word order ("patient reports pain" = "pain reports patient")
+- Creates **sparse matrices** (most values are 0)
+- Common words dominate the counts
 
-##### Sparse Time Series
-- Infrequent or irregular observations
-- Examples: Annual check-ups, episodic symptoms
-- Challenges: Interpolation, handling missing data
+### Reference Card: `CountVectorizer`
 
-### Time Series Components 📊
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Create** | `CountVectorizer(max_features=N, stop_words='english')` | Initializes vectorizer. `ngram_range=(1,1)` for unigrams. | `CountVectorizer` |
+| **Fit** | `.fit_transform(docs)` | Learns vocabulary and transforms documents to counts. | Sparse matrix |
+| **Inspect** | `.get_feature_names_out()` | Returns learned vocabulary. | `ndarray[str]` |
+| **Convert** | `.toarray()` | Converts sparse matrix to dense array. | `ndarray` |
 
-<!---
-Understanding the components of a time series is like understanding the ingredients in a recipe - you need to know what each part contributes to make sense of the whole. These components help us decompose complex patterns into interpretable pieces.
---->
-
-#### 1. Trend
-
-- Long-term progression in the data
-- Can be upward, downward, or changing direction
-- Examples in healthcare: Disease progression, recovery trajectory
-
-#### 2. Seasonality
-
-- Regular, predictable patterns that repeat
-- Can be daily, weekly, monthly, yearly
-- Examples in healthcare: Circadian rhythms, seasonal illnesses
-
-#### 3. Cyclical Patterns
-
-- Irregular fluctuations without fixed frequency
-- Usually longer than seasonal patterns
-- Examples in healthcare: Epidemic cycles, treatment response cycles
-
-#### 4. Noise/Residuals
-
-- Random variation that can't be explained by other components
-- Can be due to measurement error or natural variability
-- Examples in healthcare: Biological variability, measurement artifacts
-
-#### Visualizing Components
-
-**Conceptual**: Time series decomposition breaks a time series into its constituent parts: trend, seasonality, and residuals. This helps us understand the underlying patterns and can improve forecasting.
-
-**Reference**:
-- `statsmodels.tsa.seasonal.seasonal_decompose`: Decomposes time series into components
-  - `model`: 'additive' (components add) or 'multiplicative' (components multiply)
-  - `period`: Length of the seasonal cycle (e.g., 7 for weekly, 12 for monthly)
+### Code Snippet: Bag of Words
 
 ```python
-# Example of time series decomposition
-from statsmodels.tsa.seasonal import seasonal_decompose
-result = seasonal_decompose(ts, model='additive', period=30)
+from sklearn.feature_extraction.text import CountVectorizer
+
+docs = [
+    "patient reports chest pain",
+    "patient denies chest pain",
+    "patient reports headache"
+]
+
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(docs)
+
+print(vectorizer.get_feature_names_out())
+# ['chest' 'denies' 'headache' 'pain' 'patient' 'reports']
+
+print(X.toarray())
+# [[1 0 0 1 1 1]
+#  [1 1 0 1 1 0]
+#  [0 0 1 0 1 1]]
 ```
 
-### Common Challenges in Healthcare Time Series 🚧
+## TF-IDF
 
-<!---
-Healthcare time series data comes with unique challenges that can trip up even experienced analysts. Being aware of these challenges is the first step to addressing them properly.
---->
+**TF-IDF (Term Frequency–Inverse Document Frequency)** improves on raw counts by weighting words based on how distinctive they are. Words that appear in every document get downweighted; rare, specific terms get upweighted.
 
-#### 1. Missing Values
+![TF-IDF Weights](media/tfidf_weights.png)
 
-- Causes: Equipment failures, patient non-compliance, data entry errors
-- Approaches:
-  - Deletion (if minimal)
-  - Interpolation (linear, spline)
-  - Forward/backward fill
-  - Model-based imputation
+$$\text{TF-IDF}(word, doc) = \text{TF}(word, doc) \times \text{IDF}(word)$$
 
-**Conceptual**: Missing values are common in healthcare time series and can significantly impact analysis. Different imputation methods have different assumptions and effects on the resulting data.
+- **TF (Term Frequency)** — how often the word appears in this document
+- **IDF (Inverse Document Frequency)** — how rare the word is across all documents: $\log(\text{total docs} / \text{docs containing word})$
 
-**Reference**:
-- `pandas.Series.fillna`: Fill missing values in a Series
-- `pandas.Series.interpolate`: Interpolate missing values
+> **Note:** scikit-learn's `TfidfVectorizer` uses a smoothed IDF formula by default: $\log((n+1)/(df+1)) + 1$, where $n$ is the total number of documents and $df$ is the document frequency. This prevents division by zero and slightly different values than the standard formula.
+
+**Example:** "diabetes" appears in 10 of 1000 documents → high IDF (distinctive). "patient" appears in 900 of 1000 → low IDF (common).
+
+### Reference Card: `TfidfVectorizer`
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Create** | `TfidfVectorizer(max_df=0.9, min_df=2)` | Tokenizes + applies TF-IDF. `max_df`/`min_df` filter by doc frequency. | `TfidfVectorizer` |
+| **Fit** | `.fit_transform(docs)` | Learns vocabulary and transforms to TF-IDF weights. | Sparse matrix |
+| **Transform** | `.transform(new_docs)` | Transforms new text using learned vocabulary (no refitting). | Sparse matrix |
+| **Inspect** | `.idf_` | Learned IDF weights for each term. | `ndarray[float]` |
+
+### Code Snippet: TF-IDF
 
 ```python
-# Example of handling missing values
-ts_ffill = ts_with_gaps.fillna(method='ffill')  # Forward fill
-ts_interp = ts_with_gaps.interpolate(method='linear')  # Linear interpolation
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+docs = [
+    "patient reports chest pain",
+    "patient denies chest pain",
+    "patient reports headache"
+]
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(docs)
+
+for word, idf in zip(vectorizer.get_feature_names_out(), vectorizer.idf_):
+    print(f"{word}: IDF = {idf:.2f}")
+
+# patient: IDF = 1.00   ← appears in all docs, lowest IDF
+# denies: IDF = 1.69    ← appears in only 1 doc, high IDF
 ```
 
-#### 2. Irregular Sampling
+## N-grams
 
-- Challenge: Observations not taken at regular intervals
-- Approaches:
-  - Resampling to regular intervals
-  - Special methods for irregular time series
-  - Continuous-time models
+![N-grams Diagram](media/n-grams.webp)
 
-**Conceptual**: Irregular sampling occurs when observations aren't taken at fixed intervals. Resampling converts irregular time series to regular ones, making them easier to analyze with standard methods.
+Single words (**unigrams**) lose context. **N-grams** capture sequences of N consecutive words.
 
-**Reference**:
-- `pandas.Series.resample`: Resample time series to regular frequency
+- **Bigrams** (n=2): word pairs — "chest pain", "denies chest"
+- **Trigrams** (n=3): word triples — "patient denies chest"
+
+**Why n-grams matter for clinical text:**
+
+- "chest pain" is meaningful as a unit
+- "denies chest pain" captures negation context
+- "no chest pain" vs "chest pain" mean opposite things
+
+### Reference Card: N-grams
+
+| Category | Method | Purpose & Arguments | Example Output |
+| :--- | :--- | :--- | :--- |
+| **Unigrams** | `ngram_range=(1, 1)` | Single words only (default). | `['chest', 'pain']` |
+| **+ Bigrams** | `ngram_range=(1, 2)` | Words and word pairs. | `['chest', 'pain', 'chest pain']` |
+| **+ Trigrams** | `ngram_range=(1, 3)` | Through 3-word sequences. | `['chest', 'chest pain', 'denies chest pain']` |
+
+Use with `CountVectorizer` or `TfidfVectorizer`.
+
+### Code Snippet: N-grams
 
 ```python
-# Example of resampling irregular data
-regular_ts = irregular_ts.resample('D').interpolate(method='linear')
+from sklearn.feature_extraction.text import CountVectorizer
+
+docs = ["patient denies chest pain", "patient reports chest pain"]
+
+vectorizer = CountVectorizer(ngram_range=(1, 2))
+X = vectorizer.fit_transform(docs)
+
+print(vectorizer.get_feature_names_out())
+# ['chest', 'chest pain', 'denies', 'denies chest', 'pain',
+#  'patient', 'patient denies', 'patient reports', 'reports', 'reports chest']
 ```
 
-#### 3. Outliers
+![XKCD: Automation](media/xkcd_automation.png)
 
-- Challenge: Extreme values that may be errors or important signals
-- Approaches:
-  - Statistical detection (z-score, IQR)
-  - Contextual outlier detection
-  - Robust methods that resist outlier influence
+## Word Vectors
 
-**Conceptual**: Outliers are extreme values that may represent errors or important clinical events. Z-scores measure how many standard deviations a point is from the mean, helping identify outliers.
+The representations above treat each word independently—"diabetes" and "hypertension" are just as different as "diabetes" and "pizza." **Word vectors** (embeddings) capture semantic similarity: related words have similar vectors.
 
-**Reference**:
-- `scipy.stats.zscore`: Calculate z-scores for a dataset
+spaCy's medium and large models (`en_core_web_md`, `en_core_web_lg`) include pre-computed word vectors. We'll cover how embeddings work in Lecture 07.
+
+### Code Snippet: Word Vectors
 
 ```python
-# Example of outlier detection
-from scipy import stats
-z_scores = stats.zscore(ts_with_outliers)
-outliers = np.abs(z_scores) > 3  # Threshold at 3 standard deviations
+import spacy
+# Note: en_core_web_sm has no vectors; use _md or _lg for word vectors
+nlp = spacy.load("en_core_web_md")  # medium model has vectors
+doc = nlp("diabetes hypertension")
+print(doc[0].vector.shape)          # (300,) - 300-dimensional vector
+print(doc[0].similarity(doc[1]))    # ~0.5 - related medical terms
 ```
 
-#### 4. Changing Variance
+For classical NLP, TF-IDF is your go-to representation: interpretable, effective, and doesn't require special models.
 
-- Challenge: Variance of the time series changes over time
-- Approaches:
-  - Transformation (log, Box-Cox)
-  - GARCH models
-  - Robust scaling methods
+![XKCD: Spelling](media/xkcd_spelling.png)
 
-**Conceptual**: Changing variance (heteroscedasticity) can affect model performance. Log transformation can stabilize variance by compressing larger values more than smaller ones.
+# Document Similarity
 
-**Reference**:
-- `numpy.log1p`: Natural logarithm of (1 + x)
+With text represented as vectors, we can measure how similar documents are. This enables search, clustering, and recommendation systems. Cosine similarity is the standard choice for text; alternatives include Jaccard similarity (for sets of words) and Euclidean distance (sensitive to document length).
+
+## Cosine Similarity
+
+**Cosine similarity** measures the angle between two vectors rather than their distance. This makes it robust to document length—a long document and a short document about the same topic will have high similarity.
+
+![Document Similarity in Vector Space](media/document_similarity.png)
+
+$$\cos(\theta) = \frac{A \cdot B}{\|A\| \times \|B\|}$$
+
+- **Range:** 0 to 1 for TF-IDF vectors
+- **1.0** = identical direction (very similar)
+- **0.0** = perpendicular (no shared words)
+
+### Reference Card: Document Similarity
+
+| Category | Method | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Pairwise** | `cosine_similarity(X)` | Similarity between all row pairs in X. | `ndarray` (n×n) |
+| **Compare** | `cosine_similarity(X, Y)` | Similarity between rows of X and Y. | `ndarray` |
+| **Distance** | `spatial.distance.cosine(u, v)` | Cosine distance (1 - similarity). | `float` |
+| **Jaccard** | `jaccard_score(set1, set2)` | Intersection/union of word sets. | `float` (0-1) |
+
+### Code Snippet: Document Similarity
 
 ```python
-# Example of variance stabilization
-ts_log = np.log1p(ts_with_outliers)  # log(1+x) to handle zeros
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+docs = [
+    "patient presents with chest pain and shortness of breath",
+    "patient reports chest discomfort and difficulty breathing",
+    "patient complains of headache and nausea"
+]
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(docs)
+
+similarities = cosine_similarity(X)
+print(similarities)
+# [[1.   0.35 0.11]
+#  [0.35 1.   0.11]
+#  [0.11 0.11 1.  ]]
+# Docs 0 and 1 are most similar (both about chest/breathing)
+
+# Jaccard: compare word sets (ignores frequency)
+words0 = set(docs[0].lower().split())
+words1 = set(docs[1].lower().split())
+jaccard = len(words0 & words1) / len(words0 | words1)
+print(f"Jaccard: {jaccard:.2f}")  # 0.31
 ```
 
-### Basic Time Series Analysis Techniques 🔍
+# Specialized Tools
 
-<!---
-These fundamental techniques form the foundation of time series analysis. They're the essential tools that every analyst should have in their toolkit before moving to more advanced methods.
---->
+General NLP tools work well for common text, but clinical language requires specialized models.
 
-#### 1. Descriptive Statistics
+| Tool | Focus | Access |
+|------|-------|--------|
+| scispaCy | Biomedical NER | `pip install scispacy` |
+| MedSpaCy | Negation detection, clinical pipelines | `pip install medspacy` |
+| cTAKES | Full clinical NLP (Java) | Apache, open source |
+| MetaMap | UMLS concept extraction | NLM, requires license |
 
-- Basic measures: mean, median, min, max, standard deviation
-- Rolling statistics: moving averages, rolling standard deviation
-- Autocorrelation: correlation of a series with its own lagged values
+**UMLS** (Unified Medical Language System) is a biomedical vocabulary database from the National Library of Medicine. It maps between coding systems (ICD, SNOMED, RxNorm) and provides standardized concept identifiers. Tools like MetaMap and QuickUMLS link free-text mentions to UMLS concepts.
 
-**Conceptual**: Rolling statistics calculate metrics over a sliding window, helping identify changing patterns over time. They smooth out short-term fluctuations while preserving longer-term trends.
+# Challenges
 
-**Reference**:
-- `pandas.Series.rolling`: Create a rolling window object
+![Clinical NLP Challenges](media/clinical_negation.jpg)
 
-```python
-# Example of rolling statistics
-rolling_mean = ts.rolling(window=30).mean()
-rolling_std = ts.rolling(window=30).std()
-```
+![Clinical Negation](media/clinical_extract.png)
 
-#### 2. Correlation Analysis
+General NLP tools struggle with clinical text:
 
-- Autocorrelation Function (ACF): correlation with lagged values
-- Partial Autocorrelation Function (PACF): correlation with lagged values, controlling for intermediate lags
-- Cross-correlation: correlation between two different time series
+**Abbreviations** — "pt c/o SOB" = "patient complains of shortness of breath". Same abbreviation, different meanings: "MS" = multiple sclerosis OR mental status OR morphine sulfate.
 
-**Conceptual**: Autocorrelation measures how a time series correlates with lagged versions of itself. It helps identify seasonality and determine appropriate parameters for time series models.
+**Negation** — "Patient denies chest pain" means chest pain is ABSENT. Simple keyword extraction misses this. Basic negation detection looks for negation words ("no", "denies", "without") within a few words of the finding: `re.search(r'\b(no|denies?|without)\s+\w+\s+chest\s+pain', text, re.I)` would catch this pattern.
 
-**Reference**:
-- `statsmodels.graphics.tsaplots.plot_acf`: Plot autocorrelation function
-- `statsmodels.graphics.tsaplots.plot_pacf`: Plot partial autocorrelation function
+**Uncertainty** — "possible pneumonia" ≠ "confirmed pneumonia". "rule out MI" = suspicion, not diagnosis.
 
-```python
-# Example of autocorrelation analysis
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-plot_acf(ts, lags=40)
-plot_pacf(ts, lags=40)
-```
+**Temporality** — "History of diabetes" (past) vs "Patient has diabetes" (current) vs "Risk of diabetes" (future).
 
-#### 3. Resampling and Aggregation
+**Variations** — "hypertention", "htn", "HTN", "high blood pressure" all mean the same thing.
 
-- Upsampling: Increasing frequency (e.g., daily to hourly)
-- Downsampling: Decreasing frequency (e.g., hourly to daily)
-- Aggregation methods: mean, median, sum, min, max
+![XKCD: Easily Confused Acronyms](media/xkcd_confused_acronyms.png)
 
-**Conceptual**: Resampling changes the frequency of a time series. Downsampling aggregates data to a lower frequency, while upsampling increases frequency (requiring interpolation).
+# Pipelines
 
-**Reference**:
-- `pandas.Series.resample`: Resample time series to different frequency
+Putting it all together: combine preprocessing, analysis, and extraction into reusable pipelines.
+
+## NLTK Pipeline
+
+NLTK requires manual assembly—each step is explicit and configurable.
+
+### Code Snippet: NLTK Pipeline
 
 ```python
-# Example of resampling
-weekly_mean = ts.resample('W').mean()  # Downsample from daily to weekly
-```
-
-#### 4. Visualization Techniques
-
-- Line plots with enhancements: confidence intervals, annotations
-- Multiple time series visualization: subplots, overlay, faceting
-- Seasonal plots: values by season
-- Heatmaps: correlation between multiple time series
-
-**Conceptual**: Effective visualization is crucial for understanding time series data. Different visualization techniques highlight different aspects of the data.
-
-**Reference**:
-- `matplotlib.pyplot`: Basic plotting library
-- `seaborn`: Advanced statistical visualizations
-
-```python
-# Example of enhanced line plot
-plt.figure(figsize=(12, 6))
-plt.plot(ts, label='Time Series')
-plt.axhline(y=ts.mean(), color='r', linestyle='--', label='Mean')
-```
-
-#### 5. Survival Analysis Methods
-
-<!---
-Survival analysis methods are essential in healthcare for analyzing time-to-event data. These methods help us understand not just if an event occurs, but when it occurs, while properly handling censored observations.
---->
-
-##### Cox Proportional Hazards Model
-
-![Cox Proportional Hazards Model](media/cox_proportional_hazards.png)
-
-**Conceptual**: The Cox Proportional Hazards Model is a semi-parametric model used in survival analysis to assess the relationship between covariates and survival time. It estimates the hazard (or risk) of an event occurring at a certain time, considering the impact of various factors.
-
-Key features:
-- Handles censored data (when the event hasn't occurred by the end of observation)
-- Doesn't require specifying a particular probability distribution for survival times
-- Assumes proportional hazards (the effect of covariates is constant over time)
-- Widely used in clinical trials and epidemiological studies
-
-**Reference**:
-- `lifelines.CoxPHFitter`: Implementation of Cox Proportional Hazards model
-  - `duration_col`: Column containing the duration until the event or censoring
-  - `event_col`: Column indicating if the event of interest occurred
-  - Methods: `fit()`, `predict_survival_function()`, `plot()`
-
-```python
-# Example of Cox Proportional Hazards model
-from lifelines import CoxPHFitter
-
-# Assuming df has 'duration', 'event', and covariate columns
-cph = CoxPHFitter()
-cph.fit(df, duration_col='duration', event_col='event')
-
-# Print summary of the model
-print(cph.summary)
-```
-
-##### Kaplan-Meier Survival Analysis
-
-![Kaplan-Meier Survival Analysis](media/kaplan_meier.png)
-
-**Conceptual**: Kaplan-Meier analysis is a non-parametric method for estimating the survival function from time-to-event data. It creates a step function that shows the probability of an event occurring at different time points, accounting for censored observations.
-
-Key features:
-- Provides a visual representation of survival over time
-- Handles right-censored data effectively
-- Makes no assumptions about the underlying distribution
-- Can compare survival curves between different groups
-- Used in medicine, biology, engineering, and economics
-
-**Reference**:
-- `lifelines.KaplanMeierFitter`: Implementation of Kaplan-Meier estimator
-  - `durations`: Array of durations until event or censoring
-  - `event_observed`: Array indicating whether the event was observed (1) or censored (0)
-  - Methods: `fit()`, `plot_survival_function()`, `median_survival_time_`
-
-```python
-# Example of Kaplan-Meier analysis
-from lifelines import KaplanMeierFitter
-
-# Initialize the Kaplan-Meier model
-kmf = KaplanMeierFitter()
-
-# Fit the model
-kmf.fit(durations=df['duration'], event_observed=df['event'])
-
-# Plot the survival function
-kmf.plot_survival_function()
-```
-
-### DEMO BREAK: Exploring Heart Rate Patterns During Meditation
-
-See: [`demo1-synthetic-timeseries`](demo/demo1-synthetic-timeseries.md)
-
-## 3. ARIMA Models
-
-### Introduction to Forecasting
-
-<!---
-Forecasting is about predicting future values based on past observations. In healthcare, accurate forecasts can improve resource allocation, treatment planning, and early intervention.
---->
-
-**Conceptual**: Forecasting time series involves predicting future values based on patterns observed in historical data. The goal is to capture the underlying structure while accounting for randomness.
-
-#### Additive vs. Multiplicative Models
-
-Time series can be modeled as either:
-
-- **Additive**: Value = Base Level + Trend + Seasonality + Error
-- **Multiplicative**: Value = Base Level × Trend × Seasonality × Error
-
-Additive models are appropriate when the seasonal variation is constant over time, while multiplicative models are better when the seasonal variation increases with the level of the series.
-
-### Stationarity and Transformations
-
-**Conceptual**: A stationary time series has statistical properties that don't change over time (constant mean, variance, and autocorrelation). Most forecasting methods require stationary data.
-
-#### Testing for Stationarity
-
-- Visual inspection: Plot the series and check if properties change over time
-- Statistical tests: Augmented Dickey-Fuller (ADF), KPSS
-
-**Reference**:
-- `statsmodels.tsa.stattools.adfuller`: Augmented Dickey-Fuller test
-
-```python
-# Example of ADF test
-from statsmodels.tsa.stattools import adfuller
-result = adfuller(series)
-print(f'ADF Statistic: {result[0]}')
-print(f'p-value: {result[1]}')
-```
-
-#### Making a Series Stationary
-
-- Differencing: Subtract consecutive observations (first difference, second difference)
-- Transformation: Apply mathematical functions (log, square root, Box-Cox)
-- Detrending: Remove trend component
-- Deseasonalizing: Remove seasonal component
-
-```python
-# Example of differencing
-diff_series = series.diff().dropna()  # First difference
-
-# Example of log transformation
-log_series = np.log1p(series)  # log(1+x) to handle zeros
-```
-
-### Understanding ARIMA Components
-
-<!---
-ARIMA models are like a recipe with three main ingredients (p, d, q). Each ingredient plays a specific role in capturing different types of patterns in your time series. This section breaks down each component and shows how they work together.
---->
-
-#### AR (AutoRegressive) Component
-
-**Conceptual**: The AR component (p) captures the relationship between an observation and its previous values. It's like saying "today's value depends on the last few days' values."
-
-Key points:
-- Order p: Number of lag observations to include
-- Higher p: More complex relationships with past values
-- Too high p: Risk of overfitting
-
-**Reference**:
-```python
-# Simple AR(1) process simulation
-def simulate_ar1(n_points=1000, phi=0.7):
-    """Simulate AR(1) process: y[t] = phi*y[t-1] + e[t]"""
-    e = np.random.normal(0, 1, n_points)
-    y = np.zeros(n_points)
-    for t in range(1, n_points):
-        y[t] = phi * y[t-1] + e[t]
-    return y
-```
-
-#### I (Integrated) Component
-
-**Conceptual**: The I component (d) handles non-stationarity through differencing. It's like "leveling the playing field" by removing trends and seasonality.
-
-Types of differencing:
-1. First difference (d=1): Remove trend
-   - y'[t] = y[t] - y[t-1]
-2. Second difference (d=2): Remove quadratic trend
-   - y''[t] = (y[t] - y[t-1]) - (y[t-1] - y[t-2])
-3. Seasonal difference: Remove seasonal patterns
-   - y'[t] = y[t] - y[t-s], where s is seasonal period
-
-**Reference**:
-```python
-def difference_series(series, d=1):
-    """Apply d-th order differencing"""
-    return pd.Series(series).diff(d).dropna()
-
-def inverse_difference(diff_series, original_first_value, d=1):
-    """Reverse differencing transformation"""
-    series = diff_series.copy()
-    for _ in range(d):
-        series = series.cumsum() + original_first_value
-    return series
-```
-
-#### MA (Moving Average) Component
-
-**Conceptual**: The MA component (q) uses past forecast errors to improve current predictions. It's like "learning from your mistakes."
-
-Key points:
-- Order q: Number of past errors to consider
-- Captures short-term adjustments
-- Useful for handling irregular fluctuations
-
-**Reference**:
-```python
-# Simple MA(1) process simulation
-def simulate_ma1(n_points=1000, theta=0.5):
-    """Simulate MA(1) process: y[t] = e[t] + theta*e[t-1]"""
-    e = np.random.normal(0, 1, n_points)
-    y = np.zeros(n_points)
-    for t in range(1, n_points):
-        y[t] = e[t] + theta * e[t-1]
-    return y
-```
-
-### Practical ARIMA Implementation
-
-#### Step 1: Check Stationarity
-
-**Conceptual**: Before applying ARIMA, check if your data is stationary. Non-stationary data needs differencing.
-
-**Reference**:
-```python
-def check_stationarity(series):
-    """Check stationarity using Augmented Dickey-Fuller test"""
-    result = adfuller(series)
-    print(f'ADF Statistic: {result[0]:.3f}')
-    print(f'p-value: {result[1]:.3f}')
-    print('Critical values:')
-    for key, value in result[4].items():
-        print(f'\t{key}: {value:.3f}')
-    return result[1] < 0.05
-```
-
-#### Step 2: Parameter Selection
-
-**Conceptual**: Choosing p, d, q parameters is crucial for model performance. Use these guidelines:
-
-1. Choose d:
-   - d=0 if already stationary
-   - d=1 for most non-stationary series
-   - d=2 rarely needed
-
-2. Choose p:
-   - Examine PACF plot
-   - Count significant lags
-   - Usually p ≤ 3
-
-3. Choose q:
-   - Examine ACF plot
-   - Count significant lags
-   - Usually q ≤ 3
-
-**Reference**:
-```python
-def suggest_pdq(series):
-    """Suggest ARIMA parameters based on data characteristics"""
-    # Check stationarity
-    d = 0
-    while not check_stationarity(series):
-        series = difference_series(series)
-        d += 1
-        if d >= 2:
-            break
+import nltk
+import string
+import re
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+def nltk_pipeline(text):
+    # Step 1: Tokenize
+    tokens = nltk.word_tokenize(text.lower())
     
-    # Get ACF and PACF values
-    acf_values = acf(series, nlags=10)
-    pacf_values = pacf(series, nlags=10)
+    # Step 2: Remove punctuation and stopwords
+    stop_words = set(stopwords.words('english')) - {'no', 'not'}  # keep negations
+    tokens = [t for t in tokens if t not in string.punctuation and t not in stop_words]
     
-    # Suggest p and q based on significant lags
-    p = sum(np.abs(pacf_values[1:]) > 1.96/np.sqrt(len(series)))
-    q = sum(np.abs(acf_values[1:]) > 1.96/np.sqrt(len(series)))
+    # Step 3: Lemmatize
+    lemmatizer = WordNetLemmatizer()
+    tokens = [lemmatizer.lemmatize(t) for t in tokens]
     
-    return min(p, 3), d, min(q, 3)
-```
-
-#### Step 3: Model Fitting and Diagnostics
-
-**Conceptual**: After selecting parameters, fit the model and check its performance.
-
-**Reference**:
-```python
-from statsmodels.tsa.arima.model import ARIMA
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-
-def fit_and_evaluate_arima(train, test, order=(1,1,1)):
-    """Fit ARIMA model and evaluate performance"""
-    # Fit model
-    model = ARIMA(train, order=order)
-    model_fit = model.fit()
+    # Step 4: POS tag
+    tagged = nltk.pos_tag(tokens)
     
-    # Make predictions
-    predictions = model_fit.forecast(steps=len(test))
+    # Step 5: Extract named entities
+    entities = nltk.ne_chunk(tagged)
     
-    # Calculate metrics
-    mae = mean_absolute_error(test, predictions)
-    rmse = np.sqrt(mean_squared_error(test, predictions))
-    
-    # Model diagnostics
-    residuals = model_fit.resid
+    # Step 6: Extract patterns with regex
+    bp = re.findall(r'\d{2,3}/\d{2,3}', text)
     
     return {
-        'model': model_fit,
-        'predictions': predictions,
-        'mae': mae,
-        'rmse': rmse,
-        'aic': model_fit.aic,
-        'bic': model_fit.bic,
-        'residuals': residuals
+        'tokens': tokens,
+        'pos_tags': tagged,
+        'nouns': [word for word, tag in tagged if tag.startswith('NN')],
+        'entities': entities,
+        'blood_pressure': bp
     }
+
+note = "Patient John Smith, age 45, presents with BP 140/90 and chest pain."
+result = nltk_pipeline(note)
+print(f"Tokens: {result['tokens']}")
+print(f"Nouns: {result['nouns']}")
+print(f"BP: {result['blood_pressure']}")
+# Tokens: ['patient', 'john', 'smith', 'age', '45', 'present', 'bp', '140/90', 'chest', 'pain']
+# Nouns: ['patient', 'john', 'smith', 'age', 'bp', 'chest', 'pain']
+# BP: ['140/90']
 ```
 
-#### Step 4: Model Validation
+![XKCD: Python Environment](media/xkcd_python_environment.png)
 
-**Conceptual**: Validate your model using these checks:
+## spaCy Pipeline
 
-1. Residual Analysis:
-   - Should be normally distributed
-   - Should show no autocorrelation
-   - Should have constant variance
+spaCy's pipeline is integrated—one call processes everything.
 
-2. Cross-Validation:
-   - Use rolling forecasts
-   - Compare multiple parameter sets
-   - Check prediction intervals
+### Code Snippet: spaCy Pipeline
 
-**Reference**:
 ```python
-def validate_arima_model(model_results):
-    """Perform model validation checks"""
-    residuals = model_results['residuals']
+import spacy
+import re
+
+def spacy_pipeline(text):
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(text)
     
-    # Normality test
-    _, norm_p_value = stats.normaltest(residuals)
-    
-    # Autocorrelation in residuals
-    residual_acf = acf(residuals, nlags=10)
-    
-    # Heteroscedasticity check
-    _, hetero_p_value = stats.levene(
-        residuals[:len(residuals)//2], 
-        residuals[len(residuals)//2:]
-    )
-    
+    # All analysis available on doc object
     return {
-        'normality_p_value': norm_p_value,
-        'residual_acf': residual_acf,
-        'heteroscedasticity_p_value': hetero_p_value
+        'tokens': [token.text for token in doc],
+        'lemmas': [token.lemma_ for token in doc if not token.is_punct],
+        'nouns': [token.lemma_ for token in doc if token.pos_ == "NOUN"],
+        'entities': [(ent.text, ent.label_) for ent in doc.ents],
+        'blood_pressure': re.findall(r'\d{2,3}/\d{2,3}', text)
     }
+
+note = "Dr. Martinez at UCSF prescribed Metformin 500mg on 01/15/2025. Patient reports improved glucose control."
+result = spacy_pipeline(note)
+print(f"Nouns: {result['nouns']}")
+print(f"Entities: {result['entities']}")
+print(f"BP: {result['blood_pressure']}")
+# Nouns: ['Dr.', 'UCSF', 'Metformin', 'glucose', 'control']
+# Entities: [('Dr. Martinez', 'PERSON'), ('UCSF', 'ORG'), ('01/15/2025', 'DATE')]
+# BP: []
 ```
 
-### DEMO BREAK: Sleep Quality Prediction
-
-See: [`demo2-hrv-forecasting`](demo/demo2-hrv-forecasting.md)
-
-## 4. Sensor Data Analysis
-
-<!---
-Sensor data analysis is a critical component of modern healthcare, enabling continuous monitoring and early intervention. The volume and complexity of sensor data present unique challenges that require specialized techniques.
---->
-
-### Characteristics of Dense Physiological Data
-
-<!---
-Dense physiological data from sensors presents unique challenges and opportunities. Understanding these characteristics is essential for effective analysis.
---->
-
-**Conceptual**: Dense physiological data represents a fundamental shift in healthcare monitoring, moving from sparse, episodic measurements to continuous, high-resolution observations of physiological processes. This data is characterized by high sampling rates, continuous monitoring, and multiple variables, creating both opportunities and challenges for analysis.
-
-The richness of sensor data allows us to capture subtle patterns and transient events that would be missed by traditional monitoring approaches. However, this same richness creates computational challenges and requires specialized techniques to separate meaningful signals from noise. The temporal nature of sensor data also preserves the sequence and timing of physiological events, which is often as important as the measurements themselves.
-
-#### Key Characteristics
-
-- **High sampling rates**: ECG (250+ Hz), accelerometer (20-100 Hz)
-- **Continuous monitoring**: Wearables, implantable devices
-- **Multivariate signals**: Multiple sensors, multiple dimensions
-- **Noise and artifacts**: Movement artifacts, sensor errors, baseline drift
-
-<!---
-#### Examples in Healthcare
-
-- Heart rate and ECG monitoring
-- Activity tracking with accelerometers
-- Continuous glucose monitoring
-- Sleep monitoring (EEG, movement, respiration)
---->
-
-### Signal Processing Methods
-
-**Conceptual**: Signal processing prepares raw sensor data for analysis by removing noise and artifacts.
-
-**Common Methods**:
-- **Filtering**: Low-pass, high-pass, band-pass, and notch filters
-- **Smoothing**: Moving average, exponential smoothing, Savitzky-Golay
-- **Resampling**: Adjusting sampling rates for consistent analysis
-- **Artifact removal**: Detecting and handling motion artifacts
-
-### Frequency Analysis
-
-**Conceptual**: Frequency analysis reveals periodic patterns in sensor data that are not visible in the time domain.
-
-#### Fast Fourier Transform (FFT)
-
-- Decomposes a signal into its frequency components
-- Reveals dominant frequencies and periodic patterns
-- Essential for analyzing oscillatory physiological signals
-
-```python
-# FFT implementation
-from scipy.fft import fft, fftfreq
-import numpy as np
-
-# Generate sample data
-sampling_rate = 100  # Hz
-duration = 5  # seconds
-t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
-# Signal with 2 Hz and 10 Hz components
-signal = np.sin(2 * np.pi * 2 * t) + 0.5 * np.sin(2 * np.pi * 10 * t)
-
-# Compute FFT
-yf = fft(signal)
-xf = fftfreq(len(t), 1/sampling_rate)
-
-# Plot only positive frequencies (negative frequencies are redundant for real signals)
-positive_freq_idx = np.where(xf > 0)
-plt.figure(figsize=(10, 4))
-plt.plot(xf[positive_freq_idx], 2.0/len(t) * np.abs(yf[positive_freq_idx]))
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Amplitude')
-plt.title('Frequency Spectrum')
-
-# Practical tips for FFT analysis:
-# 1. Ensure your sampling rate is at least 2x the highest frequency you want to detect (Nyquist theorem)
-# 2. Use windowing functions (e.g., Hanning, Hamming) to reduce spectral leakage
-# 3. For better frequency resolution, use longer signal durations
-# 4. The magnitude should be normalized by dividing by N (signal length) or N/2 for one-sided spectrum
-```
-
-#### Power Spectral Density (PSD)
-
-- Measures power distribution across frequencies
-- Useful for identifying dominant rhythms in physiological signals
-- Common in heart rate variability and EEG analysis
-
-```python
-# Power spectral density estimation
-from scipy import signal
-
-# Compute PSD using Welch's method
-frequencies, psd = signal.welch(signal, sampling_rate, nperseg=256)
-
-# Plot PSD
-plt.figure(figsize=(10, 4))
-plt.semilogy(frequencies, psd)
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Power/Frequency (dB/Hz)')
-plt.title('Power Spectral Density')
-```
-
-#### Wavelet Transforms
-
-- Provides time-frequency representation
-- Better for non-stationary signals than FFT
-- Preserves both time and frequency information
-- Useful for detecting transient events in physiological signals
-
-Two main types of wavelet transforms used in physiological signal analysis:
-
-1. **Continuous Wavelet Transform (CWT)**:
-   - Analyzes signals with wavelets at all scales and positions
-   - Provides high resolution in both time and frequency domains
-   - Commonly used for ECG and EEG analysis
-
-2. **Discrete Wavelet Transform (DWT)**:
-   - Decomposes signals into approximation and detail coefficients
-   - More computationally efficient than CWT
-   - Used for denoising and feature extraction
-
-```python
-# Example of wavelet transform
-from pywt import cwt
-import numpy as np
-
-# Create sample signal
-sampling_rate = 100  # Hz
-t = np.linspace(0, 2, 2 * sampling_rate)
-# Signal with changing frequency
-signal = np.sin(2 * np.pi * 2 * t) + np.sin(2 * np.pi * 10 * t[t > 1])
-
-# Perform continuous wavelet transform
-scales = np.arange(1, 128)
-coefficients, frequencies = cwt(signal, scales, 'morl')
-
-# Plot the scalogram
-plt.figure(figsize=(10, 6))
-plt.imshow(abs(coefficients), aspect='auto', cmap='jet')
-plt.title('Wavelet Transform Scalogram')
-plt.ylabel('Scale')
-plt.xlabel('Time')
-plt.colorbar(label='Magnitude')
-```
-
-### Feature Extraction for Classification
-
-**Conceptual**: Feature extraction transforms raw sensor data into meaningful metrics that can be used for classification and pattern recognition.
-
-#### Time Domain Features
-- **Statistical measures**: Mean, median, standard deviation, skewness, kurtosis
-- **Peak characteristics**: Count, amplitude, width, prominence
-- **Signal complexity**: Approximate entropy, sample entropy, Lyapunov exponent
-
-#### Frequency Domain Features
-- **Spectral power in bands**: Power in physiologically relevant frequency bands
-- **Spectral moments**: Mean frequency, spectral centroid, bandwidth
-- **Spectral entropy**: Measure of regularity/predictability in frequency domain
-
-#### Time-Frequency Features
-- **Wavelet coefficients**: Capturing time-localized frequency content
-- **Spectrogram statistics**: Features from time-frequency representations
-
-```python
-# Example of extracting multiple features
-def extract_features(signal, sampling_rate):
-    """Extract common features from a physiological signal.
-    
-    Parameters:
-    -----------
-    signal : array-like
-        The input signal time series
-    sampling_rate : float
-        The sampling frequency in Hz
-        
-    Returns:
-    --------
-    features : dict
-        Dictionary containing extracted features
-    
-    Notes:
-    ------
-    This function extracts three types of features:
-    1. Time domain features (statistical properties)
-    2. Peak-based features (using peak detection)
-    3. Frequency domain features (using FFT)
-    
-    For physiological signals, typical frequency bands are:
-    - Delta (0.5-4 Hz): Deep sleep, relaxation
-    - Theta (4-8 Hz): Drowsiness, meditation
-    - Alpha (8-13 Hz): Relaxed alertness
-    - Beta (13-30 Hz): Active thinking, focus
-    """
-    features = {}
-    
-    # Time domain features
-    features['mean'] = np.mean(signal)
-    features['std'] = np.std(signal)
-    features['skewness'] = stats.skew(signal)
-    features['kurtosis'] = stats.kurtosis(signal)
-    
-    # Add more robust statistical features
-    features['median'] = np.median(signal)
-    features['iqr'] = np.percentile(signal, 75) - np.percentile(signal, 25)
-    features['min'] = np.min(signal)
-    features['max'] = np.max(signal)
-    
-    # Peak detection
-    peaks, peak_properties = signal.find_peaks(
-        signal,
-        height=0,                     # Minimum height of peaks
-        distance=sampling_rate//10,   # Minimum samples between peaks
-        prominence=0.1,               # Minimum prominence of peaks
-        width=None                    # Minimum width of peaks
-    )
-    
-    # Peak-based features
-    features['peak_count'] = len(peaks)
-    if len(peaks) > 0:
-        features['mean_peak_height'] = np.mean(peak_properties['peak_heights'])
-        features['peak_prominence'] = np.mean(peak_properties['prominences'])
-    else:
-        features['mean_peak_height'] = 0
-        features['peak_prominence'] = 0
-    
-    # Frequency domain features
-    yf = fft(signal)
-    xf = fftfreq(len(signal), 1/sampling_rate)
-    positive_freq_idx = np.where(xf > 0)
-    
-    # Power in different frequency bands (common in EEG/ECG analysis)
-    delta_band = (0.5, 4)    # Hz - Delta waves
-    theta_band = (4, 8)      # Hz - Theta waves
-    alpha_band = (8, 13)     # Hz - Alpha waves
-    beta_band = (13, 30)     # Hz - Beta waves
-    
-    # Calculate power in each band
-    power_spectrum = 2.0/len(signal) * np.abs(yf)
-    
-    # Extract band powers
-    for band_name, (low, high) in [
-        ('delta', delta_band),
-        ('theta', theta_band),
-        ('alpha', alpha_band),
-        ('beta', beta_band)
-    ]:
-        band_idx = np.where((xf >= low) & (xf <= high))
-        features[f'{band_name}_power'] = np.sum(power_spectrum[band_idx])
-    
-    # Calculate relative band powers (normalized)
-    total_power = np.sum(power_spectrum[positive_freq_idx])
-    if total_power > 0:
-        for band in ['delta', 'theta', 'alpha', 'beta']:
-            features[f'relative_{band}_power'] = features[f'{band}_power'] / total_power
-    
-    return features
-```
-
-### Preparing for Classification
-
-**Conceptual**: The extracted features form the input to classification algorithms in the next stage of analysis.
-
-**Key Considerations**:
-- **Feature selection**: Identifying the most informative features
-- **Feature normalization**: Scaling features to comparable ranges
-- **Dimensionality reduction**: PCA, t-SNE for visualizing high-dimensional feature spaces
-- **Time-aware validation**: Special considerations for time series data
-
-<!---
-#### Healthcare Applications
-
-- **Remote patient monitoring**: Tracking health status outside clinical settings
-- **Early warning systems**: Detecting deterioration before clinical symptoms
-- **Rehabilitation tracking**: Monitoring progress during recovery
-- **Lifestyle assessment**: Evaluating physical activity and sleep patterns
---->
-
-### DEMO BREAK: Advanced Sensor Data Analysis
-
-See: [`demo3-hrv-feature-extraction`](demo/demo3-hrv-feature-extraction.md)
-
-### Signal Preprocessing Techniques 🔧
-
-<!---
-Before analyzing physiological signals, we often need to clean and prepare the data. This section covers essential preprocessing steps that help ensure reliable analysis results.
---->
-
-#### Outlier and Artifact Removal
-
-**Conceptual**: Physiological signals often contain outliers and artifacts that can distort analysis results. Common sources include:
-- Movement artifacts
-- Equipment malfunctions
-- Ectopic beats (in ECG/RR data)
-- Environmental interference
-
-**Reference**:
-```python
-def remove_outliers(signal, n_std=3):
-    """Remove values more than n standard deviations from mean"""
-    mean = np.mean(signal)
-    std = np.std(signal)
-    return signal[(signal > mean - n_std*std) & 
-                 (signal < mean + n_std*std)]
-```
-
-#### Interpolation Methods
-
-**Conceptual**: Many analysis techniques require evenly sampled data, but physiological signals (like RR intervals) are often irregularly sampled.
-
-Common interpolation methods:
-- Linear interpolation
-- Cubic spline interpolation
-- Polynomial interpolation
-
-**Reference**:
-```python
-from scipy.interpolate import interp1d
-
-# Create evenly sampled time points
-time = np.cumsum(rr_intervals)
-uniform_time = np.linspace(time[0], time[-1], desired_length)
-
-# Interpolate signal
-interp_func = interp1d(time, signal, kind='linear')
-uniform_signal = interp_func(uniform_time)
-```
-
-### Advanced Signal Processing 📊
-
-<!---
-Signal processing techniques help extract meaningful information from complex physiological signals. These methods reveal patterns and features that aren't visible in the raw data.
---->
-
-#### Filtering Techniques
-
-##### Butterworth Filters
-
-**Conceptual**: Butterworth filters provide smooth frequency response with minimal ripples. Common types:
-- Lowpass: Remove high frequencies
-- Highpass: Remove low frequencies
-- Bandpass: Keep specific frequency range
-- Bandstop: Remove specific frequency range
-
-**Reference**:
-```python
-from scipy.signal import butter, filtfilt
-
-def butter_bandpass(lowcut, highcut, fs, order=4):
-    nyquist = 0.5 * fs
-    low = lowcut / nyquist
-    high = highcut / nyquist
-    b, a = butter(order, [low, high], btype='band')
-    return b, a
-
-def apply_bandpass(data, lowcut, highcut, fs, order=4):
-    b, a = butter_bandpass(lowcut, highcut, fs, order)
-    return filtfilt(b, a, data)
-```
-
-#### Frequency Analysis Methods
-
-##### Fast Fourier Transform (FFT)
-
-**Conceptual**: FFT decomposes a signal into its frequency components, revealing periodic patterns.
-
-Key concepts:
-- Frequency spectrum
-- Power spectral density
-- Nyquist frequency
-- Spectral leakage
-
-**Reference**:
-```python
-from scipy.fft import fft, fftfreq
-
-# Compute FFT
-yf = fft(signal)
-xf = fftfreq(len(signal), 1/sampling_rate)
-
-# Power spectrum
-power_spectrum = np.abs(yf)**2
-```
-
-##### Frequency Bands in HRV Analysis
-
-**Conceptual**: Heart Rate Variability (HRV) analysis often focuses on specific frequency bands:
-
-- VLF (Very Low Frequency): 0.003-0.04 Hz
-  - Long-term regulation mechanisms
-  - Thermoregulation
-  
-- LF (Low Frequency): 0.04-0.15 Hz
-  - Sympathetic and parasympathetic activity
-  - Baroreceptor activity
-  
-- HF (High Frequency): 0.15-0.4 Hz
-  - Parasympathetic activity
-  - Respiratory sinus arrhythmia
-
-**Reference**:
-```python
-def get_frequency_band_power(power_spectrum, freqs, band):
-    """Calculate power in specific frequency band"""
-    mask = (freqs >= band[0]) & (freqs <= band[1])
-    return np.sum(power_spectrum[mask])
-```
-
-### Feature Engineering for Time Series 🛠️
-
-<!---
-Feature engineering transforms raw time series data into meaningful metrics that can be used for classification, prediction, or clinical interpretation.
---->
-
-#### Statistical Features
-
-**Conceptual**: Basic statistical measures that capture different aspects of the signal:
-
-- Central tendency: mean, median, mode
-- Dispersion: standard deviation, variance, IQR
-- Shape: skewness, kurtosis
-- Extremes: min, max, range
-
-**Reference**:
-```python
-def extract_statistical_features(signal):
-    return {
-        'mean': np.mean(signal),
-        'std': np.std(signal),
-        'skew': stats.skew(signal),
-        'kurtosis': stats.kurtosis(signal),
-        'iqr': np.percentile(signal, 75) - 
-               np.percentile(signal, 25)
-    }
-```
-
-#### Rolling Window Features
-
-**Conceptual**: Features calculated over sliding windows capture local patterns:
-
-- Rolling mean
-- Rolling standard deviation
-- Rolling entropy
-- Rolling correlation
-
-**Reference**:
-```python
-def rolling_features(signal, window_size):
-    return {
-        'rolling_mean': pd.Series(signal).rolling(window_size).mean(),
-        'rolling_std': pd.Series(signal).rolling(window_size).std()
-    }
-```
-
-#### Frequency Domain Features
-
-**Conceptual**: Features derived from frequency analysis:
-
-- Band powers (VLF, LF, HF)
-- Peak frequencies
-- Spectral entropy
-- Power ratios (LF/HF)
-
-**Reference**:
-```python
-def frequency_domain_features(power_spectrum, freqs):
-    vlf = get_frequency_band_power(power_spectrum, freqs, (0.003, 0.04))
-    lf = get_frequency_band_power(power_spectrum, freqs, (0.04, 0.15))
-    hf = get_frequency_band_power(power_spectrum, freqs, (0.15, 0.4))
-    return {
-        'vlf_power': vlf,
-        'lf_power': lf,
-        'hf_power': hf,
-        'lf_hf_ratio': lf/hf if hf > 0 else 0
-    }
-```
-
-## Summary and Key Takeaways
-
-- **Time series data** is fundamental in healthcare for monitoring, forecasting, and understanding patterns over time
-- **Basic analysis techniques** like decomposition, correlation analysis, and visualization provide insights into underlying patterns
-- **ARIMA models** offer a powerful framework for forecasting time series data in healthcare
-- **Sensor data analysis** requires specialized techniques for processing dense physiological signals
-- **Practical applications** include patient monitoring, resource planning, and early warning systems
-
-## Further Resources
-
-- [Time Series Analysis in Python](https://otexts.com/fpp2/) - Comprehensive guide to forecasting
-- [PhysioNet](https://physionet.org/) - Repository of physiological data and software
-- [statsmodels Documentation](https://www.statsmodels.org/stable/tsa.html) - Time series analysis in Python
-- [Practical Time Series Analysis](https://www.oreilly.com/library/view/practical-time-series/9781492041641/) - O'Reilly book
-
-## Next Steps
-
-- Explore the demo notebooks to gain hands-on experience
-- Apply these techniques to your own healthcare data
-- Consider how time series analysis could improve healthcare delivery and outcomes
+### Reference Card: spaCy Pipeline
+
+| Category | Method / Attribute | Purpose & Arguments | Typical Output |
+| :--- | :--- | :--- | :--- |
+| **Setup** | `spacy.load("en_core_web_sm")` | Loads English pipeline model. | `Language` (`nlp`) |
+| **Process** | `nlp(text)` | Runs full pipeline in one call. | `Doc` object |
+| **Token** | `token.lemma_` | Dictionary base form. | `str` |
+| **Token** | `token.pos_` | Part-of-speech tag. | `str` (`"NOUN"`, `"VERB"`) |
+| **Token** | `token.is_stop`, `token.is_punct` | Boolean filters. | `bool` |
+| **Doc** | `doc.ents` | Named entities found. | `tuple[Span]` |
+
+## Comparing the Approaches
+
+| Aspect | NLTK Pipeline | spaCy Pipeline |
+|--------|---------------|----------------|
+| Assembly | Manual, step-by-step | Automatic, one call |
+| Customization | Full control at each step | Configure via `nlp.disable()` |
+| Stopwords | Explicit filtering | `token.is_stop` attribute |
+| NER quality | Basic | Better out-of-box |
+| Speed | Slower | Faster |
+
+# LIVE DEMO
+
+![XKCD: Machine Learning](media/xkcd_machine_learning.png)

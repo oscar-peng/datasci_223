@@ -1,108 +1,81 @@
-# Assignment: Debugging and Big Data Analysis 🐛📊
+# Assignment 02: Polars on EHR Event Logs
 
----
+**Due:** Before Lecture 03  
+**Points:** Pass/Fail (autograded)  
+**Skills:** Polars lazy execution, joins, group-by aggregation, streaming collection
 
 ## Overview
 
-This assignment has two parts:
+You will analyze synthetic EHR events for a type 2 diabetes-focused population. The data includes:
 
-1. **Debugging Python code (70% of grade)**
-2. **Analyzing large health data (30% of grade)**
+- **Patients** (demographics + home site)
+- **Sites** (clinics/hospitals)
+- **Events** (ICD-10 diagnoses)
+- **Code lookups** (ICD-10 dictionary)
 
----
+Your task is to build a lazy Polars pipeline that summarizes **diabetes diagnosis prevalence** by site.
 
-## Part 1: Debugging (70%)
+## Assignment Structure
 
-### Tasks
+```
+assignment/
+├── assignment.ipynb           # YOUR WORK GOES HERE
+├── assignment.md              # Notebook source (jupytext)
+├── assignment_solution.md     # Instructor solution
+├── config.yaml                # Paths + filters
+├── data/
+│   └── schema.yaml            # Data schema reference
+├── .github/
+│   └── tests/test_assignment.py
+├── requirements.txt
+└── generate_test_data.py
+```
 
-- Fix the provided buggy scripts:
-  - `patient_data_cleaner.py` (cleans and filters patient records)
-  - `med_dosage_calculator.py` (calculates medication dosages)
-- The first script has labeled bugs to help you get started
-- The second script has more subtle bugs that require using a debugger to find
-- Use **any debugging method you prefer**:
-  - Print statements
-  - `pdb`
-  - VS Code debugger
-  - Other tools
-- Pass all provided **pytest** tests:
-  - `test_patient_data_cleaner.py`
-  - `test_med_dosage_calculator.py`
-- Add comments explaining:
-  - What was wrong (use the comment format: `# BUG: description of the bug`)
-  - How you fixed it (use the comment format: `# FIX: description of the fix`)
-- **Important for autograding**: Do not change function names or return types
+## Setup
 
-### Grading
+### 1. Create virtual environment
 
-- All tests pass: **full credit**
-- Clear explanations in comments
-- Clean, readable code
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
----
-## Part 2: Big Data Analysis (30%)
+### 2. Generate synthetic data
 
-### Tasks
+```bash
+python3 generate_test_data.py --size small --output-dir data
+```
 
-1. **Time Series Analysis** (15%):
-   - Use the provided script to generate a large dataset of patient vitals over time
-   - Implement a polars-based analysis that:
-     - Identifies patients with concerning vital sign trends
-     - Calculates rolling averages of vitals
-     - Detects anomalies in vital signs
-   - Use polars' lazy evaluation for efficiency
-   - Output results as parquet files with partitioning
+This creates:
+- `data/patients.parquet`
+- `data/sites.parquet`
+- `data/events.parquet`
+- `data/icd10_codes.parquet`
 
-2. **Patient Cohort Analysis** (10%):
-   - Group patients by diagnosis and demographics
-   - Calculate statistics for each cohort:
-     - Treatment effectiveness
-     - Average length of stay
-     - Readmission rates
-   - Use polars' streaming capabilities for memory efficiency
-   - Generate visualizations of the results
+The generator reads source dictionaries from `refs/raw/` (included in the repo).
 
-3. **Documentation** (5%):
-   - Write a brief report in `analysis.md`:
-     - Explain your analysis approach
-     - Discuss any patterns or insights found
-     - Describe how you used polars' features for efficiency
-     - Include sample visualizations
-     - Suggest potential clinical applications
+### 3. Open the notebook
 
-### Grading
+```bash
+jupyter notebook assignment.ipynb
+```
 
-- Correct implementation of time series analysis
-- Effective use of polars' features
-- Quality of insights in cohort analysis
-- Clear and insightful documentation
-- Code efficiency and organization
+## Tasks
 
----
+Complete all cells marked `# TODO` in `assignment.ipynb`:
 
-## Submission Checklist
+1. **Lazy scans** for patients, sites, events, and ICD-10 lookup
+2. **Filtering** to the date window and ICD-10 diabetes codes
+3. **Joining + aggregation** to compute site-level prevalence
+4. **Streaming export** to Parquet + CSV outputs
 
-- Fixed Python scripts with bug documentation
-- All pytest tests passing
-- Time series analysis implementation
-- Cohort analysis results
-- `analysis.md` with documentation
-- Generated parquet files and visualizations
+## Testing
 
-### Autograding Requirements
+Run the autograder locally:
 
-For successful autograding:
-1. Do not rename any functions or files
-2. Follow the exact file naming conventions specified
-3. Ensure your code runs without errors using the provided test scripts
-4. Use the required comment formats for bug documentation
-5. Make sure all output files have the exact column names specified
+```bash
+pytest .github/tests/test_assignment.py -v
+```
 
----
-
-## Notes
-
-<!--
-The debugging portion teaches systematic debugging with increasing difficulty.
-The big data portion focuses on real-world health data analysis scenarios.
--->
+If all tests pass, commit and push to GitHub Classroom.

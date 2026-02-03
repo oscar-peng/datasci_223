@@ -1,0 +1,189 @@
+# Data Dictionary: Wearable HRV + Sleep Diary Generator
+# Aligned to Baigutanova et al., Scientific Data 2025 (Samsung Galaxy Active 2 dataset)
+
+version: 1.0
+description: Synthetic wearable sensor data with sleep diaries for Polars lazy/streaming demos
+
+tables:
+  sensor_hrv:
+    description: 5-minute aggregated sensor and HRV measurements
+    row_count_target:
+      small: 1_000_000
+      large: 100_000_000
+    columns:
+      device_id:
+        type: string
+        description: Anonymized wearable device identifier
+        example: "DEV-00123"
+      ts_start:
+        type: datetime
+        description: Start timestamp of 5-minute segment (epoch ms)
+        example: "2024-01-01T09:00:00Z"
+      ts_end:
+        type: datetime
+        description: End timestamp of 5-minute segment (epoch ms)
+        example: "2024-01-01T09:05:00Z"
+      heart_rate:
+        type: integer
+        unit: bpm
+        description: Mean heart rate over segment
+        range: [40, 220]
+      hrv_sdnn:
+        type: float
+        unit: ms
+        description: Standard deviation of NN intervals (time domain HRV)
+        range: [20, 200]
+      hrv_rmssd:
+        type: float
+        unit: ms
+        description: Root mean square of successive differences (time domain HRV)
+        range: [10, 150]
+      hrv_lf_hf_ratio:
+        type: float
+        description: Low/High frequency ratio (frequency domain HRV)
+        range: [0.3, 3.0]
+      bvp_mean:
+        type: float
+        description: Mean blood volume pulse amplitude
+        range: [0.1, 2.0]
+      spo2:
+        type: float
+        unit: "%"
+        description: Blood oxygen saturation
+        range: [90, 100]
+      eda_mean:
+        type: float
+        unit: µS
+        description: Mean electrodermal activity (skin conductance)
+        range: [0.1, 5.0]
+      skin_temp:
+        type: float
+        unit: "°C"
+        description: Mean skin surface temperature
+        range: [28.0, 38.0]
+      acc_magnitude:
+        type: float
+        unit: "g"
+        description: Euclidean norm of accelerometer (X,Y,Z)
+        range: [0.0, 3.0]
+      steps:
+        type: integer
+        description: Step count over segment
+        range: [0, 300]
+      missingness_score:
+        type: float
+        description: Proportion of data affected by signal loss/artifacts
+        range: [0.0, 1.0]
+
+  sleep_diary:
+    description: Daily self-reported sleep logs
+    row_count_target:
+      medium: 10_000
+      large: 500_000
+    columns:
+      user_id:
+        type: string
+        description: Anonymized participant identifier
+        example: "USER-04567"
+      date:
+        type: date
+        description: Diary entry date
+        example: "2024-01-01"
+      bedtime:
+        type: time
+        description: Time participant went to bed
+        example: "23:30"
+      fall_asleep_time:
+        type: time
+        description: Estimated time of sleep onset
+        example: "23:45"
+      wake_time:
+        type: time
+        description: Final wake time
+        example: "07:15"
+      waso_minutes:
+        type: integer
+        unit: minutes
+        description: Wake after sleep onset duration
+        range: [0, 120]
+      sleep_duration:
+        type: float
+        unit: hours
+        description: Total sleep time (calculated)
+        range: [3.0, 12.0]
+      sleep_efficiency:
+        type: float
+        unit: "%"
+        description: Sleep efficiency (sleep/time in bed)
+        range: [60, 98]
+      sleep_latency:
+        type: float
+        unit: minutes
+        description: Time from bedtime to sleep onset
+        range: [0, 60]
+
+  user_profile:
+    description: Participant demographics and lifestyle
+    row_count_target:
+      medium: 100
+      large: 500
+    columns:
+      user_id:
+        type: string
+        description: Anonymized participant identifier
+        example: "USER-04567"
+      age:
+        type: integer
+        unit: years
+        description: Participant age
+        range: [18, 65]
+      gender:
+        type: categorical
+        description: Self-reported gender
+        values: ["Female", "Male", "Nonbinary"]
+      height_cm:
+        type: float
+        unit: cm
+        description: Height in centimeters
+        range: [150, 200]
+      weight_kg:
+        type: float
+        unit: kg
+        description: Weight in kilograms
+        range: [45, 120]
+      occupation:
+        type: categorical
+        description: Occupation category
+        values: ["Undergraduate", "Graduate", "Office Worker", "Other"]
+      lifestyle_regularity:
+        type: categorical
+        description: Self-reported lifestyle regularity
+        values: ["Very Regular", "Regular", "Irregular", "Very Irregular"]
+      exercise_freq_weekly:
+        type: integer
+        unit: sessions/week
+        description: Exercise frequency per week
+        range: [0, 7]
+      smoking_freq:
+        type: categorical
+        description: Smoking frequency
+        values: ["Never", "Occasional", "Daily"]
+      alcohol_freq:
+        type: categorical
+        description: Alcohol consumption frequency
+        values: ["Never", "Monthly", "Weekly", "Daily"]
+      coffee_freq:
+        type: categorical
+        description: Coffee consumption frequency
+        values: ["Never", "1-2/day", "3-4/day", "5+/day"]
+
+generation_notes:
+  sampling_rate: "10 Hz (100 ms intervals) matching Samsung Galaxy Active 2 study"
+  segment_window: "5-minute aggregation for HRV computation"
+  temporal_coverage: "4 weeks of synthetic data per participant"
+  correlation_structure: |
+    - HRV metrics positively correlated with each other
+    - HRV negatively correlated with stress markers (e.g., elevated HR)
+    - Activity (steps, acc_magnitude) positively correlated with HR
+    - Sleep efficiency inversely related to nighttime HRV metrics
+  quality_flags: "missingness_score used to filter noisy segments (threshold 0.35)"

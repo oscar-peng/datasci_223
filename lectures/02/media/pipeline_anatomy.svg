@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260">
+  <style>
+    .box { fill: #f4f6f8; stroke: #2f2f2f; stroke-width: 2; rx: 10; ry: 10; }
+    .label { font: 18px Arial, sans-serif; fill: #2f2f2f; }
+    .arrow { stroke: #2f2f2f; stroke-width: 3; marker-end: url(#arrow); }
+  </style>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2f2f2f" />
+    </marker>
+  </defs>
+
+  <rect class="box" x="40" y="70" width="220" height="120" />
+  <text class="label" x="70" y="115">Inputs</text>
+  <text class="label" x="70" y="145">Config</text>
+
+  <rect class="box" x="340" y="70" width="220" height="120" />
+  <text class="label" x="360" y="115">Scan</text>
+  <text class="label" x="360" y="145">Filter</text>
+  <text class="label" x="360" y="175">Join + Agg</text>
+
+  <rect class="box" x="640" y="70" width="220" height="120" />
+  <text class="label" x="660" y="115">Outputs</text>
+  <text class="label" x="660" y="145">Logs</text>
+  <text class="label" x="660" y="175">Artifacts</text>
+
+  <line class="arrow" x1="260" y1="130" x2="340" y2="130" />
+  <line class="arrow" x1="560" y1="130" x2="640" y2="130" />
+</svg>

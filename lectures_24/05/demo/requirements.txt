@@ -1,0 +1,16 @@
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+shap
+plotly
+jupyter
+jupytext
+nbconvert
+ipykernel
+imblearn
+eli5
+shap

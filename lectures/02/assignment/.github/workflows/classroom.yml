@@ -1,0 +1,45 @@
+name: Autograding
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Download latest test files
+        run: |
+          mkdir -p .github/test
+          curl -o .github/test/test_assignment.py \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw02/refs/heads/main/.github/test/test_assignment.py
+          curl -o .github/test/requirements.txt \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw02/refs/heads/main/requirements.txt
+          pip install -r .github/test/requirements.txt
+
+      - name: Execute assignment notebook
+        run: |
+          jupyter nbconvert --to notebook --execute assignment.ipynb
+
+      - name: Run tests
+        run: |
+          pytest .github/tests/test_assignment.py -v
+          

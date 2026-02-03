@@ -1,90 +1,91 @@
 ## Meta-Instruction
 
-- **Audience Assessment:** Create content for health data science masters students who are beginners in programming (Python, git, shell commands)
-- **Continuous Evaluation:** Before generating each section, ensure content matches student level, balances concept / reference / example, and includes speaking notes
-- **Time Structure:** Design for 90-minute lectures, with maximum 60 slides if using Marp. Otherwise, long-form Markdown.
-- **Demo Integration:** Include 3 hands-on demo breaks (at ⅓, ⅔, and end points)
+This file is supplemental guidance and examples for authoring lectures in this repo.
+
+- **Source of truth:** If anything in this file conflicts with `AGENTS.md`, follow `AGENTS.md`.
+- **Audience:** Health data science masters students who are beginners in programming (Python, git, shell commands).
+- **Continuous evaluation:** Before generating each section, ensure content matches student level and balances concept / reference / example.
+- **Time structure:** Design for 90-minute lectures (plus demos), typically as long-form Markdown.
+- **No time estimates in text:** Do not include time cues/estimates in lecture/demo/assignment content.
+- **Demo integration:** Include 3 hands-on demo breaks (at ~⅓, ~⅔, and end points).
 
 ## Core Principles
 
 ### 1. Format & Structure
 
-- **Markdown Format:** Create lectures in long-form Markdown or, only if requested, in marp markdown slide format (separated by `---`).
-- **Speaking Notes:** Include detailed talking points in multi-line HTML comments <!--- ... ---> with specific explanations. The talking points should be supplemental content/context to each sub-sub-heading (###), written to be helpful to students reading the lecture notes on their own. It should _NOT_ be instructions to the lecturer;e.g., "speak about X" or "mention relationship to Y".
-- **Progressive Learning:** Structure content to build knowledge incrementally
-- **Visual Organization:** Use consistent heading levels, bullet points, and white space
+- **Markdown format:** Create lectures in long-form Markdown. Only if requested, use Marp markdown slide format (separated by `---`).
+- **Speaking notes (optional):** Put talking points in `NOTES.md` (same section headings), after the lecture content stabilizes.
+- **Progressive learning:** Build knowledge incrementally.
+- **Visual organization:** Use consistent heading levels, bullets, and whitespace.
 
-Example section (complex topics may span multiple sections, only need the reference card/example at least once):
-#### Random forest
+Example section (complex topics may span multiple sections; include at least one reference card and one code snippet per major concept):
 
 """
-<!Random forests are powerful and robust for tabular health data. They combine many decision trees, each trained on a random subset of the data, and vote on the final prediction. Beginners sometimes think more trees always means better results, but too many can slow things down.
---->
 
-Each of the steps can be tweaked, but the general flow goes:
+# Classifiers
 
-1. **Bagging** - create _k_ random samples from the data set
-2. **Grow trees** - individual decision trees are constructed by choosing the best features and cutpoints to separate the classes
-3. **Classify** - instances are run through all trees and assigned a class by majority vote
+## `RandomForestClassifier`
 
-**Reference Card: `RandomForestClassifier`**
+Random forests are a robust baseline for many tabular health-data tasks. They combine many decision trees trained on random subsets of data and vote on the final prediction.
+
+General flow:
+
+1. **Bagging**: create *k* random samples from the dataset
+2. **Grow trees**: build decision trees using splits that separate classes
+3. **Classify**: vote across trees for a final prediction
+
+![Random Forest Visualization](media/random_forest.png)
+
+### Reference Card: `RandomForestClassifier`
 
 - **Function:** `sklearn.ensemble.RandomForestClassifier()`
 - **Purpose:** Ensemble of decision trees for classification
-- **Key Parameters:** 
-  - `n_estimators`: (Optional, default=100) The number of trees in the forest. More trees generally improve performance but increase computation time
-  - `max_depth`: (Optional, default=None) The maximum depth of each tree. If `None`, nodes are expanded until all leaves are pure or contain less than `min_samples_split` samples. Deeper trees can capture more complex patterns but risk overfitting
-  - `random_state`: (Optional, default=None) Controls the randomness of the bootstrapping of the samples used when building trees and the sampling of the features to consider when looking for the best split at each node. Setting a specific number ensures reproducibility
-  - `parameter`: (Optional/Required, default=XXX) Brief summary of what `parameter` is and does in a sentence or two. No commentary.
-**Minimal Example:**
+- **Key Parameters:**
+    - `n_estimators`: (Optional, default=100) number of trees
+    - `max_depth`: (Optional, default=None) maximum depth of each tree
+    - `random_state`: (Optional, default=None) controls randomness for reproducibility
+
+### Code Snippet: `RandomForestClassifier`
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
+
 X = [[1, 2], [2, 3], [3, 4], [4, 5]]
 y = [0, 1, 0, 1]
+
 model = RandomForestClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-<!This code fits a random forest and predicts a class. Beginners sometimes forget to set a random seed for reproducibility or to check feature importances.
---->
+![xkcd: Scenario 4](media/xkcd_scenario_4.png)
 
-<!---
-This diagram illustrates the concept of Bagging (Bootstrap Aggregating), which is the core idea behind Random Forests.
-1.  **Original Dataset:** We start with our full dataset (imagine a spreadsheet of patient data).
-2.  **Bootstrap Samples:** We create multiple new datasets by sampling *with replacement* from the original. This means some patients might appear multiple times in a sample, while others might be left out. Each sample is roughly the same size as the original. Think of it like drawing names from a hat, putting the name back each time.
-3.  **Train Models:** We train a separate decision tree on each of these bootstrap samples. Because each tree sees slightly different data, they will learn slightly different patterns.
-4.  **Aggregate Predictions:** For a new patient, we run their data through *all* the trees. For classification, each tree "votes" for a class, and the class with the most votes wins. For regression, we average the predictions. This ensemble approach makes the final prediction more robust and less prone to overfitting than a single decision tree. It's the wisdom of the crowd, but for trees!
---->
-![Bagging diagram](media/bagging.png)
 """
 
 ### 2. Content Balance
 
-- **Conceptual Foundations:** Explain how things work in accessible terms
-- **Reference Material:** Include function definitions, syntax rules, and common parameters
-- **Practical Examples:** Provide brief example code samples inline with little-to-no context
-- **Hands-on Demos:** Should wrap up major section, ideally applying methods with health data applications
+- **Conceptual foundations:** Explain how things work in accessible terms.
+- **Reference material:** Include function definitions, syntax rules, and common parameters.
+- **Practical examples:** Provide brief example code samples inline with little-to-no context.
+- **Hands-on demos:** Apply methods to realistic health data with more complexity than lecture snippets.
 
 ### 3. Teaching Approach
 
-- **Beginner-Friendly:** Avoid jargon, explain terms when introduced
-- **Visual Learning:** Use diagrams, analogies, screenshots, and concrete examples/outputs
-- **Engagement:** Include comprehension checkpoints and practice opportunities
-- **Misconceptions:** Address common beginner mistakes in speaking notes
+- **Beginner-friendly:** Avoid jargon; define terms when introduced.
+- **Visual learning:** Prefer diagrams, screenshots, and concrete outputs.
+- **Misconceptions:** Address common beginner mistakes in `NOTES.md` (or in tightly-scoped callouts) when it improves clarity.
 
-### 4. Tone & Style
+### 4. Tone, Humor, and Visual Cues
 
-- **Professional but Engaging:** Maintain educational focus while being approachable
-- **Strategic Humor:** Include occasional nerdy puns (xkcd-style) and cheesy pop culture references (80s/90s movies)
-- **Visual Cues:** Use emoji and formatting to highlight key points and create visual interest
-- **Clear Annotations:** Comment key lines within code examples
+- **Not a script:** The lecture text is not speaking notes; it should read like reference material + worked examples.
+- **Humor:** Sprinkle relevant humor *between* sections/sub-sections. Avoid making the core explanation itself jokey in a way that obscures meaning.
+- **Emojis:** Use sparingly as visual anchors; avoid emoji-only meaning.
+- **Code annotations:** Short comments in code snippets are fine when they clarify intent.
 
 ### 5. Demo Break Structure
 
-- **Hands-On Learning:** Design 3 practical demo sessions (10-15 minutes each) at roughly 1/3, 2/3, and conclusion of lecture
-- **Progressive Difficulty:** Start simple, build complexity across demos. Difficulty should always stay accessibly understandable by students learning the topic.
-- **Clear Instructions:** Provide step-by-step guidance with expected outcomes
-- **Success Validation:** Include ways to confirm students completed tasks correctly, e.g., visual or tabular output after every code section.
-- **Markdown/Jupytext Format:** Most demos with by Jupyter notebooks, but we will write them using markdown and convert with `jupytext`.
-p
+- **Hands-on learning:** Design 3 practical demo sessions at roughly ⅓, ⅔, and the conclusion of the lecture.
+- **Progressive difficulty:** Start simple, build complexity across demos.
+- **Clear instructions:** Provide step-by-step guidance with expected outcomes.
+- **Success validation:** Include ways to confirm completion (visual/tabular output after each step).
+- **Markdown/Jupytext format:** Most demos will be Jupyter notebooks; write them in Markdown and convert with `jupytext`.
+- **Demo headings stay clean:** In the lecture, `# LIVE DEMO!` headings only mark the break—put walkthrough steps inside `lectures/XX/demo/`.

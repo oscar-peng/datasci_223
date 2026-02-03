@@ -1,0 +1,38 @@
+# Configuration for Demo 2: Patient Data Cleaning
+
+# Data paths (relative to demo directory)
+data:
+  input_file: "data/patient_intake.csv"
+  output_dir: "output"
+
+# Schema validation
+required_columns:
+  - patient_id
+  - weight_kg
+  - height_cm
+  - age
+  - sex
+
+# Bounds checking for realistic values
+bounds:
+  weight_kg:
+    min: 30
+    max: 250
+  height_cm:
+    min: 120
+    max: 230
+  age:
+    min: 0
+    max: 110
+
+# BMI categorization thresholds
+bmi_thresholds:
+  underweight: 18.5
+  normal: 25
+  overweight: 30
+  # Obese is > overweight threshold
+
+# Logging configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  format: "%(levelname)s:%(message)s"

@@ -2,777 +2,808 @@
 lecture_number: 02
 pdf: true
 ---
-<!--
-# Instructor Preparation Notes
 
-This lecture covers three main topics for health data science students who are beginners in programming:
-1. `Jupyter` notebooks as an interactive environment for health data exploration
-2. Debugging techniques from basic to advanced for health-related Python code
-3. Working with large health datasets using `polars`
+02: Scaling Tabular Workflows with Polars ⚡
 
-## Time Allocation
-- `Jupyter` notebooks: 20 minutes + 10 minute demo
-- Debugging: 30 minutes + 20 minute demo (split between print, pdb and `VS Code`)
-- Big Data: 20 minutes + 10 minute demo
-- Total: 110 minutes (including demos)
+- hw02 - #FIXME add GitHub Classroom link once ready
 
-## Demo Preparation
-- Ensure all demo scripts are working on your machine
-- For demo1: Have a simple script with common bugs ready (patient data processing)
-- For demo2: Prepare a script with logical errors for pdb debugging (medication dosage calculation)
-- For demo3: Have VS Code ready with the demo3-bmi-calculator.py loaded (BMI calculation)
-- For demo4: Test demo4-generate_large_health_data.py and demo4-analyze_large_health_data.py (large patient dataset)
+# Links & Self-Guided Review
 
-## Common Student Questions
-- "Why use `Jupyter` instead of regular Python scripts?"
-- "When should I use print vs. debugger?"
-- "How do I know which debugging technique to use?"
-- "What's the difference between `pandas` and `polars`?"
-- "How large is 'too large' for `pandas`?"
-- "How do I know if my code has a bug or if my data is wrong?"
-- "Can I use these debugging techniques in other programming languages?"
+- [Polars User Guide](https://docs.pola.rs/user-guide/) – official docs with eager + lazy API examples
+- [Apache Arrow Columnar Format](https://arrow.apache.org/overview/) – why columnar memory layouts matter
+- [Parquet Fundamentals](https://parquet.apache.org/docs/file-format/) – format internals and predicate pushdown
+- [Real Python: Working With Large CSVs](https://realpython.com/csv-python/#working-with-large-csv-files-using-pandas) – diagnosing `MemoryError`
+- [VS Code: Python performance tips](https://code.visualstudio.com/docs/python/python-tutorial) – environment setup + profiling
+- `scripts/fetch_xkcd_2x.py` – grab XKCD comics (see `all_xkcd.csv` index) for lecture visuals
 
-## Key Learning Outcomes
-- Students should be able to use `Jupyter` for interactive health data exploration
-- Students should be able to identify and fix common bugs using appropriate techniques
-- Students should understand when and how to use `polars` for large health datasets
-- Students should be able to apply debugging skills to their own health data projects
--->
+# Why Memory Limits Sneak Up On Us
 
-# Debugging and Big Data in Health Data Science 🐛💾🏥
+![Dataset vs laptop memory](media/memory_vs_dataset.png)
 
-## Outline
+_Chart shows estimated in-memory size; raw on-disk sizes are in the table below._
 
-1. **`Jupyter` Notebooks for Health Data Exploration**
-    - What are `Jupyter` notebooks and why use them?
-    - Magic commands and shell integration
-    - Best practices for reproducible analysis
-    - **Demo Break**: Interactive exploration of health data
+Health datasets outgrow laptop RAM quickly: a handful of CSVs with vitals, labs, and encounters can exceed 16 GB once loaded. Attempting to "just read the file" leads to system thrash, swap usage, and eventually Python `MemoryError`s that interrupt the workflow.
 
-2. **Debugging Python Code in Health Applications**
-    - Print debugging: The first line of defense
-    - Interactive debugging with `pdb`
-    - Visual debugging with `VS Code`
-    - Common bugs in health data processing
-    - **Demo Break**: Finding and fixing bugs in health data scripts
+### Laptop specs vs dataset footprints
 
-3. **Working with Large Health Datasets**
-    - Why traditional `pandas` might not be enough
-    - Introduction to `polars` for efficient processing
-    - Handling electronic health records larger than memory
-    - Best practices for big health data
-    - **Demo Break**: Analyzing a large patient dataset
+| Dataset                              | Typical raw size | In-memory pandas size            | Fits on 16 GB laptop?   |
+| ------------------------------------ | ---------------- | -------------------------------- | ----------------------- |
+| Intake forms (CSV)                   | 250 MB           | ~1.2 GB (due to dtype inflation) | ✅                      |
+| Longitudinal vitals (CSV)            | 6 GB             | ~14 GB                           | ⚠️ borderline           |
+| EHR encounter log (CSV)              | 18 GB            | ~42 GB                           | ❌                      |
+| Imaging metadata (Parquet)           | 9 GB             | ~9 GB                            | ⚠️ if other apps closed |
+| Claims archive (partitioned Parquet) | 120 GB           | streamed                         | ✅ (with streaming)     |
 
-> ### **Debugging:** Being the detective in a crime movie where you are also the murderer
+### Warning signs you are hitting RAM limits
 
-## References and Resources 📚
+- `top` or `Activity Monitor` shows Python ballooning toward total RAM
+- Fans spin, everything slows, disk swap spikes
+- OS kills kernel/terminal; `MemoryError` or `Killed: 9` messages
+- Notebook kernel restarts when running seemingly "simple" cells
 
-### Python and Jupyter Resources
+![Data quality fire drill](media/xkcd_data_quality.png)
 
-- [Jupyter Documentation](https://jupyter.org/documentation) - Official documentation for Jupyter notebooks
-- [Dataquest Jupyter Tutorial](https://www.dataquest.io/blog/jupyter-notebook-tutorial/) - Beginner-friendly tutorial
-- [Python for Healthcare Modelling and Data Science](https://www.routledge.com/Python-for-Healthcare-Modelling-and-Data-Science/Dauletbakov-Moussa/p/book/9781032124001) - Python applications in healthcare
-- [Official Python Documentation](https://docs.python.org/3/) - Python language reference
+_If the rows are literally on fire, start fixing quality before scaling anything else._
 
-### Debugging Resources
+Grab a quick sense of scale (`du -sh data/`, `wc -l big_file.csv`) before committing to a full load—if numbers dwarf your RAM, pivot immediately.
 
-- [Python Debugger (pdb) Documentation](https://docs.python.org/3/library/pdb.html) - Official pdb documentation
-- [`VS Code` Debugging Guide](https://code.visualstudio.com/docs/python/debugging) - Visual debugging tutorial
-- [Real Python Debugging Guide](https://realpython.com/python-debugging-pdb/) - Practical debugging techniques
-- [Python Testing with `pytest`](https://pragprog.com/titles/bopytest/python-testing-with-pytest/) - Testing as a debugging strategy
-- [Full Stack Python Debugging Guide](https://www.fullstackpython.com/debugging.html) - Comprehensive debugging techniques
-- [VS Code Debugging Overview](https://code.visualstudio.com/docs/debugtest/debugging) - General debugging concepts
+### Quick pivot when pandas crashes
 
-### Big Data Processing Resources
+1. **Stop the read** once memory spikes—killing the kernel only hides the problem.
+2. **Profile the file size** (`du -sh`, `wc -l`) so you know what you are up against.
+3. **Convert the source** to Parquet or Arrow once using a machine with headroom.
+4. **Rebuild the transform** with Polars lazy scans (`pl.scan_*`) and streaming collects.
+5. **Cache intermediate outputs** so future runs never touch the raw CSV again.
 
-- [`pandas` Documentation](https://pandas.pydata.org/) - Standard data analysis library
-- [`polars` Documentation](https://pola.rs/) - Fast DataFrame library for large datasets
-- [Python for Data Analysis](https://wesmckinney.com/book/) - By `pandas` creator Wes McKinney
-- [`Parquet` Format Explained](https://parquet.apache.org/docs/) - Efficient columnar storage format
-- [Healthcare Data Analytics Using Python](https://link.springer.com/book/10.1007/978-1-4842-7986-7) - Specific to health data
-- [Polars vs. pandas: What's the Difference?](https://blog.jetbrains.com/pycharm/2024/07/polars-vs-pandas/) - Detailed comparison of performance and features
-- [Polars Lazy Evaluation Guide](https://docs.pola.rs/user-guide/lazy/using/) - How to use lazy evaluation for large datasets
-
-### Code Quality Tools
-
-- [Ruff Documentation](https://docs.astral.sh/ruff/) - Modern, fast Python linter written in Rust
-- [Pylint Documentation](https://pylint.org/) - Traditional Python linter with extensive rules
-- [Python Debugger Comparison](https://docs.python.org/3/library/pdb.html) - Overview of Python's built-in debugger
-
-## 1. Jupyter Notebooks for Health Data Exploration 🎮🏥
-
-### 1.1 What Are Jupyter Notebooks?
-
-![Jupyter Notebook Interface](media/main-logo.svg)
-
-Jupyter notebooks are interactive documents that let you **write and run code, see results immediately, and mix in text, images, and equations**.
+### Code Snippet: Pushing pandas too far
 
 ```python
-# Example of a code cell in Jupyter
 import pandas as pd
-patient_data = pd.read_csv("patient_records.csv")
-patient_data.head()  # Displays first 5 rows
-```
+from pathlib import Path
 
-#### Why Jupyter is Perfect for Health Data Science
-
-- **Interactive exploration**: Test hypotheses on patient data instantly
-- **Visual analysis**: Create charts of health metrics on the fly
-- **Documentation**: Explain your analysis alongside code
-- **Reproducibility**: Share complete analyses with colleagues
-- **Teaching tool**: Perfect for learning data science concepts
-
-### 1.2 Magic Commands ✨
-
-Jupyter has special commands starting with `%` (line magics) or `%%` (cell magics) that extend functionality.
-
-#### Essential Magic Commands
-
-| Magic Command | What It Does | Health Data Example |
-|:--------------|:-------------|:-------------------|
-| `%pip install` | Install packages | `%pip install pydicom` for medical imaging |
-| `%matplotlib inline` | Display plots in notebook | Visualize patient vitals over time |
-| `%timeit` | Measure code performance | Optimize patient matching algorithms |
-| `%debug` | Debug after an error | Fix issues in data cleaning pipeline |
-| `%run` | Run external scripts | Execute preprocessing scripts |
-
-```python
-# Example: Timing a patient matching function
-%timeit find_matching_patients(patients_df, "diabetes")
-```
-
-### 1.3 Shell Commands in Jupyter 🖥️
-
-You can run system commands by prefixing with `!`, perfect for managing health data files.
-
-```python
-# List all CSV files in the patient_data directory
-!ls ./patient_data/*.csv
-
-# Count lines in a large health dataset
-!wc -l hospital_admissions.csv
-
-# Check disk space for large imaging datasets
-!du -h ./medical_images/
-```
-
-#### Common Shell Commands
-
-- `!head -n 5 patient_data.csv` - Preview first 5 lines of a dataset
-- `!grep "diabetes" patient_records.txt` - Find records containing "diabetes"
-- `!mkdir -p ./processed_data/2023` - Create directories for organized data
-- `!wget https://data.gov/health/dataset.csv` - Download public health datasets
-
-### 1.4 Best Practices for Reproducible Research 📊
-
-#### Key Practices
-
-1. **Organize your notebook:**
-    - Use markdown headings to structure analysis
-    - Include study objectives and methods
-    - Document data sources and limitations
-
-2. **Ensure reproducibility:**
-    - Set random seeds for consistent results
-    - Use relative file paths
-    - Include package versions with `!pip freeze`
-    - Restart and run all cells before sharing
-
-3. **Data documentation:**
-    - Include data dictionaries for health variables
-    - Document preprocessing steps
-    - Note missing data handling
-    - Include ethical considerations
-
-4. **Export for sharing:**
-    - HTML/PDF for reports to clinicians
-    - `.py` scripts for production pipelines
-    - GitHub for version control
-    - Binder for interactive sharing
-
-```python
-# Example: Setting random seed for reproducible patient sampling
-import numpy as np
-np.random.seed(42)  # Always use the same random sample
-patient_sample = patient_data.sample(n=100)
-```
-
-### DEMO BREAK: Interactive Exploration of Health Data
-
-See: [`demo0-jupyter-notebooks`](./demo/demo0-jupyter-notebooks.md)
-
-## 2. Debugging Python Code 🐛🏥
-
-### 2.1 Print Debugging: Your First Line of Defense
-
-```python
-def calculate_bmi(weight, height):
-    print(f"Weight: {weight} kg")    # Debug print
-    print(f"Height: {height} m")     # Debug print
-    bmi = weight / (height ** 2)
-    print(f"BMI: {bmi}")             # Debug print
-    return bmi
-
-# Output:
-# Weight: 70 kg
-# Height: 1.75 m
-# BMI: 22.86
-```
-
-The **simplest** debugging technique is adding strategic print statements to track values and program flow.
-
-```python
-def calculate_bmi(weight_kg, height_m):
-    print(f"Input: weight={weight_kg}kg, height={height_m}m")  # Debug print
-    
-    bmi = weight_kg / (height_m ** 2)
-    print(f"Calculated BMI: {bmi}")  # Debug print
-    
-    if bmi < 18.5:
-        category = "Underweight"
-    elif bmi < 25:
-        category = "Normal weight"
-    elif bmi < 30:
-        category = "Overweight"
-    else:
-        category = "Obese"
-    
-    print(f"BMI Category: {category}")  # Debug print
-    return bmi, category
-```
-
-#### When to Use Print Debugging
-
-- **Quick checks** during development
-- **Understanding data flow** in health record processing
-- **Identifying where** a function fails with patient data
-- **Tracking values** of clinical variables through calculations
-
-#### Print Debugging Patterns
-
-```python
-# 1. Checkpoint prints
-print("Starting patient data import...")
-
-# 2. Variable inspection
-print(f"Patient ID: {patient_id}, Type: {type(patient_id)}")
-
-# 3. Data shape checks
-print(f"Patient dataframe shape: {df.shape}")
-
-# 4. Conditional debugging
-if blood_pressure > 180:
-    print(f"WARNING: Very high BP value: {blood_pressure}")
-```
-
-### 2.2 Jupyter Debugger: A Simple Front-End to pdb
-
-Jupyter notebooks provide a simple debugging interface through the `%debug` magic command. This is essentially a front-end to Python's built-in debugger (`pdb`), which we'll explore in more detail later.
-
-```python
-# Example of using %debug in a Jupyter notebook
-def process_patient_data(patient_id, age, weight):
-    # This will cause an error if height is not defined
-    bmi = weight / (height ** 2)
-    return bmi
-
-# Run the function (will raise an error)
-try:
-    process_patient_data("P12345", 45, 70)
-except NameError:
-    # After catching the error, run %debug to enter the debugger
-    %debug
-```
-
-When you run the above code, the `%debug` command will automatically enter the debugger after the NameError occurs. The debugger will stop at the line where the error occurred, allowing you to inspect variables and step through code.
-
-While convenient for quick debugging within notebooks, the Jupyter debugger interface is somewhat clunky compared to dedicated debugging tools. For more complex debugging tasks, we'll explore more powerful options like `pdb` and VS Code's visual debugger.
-
-### 2.3 Code Quality Tools: Preventing Bugs Before They Happen
-
-While print debugging helps you find bugs after they occur, code quality tools like linters help prevent bugs before they happen.
-
-Code linters are automated tools that analyze your code to detect potential problems, bugs, stylistic errors, and suspicious constructs without running the program. They help maintain code quality and catch common mistakes early in development.
-
-![Linter highlighting errors in code](media/linter.png)
-
-Linters are like the spell checker in your word processor - they highlight potential issues with _squiggly underlines_ as you type, allowing you to fix problems before they cause issues. Just as a spell checker catches misspelled words, linters catch coding errors, style violations, and potential bugs.
-
-Common Python linters include:
-
-- **Pylint**: A traditional, comprehensive linter with extensive rules for code style, error detection, and complexity checking
-- **Ruff**: A modern, extremely fast linter written in Rust that can replace multiple Python linters while maintaining high accuracy
-
-```python
-# Example of code that Ruff would catch:
-def process_patient_data(patient_id, age, weight):  # Missing type hints
-    if age < 0:  # Potential logical error
-        return None
-    bmi = weight / (height ** 2)  # Undefined variable 'height'
-    return bmi
-```
-
-## Live demo!
-
-[`demo1-print-debugging`](./demo/demo1-print-debugging.md)
-
-### 2.4 Interactive Debugging with Python Debugger (pdb) 🐞
-
-```
-> /path/to/script.py(10)calculate_bmi()
--> bmi = weight / (height ** 2)
-(Pdb) p weight
-70
-(Pdb) p height
-1.75
-(Pdb) n
-> /path/to/script.py(11)calculate_bmi()
--> print(f"BMI: {bmi}")
-(Pdb) p bmi
-22.86
-(Pdb) c
-```
-
-Python's built-in debugger (`pdb`) allows you to **pause execution** and interactively explore program state.
-
-#### Choosing Your First Python Debugger
-
-When starting with Python debugging, you have several options:
-
-1. **Print Statements**: Simplest approach, good for quick checks
-2. **pdb**: Built-in, works everywhere, but command-line based
-3. **ipdb**: Enhanced pdb with syntax highlighting and better navigation
-4. **VS Code Debugger**: Visual interface, easier for beginners
-5. **PyCharm Debugger**: Full-featured IDE with powerful debugging tools
-
-For beginners, we recommend starting with print statements and VS Code's visual debugger, then moving to pdb as you gain confidence.
-
-#### How to Use pdb
-
-1. **Insert a breakpoint** in your code:
-
-    ```python
-    def process_lab_results(patient_labs):
-        # Stop execution when this line is reached
-        breakpoint()  # Python 3.7+ syntax
-        # Or use: import pdb; pdb.set_trace()  # older Python versions
-        
-        abnormal_results = []
-        for test, value in patient_labs.items():
-            if is_abnormal(test, value):
-                abnormal_results.append((test, value))
-        return abnormal_results
-    ```
-
-2. **Run your script** normally - it will pause at the breakpoint
-
-3. **Use pdb commands** to inspect and control execution:
-
-_For more pdb commands and examples, see the [official Python pdb documentation](https://docs.python.org/3/library/pdb.html)._
-
-pdb is a powerful tool, but for beginners, **print statements and VS Code's visual debugger** are usually easier to start with.
-
-## Live demo!
-
-[`demo2-pdb-debugging`](./demo/demo2-pdb-debugging.md)
-
-### 2.4 Visual Debugging with VS Code 🖥️
-
-![VS Code Debugging Interface](media/debug_view.png)
-
-VS Code provides a **graphical debugger** that makes debugging more intuitive and powerful.
-
-> **Note:** You can customize keyboard shortcuts in VS Code:
-> 1. Open Command Palette (⌘+Shift+P on Mac, Ctrl+Shift+P on Windows/Linux)
-> 2. Type "Preferences: Open Keyboard Shortcuts"
-> 3. Search for "debug" to find and customize debugging shortcuts
-
-#### Key VS Code Debugging Features
-
-1. **Visual breakpoints**: Click in the gutter to set breakpoints
-2. **Variable explorer**: See all variables and their values
-3. **Watch expressions**: Monitor specific expressions
-4. **Call stack view**: See the execution path
-5. **Step controls**: Buttons for step over, into, out
-6. **Conditional breakpoints**: Break only when a condition is true
-
-#### Setting Up VS Code for Debugging
-
-1. Install the Python extension
-2. Open your health data script
-3. Set breakpoints by clicking left of line numbers
-4. Press F5 or click the "Run and Debug" button
-
-![VS Code Debug Icon](media/debug-icon.png)
-
-![VS Code First Launch Config](media/debug-first-launch-config.png)
-5. Select "Python File" configuration
-
-#### Debugging a Patient Data Processing Script
-
-![VS Code Debug Example](media/debug-run.png)
-
-```python
-def calculate_medication_dosage(patient_weight, medication):
-    """Calculate medication dosage based on patient weight."""
-    # Set a breakpoint on this line
-    if medication == "acetaminophen":
-        return patient_weight * 15  # 15mg per kg
-    elif medication == "ibuprofen":
-        return patient_weight * 10  # 10mg per kg
-    else:
-        return 0  # Unknown medication
-```
-
-#### Advanced VS Code Debugging Features
-
-- **Conditional breakpoints**: Break only when `patient_id == "P12345"`
-- **Logpoints**: Log values without modifying code
-- **Debug Console**: Execute Python code while paused at a breakpoint to inspect variables, test expressions, or run custom code in the context of your program
-- **Remote debugging**: Debug code running on hospital servers
-
-### DEMO BREAK: Finding and Fixing Bugs in Health Data Scripts
-
-[`demo3-vscode-debugging`](./demo/demo3-vscode-debugging.md)
-
-![Read the docs!](media/read-the-docs.jpeg)
-
-### 2.4 Using Test Cases to Reproduce Bugs
-
-- Create **small, repeatable examples** that trigger the bug
-- Automate with `assert` statements or test frameworks
-- Ensures bug is fixed and **doesn't come back**
-
-#### Simple Test Cases
-
-```python
-def test_bmi():
-    assert calculate_bmi(70, 1.75) > 0
-```
-
-#### Using pytest for Automated Testing
-
-[`pytest`](https://docs.pytest.org/) is a popular testing framework that makes it easy to write and run tests.
-
-1. **Installation**:
-
-    ```bash
-    pip install pytest
-    ```
-
-2. **Creating Test Files**:
-    - Name files with `test_` prefix (e.g., `test_bmi_calculator.py`)
-    - Write functions with `test_` prefix
-
-3. **Writing Tests**:
-
-    ```python
-    # test_bmi_calculator.py
-    def test_bmi_calculation():
-        from bmi_calculator import calculate_bmi
-        assert calculate_bmi(70, 1.75) == 22.86
-        
-    def test_bmi_categories():
-        from bmi_calculator import get_bmi_category
-        assert get_bmi_category(18.4) == "Underweight"
-        assert get_bmi_category(22.0) == "Normal weight"
-        assert get_bmi_category(27.5) == "Overweight"
-        assert get_bmi_category(31.0) == "Obese"
-    ```
-
-5. **Benefits for Debugging**:
-    - Verify fixes work correctly
-    - Prevent regression (bugs coming back)
-    - Document expected behavior
-    - Automate testing with GitHub Actions
-
-## 3. Working with Large Datasets 💾🏥
-
-![xkcd Data Trap](media/data_trap_2x.png)
-
-### 3.1 Why Traditional `pandas` Might Not Be Enough 🐼
-
-Health data science often involves **massive datasets** that won't fit in memory:
-
-📊 **Dataset Size Comparison**:
-
-| Data Type | Typical Size | Fits in Memory? |
-|:----------|:------------|:----------------|
-| **Electronic Health Records (EHRs)** | 10GB-1TB+ | ❌ Often too large |
-| **Medical Imaging** | 100MB-10GB per scan | ❌ Collections too large |
-| **Genomic Data** | 1TB+ per patient | ❌ Far too large |
-| **Claims Data** | 100GB+ | ❌ Too large |
-| **Longitudinal Studies** | Growing over time | ❌ Eventually too large |
-| **Small Research Dataset** | <1GB | ✅ Usually fits |
-
-⚠️ **Memory Warning Signs**:
-
-- Computer slows down dramatically
-- Applications crash unexpectedly
-- "MemoryError" in Python
-- System becomes unresponsive
-
-#### The `pandas` Memory Challenge
-
-```python
-# This approach works for small datasets but fails with large ones
-import pandas as pd
+PATH = Path("data/hospital_records_2020_2023.csv")
 
 try:
-    # 🚨 Will crash with large health datasets
-    patient_records = pd.read_csv("hospital_records_2020_2023.csv")
-    diabetes_patients = patient_records[patient_records["diagnosis"] == "diabetes"]
+    df = pd.read_csv(PATH)
 except MemoryError:
-    print("Dataset too large for memory!")
+    raise SystemExit(
+        "Dataset too large: consider chunked loading or Polars streaming"
+    )
 ```
 
-### 3.2 Introduction to polars for Efficient Data Processing ⚡
+This is the moment to stop fighting pandas and switch strategies (column pruning, chunked readers, or a Polars lazy pipeline) _before_ debugging phantom crashes.
 
-![Polars vs Pandas Performance](media/polars_vs_pandas.png)
+# Polars Essentials
 
-**polars** is a modern DataFrame library designed for speed and efficiency:
+## Columnar storage (row vs column)
 
-🚀 **Key Features**:
+Columnar formats keep same-typed values together, which makes scans faster and cheaper than row-wise text formats.
 
-| Feature | Description | Benefit |
-|:--------|:------------|:--------|
-| **Lazy Evaluation** | Plans operations before execution | Optimizes query plan |
-| **Streaming** | Processes data in chunks | Handles data larger than memory |
-| **Arrow Backend** | Efficient columnar memory layout | Faster data processing |
-| **Parallel Processing** | Uses all CPU cores | Better performance |
-| **Similar Syntax** | Familiar API for pandas users | Easy transition |
+![Row vs column layout](media/columnar.png)
 
-📈 **Performance Comparison**:
+Why this matters for Polars + Parquet:
 
-- **10-20x** faster than pandas for many operations
-- Uses **50-80%** less memory for the same datasets
-- Scales to datasets **100x larger** than pandas can handle
-- Written in Rust for high performance and memory safety
+- **Projection pushdown:** read only the columns you select.
+- **Predicate pushdown:** skip row groups whose stats fail the filter.
+- **Compression:** contiguous same-typed values compress more effectively.
+
+_Prompt:_ If you only need `patient_id` + `heart_rate`, what does a columnar engine read vs a CSV reader?
+
+![SIMD on columnar data](media/simd.png)
+
+SIMD works best when values are contiguous in memory, which columnar layouts enable.
+
+![Polars vs pandas runtime](media/polars_vs_pandas.png)
+
+_Example benchmark on a 12M-row vitals dataset on a single laptop; exact timings vary by hardware and data layout._
+
+pandas is ubiquitous and a great default; Polars is often adopted case-by-case when you hit real constraints (runtime, memory, I/O).
+
+Polars is pandas without the hidden index and with a Rust engine under the hood. Two mindshifts:
+
+- **Everything is explicit columns**—no surprise index alignment.
+- **Expressions replace per-row Python**—filters, casts, joins compile to vectorized Rust kernels.
+
+### Reference Card: pandas → Polars translation
+
+| To do this              | You know this in pandas         | Do this in Polars                                          |
+| ----------------------- | ------------------------------- | ---------------------------------------------------------- |
+| Load a CSV              | `pd.read_csv("file.csv")`       | `pl.read_csv("file.csv")` _(eager preview)_                |
+| Lazy scan (build plan)  | _(no equivalent)_               | `pl.scan_csv("file.csv")` _(build plan, nothing runs yet)_ |
+| Filter rows             | `df[df.age > 65]`               | `.filter(pl.col("age") > 65)`                              |
+| Add/transform columns   | `df.assign(bmi=...)`            | `.with_columns(pl.col("weight") / pl.col("height")**2)`    |
+| Aggregate by group      | `df.groupby("cohort").agg(...)` | `.group_by("cohort").agg([...])`                           |
+| Join tables             | `df.merge(dim, on="id")`        | `.join(dim, on="id")`                                      |
+| Stream-collect results  | _(n/a)_                         | `.collect(engine="streaming")`                             |
+
+## `scan_csv` and `scan_parquet`
+
+Lazy scans build a query plan without loading the full dataset. Use them for large files, globs, and any pipeline you want to keep in streaming mode.
+
+### Reference Card: `scan_csv` / `scan_parquet`
+
+- **Function:** `pl.scan_csv(...)`, `pl.scan_parquet(...)`
+- **Purpose:** Create a `LazyFrame` for pushdown + optimization
+- **Key Parameters:**
+  - `try_parse_dates` (CSV): parse date-like strings during scan
+  - `columns` (both): read only specific columns
+  - `dtypes` / `schema` (CSV): set column types and avoid inference
+- **Returns:** `LazyFrame`
+
+### Code Snippet: Lazy scan + schema preview
 
 ```python
 import polars as pl
 
-# Efficient processing of large health records
-diabetes_stats = (
-    pl.scan_csv("hospital_records_2020_2023.csv")  # Lazy loading
-    .filter(pl.col("diagnosis") == "diabetes")     # Filter first
-    .groupby(["age_group", "gender"])              # Group by demographics
-    .agg([
-        pl.count().alias("patient_count"),
-        pl.mean("hba1c").alias("avg_hba1c"),
-        pl.mean("bmi").alias("avg_bmi")
-    ])
-    .collect(streaming=True)  # Process in chunks
+sensor = pl.scan_parquet("data/sensor_hrv/*.parquet")
+vitals = pl.scan_csv("data/vitals/*.csv", try_parse_dates=True)
+
+print(sensor.collect_schema())
+print(vitals.collect_schema())
+```
+
+### Reference Card: `collect_schema()`
+
+- **Method:** `LazyFrame.collect_schema()`
+- **Purpose:** Retrieve column names and data types without executing the full query
+- **Returns:** `Schema` (dict-like mapping of column names → dtypes)
+- **Why use it:**
+    - Avoids the "resolving schema is expensive" warning you get from `.schema` on a `LazyFrame`
+    - Fast introspection—validates your pipeline before collecting
+    - Confirms dtypes after casts or transforms
+
+## `pl.DataFrame()`
+
+Use `pl.DataFrame()` to build small in-memory tables for benchmarks, checks, or plotting.
+
+### Reference Card: `pl.DataFrame`
+
+- **Function:** `pl.DataFrame(...)`
+- **Purpose:** Create a Polars `DataFrame` from Python data
+- **Key Parameters:**
+  - `data`: dict of columns or list of rows
+  - `schema`: optional column names/types
+- **Returns:** `DataFrame`
+
+### Code Snippet: Small benchmark table
+
+```python
+import polars as pl
+
+bench = pl.DataFrame(
+    {
+        "engine": ["polars (streaming)", "pandas (pyarrow + in-mem groupby)"],
+        "seconds": [19.7, 318.0],
+        "memory_mb": [0.82, 52051.3],
+    }
 )
 ```
 
-### 3.3 Parquet: An Efficient Data Storage Format for Out-of-Memory Scenarios 🗄️
+## `select()` and `filter()`
 
-![Parquet Format](media/parquet-logo.webp)
+`select()` chooses columns (or expressions); `filter()` keeps rows that match a boolean expression. Use both early for pushdown.
 
-**Parquet** is a columnar storage format that's essential for working with datasets larger than memory:
+### Reference Card: `select` / `filter`
 
-📁 **Storage Efficiency**:
+- **Select:** `.select([col1, col2, expr.alias("new")])`
+- **Filter:** `.filter(pl.col("...") >= 0)`
+- **Notes:** chained filters are fine; projections + filters often push down to the scan
 
-| Format | Size | Query Speed | Schema | Best For |
-|:-------|:-----|:------------|:-------|:---------|
-| **CSV** | 🔴 Large | 🔴 Slow | ❌ No | Simple data exchange |
-| **JSON** | 🔴 Very large | 🔴 Very slow | ✅ Yes | API responses |
-| **Parquet** | 🟢 Small (2-4x smaller) | 🟢 Fast | ✅ Yes | Analytics, big data |
-| **HDF5** | 🟢 Small | 🟢 Fast | ✅ Yes | Scientific computing |
-
-🔍 **Key Advantages**:
-
-- **Column-based**: Perfect for analytical queries on specific variables
-- **Compression**: 2-4x smaller than CSV files
-- **Schema Enforcement**: Ensures data consistency
-- **Predicate Pushdown**: Filter data before loading
-- **Partitioning**: Organize by year, facility, or department
-
-![Columnar vs Row Storage](media/columnar.png)
-
-#### Comparing `pandas` vs `polars` with `Parquet`
+### Code Snippet: Projection + predicate pushdown
 
 ```python
 import polars as pl
+
+vitals = (
+    pl.scan_parquet("data/vitals/*.parquet")
+    .filter(pl.col("facility").is_in(["UCSF", "ZSFG"]))
+    .filter(pl.col("timestamp") >= pl.datetime(2024, 1, 1))
+    .select([
+        "patient_id",
+        "timestamp",
+        "heart_rate",
+        pl.col("bmi").cast(pl.Float32).alias("bmi"),
+    ])
+)
+```
+
+## `with_columns()` and expression helpers
+
+Expressions let you define column logic once and push it down into the engine.
+
+### Reference Card: Expression toolbox
+
+- **Core:** `pl.col(...)`, `pl.lit(...)`, `.with_columns([...])`
+- **String + list:** `.str.split(...)`, `.list.get(...)`, `pl.concat_str([...])`
+- **Datetime:** `.str.strptime(...)`, `.dt.date()`, `.dt.hour()`, `.dt.year()`, `.dt.month()`
+- **Filtering:** `.is_in(...)`, `.is_between(...)`
+- **Types + bounds:** `.cast(...)`, `.clip(lower_bound=..., upper_bound=...)`
+
+### Code Snippet: Derive keys + time parts
+
+```python
+import polars as pl
+
+sensor = (
+    pl.scan_parquet("data/sensor_hrv/*.parquet")
+    .with_columns([
+        pl.concat_str([pl.lit("USER-"), pl.col("device_id").str.split("-").list.get(1)]).alias("user_id"),
+        pl.col("ts_start").dt.date().alias("date"),
+        pl.col("ts_start").dt.hour().alias("hour"),
+    ])
+    .filter(pl.col("hour").is_between(22, 23) | pl.col("hour").is_between(0, 6))
+)
+
+vitals = (
+    pl.scan_csv("data/vitals/*.csv", try_parse_dates=True)
+    .with_columns([
+        pl.col("timestamp").str.strptime(pl.Datetime, strict=False).alias("timestamp"),
+        pl.col("bmi").cast(pl.Float32).clip(lower_bound=12, upper_bound=70).alias("bmi"),
+    ])
+)
+```
+
+## Distinct counts and prefix filters
+
+When you summarize events by site, you often want distinct patients and a quick way to filter code prefixes. Polars gives you both with `unique()` and string expressions.
+
+| code  | starts_with("E11") |
+| ----- | ------------------- |
+| E11.9 | True                |
+| E11.65| True                |
+| I10   | False               |
+
+### Reference Card: Distinct + prefix helpers
+
+- **Distinct rows:** `.select([...]).unique()` (keeps one row per key combo)
+- **Distinct counts:** `.group_by("site_id").agg(pl.n_unique("patient_id"))`
+- **Prefix filter:** `pl.col("code").str.starts_with("E11")`
+- **Null fill:** `.with_columns(pl.col("diabetes_patients").fill_null(0))`
+- **Rounding:** `.with_columns(pl.col("diabetes_prevalence").round(3))`
+
+### Code Snippet: Distinct patients + prefix filter
+
+```python
+import polars as pl
+
+dx_diabetes = dx_events.filter(pl.col("code").str.starts_with(prefix))
+
+patients_by_site = (
+    events_filtered.select(["site_id", "patient_id"])
+    .unique()
+    .group_by("site_id")
+    .agg(pl.len().alias("patients_seen"))
+)
+```
+
+### Aside: Data model for health-data workflows
+
+Many health-data pipelines involve multiple sources, repeated measurements, and joins that can accidentally multiply rows. _Grain_ = the unit of observation in a table.
+
+| Table          | Grain                                 | Join key(s)                                                    | Typical use                     |
+| -------------- | ------------------------------------- | -------------------------------------------------------------- | ------------------------------- |
+| `user_profile` | 1 row per `user_id`                   | `user_id`                                                      | Demographics / grouping         |
+| `sleep_diary`  | 1 row per `user_id` per day           | `user_id`, `date`                                              | Nightly outcomes                |
+| `sensor_hrv`   | many rows per device in 5-min windows | derive `user_id` from `device_id`; also `date` from `ts_start` | High-volume physiology          |
+| `encounters`   | many rows per `patient_id`            | `patient_id`                                                   | Events/visits to count/stratify |
+| `vitals`       | many rows per `patient_id`            | `patient_id` (+ time filter)                                   | Measurements to summarize       |
+
+Two practical rules:
+
+- Know the _grain_ before you join (one-to-many joins are normal; many-to-many joins often explode row counts).
+- Decide early whether you want “per-patient”, “per-encounter”, or “per-month” outputs, and aggregate to that grain before expensive joins.
+
+## `group_by` + `agg` + `join`
+
+Aggregations and joins are the core of most tabular pipelines. Keep joins at the right grain, then summarize.
+
+### Reference Card: `group_by`, `agg`, `join`, `sort`
+
+- **Group + aggregate:** `.group_by([...]).agg([...])`
+- **Common aggregations:** `pl.len()`, `pl.mean(...)`, `pl.median(...)`, `pl.sum(...)`, `pl.corr(...)`
+- **Join:** `.join(other, on=..., how=...)` (know the join grain)
+- **Order:** `.sort([...])` (global sort can break streaming)
+
+### Code Snippet: Monthly facility summary
+
+```python
+encounters = pl.scan_csv("data/encounters/*.csv", try_parse_dates=True)
+vitals = pl.scan_csv("data/vitals/*.csv", try_parse_dates=True)
+
+summary = (
+    vitals.join(
+        encounters.filter(pl.col("facility").is_in(["UCSF", "ZSFG"])),
+        on="patient_id",
+        how="inner",
+    )
+    .group_by([
+        "facility",
+        pl.col("timestamp").dt.year().alias("year"),
+        pl.col("timestamp").dt.month().alias("month"),
+    ])
+    .agg([
+        pl.len().alias("num_vitals"),
+        pl.mean("heart_rate").alias("avg_hr"),
+        pl.mean("bmi").alias("avg_bmi"),
+    ])
+    .sort(["facility", "year", "month"])
+)
+```
+
+### Code Snippet: pandas vs Polars
+
+```python
 import pandas as pd
-import time
+import polars as pl
+
+# pandas: full load, then work
+pandas_result = (
+    pd.read_csv("data/vitals.csv")
+      .query("timestamp >= '2024-01-01'")
+      .groupby("patient_id")
+      .heart_rate.mean()
+)
+
+# polars: lazy scan, stream collect
+polars_result = (
+    pl.scan_csv("data/vitals.csv")
+      .filter(pl.col("timestamp") >= pl.datetime(2024, 1, 1))
+      .group_by("patient_id")
+      .agg(pl.mean("heart_rate").alias("avg_hr"))
+      .collect(engine="streaming")
+)
+```
+
+### Does pandas support larger-than-memory data now?
+
+Core pandas is still fundamentally in-memory for operations like groupby, joins, sorts, etc.
+
+- What has improved a lot is I/O and dtypes via `pyarrow` (projection/predicate pushdown at read time; Arrow-backed strings/types).
+- For larger-than-RAM pipelines, common tools include DuckDB, Polars, Dask/Modin, Vaex, or PyArrow dataset/compute (depending on the task).
+- pandas is catching up on Parquet I/O via `pyarrow` (projection/predicate pushdown), but most pandas transforms (groupby/join/sort) still run in-memory.
+
+### Columnar hand-off
+
+Convert each raw CSV to Parquet once, then keep everything columnar:
+
+```python
 import os
+import polars as pl
 
-# Convert CSV to Parquet for more efficient storage
-print("Converting CSV to Parquet...")
-pl.read_csv("patient_vitals.csv").write_parquet("patient_vitals.parquet")
+source = "data/patient_vitals.csv"
+pl.read_csv(source).write_parquet("data/patient_vitals.parquet", compression="zstd")
 
-# Compare file sizes
-csv_size = os.path.getsize("patient_vitals.csv") / (1024 * 1024)  # MB
-parquet_size = os.path.getsize("patient_vitals.parquet") / (1024 * 1024)  # MB
-print(f"CSV size: {csv_size:.2f} MB, Parquet size: {parquet_size:.2f} MB")
-print(f"Compression ratio: {csv_size/parquet_size:.2f}x")
-
-# Try with pandas - CSV (may fail with large files)
-print("\nTrying pandas with CSV...")
-try:
-    start = time.time()
-    df_pandas_csv = pd.read_csv("patient_vitals.csv")
-    df_pandas_csv = df_pandas_csv[df_pandas_csv["timestamp"] > "2023-01-01"]
-    print(f"Pandas CSV success: {len(df_pandas_csv)} rows in {time.time() - start:.2f}s")
-except Exception as e:
-    print(f"Pandas CSV failed: {str(e)}")
-
-# Try with pandas - Parquet (usually works better)
-print("\nTrying pandas with Parquet...")
-try:
-    start = time.time()
-    df_pandas_parquet = pd.read_parquet("patient_vitals.parquet")
-    df_pandas_parquet = df_pandas_parquet[df_pandas_parquet["timestamp"] > "2023-01-01"]
-    print(f"Pandas Parquet success: {len(df_pandas_parquet)} rows in {time.time() - start:.2f}s")
-except Exception as e:
-    print(f"Pandas Parquet failed: {str(e)}")
-
-# Try with polars - both work efficiently
-print("\nTrying polars with CSV and Parquet...")
-start = time.time()
-df_polars_csv = pl.scan_csv("patient_vitals.csv").filter(pl.col("timestamp") > "2023-01-01").collect()
-print(f"Polars CSV: {df_polars_csv.shape[0]} rows in {time.time() - start:.2f}s")
-
-start = time.time()
-df_polars_parquet = pl.scan_parquet("patient_vitals.parquet").filter(pl.col("timestamp") > "2023-01-01").collect()
-print(f"Polars Parquet: {df_polars_parquet.shape[0]} rows in {time.time() - start:.2f}s")
+csv_mb = os.path.getsize(source) / 1024**2
+parquet_mb = os.path.getsize("data/patient_vitals.parquet") / 1024**2
+print(f"{csv_mb:.1f} MB → {parquet_mb:.1f} MB ({csv_mb / parquet_mb:.2f}x smaller)")
 ```
 
-#### Example Output
+Use `LazyFrame.collect_schema()` (not `lazyframe.schema`) to confirm dtypes, and partition long histories by `year` or `facility` so streaming scans stay sub-gigabyte.
 
+### Advanced aside: Parquet layout (why it affects speed)
+
+- Parquet stores data in **row groups**; each row group contains per-column chunks plus min/max stats that enable predicate pushdown.
+- If you frequently filter on `facility` or `year`, consider **partitioning** your dataset by those columns (fewer bytes scanned).
+- Avoid thousands of tiny Parquet files (metadata overhead); prefer fewer, reasonably sized files with consistent schema.
+
+![Health data reality check](media/xkcd_health_data.png)
+
+# LIVE DEMO
+
+See [`demo/01a_streaming_filter.md`](./demo/01a_streaming_filter.md) for the Polars basics walkthrough.
+
+# Lazy Execution & Streaming Patterns
+
+## `LazyFrame` methods
+
+Most of this lecture uses a `LazyFrame` pipeline (`pl.scan_* → ... → collect/sink`). If you learn these methods, you can read almost every Polars example we write this quarter.
+
+| Goal                              | Method                          | Notes                                                                         |
+| --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------- |
+| Inspect columns + dtypes          | `.collect_schema()`             | Preferred for `LazyFrame`; avoids the "resolving schema is expensive" warning |
+| See the query plan                | `.explain()`                    | Helps you spot joins/sorts and confirm pushdown                               |
+| Keep only columns you need        | `.select([...])`                | Enables projection pushdown                                                   |
+| Filter rows early                 | `.filter(...)`                  | Enables predicate pushdown                                                    |
+| Create/transform columns          | `.with_columns(...)`            | Use expressions (`pl.col(...)`, `pl.when(...)`) instead of Python loops       |
+| Aggregate to a target grain       | `.group_by(...).agg([...])`     | Often do this _before_ joining large tables                                   |
+| Combine tables                    | `.join(other, on=..., how=...)` | Know the grain to avoid many-to-many explosions                               |
+| Collect results                   | `.collect(engine="streaming")`  | Streaming helps when the plan supports it                                     |
+| Write without loading into Python | `.sink_parquet("...")`          | Writes directly to disk from the lazy pipeline                                |
+
+![Lazy query plan sketch](media/lazy_plan.png)
+
+## `LazyFrame.explain()` and `.collect(engine="streaming")`
+
+`explain()` prints the optimized plan so you can spot scans, filters, joins, and aggregations.
+
+```text
+== Optimized Plan ==
+SCAN PARQUET [data/labs/*.parquet]
+  SELECTION: [(col("test_name") == "HbA1c")]
+  PROJECT: [patient_id, test_name, result_value]
+JOIN INNER [patient_id]
+  LEFT: SCAN PARQUET [data/patients/*.parquet]
+  RIGHT: (selection/project above)
+AGGREGATE [age_group, gender]
+  [mean(result_value)]
 ```
-Converting CSV to Parquet...
-CSV size: 1024.50 MB, Parquet size: 256.30 MB
-Compression ratio: 4.00x
 
-Trying pandas with CSV...
-Pandas CSV failed: MemoryError
+_Format varies by Polars version; look for scan -> filter -> join -> aggregate._
 
-Trying pandas with Parquet...
-Pandas Parquet success: 1250000 rows in 8.45s
+![Flawed data](media/flawed_data.png)
 
-Trying polars with CSV and Parquet...
-Polars CSV: 1250000 rows in 3.21s
-Polars Parquet: 1250000 rows in 0.87s
+Lazy plans shine once you chain multiple operations: the engine reorders filters, drops unused columns, and chooses whether to stream.
+
+### Diagnose and trust the plan
+
+- `query.explain()` outlines scan → filter → join → aggregate so you can spot expensive steps.
+- `query.collect(engine="streaming")` opts into streaming; Polars swaps to an in-memory engine only when necessary (e.g., global sorts).
+- `.sink_parquet("outputs/summary.parquet")` writes directly to disk without loading the DataFrame into Python.
+
+## `collect()` and `sink_parquet()`
+
+`collect()` loads a LazyFrame into a DataFrame in memory. `sink_parquet()` writes straight to disk without loading into Python.
+
+### Reference Card: Collecting and sinking
+
+- **`collect()`**: execute and return a DataFrame (in memory)
+- **`collect(engine="streaming")` / `collect(streaming=True)`**: stream when possible
+- **`sink_parquet(path)`**: write without loading into Python
+- **`pl.read_parquet(path)`**: eager read for spot checks
+- **`write_csv(path)`**: DataFrame -> CSV after collect
+
+### Code Snippet: Stream, then write
+
+```python
+result = query.collect(engine="streaming")
+result.write_parquet("outputs/summary.parquet")
+result.write_csv("outputs/summary.csv")
+
+query.sink_parquet("outputs/summary_sink.parquet")
+
+check = pl.read_parquet("outputs/summary.parquet")
+check.describe()
 ```
 
-### 3.4 Handling Datasets Larger Than Memory 📊
+## `to_pandas()`
 
-#### Common Challenges with Large Datasets
+Sometimes the fastest path to compatibility is converting to pandas for plotting or library support.
 
-1. **Memory Limitations**: Standard laptops have 8-16GB RAM
-2. **Processing Time**: Full dataset scans can take hours
-3. **Data Quality**: Missing values, inconsistent formats
-4. **Joining Tables**: Patient data spread across multiple files
-5. **Temporal Analysis**: Tracking changes over time
+> "~~AK-47~~ pandas. ~~The very best there is.~~ When you absolutely, positively got to ~~kill every motherfucker in the room~~ be compatible with everything, accept no substitutes." - _Jackie Brown_
 
-#### Strategies for Working with Large Data
+### Reference Card: `to_pandas`
 
-1. **Filter Early**: Apply filters before loading data
+- **Method:** `.to_pandas()`
+- **Purpose:** Convert a Polars `DataFrame` to pandas for compatibility
+- **Note:** Use after filtering/aggregating to keep the pandas DataFrame small
 
-    ```python
-    # Good: Filter during loading
-    patients = pl.scan_csv("patients.csv").filter(pl.col("age") > 65).collect()
-    
-    # Bad: Load everything then filter
-    patients = pl.read_csv("patients.csv")
-    elderly = patients.filter(pl.col("age") > 65)
-    ```
+### Code Snippet: Convert for plotting
 
-2. **Select Only Needed Columns**:
+```python
+import altair as alt
 
-    ```python
-    # Only load columns you need
-    vitals = pl.scan_csv("vitals.csv").select(["patient_id", "heart_rate", "blood_pressure"])
-    ```
+df = query.collect(engine="streaming")
+plot_df = df.to_pandas()
 
-3. **Use Lazy Evaluation**:
+alt.Chart(plot_df).mark_line().encode(
+    x="timestamp:T",
+    y="avg_hr:Q",
+).properties(width=600, height=250)
+```
 
-    ```python
-    # Build up operations without executing
-    query = (
-        pl.scan_csv("lab_results.csv")
-        .filter(pl.col("test_name") == "HbA1c")
-        .join(pl.scan_csv("patients.csv"), on="patient_id")
-        .group_by("age_group")
-        .agg(pl.mean("result_value"))
-    )
-    
-    # Execute only when needed with streaming engine
-    result = query.collect(engine='streaming')
-    ```
+## SQL with `SQLContext`
 
-### 3.5 Best Practices for Big Data
+Polars can run SQL over lazy frames. This is a thin layer over the same optimizer, so you still get pushdown and streaming when the plan supports it.
 
-1. **Document Your Data Pipeline**:
-    - Source of each dataset
-    - Preprocessing steps
-    - Filtering criteria
-    - Expected output
+**NOTE:** Polars SQL is not a full-featured SQL engine; it covers common patterns (SELECT, WHERE, GROUP BY, JOIN) but lacks advanced features (CTEs, window functions, etc.). We will cover SQL in more detail next week.
 
-2. **Validate Results on Subsets**:
-    - Test on small samples first
-    - Compare with known statistics
-    - Check for outliers and anomalies
+### Reference Card: `SQLContext`
 
-3. **Optimize Storage Format**:
-    - Convert CSV to Parquet
-    - Partition by logical divisions (year, facility)
-    - Use compression appropriate for your data
+- **Create:** `ctx = pl.SQLContext()`
+- **Register:** `ctx.register("table_name", lazy_frame)`
+- **Execute:** `query = ctx.execute("SELECT ...")` (returns a `LazyFrame`)
 
-4. **Monitor Resource Usage**:
-    - Track memory consumption
-    - Measure processing time
-    - Identify bottlenecks
-
-5. **Consider Privacy and Security**:
-    - De-identify data when possible
-    - Limit access to sensitive fields
-    - Document compliance with regulations (HIPAA, GDPR)
-
-### 3.6 Practical Applications
-
-These techniques can be used to analyze:
-
-- **Clinical Outcomes**: Mortality rates, readmissions, complications
-- **Population Health**: Disease prevalence, geographic patterns
-- **Healthcare Utilization**: ER visits, hospital stays, procedures
-- **Quality Metrics**: Care compliance, preventive screening rates
-- **Cost Analysis**: Resource utilization, intervention effectiveness
-
-#### Real-world Example: Analyzing Hospitalization Data
+### Code Snippet: SQL-style query, lazy execution
 
 ```python
 import polars as pl
 
-# Process nationwide COVID-19 hospitalization data (hypothetical)
-covid_stats = (
-    pl.scan_parquet("covid_hospitalizations/*.parquet")
-    .filter(
-        (pl.col("admission_date") >= "2020-03-01") &
-        (pl.col("admission_date") <= "2022-12-31")
-    )
-    .with_column(
-        pl.col("admission_date").dt.month().alias("month"),
-        pl.col("admission_date").dt.year().alias("year")
-    )
-    .groupby(["year", "month", "state", "age_group"])
-    .agg([
-        pl.count().alias("hospitalizations"),
-        pl.mean("length_of_stay").alias("avg_stay_days"),
-        pl.sum("icu_days").alias("total_icu_days"),
-        pl.mean("o2_saturation").alias("avg_o2")
-    ])
-    .sort(["year", "month", "state"])
-    .collect(streaming=True)
+ctx = pl.SQLContext()
+ctx.register("vitals", pl.scan_parquet("data/vitals/*.parquet"))
+
+query = ctx.execute(
+    \"\"\"
+    SELECT patient_id, AVG(heart_rate) AS avg_hr
+    FROM vitals
+    WHERE timestamp >= '2024-01-01'
+    GROUP BY patient_id
+    \"\"\"
 )
 
-# Save results to a much smaller analysis file
-covid_stats.write_parquet("covid_monthly_by_state_age.parquet")
+print(query.explain())
+result = query.collect(engine="streaming")
+result.describe()
 ```
 
-### DEMO BREAK: Analyzing a Large Patient Dataset
+## `sort()` and `sample()`
 
-See: [`demo4-bigdata.md`](./demo/demo4-bigdata.md)
+> [!warning]
+> Sorting can force a full in-memory load. Sampling is cheap after collection and helps with quick visuals.
+
+### Reference Card: Ordering + quick checks
+
+- **`sort([...])`**: global order, can break streaming
+- **`sample(n=..., shuffle=True)`**: take a subset after collect
+- **`estimated_size("mb")`**: quick size check on a DataFrame
+
+### Code Snippet: Small sanity sample
+
+```python
+df = query.collect(engine="streaming")
+sample = df.sample(n=2000, shuffle=True).sort("timestamp")
+print(sample.estimated_size("mb"))
+```
+
+## Streaming limits (when streaming won't help)
+
+Streaming is powerful, but not magic. Some operations force large shuffles or require global state.
+
+Common “streaming-hostile” patterns:
+
+- Global sorts and “top-k” style operations that need to see all rows.
+- Many-to-many joins (or joins after a key exploded) that produce huge intermediate tables.
+- Some window functions / rolling calculations that need overlapping history.
+- Wide reshapes like pivots that increase the number of columns dramatically.
+
+When this happens:
+
+- Reduce columns early (projection), filter early (predicate), and aggregate to the target grain before joins.
+- Write intermediate outputs (Parquet) at stable checkpoints so you don’t recompute expensive steps.
+
+### Reference Card: Lazy vs eager
+
+| Situation                             | Use eager when…            | Use lazy when…                         |
+| ------------------------------------- | -------------------------- | -------------------------------------- |
+| Notebook poke                         | You just need `.head()`    | You’re scripting a repeatable job      |
+| File size                             | File < 1 GB fits in RAM    | Files are globbed or already too large |
+| Complex UDF (Python per-row function) | Logic needs Python per row | You can rewrite as expressions         |
+| Joins/aggregations                    | Dimension table is tiny    | Fact table exceeds RAM                 |
+
+### Code Snippet: Multi-source lazy join
+
+```python
+import polars as pl
+
+patients = pl.scan_parquet("data/patients/*.parquet").select(
+    ["patient_id", "age_group", "gender"]
+)
+
+labs = pl.scan_parquet("data/labs/*.parquet").filter(
+    pl.col("test_name") == "HbA1c"
+)
+
+query = (
+    labs.join(patients, on="patient_id", how="inner")
+        .group_by(["age_group", "gender"])
+        .agg(pl.mean("result_value").alias("avg_hba1c"))
+)
+
+result = query.collect(engine="streaming")
+```
+
+# LIVE DEMO
+
+See [`demo/02a_lazy_join.md`](./demo/02a_lazy_join.md) for the lazy-plan deep dive.
+
+# Building a Polars Pipeline
+
+![Data pipeline](media/xkcd_data_pipeline.png)
+
+Good pipelines make the flow obvious: inputs -> transforms -> outputs. The visuals below map to that flow.
+
+## Pipeline anatomy: inputs -> transforms -> outputs
+
+```mermaid
+flowchart LR
+    subgraph inputs["Inputs"]
+        config["config.yaml<br/>paths, filters, params"]
+        sources["Raw Files<br/>CSV / Parquet / glob"]
+    end
+
+    subgraph transforms["Transforms (Lazy)"]
+        scan["scan_*()<br/>build LazyFrame"]
+        filter["filter()<br/>predicate pushdown"]
+        select["select()<br/>projection pushdown"]
+        join["join()<br/>combine tables"]
+        agg["group_by().agg()<br/>aggregate"]
+    end
+
+    subgraph outputs["Outputs"]
+        parquet["Parquet<br/>downstream pipelines"]
+        csv["CSV<br/>quick inspection"]
+        logs["Logs<br/>row counts, timing"]
+    end
+
+    config --> scan
+    sources --> scan
+    scan --> filter --> select --> join --> agg
+    agg --> parquet
+    agg --> csv
+    agg --> logs
+```
+
+- **Inputs + config**: define what to scan, which columns to keep, and filter criteria.
+- **Transforms**: lazy expressions that stay pushdown-friendly—nothing executes until collect.
+- **Outputs + logs**: always emit both Parquet (for downstream) and CSV (for quick checks), plus row counts and timing for reproducibility.
+
+## Memory profile: streaming vs eager
+
+![Streaming keeps memory bounded](media/memory_plateau.svg)
+
+_Streaming stays bounded; eager loads can spike past RAM._
+
+## Monitor early runs
+
+![Resource monitoring dashboard](media/resource_monitor.png)
+
+_Optional: a real monitor helps confirm the memory curve above and catch runaway steps._
+
+![Workflow empathy](media/xkcd_workflow.png)
+
+Pipelines are as much about reproducibility and debugging as raw speed.
+
+Put the pieces together: start lazy, keep everything parameterized, and stream the final collect.
+
+## Checklist: from pandas crash to Polars pipeline
+
+- [ ] **Define inputs & outputs** in a config (`config/pipeline.yaml`) instead of hardcoding paths.
+- [ ] **Scan sources lazily** (`pl.scan_parquet`) and push filters (`pl.col("timestamp") >= ...`).
+- [ ] **Join dimensions** only after pruning columns so keys stay small.
+- [ ] **Collect with streaming** or `.sink_parquet()` to avoid loading giant tables into memory.
+- [ ] **Emit artifacts + logs** (row counts, durations) for reproducibility.
+
+## Methodology: config-driven pipeline
+
+- **Config-driven**: all file globs, filters, and output paths live in YAML.
+- **Three phases**: load (scan + cast) → transform (joins + groupby) → write artifacts.
+- **Artifacts**: always write both Parquet (for downstream pipelines) and CSV (for quick inspection).
+- **Sanity checks**: row counts, schema, and "does the output look plausible?" before you ship results.
+
+### Code Snippet: yaml-driven pipeline
+
+```yaml
+# config/vitals_pipeline.yaml
+name: Vitals Summary Pipeline
+description: Aggregate patient vitals by facility and month
+
+inputs:
+  vitals:
+    path: "data/vitals/*.parquet"
+    columns: ["patient_id", "facility", "timestamp", "heart_rate", "bmi"]
+  encounters:
+    path: "data/encounters/*.parquet"
+    columns: ["patient_id", "facility", "encounter_date"]
+
+filters:
+  facilities: ["UCSF", "ZSFG"]
+  date_range:
+    start: "2024-01-01"
+    end: null  # no upper bound
+
+transforms:
+  - id: join_encounters
+    type: join
+    left: vitals
+    right: encounters
+    on: ["patient_id"]
+    how: inner
+  - id: aggregate
+    type: group_by
+    keys: ["facility", "year", "month"]
+    aggregations:
+      - column: heart_rate
+        function: mean
+        alias: avg_hr
+      - column: bmi
+        function: mean
+        alias: avg_bmi
+      - column: patient_id
+        function: count
+        alias: num_patients
+
+outputs:
+  parquet: "outputs/vitals_summary.parquet"
+  csv: "outputs/vitals_summary.csv"
+  log: "outputs/vitals_summary.log"
+
+settings:
+  engine: streaming
+  compression: zstd
+```
+
+```python
+# pipeline.py - loads config and executes
+import yaml
+import polars as pl
+from pathlib import Path
+
+def run_pipeline(config_path: str):
+    config = yaml.safe_load(Path(config_path).read_text())
+
+    # Load inputs as lazy frames
+    vitals = pl.scan_parquet(config["inputs"]["vitals"]["path"])
+    encounters = pl.scan_parquet(config["inputs"]["encounters"]["path"])
+
+    # Apply filters from config
+    facilities = config["filters"]["facilities"]
+    start_date = config["filters"]["date_range"]["start"]
+
+    query = (
+        vitals
+        .filter(pl.col("facility").is_in(facilities))
+        .filter(pl.col("timestamp") >= pl.datetime.fromisoformat(start_date))
+        .join(encounters, on="patient_id", how="inner")
+        .group_by(["facility", pl.col("timestamp").dt.year().alias("year"),
+                   pl.col("timestamp").dt.month().alias("month")])
+        .agg([
+            pl.mean("heart_rate").alias("avg_hr"),
+            pl.mean("bmi").alias("avg_bmi"),
+            pl.len().alias("num_patients"),
+        ])
+    )
+
+    result = query.collect(engine=config["settings"]["engine"])
+    result.write_parquet(config["outputs"]["parquet"])
+    result.write_csv(config["outputs"]["csv"])
+    return result
+```
+
+![Datacenter scale](media/xkcd_datacenter.png)
+
+The same flow scales up; the orchestration just gets bigger.
+
+### Reference Card: Pipeline ergonomics
+
+| Task                   | Command                                                   | Why                         |
+| ---------------------- | --------------------------------------------------------- | --------------------------- |
+| Run script with config | `uv run python pipeline.py --config config/pipeline.yaml` | Keeps datasets swappable    |
+| Monitor usage          | `htop`, `psrecord pipeline.py`                            | Catch runaway memory early  |
+| Benchmark modes        | `hyperfine 'uv run pipeline.py --engine streaming' ...`   | Compare eager vs streaming  |
+| Validate outputs       | `pl.read_parquet(...).describe()`                         | Confirm schema + row counts |
+| Archive artifacts      | `checksums.txt`, `manifest.json`                          | Detect drift later          |
+
+### Code Snippet: CLI batch skeleton
+
+```python
+import argparse
+import logging
+import polars as pl
+from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+
+parser = argparse.ArgumentParser(description="Generate vitals summary")
+parser.add_argument("--input", default="data/vitals_*.parquet")
+parser.add_argument("--output", default="outputs/vitals_summary.parquet")
+parser.add_argument("--engine", choices=["streaming", "auto"], default="streaming")
+args = parser.parse_args()
+
+query = (
+    pl.scan_parquet(args.input)
+    .filter(pl.col("timestamp") >= pl.datetime(2023, 1, 1))
+    .group_by("patient_id")
+    .agg([
+        pl.len().alias("num_measurements"),
+        pl.median("heart_rate").alias("median_hr"),
+    ])
+)
+
+result = query.collect(engine=args.engine)
+Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+result.write_parquet(args.output)
+logging.info("Wrote %s rows to %s", result.height, args.output)
+```
+
+# LIVE DEMO
+
+See [`demo/03a_batch_report.md`](./demo/03a_batch_report.md) for a config-driven batch run with validation checkpoints.

@@ -1,0 +1,14 @@
+# Assignment 03 Dependencies
+
+# SQL and database
+jupysql>=0.11.0
+sqlalchemy>=2.0.0
+
+# Testing
+pytest>=7.4.0
+
+# Notebook support
+jupyter>=1.0.0
+papermill>=2.5.0
+ipykernel>=6.25.0
+nbconvert>=7.0.0

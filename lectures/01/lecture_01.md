@@ -3,389 +3,838 @@ lecture_number: 01
 pdf: true
 ---
 
-# Lecture 1: `git init` - Getting Started with Git, Python, and Markdown
+01: Defensive Programming and Debugging 🐛
 
-Welcome to the first lecture of Applied Data Science with Python! Today we'll be covering the essential tools and concepts that will form the foundation of your data science journey.
+- hw01 - <https://classroom.github.com/a/UIovekSt>
 
-## Table of Contents
+# Links & Self-Guided Review
 
-- Tools: `python` and `git`
-    - Getting set up locally
-    - Cloud options (GitHub Codespaces, Colab, Binder, Paperspace)
-- Command Line Basics
-    - Terminal access on different platforms
-    - Basic navigation and file operations
-    - Chaining commands with pipes and redirection
-- Markdown
-    - Syntax summaries
-    - Readme.md - make one for every repo
-- git and GitHub
-    - Starting or cloning a repository
-    - Git push/pull/sync
-    - Branches & Conflicts
-- Python
-    - Syntax basics
-    - Running python and jupyter
-    - Variables and control flow
-- Runtime Environments
-    - Virtual environments
-    - Jupyter Notebooks
-    - Cloud options: Google Colab & GitHub Codespaces (no PHI in this course)
-- Data Security and Ethics
-    - Working securely with health data
-    - When NOT to use cloud tools
+- [GitHub Education](https://education.github.com/pack)
+- [DS-217 Lecture 01](https://www.notion.so/01-Python-the-Command-Line-and-VS-Code-271d9fdd1a1a805784e1fe68dc985696?pvs=21)
+- [Markdown Tutorial](https://www.markdownguide.org/basic-syntax/)
+- [Shell Basics](https://swcarpentry.github.io/shell-novice/)
+- [Exercism Python Basics](https://exercism.org/tracks/python)
+- [GitHub Hello World](https://docs.github.com/en/get-started/start-your-journey/hello-world)
 
-## Why Python?
+# But First, A Blast from the Past
 
-> **Check**: What tools have you used before? What would you like to cover in this course?
+## Carryovers from DataSci-217
 
-![](python_import.webp)
+![XKCD: Git](media/xkcd_git.png)
 
-## Installing tools
+- You already know Python, git/Markdown, and VS Code basics—this lecture focuses on reliability and debugging.
+- Pick a workflow (local venv or Codespaces) and stick with it to reduce surprises.
 
-For most roles data science happens in `python` and `R`, in this course we will be talking about `python`.
+### Reference: DS-217 carryovers
 
-It doesn't matter which tools you use; python and R (and other specialized tools) are quite capable. Since python and R are the most commonly used tools, knowing one or both of them will make it easier to play well with others. Don't try to be an expert in everything! Figure out which you prefer and learn to be "fluent" (able to code a solution from start to finish) in one, then you can get by being "conversational" (able to read and edit others' code) in the other. 
+| Topic         | What to reuse                       |
+| ------------- | ----------------------------------- |
+| Python basics | Functions, imports, venv activation |
+| Git hygiene   | Small commits, meaningful messages  |
+| Markdown      | Headings, fenced code blocks, links |
 
-Additionally, collaboration usually happens in git and documentation will use markdown. Luckily, those are "easy" to pick up.
+### Code Snippet: Warmup commands
 
-### Quickstart
-
-_Note: this is also included in the week's assignment_
-
-These are the standard options that I'll be using to demonstrate going forward. They will also give us a common base to work from, so we can focus on the work rather than tweaking/fixing our development environment.
-
-- Sign up for an account on [GitHub](https://github.com)
-  - Apply for [GitHub Education](https://education.github.com/pack) to get extra free hours on Codespaces and other benefits
-- Install Python 3 ([instructions](https://docs.python-guide.org))
-- Get [VisualStudio Code](https://code.visualstudio.com)
-    
-    - Most commands are accessed using the "Command Palette"
-        - **Shift + Command + P** (Mac)
-        - **Ctrl + Shift + P** (Windows/Linux)
-        - **F1** (All)
-    
-    - Extensions
-        - Python + Jupyter (use notebooks within VS Code)
-        - GitHub Repositories + Remote Repositories (manage git in VS Code instead of the terminal)
-
-**Note:** If you don't want to install software locally, you can use GitHub Codespaces (recommended) or [Google Colab](https://colab.research.google.com) but _never_ use PHI data with public-facing tools.
-
-### GitHub Codespaces
-
-Cloud-based development environment with VS Code in your browser:
-
-- **Benefits**: No setup, consistent environment, works on any device
-- **Student perks**: Extra free hours with GitHub Education
-- **Getting started**: Repository → Code button → Codespaces tab → Create
-- **Persistence**: Codespaces last weeks but not forever; commit/push often
-- **Fun fact**: I write these lectures on my iPad using Codespaces and VS Code tunnels
-
-### GitHub Classroom
-
-How we'll manage assignments in this course:
-
-- **Benefits**: Automated distribution, testing, and grading; private repos
-- **Process**: Get link → Accept assignment → Clone repo → Make changes → Push to submit
-- **Grading**: Automated tests run on submission; feedback via issues/comments
-
-## Command Line Basics
-
-### Recommended Resources:
-
-- [LinuxCommand.org](https://linuxcommand.org/lc3_learning_the_shell.php) - Learning the shell
-- [The Missing Semester](https://missing.csail.mit.edu/) - MIT course on developer tools
-- [regex101.com](https://regex101.com/) - Regular expression testing tool
-
-### Essential commands for navigating and working with files:
-
-- **Navigation**: `pwd` (where am I?), `ls` (what's here?), `cd` (change directory)
-- **Special directories**: `~` (home), `.` (current), `..` (parent)
-- **File operations**: `mkdir`, `touch`, `cp`, `mv`, `rm` (careful - no undo!)
-- **Viewing content**: `cat`, `head`, `tail`
-- **Text tools**: `grep` (search), `nano` (edit)
-- **Chaining**: `|` (pipe output), `>` (redirect to file), `>>` (append to file)
-
-Access via Terminal (Mac), WSL (Windows, recommended), or Terminal (Linux)
-
-### Health Data Science Applications
-
-- Organizing patient data files: `mkdir patient_cohorts/{control,treatment}`
-- Searching clinical notes: `grep "diabetes" patient_notes.txt`
-- Extracting first 10 rows of data: `head -n 10 lab_results.csv`
-- Counting records by type: `grep "diagnosis" records.csv | wc -l`
-- Combining data processing steps: `cat vitals.csv | grep "elevated" | sort > high_risk_patients.csv`
-
-## LIVE DEMO!
-
-## Windows Subsystem for Linux (WSL)
-
-For Windows users, WSL provides a Linux environment directly in Windows:
-
-- **Why use it**: Consistent Unix environment, better compatibility with data science tools
-- **Quick install**: In PowerShell (as Admin): `wsl --install`, then restart
-- **VS Code integration**: Install the WSL extension in VS Code to work from Unix
-- **File access**: Windows files at `/mnt/c/...`, WSL files at `\\wsl$\Ubuntu\...`
-- **Best terminal**: Windows Terminal or VS Code's integrated terminal
-
-## Local setup
-
-MacOS:
-
-- [Meet HomeBrew (brew.sh)](https://brew.sh)
-- [Data Science Setup on MacOS](https://engineeringfordatascience.com/posts/setting_up_a_macbook_for_data_science/)\
-
-Windows:
-
-- [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install)
-- [A usable and good-looking automation environment on Windows](https://www.trueneutral.eu/2021/win-proper-env.html)
-
-iOS:
-
-_if you're a weirdo and want to turn your iPad into a fully-fledged development environment_
-
-- git: [Working Copy](https://workingcopyapp.com)
-- Terminal: [blink.sh](https://blink.sh)
-- VS Code: [vscode.dev](https://vscode.dev)
-- Jupyter: [Juno](https://juno.sh) (and Juno Connect to use cloud processing and GPUs)
-
-### Tools you'll need:
-
-- git
-    - `brew install git`
-    - WSL has git installed by default
-    - [GitHub Desktop](https://desktop.github.com) has a GUI (excellent for beginners, but plenty of devs use it, too!)
-    - VS Code 👇 can also manage git repositories!
-- Python 3 - [Data Science with Python Tutorial](https://www.geeksforgeeks.org/data-science-tutorial/)
-    - We'll install and explore throughout the course 👇
-
-### Cloud options
-
-You can run Python in lots of places, many for free:
-
-- GitHub Codespaces (free extra hours for students with GitHub Education, can work with private repos)
-- Google Colab (free for public notebooks, paid for private or higher-powered machines)
-- Paperspace (free for public notebooks, paid for private or higher-powered machines)
-- Binder (free, always public)
-
-## Markdown
-
-Lightweight markup language for documentation, used in GitHub, Notion, and more:
-
-**Recommended Resources:**
-- [Markdown Guide](https://www.markdownguide.org/basic-syntax/) - Comprehensive reference
-- [Interactive Tutorial](https://www.markdowntutorial.com) - Hands-on learning
-- [CommonMark tutorial](https://commonmark.org/help/tutorial) - Standard Markdown tutorial
-
-> **Markdown Tip**: In Markdown, only use one H1 (`#`) heading per document. This helps maintain a clear document structure and improves readability. The first H1 heading typically serves as the document's title or main heading.
-
-### Key Syntax
-
-- **Paragraphs**: Separate with blank lines
-- **Headers**: `# H1`, `## H2`, `### H3`
-- **Formatting**: `**bold**`, `_italic_`, `` `code` ``
-- **Lists**: 
-  - Unordered: `* item` or `- item`
-  - Ordered: `1. item` (numbers don't matter)
-  - Checklists: `- [ ]` and `- [x]`
-- **Code blocks**: Triple backticks ` ``` `
-- **Links**: `[text](url)`
-- **Blockquotes**: `> quoted text`
-
-Every repo should have a README.md to explain what it is and how to use it.
-
-## `git` and GitHub
-
-Version control system for tracking changes and collaborating on code:
-
-![](xkcd_git.png)
-
-**Recommended Resources:**
-- [GitHub Foundations](https://learn.microsoft.com/en-us/training/paths/github-foundations/) - THE tutorial for GitHub
-- [Atlassian Git Tutorial](https://www.atlassian.com/git/tutorials/what-is-version-control) (focus on _Getting Started_ and _Collaborating_)
-- [Markdown Guide](https://www.markdownguide.org/basic-syntax/) - Markdown syntax reference
-
-### Essential Git Commands
-
-- **Setup**: `git config --global user.name "Your Name"` and `git config --global user.email "email@example.com"`
-- **Starting**: `git init` (new repo) or `git clone URL` (copy existing repo)
-- **Basic workflow**:
-  1. `git status` (check what's changed)
-  2. `git add filename` (stage changes)
-  3. `git commit -m "Message"` (save snapshot)
-  4. `git push` (upload to remote) / `git pull` (download from remote)
-
-### `git config --global user.email "NOT YOUR ACTUAL EMAIL"`
-
-GitHub (thankfully) will do its best to keep you from posting your email on the internet. They provide an anonymous remailing service with an email alias. Add that to your `git config`
-
-![](github_email.png)
-
-### Collaboration Features
-
-- **Branches**: Create separate workspaces with `git branch` and `git checkout`
-- **Pull Requests**: Request code review before merging changes
-- **Forks**: Make your own copy of someone else's repository
-
-### Important Notes
-
-- **Never commit sensitive info**: No passwords, PHI, or PII
-- **Handling conflicts**: Use `git restore`, `git rebase`, or `git stash` when things get messy
-- **GitHub alternatives**: GitLab, Bitbucket, or UCSF's internal GitHub (for PHI)
-
-![](git_branches.png)
-
-## LIVE DEMO!
-
-## Python
-
-The most popular language for data science and machine learning:
-
-**Recommended Resources:**
-- [A Whirlwind Tour of Python](https://jakevdp.github.io/WhirlwindTourOfPython/) (free online)
-- [Think Python](https://greenteapress.com/wp/think-python/) - Free book by Allen Downey
-- [Python for Data Analysis](https://wesmckinney.com/book/) - For data science applications
-- [Python Data Science Handbook](https://jakevdp.github.io/PythonDataScienceHandbook/) - Comprehensive guide
-
-### Quick Setup
-
-- **Mac**: `brew install python`
-- **Windows**: In WSL: `sudo apt install python3 python3-pip python3-venv`
-
-### Key Packages
-
-- **Data analysis**: Pandas, NumPy
-- **Visualization**: Matplotlib, Seaborn
-- **Machine learning**: scikit-learn, PyTorch, TensorFlow/Keras
-- **Health-specific**: BioPython, Nilearn, MedPy, PyDicom
-
-### Python in Health Data Science
-
-```python
-# Example: Working with patient data
-patient_name = "Jane Doe"  # String (text) - always anonymized for teaching
-patient_age = 65           # Integer (whole number)
-blood_glucose = 140.5      # Float (decimal number)
-has_diabetes = True        # Boolean (True/False)
-
-# Simple analysis
-if blood_glucose > 126.0:
-    print(f"Patient {patient_name} has elevated blood glucose")
-    
-# List of blood pressure readings
-bp_readings = [120, 122, 118, 125]
-average_bp = sum(bp_readings) / len(bp_readings)
-print(f"Average systolic BP: {average_bp}")
+```bash
+python -m venv .venv && source .venv/bin/activate
+git status && git commit -am "chore: warm up"
 ```
 
-### Virtual Environments
+## Command line quick hits
 
-**Recommended Resources:**
-- [Python Virtual Environments Primer](https://realpython.com/python-virtual-environments-a-primer/) - Detailed guide
-- [Python venv documentation](https://docs.python.org/3/library/venv.html) - Official documentation
+- Same commands everywhere: use the CLI for speed and reproducibility.
+- Shell in Jupyter works too (`!ls`, `!pwd`), but keep paths relative.
 
-Isolated Python environments for different projects:
+### Reference: Workflow commands
 
-- **Why**: Avoid dependency conflicts between projects, essential for reproducible health research
-- **How**:
-  1. Create: `python3 -m venv env_folder`
-  2. Activate: `source env_folder/bin/activate` (Mac/Linux) or `env_folder\Scripts\activate` (Windows)
-  3. Install: `pip install -r requirements.txt`
-  4. Deactivate: `deactivate`
+| Command          | Purpose                   |
+| ---------------- | ------------------------- |
+| `pwd`            | Show current directory    |
+| `ls -la`         | List files (long, hidden) |
+| `cd <path>`      | Change directory          |
+| `cp <src> <dst>` | Copy files                |
+| `mv <src> <dst>` | Move/rename               |
+| `rm <file>`      | Remove file (careful)     |
 
-### Jupyter Notebooks
+### Code Snippet: Shell basics
 
-Interactive Python environment combining code, output, and documentation:
+```bash
+pwd
+ls -la
+cd lectures/01
+```
 
-- **Best practice**: Clear outputs before committing to git
-- **Why**: Prevents large file sizes and merge conflicts
-- **Health applications**: Ideal for exploratory analysis of health data, creating shareable research, and documenting clinical data pipelines
+## Workflow: local venv or Codespaces
 
-![Jupyter clearing dialog](jupyter_clear.png)
+![Python import tips](media/python_import.webp)
 
-## LIVE DEMO!
+- Try the different ways of doing things and pick one workflow (local venv or Codespaces) and stick to it for fewer surprises.
+- Local venv for performance/PHI; Codespaces for consistency and easy onboarding.
+- Windows: WSL2 + `.venv/Scripts/activate` mirrors Linux/Codespaces.
+- VS Code: Python + Jupyter extensions, format-on-save, debugger panel.
 
-## Data Security and Ethics in Health Data Science
+> [!WARNING]
+> Beware of Symantec Firewall and WSL, they do **NOT** like each other.
 
-**Recommended Resources:**
-- [UCSF Information Commons Tools](https://informationcommons.ucsf.edu/tools) - For working with EHR data
+### Reference: Workflow setup
 
-### Key Principles
+| Command                           | Purpose                     |
+| --------------------------------- | --------------------------- |
+| `python -m venv .venv`            | Create isolated environment |
+| `source .venv/bin/activate`       | Activate venv (Linux/macOS) |
+| `.venv\\Scripts\\activate`        | Activate venv (Windows)     |
+| `pip install -r requirements.txt` | Install course dependencies |
 
-- **PHI (Protected Health Information)**: Any identifiable health information
-- **De-identification**: Removing identifiers from health data
-- **HIPAA compliance**: Legal requirements for handling health data
-- **Informed consent**: Ensuring proper permissions for data use
+### Code Snippet: venv + install
 
-### Tool Considerations
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+pip install -r requirements.txt
+```
 
-- **Local vs. Cloud**: When to keep data on local, secured systems
-- **Public tools**: Never use Google Colab, GitHub, etc. with PHI
-- **Secure alternatives**: UCSF's secure computing environments, private instances
-- **Data minimization**: Only use the data you need for your specific purpose
+## Notebook hygiene and reproducibility
 
-### Best Practices
+![](media/clinically_tested.png)
 
-- Always encrypt sensitive data and minimize "data surface"
-- Use secure authentication (MFA where possible)
-- Document your data handling procedures
-- Consult with privacy experts when in doubt
-- Consider ethical implications beyond legal requirements
+- Run-all ready, deterministic, and no stray outputs or secrets.
+- Clear outputs before commits unless the output is the point.
+- Keep configs/paths in YAML or `.env`
 
-## Assignment
+### Reference: Notebook hygiene
 
-### GitHub Classroom Overview
+| Practice             | Why it matters                    |
+| -------------------- | --------------------------------- |
+| Clear outputs        | Prevent stale screenshots/results |
+| Defined requirements | Reproducible environments         |
+| Relative paths       | Portability across machines       |
 
-- **What**: Platform for distributing, submitting, and grading assignments
-- **How**: Accept assignment link → Get private repo → Make changes → Push to submit
-- **Benefits**: Automated testing, private repos, direct feedback
+### Code Snippet: Clear outputs
 
-### Assignment Tasks
+```bash
+jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace lecture.ipynb
+```
 
-1. **Create README.md** with:
-   - Brief introduction (first name only)
-   - What you hope to get from the course
-   - Music recommendation with link
+![Notebook cleared outputs](media/jupyter_clear.png)
 
-2. **Write Python script** that:
-   - Takes email address as command line argument
-   - Hashes it using specified algorithm
-   - Outputs to 'hash.email' file
+## YAML essentials for config files 🧾
 
-3. **Submit** via git push (auto-graded)
+- YAML = “Yet Another Markup Language,” but think “plain-English JSON” with indentation-based structure.
+- Use **spaces, not tabs**, and keep indentation consistent (two spaces is plenty).
+- Strings don’t need quotes unless they contain special characters; `#` starts a comment.
+- Great for centralizing run-time knobs like file paths, thresholds, or feature flags.
 
-> **Check**: How's my driving? What's still confusing?
+### Reference Card: YAML building blocks
 
-## It came from the Internet
+| Concept          | YAML syntax example                      | Tip for beginners                        |
+| ---------------- | ---------------------------------------- | ---------------------------------------- |
+| Key/value        | `project: intake_audit`                  | Keys end with `:` followed by a value    |
+| Nested structure | `data:\n  input_file: data/patients.csv` | Indentation defines hierarchy            |
+| Lists            | `emails:\n  - alice@example.com`         | Dashes introduce list items              |
+| Inline objects   | `height_cm: { min: 120, max: 230 }`      | Use cautiously; easier to read multiline |
 
-Thanks this week to [Data Science Weekly Newsletter](https://datascienceweekly.substack.com/?utm_source=subsoft&utm_medium=email)
+### Code Snippet: Sample `config.yaml`
 
-### Data teams
+```yaml
+data:
+    input_file: "data/patient_intake.csv"
 
-> [!info] Should You Measure the Value of a Data Team?  
-> Data teams are sometimes asked to prove their ROI to senior leadership to justify a budget for new hires, tools, projects, or process changes.  
-> [https://medium.com/the-prefect-blog/should-you-measure-the-value-of-a-data-team-95c447f28d4a](https://medium.com/the-prefect-blog/should-you-measure-the-value-of-a-data-team-95c447f28d4a)  
+bounds:
+    weight_kg:
+        min: 30
+        max: 250
+    height_cm:
+        min: 120
+        max: 230
 
-> [!info] Data scientists work alone and that's bad | Ethan Rosenthal  
-> In Need of a Good Editor Growing up, I had always considered myself a decent writer based on my decent grades in English class.  
-> [https://www.ethanrosenthal.com/2023/01/10/data-scientists-alone/](https://www.ethanrosenthal.com/2023/01/10/data-scientists-alone/)  
+bmi_thresholds:
+    underweight: 18.5
+    normal: 25
+    overweight: 30 # obese is anything above this
+```
 
-### Tooling updates
+### Code Snippet: Load YAML safely
 
-> [!info] Beyond Pandas - working with big(ger) data more efficiently using Polars and Parquet  
-> As data scientists/engineers, we often deal with large datasets that can be challenging to work with.  
-> [https://medium.com/data-analytics-at-nesta/beyond-pandas-working-with-big-ger-data-more-efficiently-using-polars-and-parquet-fd980353cc2](https://medium.com/data-analytics-at-nesta/beyond-pandas-working-with-big-ger-data-more-efficiently-using-polars-and-parquet-fd980353cc2)  
+```python
+from pathlib import Path
+import yaml
 
-> [!info] SQL should be your default choice for data engineering pipelines  
-> Originally posted: 2023-01-30.  
-> [https://www.robinlinacre.com/recommend_sql/](https://www.robinlinacre.com/recommend_sql/)  
+CONFIG_PATH = Path("config.yaml")
 
-### Data science in practice
+with CONFIG_PATH.open() as f:
+    config = yaml.safe_load(f)  # safe_load avoids executing arbitrary code
 
-> [!info] I Used Computer Vision To Destroy My Childhood High Score in a DS Game  
-> I train an object detection model to control my computer to play a minigame running in a DS emulator endlessly.  
-> [https://betterprogramming.pub/using-computer-vision-to-destroy-my-childhood-high-score-in-a-ds-game-38ebd53a1d64](https://betterprogramming.pub/using-computer-vision-to-destroy-my-childhood-high-score-in-a-ds-game-38ebd53a1d64)  
+print("BMI thresholds:", config["bmi_thresholds"])
+```
 
-> [!info] Data Cleaning Plan  #FIXME:MOVE TO NEXT WEEK
-> Data cleaning or data wrangling is the process of organizing and transforming raw data into a dataset that can be easily accessed and analyzed.  
-> [https://cghlewis.github.io/mpsi-data-training/training_4.html](https://cghlewis.github.io/mpsi-data-training/training_4.html)
+## Config Alternative: `.env`
+
+`dot-env` is a simple way to manage environment variables in Python. It allows you to store sensitive information like API keys and database credentials in a `.env` file, which is not committed to version control.
+
+### Reference: `.env`
+
+- [Python-dotenv](https://github.com/theskumar/python-dotenv)
+- [os](https://docs.python.org/3/library/os.html)
+
+### Code Snippet: `.env`
+
+```bash
+# This would be the .env file
+API_KEY=your_api_key_here
+DB_PASSWORD=your_db_password_here
+```
+
+```python
+import os
+import dotenv
+
+# Load environment variables from .env file
+dotenv.load_dotenv()
+dotenv.load_dotenv("filename.env") # Can also specify a different filename
+
+API_KEY = os.getenv("API_KEY")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+```
+
+## Jupyter magics & shell in notebooks
+
+- Magics speed up debugging and profiling; shell commands help inspect files without leaving the notebook.
+
+### Reference: Jupyter magics
+
+| Magic            | Purpose                     |
+| ---------------- | --------------------------- |
+| `%pwd`, `%ls`    | Where am I / list files     |
+| `%run script.py` | Run another script/notebook |
+| `%timeit expr`   | Quick timing                |
+| `%%bash`         | Run a bash cell             |
+| `!ls data`       | Shell command from a cell   |
+
+### Code Snippet: Magics
+
+```python
+%pwd
+%timeit [x**2 for x in range(1000)]
+!ls data
+```
+
+## Git/GitHub/Markdown in 5 minutes
+
+![Git branches at a glance](media/git_branches.png)
+
+- Minimal loop: status → add → commit → push.
+- Markdown: one `# Title`, structured headings, fenced code blocks.
+- GUI (VS Code Source Control) is fine if it keeps you moving.
+
+### Reference: Git/Markdown cheatsheet
+
+| Command                         | Purpose                     |
+| ------------------------------- | --------------------------- |
+| `git status`                    | See staged/unstaged changes |
+| `git add <path>`                | Stage files                 |
+| `git commit -m "feat: message"` | Save a snapshot             |
+| `git push`                      | Sync to GitHub              |
+| `git config user.email`         | Set author email            |
+
+| Markdown      | Purpose                   |
+| ------------- | ------------------------- |
+| `# Heading`   | Section titles            |
+| `- bullet`    | Lists                     |
+| ` ` `lang`    | Code fences with language |
+| `[text](url)` | Links                     |
+| `![alt](path)` | Images                    |
+| `**bold**`   | Bold text                 |
+| `_italic_` | Italic text               |
+| `> quote`     | Blockquotes               |
+
+### Code Snippet: Git loop
+
+```bash
+git status
+git add README.md
+git commit -m "chore: refresh setup notes"
+git push
+```
+
+![](media/read-the-docs.jpeg)
+
+# LIVE DEMO
+
+# Defensive programming for data science
+
+## Common failure modes in data projects
+
+![XKCD: Error Types](media/xkcd_error_types.png)
+
+- Missing columns, unexpected units, unseeded randomness.
+- Environment drift: different Python versions or stale venvs.
+- PHI leaks via logs or screenshots.
+
+### Reference: Failure modes
+
+| Risk            | Quick defense                         |
+| --------------- | ------------------------------------- |
+| Missing columns | Assert expected columns               |
+| Unit drift      | Normalize units + validate ranges     |
+| Stale env       | Recreate venv from `requirements.txt` |
+
+### Code Snippet: Assert schema
+
+```python
+def assert_expected_columns(df, expected):
+    missing = [c for c in expected if c not in df]
+    if missing:
+        raise ValueError(f"Missing columns: {missing}")
+```
+
+## DRY + KISS (and pure functions)
+
+These are important principles in software development, but they are not hard rules. They are guidelines that help you write better code. They are often stored together in a shared `lib/` library directory.
+
+- DRY: when you copy/paste the same logic, a bug fix becomes N bug fixes.
+- KISS: fewer moving parts means fewer places for bugs to hide.
+- Pure functions (same input → same output) are easier to test and debug.
+
+### Reference Card: DRY/KISS and pure functions
+
+| Idea          | Meaning                                               | Why it matters                            |
+| ------------- | ----------------------------------------------------- | ----------------------------------------- |
+| DRY           | Don’t repeat yourself                                 | Fix bugs once; change code safely         |
+| KISS          | Keep it simple (small functions, clear names)         | Easier to read, debug, and refactor       |
+| Pure function | No hidden changes; returns a value instead of “doing” | Simple unit tests; fewer surprise effects |
+
+### Code Snippet: A tiny “pure helper” function
+
+```python
+# Define a function once and use it everywhere!
+def normalize_column_name(name: str) -> str:
+    return name.strip().lower().replace(" ", "_")
+```
+
+## Linters (catch issues early)
+
+![Linter reminder](media/linter.png)
+
+- Linters flag common mistakes before you run anything.
+- They catch typos, unused imports, and inconsistent style.
+- In VS Code, they show up as warnings while you type.
+
+### Reference Card: Linters in practice
+
+| Tool   | What it catches early               | Where you see it                  |
+| ------ | ----------------------------------- | --------------------------------- |
+| Linter | Unused imports, typos, style issues | VS Code “Problems”, squiggles, CI |
+
+## Config files (stop hardcoding)
+
+- Config files keep settings out of your code.
+- Typical config values: file paths, URLs, API keys (never commit real secrets).
+- Should be human readable and easy to edit.
+    - `.env` - Compatible with shell scripts and environment variables
+    - `.yaml` - Very human-friendly
+    - `.json` - Most common with Javascript and web applications
+
+### Reference Card: What belongs in config vs code
+
+| Put it in… | Examples                                         |
+| ---------- | ------------------------------------------------ |
+| Config     | data paths, environment names, API endpoints     |
+| Code       | data cleaning logic, feature engineering, models |
+
+### Code Snippet: Config helper
+
+```bash
+# config.yaml
+data:
+  path: data.csv
+data_path: another_way.parquet
+```
+
+```python
+import yaml
+from pathlib import Path
+
+def load_settings(config_path: Path) -> dict:
+    return yaml.safe_load(config_path.read_text())
+
+settings = load_settings(Path("config.yaml"))
+data = pd.read_csv(settings["data"]["path"])
+data = pd.read_parquet(settings["data"]["path"])
+```
+
+## Code quality tools
+
+- Formatters and linters (`ruff`) keep code clean; tests catch regressions.
+- Run before committing or wire into a pre-commit hook.
+
+### Reference: Quality tools
+
+| Tool     | Purpose                |
+| -------- | ---------------------- |
+| `ruff`   | Lint/format fast       |
+| `black`  | Consistent formatting  |
+
+### Code Snippet: Lint/format/test
+
+```bash
+$ uv run ruff check # or just `ruff check` if installed globally
+src/numbers/calculate.py:3:8: F401 [*] `os` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+```
+
+```python
+# Input
+def _make_ssl_transport(
+    rawsock, protocol, sslcontext, waiter=None,
+    *, server_side=False, server_hostname=None,
+    extra=None, server=None,
+    ssl_handshake_timeout=None,
+    call_connection_made=True):
+    '''Make an SSL transport.'''
+    if waiter is None:
+      waiter = Future(loop=loop)
+
+    if extra is None:
+      extra = {}
+
+    ...
+
+$ ruff format example.py
+# Ruff
+def _make_ssl_transport(
+    rawsock,
+    protocol,
+    sslcontext,
+    waiter=None,
+    *,
+    server_side=False,
+    server_hostname=None,
+    extra=None,
+    server=None,
+    ssl_handshake_timeout=None,
+    call_connection_made=True,
+):
+    """Make an SSL transport."""
+    if waiter is None:
+        waiter = Future(loop=loop)
+
+    if extra is None:
+        extra = {}
+```
+
+## Automated Testing: `pytest`
+
+This is what we use to automate grading. The tests are run automatically on every commit, but they are not magical. They are only as good as the person who writes them.
+
+- Tests should be deterministic and cover edge cases.
+- Use fixtures (known input/output pairs) for setup/teardown.
+- Tests pass or fail deterministically.
+- `pytest` will run all files of the form `test_*.py` or `*_test.py`
+
+### Reference: `pytest` outcomes
+
+| Behavior | Result | Example |
+| --- | --- | --- |
+| `assert <condition>` (True) | ✓ PASS | `assert 1 + 1 == 2` |
+| `assert <condition>` (False) | ✗ FAIL | `assert 1 + 1 == 3` |
+| `raise Exception(...)` | ✗ FAIL | `raise ValueError("invalid")` |
+| `raise expected_exception` (caught) | ✓ PASS | `with pytest.raises(ValueError):` |
+| Return normally (no assert/raise) | ✓ PASS | Empty test body passes |
+| Timeout or infinite loop | ✗ FAIL | Exceeds max duration |
+| Import error or syntax error | ✗ ERROR | `import bad_module` |
+
+### Code Snippet: `pytest`
+
+```python
+import pytest
+
+def test_example():
+  # randomly fail (not a good test)
+  if random.random() < 0.5:
+    raise ValueError("Random failure")
+  assert True
+```
+
+![XKCD: Compiler Complaint](media/xkcd_compiler_complaint.png)
+
+## Raising exceptions
+
+_Exceptions_ represent errors or unusual conditions during program execution. When Python encounters a problem (missing file, bad type, invalid value), it raises an exception; if not caught, the program stops with an error message.
+
+- Raise exceptions; avoid bare `except`.
+- Let exceptions bubble up unless you can recover.
+- Catch only what you can handle; re-raise if unsure.
+
+### Reference: Exception types
+
+| Exception | When to raise | Avoid |
+| --- | --- | --- |
+| `ValueError` | Invalid argument value | `except Exception:` |
+| `FileNotFoundError` | Missing file | Bare `except:` |
+| `KeyError` | Missing dict key | Generic `Exception()` |
+| `TypeError` | Wrong type | Swallowing errors silently |
+
+### Code Snippet: Specific exceptions
+
+```python
+from pathlib import Path
+
+def load_data(path: str) -> list[dict]:
+    csv_path = Path(path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Missing input: {csv_path}")
+    if not csv_path.suffix == ".csv":
+        raise ValueError(f"Expected .csv, got {csv_path.suffix}")
+    return csv_path.read_text().splitlines()
+```
+
+## Catching and handling exceptions
+
+Sometimes you can recover from an error (e.g., missing file → use default). In those cases, catch the exception and handle it gracefully.
+
+- Use `try`/`except` to catch exceptions you can recover from.
+- Be specific: catch the exact exception type, not `Exception` or bare `except`.
+- Use `finally` for cleanup (file closes, locks release) regardless of success or failure.
+
+### Reference: try/except/finally patterns
+
+| Pattern | Use when | Example |
+| --- | --- | --- |
+| `try`/`except` | You can handle the error | File not found → create default |
+| `try`/`finally` | You need cleanup | Always close file handles |
+| `try`/`except`/`finally` | Both: recover AND clean up | Read file, handle error, close handle |
+| Re-raise with `raise` | You caught it but can't fix it | Log error, then re-raise |
+
+### Code Snippet: try/except/finally
+
+```python
+from pathlib import Path
+
+def read_patient_data(path: str) -> list[dict]:
+    csv_path = Path(path)
+    file_handle = None
+    try:
+        if not csv_path.exists():
+            raise FileNotFoundError(f"Missing {csv_path}")
+        file_handle = open(csv_path)
+        return [line.strip() for line in file_handle]
+    except FileNotFoundError as e:
+        logging.warning("File not found; using empty default: %s", e)
+        return []  # Recover gracefully
+    except ValueError as e:
+        logging.error("Bad data: %s", e)
+        raise  # Can't recover; let caller handle it
+    finally:
+        if file_handle:
+            file_handle.close()  # Always runs
+```
+
+## Logging
+
+There is more to effective logging than just sprinkling `print()` statements everywhere. Use the built-in `logging` module to log at different levels (DEBUG, INFO, WARNING, ERROR).
+
+- Log at the right level; no PHI in logs.
+- Use structured messages with context.
+- Configure logging format and level at the start of your program.
+- Remember: logs are the first place to look when something breaks.
+
+### Reference: Logging levels
+
+| Level   | Use for                    | Example |
+| --- | --- | --- |
+| DEBUG   | Detailed diagnostic info   | `logging.debug("var=%s", var)` |
+| INFO    | High-level progress        | `logging.info("Starting ETL")` |
+| WARNING | Non-blocking issues        | `logging.warning("Missing value at row %d", i)` |
+| ERROR   | Failures needing attention | `logging.error("Failed to parse")` |
+
+### Code Snippet: Logging with checks
+
+```python
+import logging
+import os
+
+# Configure logging at the start of your program
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=getattr(logging, log_level), format="%(levelname)s:%(message)s")
+
+# Can also log to a file. In this case, append to 'app.log' insted of overwriting.
+logging.basicConfig(filename='app.log', filemode='a', level=logging.INFO)
+
+def load_clean_data(path: str) -> list[dict]:
+    csv_path = Path(path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Missing input: {csv_path}")
+    logging.info("Reading %s", csv_path)
+    return csv_path.read_text().splitlines()
+```
+
+## Fail fast with actionable messages
+
+- Detect problems early in the pipeline.
+- Include context in error messages (values, paths, hints).
+- Stop gracefully instead of silently producing wrong results.
+
+### Reference: Actionable messages
+
+| Bad | Better | Why |
+| --- | --- | --- |
+| `raise ValueError("error")` | `raise ValueError(f"Expected columns {expected}, got {df.columns}")` | Includes what was expected vs actual |
+| `assert len(df) > 0` | `if len(df) == 0: raise ValueError("Empty input file")` | Name the failure, don't just assert |
+| Silent `pass` | Raise or log the issue | Prevents hours of debugging downstream |
+
+### Code Snippet: Guard clauses
+
+```python
+def process_patients(df):
+    if df.empty:
+        raise ValueError("Empty DataFrame: no patient records to process")
+    if "patient_id" not in df.columns:
+        raise ValueError(f"Missing 'patient_id'; got columns: {list(df.columns)}")
+    if (df["age"] < 0).any():
+        raise ValueError(f"Negative ages found: {df[df['age'] < 0].index.tolist()}")
+    logging.info("Processing %d patients", len(df))
+    return df  # Safe to continue
+```
+
+# LIVE DEMO
+
+# Debugging in VS Code + Jupyter
+
+![When code works first time (suspicious)](media/code-worked-the-first-time-suspicious.jpg)
+
+## Debugging toolkit overview
+
+- Start simple with prints/logging; move to pdb/VS Code for deeper inspection.
+- Breakpoints + Variables/Watch/Debug Console = see state without littering prints.
+
+### Reference: Debugging toolkit
+
+| Tool               | Use case                   |
+| ------------------ | -------------------------- |
+| `print(f"{var=}")` | Quick value checks         |
+| `breakpoint()`     | Drop into pdb              |
+| VS Code debugger   | Visual stepping/inspection |
+
+### Code Snippet: Print + calc
+
+```python
+def calculate_bmi(weight_kg, height_m):
+    print(f"{weight_kg=}, {height_m=}")
+    bmi = weight_kg / (height_m ** 2)
+    print(f"{bmi=}")
+    return bmi
+```
+
+## Print debugging: start here
+
+![XKCD: Debugging](media/xkcd_debugging.png)
+![#FIXME: screenshot of VS Code gutter breakpoint set on BMI script](media/xkcd_debugging.png)
+
+- Use f-strings with `{var=}` to see names + values.
+- Remove prints before commit or migrate to logging.
+
+### Reference: Print patterns
+
+| Pattern                 | Purpose            |
+| ----------------------- | ------------------ |
+| `print(f"{df.shape=}")` | Check dimensions   |
+| `print(f"{row=}")`      | Inspect loop state |
+| `print(f"{result=}")`   | Verify outputs     |
+
+### Code Snippet: Print debugging
+
+```python
+def calculate_bmi(weight_kg, height_m):
+    print(f"{weight_kg=}, {height_m=}")
+    return weight_kg / (height_m ** 2)
+```
+
+## VS Code debugger
+
+- `pdb` or `ipdb` for terminal; VS Code for visuals and conditional breakpoints.
+- Break on exception with `breakpoint()` inside `except`.
+
+### Reference: Breakpoints & commands
+
+| Tool/command   | Purpose                      |
+| -------------- | ---------------------------- |
+| `n / s / c`    | Next, step into, continue    |
+| `p var`        | Print variable               |
+| Conditional BP | Pause when expression true   |
+| Logpoint       | Print a message without stop |
+| `breakpoint()` | Drop into pdb on exception   |
+| VS Code gutter | Opens debugger, may be conditional |
+
+![Gutter bullets](media/gutter_bullet.png)]
+
+### Code Snippet: Conditional + logpoint
+
+```python
+try:
+    risky_fn()
+except Exception:
+    breakpoint()  # pdb session
+
+# VS Code logpoint: right-click breakpoint -> "Add Logpoint"
+# Message example: "value={value}"
+```
+
+## Runtime variable inspection in VS Code
+
+- Variables panel shows locals/globals; expand DataFrames.
+- Watch expressions track custom values.
+- Debug Console evaluates code while paused.
+
+![VS Code debug panels](media/debug_view.png)
+
+### Reference: VS Code panels
+
+| Panel         | Purpose                         |
+| ------------- | ------------------------------- |
+| Variables     | Inspect state at breakpoint     |
+| Watch         | Track expressions (`df.shape`)  |
+| Debug Console | Run ad-hoc checks (`df.head()`) |
+
+### Code Snippet: Inspect while paused
+
+```python
+# Pause at breakpoint, then:
+# - Check Variables panel
+# - Add Watch: df.shape
+# - Debug Console: df.dtypes
+```
+
+## VS Code debugger basics (scripts)
+
+![Debug run button](media/debug-run.png)
+
+- Click the gutter to set breakpoints (red dot), then use Run and Debug (F5) or the play button to start the Python debugger.
+- In Run and Debug, pick the Python config or accept the default; make sure the correct interpreter/venv is selected.
+- Inspect call stack, Variables, and Watch panels while stepping; launch.json is optional because the Python extension supplies defaults.
+- Debugger will use the default selected Python interpreter in VS Code. Can override in launch.json.
+
+### Reference: launch.json fields
+
+| Field     | Meaning              |
+| --------- | -------------------- |
+| `program` | Entry script         |
+| `request` | `launch` vs `attach` |
+| `type`    | `python`             |
+
+### Code Snippet: launch config
+
+Example override to debug a specific script with args, env vars, and specific venv. These would equivalent:
+
+```bash
+source .venv/bin/activate
+python lectures/01/demo/03a_buggy_bmi.py
+```
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Buggy BMI Script",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lectures/01/demo/03a_buggy_bmi.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "runserver",
+                "--noreload",
+                "0.0.0.0:8001",
+            ],
+            "env": {
+                "LOG_LEVEL": "DEBUG"
+            },
+            "console": "integratedTerminal"
+        }
+    ]
+}
+```
+
+## Debugging Notebooks in VS Code
+
+![XKCD: Debugger](media/xkcd_debugger.png)
+
+- Click the debug icon on the cell; set breakpoints inside.
+- **Restart kernel** before Run All after debugging.
+
+![Debug notebook cell](media/debug_cell.png)
+
+### Reference: Notebook debugging steps
+
+| Step                | Purpose                        |
+| ------------------- | ------------------------------ |
+| Debug cell button   | Start a notebook debug session |
+| Breakpoints in cell | Pause where needed             |
+| Restart kernel      | Clear state after debugging    |
+
+## Debugging checklist for messy data
+
+![XKCD: Existential Bug Reports](media/xkcd_existential_bug_reports.png)
+
+- Reproduce with the smallest failing fixture.
+- Check assumptions (types, units, nulls) before changing code.
+- Add assertions/logging near the failure and rerun.
+- Write a test to prevent regression.
+
+### Reference: Debugging checklist
+
+| Step      | Goal                            |
+| --------- | ------------------------------- |
+| Reproduce | Confirm the failure             |
+| Minimize  | Small fixture for fast loops    |
+| Guard     | Assertions/logging close to bug |
+| Test      | Lock in the fix with pytest     |
+
+## Tests to lock in fixes
+
+- Save failing fixtures and add tiny tests so bugs stay fixed.
+- Prefer small, deterministic inputs; avoid brittle expectations.
+
+### Code Snippet: Column validation helper
+
+```python
+def has_required_columns(df: pd.DataFrame, required: list[str]) -> bool:
+    """Check if DataFrame contains all required columns."""
+    # Reminder: all() returns True only if all elements are True
+    return all(col in df.columns for col in required)
+
+# Use the helper to check before processing
+required = ["patient_id", "height_cm", "weight_kg", "age", "sex"]
+
+# Raise an error if columns are missing
+if not has_required_columns(df, required):
+    # Find which columns are missing for the error message
+    missing = [col for col in required if col not in df.columns]
+    raise ValueError(f"Missing required columns: {missing}")
+```
+
+### Code Snippet: Test column validation
+
+```python
+import pytest
+
+def test_detects_missing_height_column():
+    """Ensure column check catches missing height_cm in fixture."""
+    from your_module import has_required_columns
+    
+    fixture = Path("lectures/01/demo/data/patient_intake_missing_height.csv")
+    df = pd.read_csv(fixture)
+    required = ["patient_id", "height_cm", "weight_kg", "age", "sex"]
+    
+    # Should return False because height_cm is missing
+    assert has_required_columns(df, required) is False
+```
+
+## Rubber ducking
+
+Rubber ducking is still undefeated for finding your own bugs.
+
+![](media/ducky.jpg)
+
+# LIVE DEMO

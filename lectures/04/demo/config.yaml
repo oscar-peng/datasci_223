@@ -1,0 +1,18 @@
+# Configuration for Lecture 04 NLP demos
+# Paths are relative to the demo directory (where this file lives)
+
+data:
+  dir: "data"
+  files:
+    alice: "alice_ch1.txt"
+    holmes: "holmes_scandal.txt"
+    pride: "pride_ch1_2.txt"
+    frankenstein: "frankenstein_ch5.txt"
+
+spacy:
+  model: "en_core_web_sm"
+
+# Chart defaults (used by demo notebooks)
+visualization:
+  top_tokens: 15
+  top_tfidf: 12

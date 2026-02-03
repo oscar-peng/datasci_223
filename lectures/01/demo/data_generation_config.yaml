@@ -1,0 +1,92 @@
+# Configuration for synthetic patient data generation
+# Demonstrates config-driven development: parameters in YAML, not hardcoded
+
+# Random seed for reproducibility
+random_seed: 42
+
+# Number of patients to generate for each file
+sample_sizes:
+  clean_data: 50
+  missing_column: 10
+  bad_values: 10
+
+# Patient demographics
+demographics:
+  age_range:
+    min: 18
+    max: 85
+
+  # Sex-specific anthropometric parameters (mean, std deviation)
+  male:
+    weight_kg:
+      mean: 82
+      std: 12
+    height_cm:
+      mean: 176
+      std: 8
+
+  female:
+    weight_kg:
+      mean: 70
+      std: 10
+    height_cm:
+      mean: 163
+      std: 7
+
+# Realistic bounds (same as in 02_config.yaml for validation)
+bounds:
+  weight_kg:
+    min: 45
+    max: 150
+  height_cm:
+    min: 150
+    max: 200
+  age:
+    min: 18
+    max: 85
+
+# Bad values to introduce for testing (indices and values)
+violations:
+  - patient_index: 0
+    column: weight_kg
+    value: 500
+    reason: "Impossible weight"
+
+  - patient_index: 1
+    column: height_cm
+    value: 50
+    reason: "Impossible height (too short)"
+
+  - patient_index: 2
+    column: age
+    value: 150
+    reason: "Impossible age"
+
+  - patient_index: 3
+    column: weight_kg
+    value: 0
+    reason: "Zero weight (missing/invalid)"
+
+  - patient_index: 4
+    column: height_cm
+    value: 300
+    reason: "Impossible height (too tall)"
+
+# Output file names
+output_files:
+  clean: "patient_intake.csv"
+  missing_column: "patient_intake_missing_height.csv"
+  bad_values: "patient_intake_bad_values.csv"
+
+# Columns to generate
+columns:
+  - patient_id
+  - first_name
+  - last_name
+  - weight_kg
+  - height_cm
+  - age
+  - sex
+
+# Column to remove for schema violation test
+column_to_remove: height_cm

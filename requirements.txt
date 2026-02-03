@@ -64,6 +64,7 @@ pymdown-extensions>=10.15
 dash>=2.14.2
 plotly>=5.18.0
 pandas>=2.1.4
+pyarrow>=15.0.0
 numpy>=1.26.2
 altair>=5.1.2
 selenium>=4.16.0

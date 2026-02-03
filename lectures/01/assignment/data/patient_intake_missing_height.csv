@@ -1,0 +1,11 @@
+patient_id,first_name,last_name,weight_kg,age,sex
+P001,Mark,Johnson,91.5,46,M
+P002,Donald,Walker,80.5,29,M
+P003,Nancy,Rhodes,74.3,47,F
+P004,Steven,Miller,64.4,71,M
+P005,Javier,Johnson,72.8,18,M
+P006,Daniel,Wagner,78.5,37,M
+P007,Alexander,Gonzalez,92.5,29,M
+P008,Marie,Gardner,85.9,51,F
+P009,Daniel,Lawrence,80.1,66,M
+P010,Robert,Smith,60.6,64,M

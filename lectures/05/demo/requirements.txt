@@ -6,11 +6,10 @@ seaborn
 scikit-learn
 xgboost
 shap
-plotly
+medmnist
+imblearn
+eli5
 jupyter
 jupytext
 nbconvert
 ipykernel
-imblearn
-eli5
-shap

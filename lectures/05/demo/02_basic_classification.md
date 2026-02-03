@@ -24,14 +24,15 @@ import seaborn as sns
 import scipy.stats as stats
 
 # Machine learning
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
+import shap
 
 # Model evaluation
-from sklearn.metrics import (confusion_matrix, classification_report, 
+from sklearn.metrics import (confusion_matrix, classification_report,
                            roc_curve, auc)
 
 # Set random seed for reproducibility
@@ -127,39 +128,60 @@ print("Training set shape:", X_train_scaled_df.shape)
 print("Test set shape:", X_test_scaled_df.shape)
 ```
 
-## 3. Train and Compare Models 🤖
+## 3. Cross-Validation for Model Selection 🔄
 
-Let's compare three different classifiers:
+Before picking a final model, use **cross-validation** to get more reliable performance estimates. A single train/test split can be misleading if the split happens to be particularly easy or hard.
 
 ```python
 # Initialize models
 models = {
-    'Logistic Regression': LogisticRegression(random_state=42),
+    'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
     'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
-    'XGBoost': xgb.XGBClassifier(n_estimators=100, random_state=42)
+    'XGBoost': xgb.XGBClassifier(n_estimators=100, random_state=42, verbosity=0)
 }
 
-# Train and evaluate each model
+# Use the same CV splitter for fair comparison
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+# Cross-validate each model on the TRAINING data only
+print("Cross-Validation Results (5-fold on training set):\n")
+cv_results = {}
+
+for name, model in models.items():
+    scores = cross_val_score(model, X_train_scaled_df, y_train, cv=cv, scoring='roc_auc')
+    cv_results[name] = scores
+    print(f"{name}:")
+    print(f"  AUC per fold: {scores.round(3)}")
+    print(f"  Mean AUC: {scores.mean():.3f} (+/- {scores.std() * 2:.3f})\n")
+```
+
+## 4. Train Final Models and Evaluate on Test Set 🤖
+
+Now train on the full training set and evaluate on the held-out test set:
+
+```python
+# Train and evaluate each model on the test set
 results = {}
 plt.figure(figsize=(10, 8))
 
 for name, model in models.items():
-    # Train model
+    # Train model on full training set
     model.fit(X_train_scaled_df, y_train)
-    
+
     # Get predictions and probabilities
     y_pred = model.predict(X_test_scaled_df)
     y_prob = model.predict_proba(X_test_scaled_df)[:, 1]
-    
+
     # Calculate ROC curve
     fpr, tpr, _ = roc_curve(y_test, y_prob)
     roc_auc = auc(fpr, tpr)
-    
+
     # Plot ROC curve
     plt.plot(fpr, tpr, label=f'{name} (AUC = {roc_auc:.2f})')
-    
+
     # Store results
     results[name] = {
+        'model': model,
         'predictions': y_pred,
         'probabilities': y_prob,
         'confusion_matrix': confusion_matrix(y_test, y_pred),
@@ -181,7 +203,7 @@ for name, result in results.items():
     print(result['classification_report'])
 ```
 
-## 4. Feature Importance Analysis 🔍
+## 5. Feature Importance Analysis 🔍
 
 Let's examine which features are most important for each model:
 
@@ -189,21 +211,22 @@ Let's examine which features are most important for each model:
 # Get feature importance for each model
 plt.figure(figsize=(12, 4))
 
-for i, (name, model) in enumerate(models.items()):
+for i, (name, result) in enumerate(results.items()):
+    model = result['model']
     plt.subplot(1, 3, i+1)
-    
+
     if name == 'Logistic Regression':
         importance = np.abs(model.coef_[0])
     else:
         importance = model.feature_importances_
-        
+
     # Create importance DataFrame
     importance_df = pd.DataFrame({
         'feature': X.columns,
         'importance': importance
     }).sort_values('importance', ascending=True)
-    
-    # Plot horizontal bar chart using seaborn's barplot
+
+    # Plot horizontal bar chart
     sns.barplot(data=importance_df, y='feature', x='importance')
     plt.title(f'{name}\nFeature Importance')
 
@@ -211,7 +234,37 @@ plt.tight_layout()
 plt.show()
 ```
 
-## 5. Interactive Prediction Function 🎯
+## 6. SHAP Values for Model Interpretation 🔬
+
+SHAP (SHapley Additive exPlanations) provides more detailed feature importance by showing how each feature contributes to individual predictions.
+
+```python
+# Use SHAP to explain the XGBoost model
+xgb_model = results['XGBoost']['model']
+
+# Create SHAP explainer for tree-based model
+explainer = shap.TreeExplainer(xgb_model)
+shap_values = explainer.shap_values(X_test_scaled_df)
+
+# Summary plot: shows feature importance and direction of effect
+print("SHAP Summary Plot (XGBoost):")
+shap.summary_plot(shap_values, X_test_scaled_df, plot_type="dot", show=False)
+plt.tight_layout()
+plt.show()
+
+# Bar plot: global feature importance
+print("\nSHAP Feature Importance (bar):")
+shap.summary_plot(shap_values, X_test_scaled_df, plot_type="bar", show=False)
+plt.tight_layout()
+plt.show()
+```
+
+The SHAP summary plot shows:
+- **Position on x-axis**: How much each feature pushed the prediction higher (right) or lower (left)
+- **Color**: The feature value (red = high, blue = low)
+- **Spread**: Features with wider spread have more variable impact across patients
+
+## 7. Interactive Prediction Function 🎯
 
 Let's create a function to make predictions for new patients:
 
@@ -247,4 +300,4 @@ predict_diabetes_risk(
 )
 ```
 
-The ROC curves and classification reports show how each model trades off true positives and false positives; the feature-importance plots show which inputs (e.g. glucose, BMI) the model relied on most. For real-world use, you could try different feature sets, tune hyperparameters, add cross-validation, or add confidence intervals to predictions.
+Cross-validation gave us confidence in model performance before committing to a final evaluation; the ROC curves and classification reports show how each model trades off true positives and false positives; both feature importance plots and SHAP values reveal which inputs (e.g., glucose, BMI) the model relied on most. SHAP additionally shows the *direction* of effect—for example, high glucose pushing predictions toward "high risk."

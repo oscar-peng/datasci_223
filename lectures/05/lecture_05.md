@@ -30,15 +30,6 @@ Classification algorithms learn to assign labels to data points based on their f
 | **Naive Bayes** | Probabilistic, assumes features are independent | Fast and simple |
 | **Neural Networks** | Layers of nodes, can model complex patterns | Powerful but less interpretable |
 
-### Code Snippet: Logistic Regression
-
-```python
-from sklearn.linear_model import LogisticRegression
-X = [[1, 2], [2, 3], [3, 4]]
-y = [0, 1, 0]
-model = LogisticRegression().fit(X, y)
-print(model.predict([[2, 2]]))  # Predicts class label
-```
 
 - Some links to dive deeper:
     - A nice tour of methods: [**https://github.com/bagheri365/ML-Models-for-Classification**](https://github.com/bagheri365/ML-Models-for-Classification)
@@ -79,6 +70,8 @@ I get in trouble with the data science police if I don't include something about
 - **Miss Rate** (False Negative Rate) = $\frac{FN}{TP + FN}$
 
     > _Proportion of positives that were incorrectly classified, good measure when missing a positive has a high cost_
+
+![](media/accuracy.webp)
 
 ### Reference Card: `confusion_matrix`
 
@@ -146,6 +139,8 @@ An **ROC curve** (Receiver Operating Characteristic curve) shows how a classifie
 
 ![AUROC example](media/auroc.png)
 
+![](media/auc.png)
+
 ### Reference Card: `roc_curve` and `roc_auc_score`
 
 | Component | Details |
@@ -180,11 +175,6 @@ However, both these reasons come with caveats:
 
 - [How to evaluate classification models](https://www.edlitera.com/en/blog/posts/evaluating-classification-models) (edlitera)
 
-# LIVE DEMO!
-
-A hands-on walkthrough of binary classification with logistic regression, using synthetic diabetes data.
-
-See: [demo/01_diabetes_prediction.md](demo/01_diabetes_prediction.md)
 
 # Supervised vs. Unsupervised
 
@@ -194,14 +184,17 @@ There are two(-ish) overarching categories of classification algorithms: **super
 - **Unsupervised** - uses unlabeled data to uncover organizational patterns
 - **Semi-supervised** - some data with labels is used to extract relevant features, while others without can amplify that signal; e.g., medical images (x-ray, CT)
 
-![unsupervised](media/unsupervised.png)
+![](media/supervisor.gif)
 
 ## Supervised Models
 
 To fairly evaluate each model, we must **test** its performance on different data than it was **train**ed on. So we split our dataset into two partitions: **test** and **train**:
 
-- **Train** - the model is built using this data, which includes class labels
-- **Test** - the model is tested using this data, withholding class labels
+- **Train** - data used to train the model(s), includes class labels
+- **Validation** - data used to compare models, class labels withheld
+- **Test** - data used to evaluate selected model, class labels withheld
+
+![](media/train-test-validation.png)
 
 ### Reference Card: `train_test_split`
 
@@ -250,6 +243,8 @@ A single train/test split can be misleading if the split happens to be particula
 | **Key Parameters** | • `estimator`: Model to evaluate<br>• `X, y`: Features and labels<br>• `cv`: Number of folds or CV splitter<br>• `scoring`: Metric to use ('accuracy', 'f1', 'roc_auc') |
 | **Returns** | Array of scores, one per fold |
 
+![](media/cross-validation-k-fold.jpg)
+
 ### Code Snippet: Cross-Validation
 
 ```python
@@ -277,6 +272,8 @@ print(f"Mean F1: {scores.mean():.3f} (+/- {scores.std() * 2:.3f})")
 | **Key Parameters** | • `n_splits`: Number of folds (default 5)<br>• `shuffle`: Shuffle data before splitting<br>• `random_state`: Seed for reproducibility |
 | **Use With** | Pass to `cross_val_score(cv=...)` or iterate manually |
 
+![](media/cross-validation-stratified.webp)
+
 ### Code Snippet: Comparing Multiple Models
 
 ```python
@@ -303,6 +300,8 @@ for name, model in models.items():
 
 ![better than me](media/better_than_me.png)
 
+# LIVE DEMO!
+
 ## Quick Supervised Model Review
 
 Let's look at a few tools that you should get a lot of use out of:
@@ -316,9 +315,11 @@ Let's look at a few tools that you should get a lot of use out of:
 
 ## Logistic Regression
 
-Logistic regression works similarly to linear regression but uses a sigmoid curve that squeezes our straight line into an S-curve.
+Logistic regression works similarly to linear regression but uses a sigmoid curve that squeezes our straight line into an S-curve. Note that logistic regression actually "fits" by training linear-like terms inside a more complex function.
 
 ![Linear vs logistic regression](media/lin_vs_log.png)
+
+![](media/logistic-vs-linear.png)
 
 Additionally, it uses **log loss** (also called **cross-entropy loss**: a cost that measures how far predicted probabilities are from the true labels and penalizes confident wrong predictions more than uncertain ones) in place of our usual mean-squared error cost function. This provides a convex curve for approximating variable weights using gradient descent.
 
@@ -336,15 +337,25 @@ Additionally, it uses **log loss** (also called **cross-entropy loss**: a cost t
 - [Logistic regression](https://christophm.github.io/interpretable-ml-book/logistic.html) (interpretable ml)
 - [Logistic Regression using Gradient descent](https://www.kaggle.com/general/192255) (kaggle)
 
+### Code Snippet: Logistic Regression
+
+```python
+from sklearn.linear_model import LogisticRegression
+X = [[1, 2], [2, 3], [3, 4]]
+y = [0, 1, 0]
+model = LogisticRegression().fit(X, y)
+print(model.predict([[2, 2]]))  # Predicts class label
+```
+
 ## Random Forest
 
 Each of the steps can be tweaked, but the general flow goes:
 
-1. **Bagging** - create _k_ random samples from the data set
+1. **Bagging** (Bootstrap AGGregating) - create _k_ random samples (with replacement) from the dataset
 2. **Grow trees** - individual decision trees are constructed by choosing the best features and cutpoints to separate the classes
 3. **Classify** - instances are run through all trees and assigned a class by majority vote
 
-![Bagging diagram](media/bagging.png)
+![](media/random_forest.jpg)
 
 ### Reference Card: `RandomForestClassifier`
 
@@ -354,6 +365,8 @@ Each of the steps can be tweaked, but the general flow goes:
 | **Purpose** | Ensemble of decision trees for classification |
 | **Key Parameters** | • `n_estimators`: Number of trees (default 100)<br>• `max_depth`: Maximum tree depth<br>• `min_samples_split`: Min samples to split a node<br>• `max_features`: Features to consider per split |
 | **Attributes** | `.feature_importances_` - importance of each feature |
+
+![](media/feature_importance.webp)
 
 ### Code Snippet: Random Forest
 
@@ -365,6 +378,8 @@ y = [0, 1, 0, 1]
 model = RandomForestClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
+
+![XKCD Ensemble Model](media/xkcd_ensemble_model.png)
 
 ## XGBoost
 
@@ -409,6 +424,8 @@ Deep learning models are especially useful for handling large datasets with high
 - **Convolutional neural networks** - designed for image and video recognition
 - **Recurrent neural networks** - designed for sequence data
 
+More on neural networks later in the course...
+
 ### Reference Card: Keras Sequential Model
 
 | Component | Details |
@@ -429,7 +446,7 @@ model = keras.Sequential([
     layers.Dense(1, activation='sigmoid')
 ])
 model.compile(optimizer='adam', loss='binary_crossentropy')
-# model.fit(X_train, y_train, epochs=10)
+model.fit(X_train, y_train, epochs=10)
 ```
 
 **Popular frameworks:**
@@ -449,11 +466,9 @@ Unsupervised models are used when you don't have labeled data. While this course
 
 - [Unsupervised Learning: Algorithms and Examples](https://www.altexsoft.com/blog/unsupervised-machine-learning/) (altexsoft)
 
+![unsupervised](media/unsupervised.png)
+
 # LIVE DEMO!!
-
-Feature engineering from sensor data, comparing RandomForest and XGBoost, and interpreting results.
-
-See: [demo/02_basic_classification.md](demo/02_basic_classification.md)
 
 # How Models Fail
 
@@ -483,6 +498,8 @@ A model may fail to fit the data in one of two ways: under-fitting or over-fitti
 - **Over-fitting**: The model fits the training data too closely, leading to poor generalization. This can be the case when the model is overly complex or the data may have "too many features".
 
     > **Note**: _With enough variables you can build a perfect predictor for anything (at least in the training set). That doesn't mean the model will perform well in the wild_
+
+![XKCD Curve Fitting](media/xkcd_curve_fitting.png)
 
 ## Dataset Shift
 
@@ -530,6 +547,7 @@ For complex relational datasets, libraries like **featuretools** can automatical
 Understanding **why** a model makes its predictions is crucial in health data science—especially when decisions impact patient care.
 
 ![what the hell is this](media/what_the_hell_is_this.jpg)
+
 
 ## SHAP Values for Feature Importance
 
@@ -695,7 +713,7 @@ print("Resampled:", collections.Counter(y_resampled))
 
 Often, you'll need to use several data prep techniques together. The order is crucial to prevent **data leakage**—when information from the test set accidentally influences training, leading to overly optimistic performance estimates.
 
-**Recommended Order:**
+**Recommended Order** (opinionated):
 
 1. **Split into train/test sets FIRST:** Use `stratify=y` to preserve class ratios
 2. **Encode categorical variables:** Fit encoder *only* on training data, then transform both
@@ -711,7 +729,3 @@ Often, you'll need to use several data prep techniques together. The order is cr
 - **ROC AUC:** Or Precision-Recall AUC for imbalanced data
 
 # LIVE DEMO!!!
-
-Handling imbalanced classes, categorical feature encoding, SMOTE, and model interpretation with eli5.
-
-See: [demo/03_imbalanced_classification.md](demo/03_imbalanced_classification.md)

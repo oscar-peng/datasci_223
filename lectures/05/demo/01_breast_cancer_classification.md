@@ -7,9 +7,10 @@ This demo introduces binary classification using real medical data: the Wisconsi
 By the end of this demo, you will be able to:
 
 1. Load and explore a real medical dataset
-2. Split data properly with stratification
-3. Train a logistic regression classifier
-4. Evaluate model performance with confusion matrix, classification report, and ROC curve
+2. Split data into train/validation/test sets properly
+3. Use cross-validation to evaluate model performance
+4. Evaluate with confusion matrix, classification report, and ROC curve
+5. Train a final model and evaluate on held-out test data
 
 ## 0. Setup
 
@@ -65,9 +66,9 @@ print("Top 10 features correlated with diagnosis:")
 print(top_features)
 ```
 
-## 3. Prepare Data for Modeling
+## 3. Split Data: Train/Validation/Test
 
-Split the data into training and test sets. Use `stratify` to ensure both sets have similar proportions of malignant and benign cases.
+First, hold out a **test set** that we won't touch until final evaluation. The remaining data will be used for cross-validation (train/validation splits).
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -76,45 +77,64 @@ from sklearn.model_selection import train_test_split
 X = data.data
 y = data.target  # 0 = malignant, 1 = benign
 
-# Split with stratification
-X_train, X_test, y_train, y_test = train_test_split(
+# First split: hold out 20% as final test set
+X_trainval, X_test, y_trainval, y_test = train_test_split(
     X, y,
     test_size=0.2,
     random_state=42,
     stratify=y
 )
 
-print(f"Training set: {X_train.shape[0]} samples")
-print(f"Test set: {X_test.shape[0]} samples")
-print(f"\nTraining class distribution:")
-print(f"  Malignant (0): {sum(y_train == 0)}")
-print(f"  Benign (1): {sum(y_train == 1)}")
+print(f"Train+Validation set: {X_trainval.shape[0]} samples (for cross-validation)")
+print(f"Test set (final holdout): {X_test.shape[0]} samples")
+print(f"\nClass distribution in train+val:")
+print(f"  Malignant (0): {sum(y_trainval == 0)}")
+print(f"  Benign (1): {sum(y_trainval == 1)}")
 ```
 
-## 4. Train a Logistic Regression Model
+## 4. Cross-Validation with Logistic Regression
 
-Logistic regression is a good starting point for binary classification - it's interpretable and often performs well on medical data.
+Use stratified k-fold cross-validation to get robust performance estimates before committing to a final model.
 
 ```python
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
-# Scale features (important for logistic regression)
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+# Create a pipeline that scales features and fits logistic regression
+# (Pipeline ensures scaling is done properly within each CV fold)
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('classifier', LogisticRegression(max_iter=5000, random_state=42))
+])
 
-# Train logistic regression
-model = LogisticRegression(max_iter=5000, random_state=42)
-model.fit(X_train_scaled, y_train)
+# Set up stratified k-fold
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-print("Model trained successfully!")
-print(f"Training accuracy: {model.score(X_train_scaled, y_train):.4f}")
+# Evaluate with cross-validation
+cv_scores = cross_val_score(pipeline, X_trainval, y_trainval, cv=cv, scoring='roc_auc')
+
+print("5-Fold Cross-Validation Results:")
+print(f"  AUC per fold: {cv_scores.round(3)}")
+print(f"  Mean AUC: {cv_scores.mean():.3f} (+/- {cv_scores.std() * 2:.3f})")
 ```
 
-## 5. Evaluate the Model
+## 5. Train Final Model
 
-Use multiple metrics to understand model performance, especially important in medical contexts where false negatives (missing cancer) can be serious.
+Now that cross-validation gives us confidence in the model, train on the full train+validation set.
+
+```python
+# Fit the pipeline on all train+validation data
+pipeline.fit(X_trainval, y_trainval)
+
+print("Final model trained on all train+validation data!")
+print(f"Training accuracy: {pipeline.score(X_trainval, y_trainval):.4f}")
+```
+
+## 6. Final Evaluation on Test Set
+
+Evaluate on the held-out test set—this is the first and only time we use this data.
 
 ```python
 from sklearn.metrics import (
@@ -125,20 +145,20 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay
 )
 
-# Make predictions
-y_pred = model.predict(X_test_scaled)
-y_prob = model.predict_proba(X_test_scaled)[:, 1]
+# Make predictions on held-out test set
+y_pred = pipeline.predict(X_test)
+y_prob = pipeline.predict_proba(X_test)[:, 1]
 
 # Confusion Matrix
 fig, ax = plt.subplots(figsize=(8, 6))
 cm = confusion_matrix(y_test, y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Malignant', 'Benign'])
 disp.plot(ax=ax, cmap='Blues')
-ax.set_title('Confusion Matrix')
+ax.set_title('Confusion Matrix (Test Set)')
 plt.show()
 
 # Classification Report
-print("\nClassification Report:")
+print("\nClassification Report (Test Set):")
 print(classification_report(y_test, y_pred, target_names=['Malignant', 'Benign']))
 
 # ROC Curve and AUC
@@ -150,20 +170,23 @@ plt.plot(fpr, tpr, label=f'Logistic Regression (AUC = {auc_score:.3f})')
 plt.plot([0, 1], [0, 1], 'k--', label='Random Guess')
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('ROC Curve')
+plt.title('ROC Curve (Test Set)')
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
 
-print(f"\nAUC Score: {auc_score:.4f}")
+print(f"\nFinal Test AUC: {auc_score:.4f}")
+print(f"Cross-validation AUC was: {cv_scores.mean():.4f}")
+print("(These should be similar - if test AUC is much higher, we may have gotten lucky with the split)")
 ```
 
-## 6. Interpret the Model
+## 7. Interpret the Model
 
 Examine which features are most important for predicting malignancy.
 
 ```python
-# Get feature importances (coefficients)
+# Get feature importances (coefficients) from the trained model
+model = pipeline.named_steps['classifier']
 feature_importance = pd.DataFrame({
     'feature': data.feature_names,
     'coefficient': model.coef_[0]
@@ -187,9 +210,10 @@ In this demo, we:
 
 1. Loaded a real medical dataset with 30 tumor measurements
 2. Explored feature distributions between malignant and benign cases
-3. Split data with stratification to preserve class balance
-4. Trained a logistic regression model with feature scaling
-5. Evaluated using confusion matrix, classification report, and ROC/AUC
-6. Interpreted which features most strongly predict malignancy
+3. Split data into train+validation (80%) and test (20%) sets
+4. Used 5-fold cross-validation to estimate model performance
+5. Trained the final model on all train+validation data
+6. Evaluated once on the held-out test set
+7. Interpreted which features most strongly predict malignancy
 
-The model achieved high accuracy on this dataset, but in real clinical settings, we'd want to carefully consider the costs of false negatives (missing cancer) vs false positives (unnecessary follow-up tests).
+The cross-validation gave us confidence in the model before we touched the test set. In real clinical settings, we'd also want to carefully consider the costs of false negatives (missing cancer) vs false positives (unnecessary follow-up tests).

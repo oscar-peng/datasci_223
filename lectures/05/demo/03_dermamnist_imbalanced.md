@@ -312,18 +312,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Summary
-
-In this demo, we:
-
-1. Loaded DermaMNIST skin lesion data with 7 imbalanced classes
-2. Visualized the class distribution to understand the imbalance (~20x between largest and smallest)
-3. Trained a baseline model that struggled with minority classes
-4. Applied SMOTE to create synthetic minority samples
-5. Observed improved recall on minority classes after balancing
-6. Used eli5 to interpret which image regions influence predictions
-
-Key takeaways:
+## Takeaways
 
 - **Accuracy is misleading** for imbalanced data - use balanced accuracy, macro F1, or per-class recall
 - **SMOTE only on training data** - never on test data (data leakage)

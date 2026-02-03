@@ -9,12 +9,12 @@ By the end of this demo, you will be able to:
 1. Load and explore medical image data from MedMNIST
 2. Prepare image data for sklearn classifiers
 3. Use cross-validation to compare models fairly
-4. Interpret model predictions with SHAP
+4. Evaluate and select the best model
 
 ## 0. Setup
 
 ```python
-%pip install -q medmnist scikit-learn xgboost shap matplotlib seaborn pandas numpy
+%pip install -q medmnist scikit-learn xgboost matplotlib seaborn pandas numpy
 ```
 
 ## 1. Load PneumoniaMNIST
@@ -203,42 +203,17 @@ ax.set_title(f'Confusion Matrix - {best_model_name}')
 plt.show()
 ```
 
-## 7. SHAP Interpretation
+## 7. Feature Importance (Random Forest)
 
-Use SHAP to understand which image regions influence predictions.
-
-```python
-import shap
-
-# Use XGBoost for SHAP (tree-based explainer is fast)
-xgb_model = trained_models['XGBoost']
-
-# Create explainer
-explainer = shap.TreeExplainer(xgb_model)
-
-# Calculate SHAP values for a subset of test data
-sample_size = 100
-X_sample = X_test_scaled[:sample_size]
-shap_values = explainer.shap_values(X_sample)
-
-# Summary plot
-print("SHAP Feature Importance (pixel positions):")
-shap.summary_plot(shap_values, X_sample, plot_type="bar", max_display=20, show=False)
-plt.title('Top 20 Most Important Pixels')
-plt.tight_layout()
-plt.show()
-```
-
-## 8. Visualize Important Regions
-
-Reshape SHAP values back to image format to see which regions matter.
+Use built-in feature importances to see which pixels matter most.
 
 ```python
-# Get mean absolute SHAP values per pixel
-mean_shap = np.abs(shap_values).mean(axis=0)
+# Get feature importances from Random Forest
+rf_model = trained_models['Random Forest']
+importances = rf_model.feature_importances_
 
 # Reshape to 28x28 image
-shap_image = mean_shap.reshape(28, 28)
+importance_image = importances.reshape(28, 28)
 
 # Plot
 fig, axes = plt.subplots(1, 3, figsize=(15, 5))
@@ -249,15 +224,15 @@ axes[0].imshow(test_dataset.imgs[sample_idx].squeeze(), cmap='gray')
 axes[0].set_title('Sample X-ray (Pneumonia)')
 axes[0].axis('off')
 
-# SHAP importance heatmap
-im = axes[1].imshow(shap_image, cmap='hot')
-axes[1].set_title('SHAP Importance (brighter = more important)')
+# Importance heatmap
+im = axes[1].imshow(importance_image, cmap='hot')
+axes[1].set_title('Feature Importance (brighter = more important)')
 axes[1].axis('off')
 plt.colorbar(im, ax=axes[1], fraction=0.046)
 
 # Overlay
 axes[2].imshow(test_dataset.imgs[sample_idx].squeeze(), cmap='gray')
-axes[2].imshow(shap_image, cmap='hot', alpha=0.5)
+axes[2].imshow(importance_image, cmap='hot', alpha=0.5)
 axes[2].set_title('Importance Overlay')
 axes[2].axis('off')
 
@@ -265,14 +240,10 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Summary
+## Takeaways
 
-In this demo, we:
-
-1. Loaded real medical chest X-ray images from MedMNIST
-2. Flattened 28x28 images for use with sklearn classifiers
-3. Compared three models using 5-fold cross-validation
-4. Evaluated on a held-out test set with ROC curves
-5. Used SHAP to visualize which image regions influence predictions
-
-Cross-validation gave us confidence in model selection before final evaluation. SHAP visualization shows which regions of the chest X-ray the model focuses on - ideally, these should align with where radiologists would look for signs of pneumonia (lung fields, not edges/artifacts).
+- **Same CV splitter for fair comparison** - all models evaluated on identical data splits
+- **Combine train+val for CV, hold out test** - test set touched only once at the end
+- **ROC curves reveal trade-offs** - see how models balance sensitivity vs. specificity
+- **Feature importance shows what the model "sees"** - ideally should focus on clinically relevant regions (lung fields), not artifacts
+- **Simple models can work well** - logistic regression often competitive with complex methods on medical data

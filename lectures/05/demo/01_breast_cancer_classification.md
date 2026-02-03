@@ -204,16 +204,10 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Summary
+## Takeaways
 
-In this demo, we:
-
-1. Loaded a real medical dataset with 30 tumor measurements
-2. Explored feature distributions between malignant and benign cases
-3. Split data into train+validation (80%) and test (20%) sets
-4. Used 5-fold cross-validation to estimate model performance
-5. Trained the final model on all train+validation data
-6. Evaluated once on the held-out test set
-7. Interpreted which features most strongly predict malignancy
-
-The cross-validation gave us confidence in the model before we touched the test set. In real clinical settings, we'd also want to carefully consider the costs of false negatives (missing cancer) vs false positives (unnecessary follow-up tests).
+- **Cross-validation before final evaluation** - CV gives confidence in model performance before touching the test set
+- **Pipeline for proper preprocessing** - putting scaler inside the pipeline prevents data leakage across CV folds
+- **Test AUC should match CV AUC** - large discrepancies suggest overfitting or a lucky/unlucky split
+- **Interpretable models matter in healthcare** - logistic regression coefficients show which features drive predictions
+- **Consider clinical costs** - in cancer detection, false negatives (missing cancer) may be worse than false positives

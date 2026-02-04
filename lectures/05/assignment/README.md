@@ -76,13 +76,15 @@ Complete the code cells in `assignment.md` (or `assignment.ipynb` after converti
 1. Filter dataset to labels 5, 7, and 9
 2. Split into train/test sets (80/20) with stratification
 3. Scale features
-4. Compare two models using 5-fold cross-validation:
+4. Encode labels to 0, 1, 2 using LabelEncoder (required for XGBoost)
+5. Compare three models using 5-fold cross-validation:
    - LogisticRegression
    - RandomForestClassifier
-5. Select the best model based on mean CV accuracy
-6. Retrain the best model on the full training set
-7. Evaluate on test set using `classification_report`
-8. Save CV results and final evaluation
+   - XGBClassifier
+6. Select the best model based on mean CV accuracy
+7. Retrain the best model on the full training set
+8. Evaluate on test set using `classification_report`
+9. Save CV results and final evaluation
 
 **Output files:**
 - `output/part2_cv_results.csv` - columns: `model`, `fold`, `score`

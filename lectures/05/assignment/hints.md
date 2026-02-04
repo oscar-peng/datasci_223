@@ -37,6 +37,17 @@ X_test_scaled = scaler.transform(X_test)        # transform only (no fit!)
 
 ## Part 2 Hints
 
+### Encoding labels for XGBoost
+```python
+# XGBoost requires labels to be 0, 1, 2, ... (not 5, 7, 9)
+from sklearn.preprocessing import LabelEncoder
+
+label_encoder = LabelEncoder()
+y_encoded = label_encoder.fit_transform(y_filtered)  # [5,7,9] -> [0,1,2]
+
+# Use y_encoded for train_test_split and model training
+```
+
 ### Cross-validation loop structure
 ```python
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)

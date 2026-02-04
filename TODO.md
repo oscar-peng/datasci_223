@@ -1,3 +1,22 @@
+# Dataset Options for Future Lectures
+
+**Lectures 6-8 (Neural Networks / Deep Learning):**
+- `cifar10` - 60k 32x32 color images, 10 classes (keras)
+- `fetch_20newsgroups` - ~18k text documents, 20 categories (sklearn)
+- `fetch_covtype` - 581k samples, forest cover type, 7 classes (sklearn)
+
+**MedMNIST options (unused - dermamnist/pneumoniamnist in Lecture 05 demos):**
+- `pathmnist` - pathology (colon cancer)
+- `chestmnist` - chest X-ray (14 diseases)
+- `octmnist` - retinal OCT
+- `retinamnist` - fundus camera (diabetic retinopathy)
+- `breastmnist` - breast ultrasound
+- `bloodmnist` - blood cell microscopy
+- `tissuemnist` - kidney cortex microscopy
+- `organamnist/organcmnist/organsmnist` - abdominal CT (axial/coronal/sagittal)
+
+---
+
 # Lecture 02 Follow-up Tasks
 
 - [x] Build lecture visuals (#FIXME graphics: memory vs dataset chart, row/column diagram, updated Polars benchmark, lazy-plan diagram, monitoring screenshot).

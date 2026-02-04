@@ -309,6 +309,44 @@ Once you have evaluation metrics and cross-validation set up, the typical workfl
 6. **Retrain selected model on full train+validation data**
 7. **Final evaluation** - evaluate the chosen model on the held-out test set (touched only once)
 
+```mermaid
+flowchart TD
+    subgraph Setup
+        A[Full Dataset] --> B[Hold out Test Set]
+        B --> C[Train + Validation Data]
+    end
+
+    subgraph CV["Cross-Validation (k folds)"]
+        C --> D[Split into k folds]
+        D --> E[Fold 1]
+        D --> F[Fold 2]
+        D --> G[...]
+        D --> H[Fold k]
+    end
+
+    subgraph Models["For Each Model"]
+        E & F & G & H --> I[Train on k-1 folds]
+        I --> J[Evaluate on held-out fold]
+        J --> K[Record score]
+    end
+
+    subgraph Select["Model Selection"]
+        K --> L[Average scores across folds]
+        L --> M{Best mean score?}
+        M -->|Winner| N[Selected Model]
+    end
+
+    subgraph Final["Final Evaluation"]
+        N --> O[Retrain on ALL train+val data]
+        O --> P[Evaluate on Test Set]
+        P --> Q[Report Final Metrics]
+    end
+
+    style A fill:#e1f5fe
+    style Q fill:#c8e6c9
+    style N fill:#fff9c4
+```
+
 ### Code Snippet: Comparing Multiple Models
 
 ```python
@@ -515,11 +553,11 @@ Even the best models can fail if the data is messy, the problem is hard, or the 
 - Hidden confounders (Simpson's paradox)
 - Imbalanced or "troublesome" classes
 
-![#FIXME images for failure modes]
-
 ## Labeling
 
 Oh, labeling…
+
+![Labeling error](media/labeling_error.jpg)
 
 Labeling issues can arise when the data is not labeled correctly or consistently, which can lead to biased or inaccurate models. Examples of labeling issues include:
 
@@ -536,6 +574,8 @@ A model may fail to fit the data in one of two ways: under-fitting or over-fitti
 
     > **Note**: _With enough variables you can build a perfect predictor for anything (at least in the training set). That doesn't mean the model will perform well in the wild_
 
+![Overfitting](media/overfitting.jpg)
+
 ![XKCD Curve Fitting](media/xkcd_curve_fitting.png)
 
 ## Dataset Shift
@@ -545,6 +585,14 @@ Dataset shift occurs when the distribution of the data changes between the train
 1. **Covariate Shift**: A change in the distribution of the independent variables between the training and test sets.
 2. **Prior Probability Shift**: A change in the distribution of the target variable between the training and test sets.
 3. **Concept Shift**: A change in the relationship between the independent and target variables between the training and test sets.
+
+Training data (Q2 2017): "Fidget spinners are the future!"
+
+![Fidget spinner hype](media/fidget_spinner_hype.png)
+
+Production data (2018+): "...nevermind"
+
+![Fidget spinner crash](media/fidget_spinner_crash.png)
 
 See: [https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html](https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html)
 
@@ -560,6 +608,7 @@ Certain classes or categories in a dataset may be more difficult to classify acc
 
 ![Confused classes](media/confused_classes.png)
 
+![XKCD Extrapolating](media/xkcd_extrapolating.png)
 
 # Model Interpretation
 

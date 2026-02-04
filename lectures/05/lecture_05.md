@@ -761,6 +761,36 @@ print("Scaled:\n", X_scaled)
 # Each column now has mean≈0, std≈1
 ```
 
+## LabelEncoder for Target Variables
+
+Some classifiers (like XGBoost) require target labels to be consecutive integers starting from 0. **LabelEncoder** transforms arbitrary labels like [5, 7, 9] into [0, 1, 2].
+
+### Reference Card: `LabelEncoder`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `sklearn.preprocessing.LabelEncoder()` |
+| **Purpose** | Encode target labels as integers 0, 1, 2, ... |
+| **Key Methods** | • `fit(y)`: Learn label mapping<br>• `transform(y)`: Apply encoding<br>• `fit_transform(y)`: Fit and transform in one step<br>• `inverse_transform(y)`: Convert back to original labels |
+| **When to Use** | XGBoost with multi-class labels, or when algorithms require 0-indexed labels |
+
+### Code Snippet: LabelEncoder
+
+```python
+from sklearn.preprocessing import LabelEncoder
+
+# Original labels aren't 0-indexed
+y = [5, 7, 9, 5, 7, 9]
+
+encoder = LabelEncoder()
+y_encoded = encoder.fit_transform(y)
+print(y_encoded)  # [0, 1, 2, 0, 1, 2]
+
+# To decode back:
+y_original = encoder.inverse_transform(y_encoded)
+print(y_original)  # [5, 7, 9, 5, 7, 9]
+```
+
 ## OneHotEncoder for Categorical Variables
 
 Many machine learning models require all input features to be numeric. **One-hot encoding** transforms categorical variables (like "smoker" or "blood type") into a set of binary columns.

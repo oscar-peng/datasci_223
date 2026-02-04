@@ -10,7 +10,7 @@ import json
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
@@ -86,6 +86,18 @@ print(f"Accuracy: {accuracy:.4f}")
 print(f"Confusion Matrix:\n{cm}")
 ```
 
+```python
+# Visualize results (provided - not part of assignment)
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['T-shirt', 'Trouser']).plot(ax=ax, cmap='Blues')
+ax.set_title('Part 1: T-shirt vs Trouser')
+plt.tight_layout()
+plt.show()
+```
+
 ---
 
 ## Part 2: Multi-class Classification with Cross-Validation
@@ -103,13 +115,15 @@ print("\nPart 2: Multi-class Classification with CV")
 print("-" * 40)
 
 # TODO: Load data, filter to labels 5, 7, 9
+# TODO: Encode labels to 0, 1, 2 using LabelEncoder (required for XGBoost)
 # TODO: Train/test split with stratification
 # TODO: Scale features
 
 # Models to compare
 models = {
     'LogisticRegression': LogisticRegression(max_iter=1000, random_state=42),
-    'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+    'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
+    'XGBoost': XGBClassifier(n_estimators=100, random_state=42, verbosity=0, n_jobs=-1)
 }
 
 # TODO: Run 5-fold CV for each model (use StratifiedKFold, scoring='accuracy')
@@ -117,6 +131,21 @@ models = {
 # TODO: Find best model by mean CV score
 # TODO: Retrain best model on full training data
 # TODO: Evaluate on test set, save classification_report to part2_test_results.csv
+```
+
+```python
+# Visualize CV results (provided - not part of assignment)
+import matplotlib.pyplot as plt
+
+if cv_df is not None:
+    fig, ax = plt.subplots(figsize=(8, 5))
+    cv_df.boxplot(column='score', by='model', ax=ax)
+    ax.set_title('Part 2: Cross-Validation Scores by Model')
+    ax.set_xlabel('Model')
+    ax.set_ylabel('Accuracy')
+    plt.suptitle('')  # Remove automatic title
+    plt.tight_layout()
+    plt.show()
 ```
 
 ---

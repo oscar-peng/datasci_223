@@ -104,7 +104,7 @@ plt.show()
 
 **Task:** Classify footwear types: Sandal (5) vs Sneaker (7) vs Ankle boot (9)
 
-Compare two models using 5-fold cross-validation. Select the best model and evaluate on test set.
+Compare three models using 5-fold cross-validation. Select the best model and evaluate on test set.
 
 **Required outputs:**
 - `output/part2_cv_results.csv` - columns: `model`, `fold`, `score`
@@ -137,7 +137,7 @@ models = {
 # Visualize CV results (provided - not part of assignment)
 import matplotlib.pyplot as plt
 
-if cv_df is not None:
+try:
     fig, ax = plt.subplots(figsize=(8, 5))
     cv_df.boxplot(column='score', by='model', ax=ax)
     ax.set_title('Part 2: Cross-Validation Scores by Model')
@@ -146,6 +146,8 @@ if cv_df is not None:
     plt.suptitle('')  # Remove automatic title
     plt.tight_layout()
     plt.show()
+except NameError:
+    print("cv_df not defined yet - complete the TODOs above first!")
 ```
 
 ---

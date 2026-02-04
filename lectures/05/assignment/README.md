@@ -150,7 +150,7 @@ After successful completion, your `output/` directory should contain:
 | File | Part | Description |
 |:---|:---:|:---|
 | `part1_results.json` | 1 | Accuracy and confusion matrix |
-| `part2_cv_results.csv` | 2 | CV scores for both models |
+| `part2_cv_results.csv` | 2 | CV scores for all three models |
 | `part2_test_results.csv` | 2 | Per-class metrics |
 | `part3_cv_results.csv` | 3 | CV AUC scores for all models |
 | `part3_test_results.csv` | 3 | Final test metrics |

@@ -5,6 +5,8 @@ matplotlib
 seaborn
 scikit-learn
 xgboost
+lightgbm
+pillow
 shap
 medmnist
 imblearn

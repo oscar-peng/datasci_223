@@ -1,10 +1,47 @@
 Classification: Putting a Label on Things
 
-- Quick example
-- Classification model types and how to evaluate them
-- How things can go wrong…
-- … and how to fix it
-- Hands-on with code
+- hw05 #FIXME
+
+# References
+
+## Documentation
+
+- [Scikit-learn Classification](https://scikit-learn.org/stable/supervised_learning.html#supervised-learning)
+- [XGBoost Documentation](https://xgboost.readthedocs.io/)
+- [LightGBM Documentation](https://lightgbm.readthedocs.io/)
+- [Featuretools Documentation](https://featuretools.alteryx.com/en/stable/)
+
+## Deep Learning Frameworks
+
+- [Keras Getting Started](https://keras.io/getting_started/)
+- [PyTorch Tutorials](https://pytorch.org/tutorials/)
+- [TensorFlow Beginner Quickstart](https://www.tensorflow.org/tutorials/quickstart/beginner)
+- [JAX Quickstart](https://jax.readthedocs.io/en/latest/notebooks/quickstart.html)
+
+## Books
+
+- [Python Data Science Handbook](https://jakevdp.github.io/PythonDataScienceHandbook/) - Jake VanderPlas (free online)
+- [Hands-On Machine Learning](https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) - Aurélien Géron
+- [Introduction to Statistical Learning](https://www.statlearning.com/) - James, Witten, Hastie, Tibshirani (free PDF)
+- [Interpretable Machine Learning](https://christophm.github.io/interpretable-ml-book/) - Christoph Molnar (free online)
+
+## Tutorials & Articles
+
+- [A Visual Introduction to Machine Learning](http://www.r2d3.us/visual-intro-to-machine-learning-part-1/)
+- [ROC Curves Explained](https://developers.google.com/machine-learning/crash-course/classification/roc-and-auc) - Google ML Crash Course
+- [How to Evaluate Classification Models](https://www.edlitera.com/en/blog/posts/evaluating-classification-models) - edlitera
+- [ML Models for Classification](https://github.com/bagheri365/ML-Models-for-Classification) - tour of methods
+- [Logistic Regression using Gradient Descent](https://www.kaggle.com/general/192255) - Kaggle
+- [XGBoost vs Random Forest](https://medium.com/geekculture/xgboost-versus-random-forest-898e42870f30) - Geek Culture
+- [Interpretable ML with XGBoost](https://towardsdatascience.com/interpretable-machine-learning-with-xgboost-9ec80d148d27) - Towards Data Science
+- [Unsupervised Learning: Algorithms and Examples](https://www.altexsoft.com/blog/unsupervised-machine-learning/) - AltexSoft
+- [Environment and Distribution Shift](https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html) - Dive into Deep Learning
+
+## Health Data Examples
+
+- [Cancer Classification (EDA, PCA, Random Forest)](https://www.kaggle.com/code/nandita711/cancer-classification-eda-pca-random-forest) - Kaggle
+- [XGBoost, Random Forest, and Nomograph for Disease Severity Prediction](https://www.frontiersin.org/articles/10.3389/fcimb.2022.819267/full) - Frontiers
+- [Prediction Method for Hypertension](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6963807/) - Diagnostics Journal
 
 # Crash Course in Classification
 
@@ -29,13 +66,6 @@ Classification algorithms learn to assign labels to data points based on their f
 | **Support Vector Machines (SVM)** | Finds the best boundary between classes | Good for complex data |
 | **Naive Bayes** | Probabilistic, assumes features are independent | Fast and simple |
 | **Neural Networks** | Layers of nodes, can model complex patterns | Powerful but less interpretable |
-
-
-- Some links to dive deeper:
-    - A nice tour of methods: [**https://github.com/bagheri365/ML-Models-for-Classification**](https://github.com/bagheri365/ML-Models-for-Classification)
-    - [**Cancer classification**](https://www.kaggle.com/code/nandita711/cancer-classification-eda-pca-random-forest) (Kaggle)
-    - [**Comparison of XGBoost, Random Forest, and Nomograph for Prediction of Disease Severity**](https://www.frontiersin.org/articles/10.3389/fcimb.2022.819267/full)
-    - [**Prediction Method for Hypertension**](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6963807/) (Diagnostics Journal)
 
 ![it's all statistics](media/its_all_statistics.jpg)
 
@@ -173,9 +203,6 @@ However, both these reasons come with caveats:
 - **Scale invariance is not always desirable.** Sometimes we need well calibrated probability outputs, and AUC won't tell us about that.
 - **Classification-threshold invariance is not always desirable.** In cases where there are wide disparities in the cost of false negatives vs. false positives, AUC isn't the right metric.
 
-- [How to evaluate classification models](https://www.edlitera.com/en/blog/posts/evaluating-classification-models) (edlitera)
-
-
 # Supervised vs. Unsupervised
 
 There are two(-ish) overarching categories of classification algorithms: **supervised** and **unsupervised**. There are many possible approaches in each category, and some that work well in both (deep learning, for example).
@@ -233,7 +260,7 @@ A single train/test split can be misleading if the split happens to be particula
 
 **K-Fold Cross-Validation:**
 
-1. Split data into *k* equal parts (folds)
+1. Split data into _k_ equal parts (folds)
 2. Train on k-1 folds, test on the remaining fold
 3. Repeat k times, each fold serving as test once
 4. Average the results for final performance estimate
@@ -371,7 +398,7 @@ for name, model in models.items():
     print(f"{name}: F1 = {scores.mean():.3f} (+/- {scores.std() * 2:.3f})")
 ```
 
-# LIVE DEMO!
+# LIVE DEMO
 
 # Quick Supervised Model Overview
 
@@ -404,9 +431,6 @@ Additionally, it uses **log loss** (also called **cross-entropy loss**: a cost t
 | **Purpose** | Linear model for classification (binary or multinomial) |
 | **Key Parameters** | • `penalty`: Regularization ('l2', 'l1', 'elasticnet')<br>• `C`: Inverse regularization strength (smaller = stronger)<br>• `solver`: Optimization algorithm<br>• `max_iter`: Max iterations for convergence |
 | **Key Methods** | `.fit()`, `.predict()`, `.predict_proba()` |
-
-- [Logistic regression](https://christophm.github.io/interpretable-ml-book/logistic.html) (interpretable ml)
-- [Logistic Regression using Gradient descent](https://www.kaggle.com/general/192255) (kaggle)
 
 ### Code Snippet: Logistic Regression
 
@@ -481,8 +505,41 @@ model = xgb.XGBClassifier(n_estimators=10).fit(X, y)
 print(model.predict([[2, 2]]))
 ```
 
-- [XGBoost vs Random Forest](https://medium.com/geekculture/xgboost-versus-random-forest-898e42870f30) (geek culture)
-- [Interpretable machine learning with XGBoost](https://towardsdatascience.com/interpretable-machine-learning-with-xgboost-9ec80d148d27) (towardsdatascience)
+## LightGBM: A Faster Alternative
+
+**LightGBM** (Light Gradient Boosting Machine) is Microsoft's gradient boosting framework, optimized for speed and memory efficiency. It's often faster than XGBoost, especially on large datasets.
+
+Key differences from XGBoost:
+
+- **Leaf-wise tree growth** - grows trees by choosing the leaf with max delta loss, rather than level-wise. Faster but can overfit on small datasets
+- **Histogram-based splitting** - bins continuous features into discrete bins for faster training
+- **Native categorical support** - handles categorical features directly without one-hot encoding
+
+### Reference Card: `LGBMClassifier`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `lightgbm.LGBMClassifier()` |
+| **Purpose** | Fast gradient boosting for classification |
+| **Key Parameters** | • `n_estimators`: Number of boosting rounds<br>• `learning_rate`: Step size shrinkage<br>• `num_leaves`: Max number of leaves per tree<br>• `max_depth`: Limit tree depth (-1 for no limit) |
+| **Install** | `pip install lightgbm` |
+
+### Code Snippet: LightGBM
+
+```python
+from lightgbm import LGBMClassifier
+
+X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+y = [0, 1, 0, 1]
+model = LGBMClassifier(n_estimators=10, verbosity=-1).fit(X, y)
+print(model.predict([[2, 2]]))
+```
+
+**When to use which?**
+
+- **XGBoost** - well-established, extensive documentation, Kaggle competitions
+- **LightGBM** - faster training, lower memory, good for large datasets
+- Both are excellent choices for tabular data classification
 
 ## Deep Learning
 
@@ -522,13 +579,6 @@ model.compile(optimizer='adam', loss='binary_crossentropy')
 model.fit(X_train, y_train, epochs=10)
 ```
 
-**Popular frameworks:**
-
-- **Keras** - [https://keras.io/getting_started/](https://keras.io/getting_started/)
-- **PyTorch** - [https://pytorch.org/tutorials/](https://pytorch.org/tutorials/)
-- **TensorFlow** - [https://www.tensorflow.org/tutorials/quickstart/beginner](https://www.tensorflow.org/tutorials/quickstart/beginner)
-- **JAX** - [https://jax.readthedocs.io/en/latest/notebooks/quickstart.html](https://jax.readthedocs.io/en/latest/notebooks/quickstart.html)
-
 ## Unsupervised Models (Further Reading)
 
 Unsupervised models are used when you don't have labeled data. While this course focuses on supervised classification, it's worth knowing what's available:
@@ -537,11 +587,9 @@ Unsupervised models are used when you don't have labeled data. While this course
 - **Association**: reveals relationships between variables; e.g., Apriori, F-P Growth
 - **Dimensionality reduction**: reduces the inputs to a smaller size; e.g., PCA, t-SNE, autoencoders
 
-- [Unsupervised Learning: Algorithms and Examples](https://www.altexsoft.com/blog/unsupervised-machine-learning/) (altexsoft)
-
 ![unsupervised](media/unsupervised.png)
 
-# LIVE DEMO!!
+# LIVE DEMO
 
 # How Models Fail
 
@@ -594,8 +642,6 @@ Production data (2018+): "...nevermind"
 
 ![Fidget spinner crash](media/fidget_spinner_crash.png)
 
-See: [https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html](https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html)
-
 ## Simpson's Paradox
 
 **Simpson's paradox** occurs when a trend appears in several different groups of data, but disappears or reverses when these groups are combined. It is a common problem in statistics and machine learning that can occur when there are confounding variables that affect the relationship between the independent and dependent variables.
@@ -615,7 +661,6 @@ Certain classes or categories in a dataset may be more difficult to classify acc
 Understanding **why** a model makes its predictions is crucial in health data science—especially when decisions impact patient care.
 
 ![what the hell is this](media/what_the_hell_is_this.jpg)
-
 
 ## SHAP Values for Feature Importance
 
@@ -649,11 +694,11 @@ shap.summary_plot(shap_values, X, plot_type="bar")
 
 ![SHAP summary plot example](media/oyster_shap.png)
 
-*Example SHAP summary plot: Each dot shows a feature's impact on a prediction. Color indicates feature value (red=high, blue=low).*
+_Example SHAP summary plot: Each dot shows a feature's impact on a prediction. Color indicates feature value (red=high, blue=low)._
 
 ![SHAP dependence plot](media/shap_dependence_plot.png)
 
-*Example SHAP dependence plot: Shows how the effect of one feature depends on the value of another feature.*
+_Example SHAP dependence plot: Shows how the effect of one feature depends on the value of another feature._
 
 ## eli5 for Model Inspection
 
@@ -745,6 +790,14 @@ encoded = encoder.fit_transform(df[['smoker']])
 print(encoded)
 ```
 
+## Handling Imbalanced Classes with Evaluation Metrics
+
+Consider metrics that penalize misclassifications unequally, like:
+
+- **F1-score**: Harmonic mean of precision and recall (good out of the box, but can be weighted for class imbalance)
+- **Precision**: Proportion of positive identifications that were actually correct
+- **Recall**: Proportion of actual positives that were identified correctly
+
 ## Handling Imbalanced Data with SMOTE
 
 In health data, one class (like "disease present") is often much rarer than the other. **SMOTE** (Synthetic Minority Over-sampling Technique) creates synthetic examples of the minority class to balance the dataset.
@@ -794,8 +847,6 @@ The best features often come from domain knowledge—knowing what matters in hea
 
 For complex relational datasets, libraries like **featuretools** can automatically generate features using Deep Feature Synthesis. This is especially useful for time series and multi-table data.
 
-- [Featuretools documentation](https://featuretools.alteryx.com/en/stable/)
-
 ## When and How to Combine Techniques
 
 Often, you'll need to use several data prep techniques together. The order is crucial to prevent **data leakage**—when information from the test set accidentally influences training, leading to overly optimistic performance estimates.
@@ -803,13 +854,13 @@ Often, you'll need to use several data prep techniques together. The order is cr
 **Recommended Order** (opinionated):
 
 1. **Split data FIRST:** Hold out the test set before any preprocessing. Use `stratify=y` to preserve class ratios.
-2. **Encode categorical variables:** Fit encoder *only* on training data, then transform both train and validation/test
+2. **Encode categorical variables:** Fit encoder _only_ on training data, then transform both train and validation/test
 3. **Engineer additional features:**
     - Always use subject matter expertise to transform or combine conceptually consistent columns that may be more predictive or better fit (e.g., linear) for your model
     - Use dimension reduction techniques like Principal Component Analysis to combine columns for better predictive value and to reduce multicollinearity
     - Consider automated feature engineering as an exploratory step but beware that it is a kind of modeling and, just like any model, it is susceptible to overfitting. Also, you're going to have to explain whatever you did and the relationships in your analysis.
-4. **Scale/normalize features (if needed):** Fit scaler *only* on training data, then transform both
-5. **Balance classes (optional, e.g., SMOTE):** Apply *only* to training set—never validation or test!
+4. **Scale/normalize features (if needed):** Fit scaler _only_ on training data, then transform both
+5. **Balance classes (optional, e.g., SMOTE):** Apply _only_ to training set—never validation or test!
 
 > **Why split first?** If you fit your scaler or encoder on the full dataset before splitting, your model "sees" test data statistics during training. This leaks information and makes your model appear better than it really is.
 
@@ -819,4 +870,4 @@ Often, you'll need to use several data prep techniques together. The order is cr
 - **Precision, Recall, F1-score:** Especially for minority class
 - **ROC AUC:** Or Precision-Recall AUC for imbalanced data
 
-# LIVE DEMO!!!
+# LIVE DEMO

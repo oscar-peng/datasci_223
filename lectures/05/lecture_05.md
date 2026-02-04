@@ -337,41 +337,38 @@ Once you have evaluation metrics and cross-validation set up, the typical workfl
 7. **Final evaluation** - evaluate the chosen model on the held-out test set (touched only once)
 
 ```mermaid
-flowchart TD
-    subgraph Setup
-        A[Full Dataset] --> B[Hold out Test Set]
-        B --> C[Train + Validation Data]
+flowchart TB
+    A[Setup: Define models, metric, hold out test, split into k folds]
+
+    A --> F1 & F2 & Fdots & Fk
+
+    subgraph FoldRow[" "]
+        direction LR
+        F1[Fold 1]
+        F2[Fold 2]
+        Fdots[...]
+        Fk[Fold k]
     end
 
-    subgraph CV["Cross-Validation (k folds)"]
-        C --> D[Split into k folds]
-        D --> E[Fold 1]
-        D --> F[Fold 2]
-        D --> G[...]
-        D --> H[Fold k]
+    F1 --> LR & RF & XGB
+
+    subgraph Fold1Box[" "]
+        LR[Logistic Regression] --> LR1[Train] --> LR2[Eval] --> LR3[Record]
+        RF[Random Forest] --> RF1[Train] --> RF2[Eval] --> RF3[Record]
+        XGB[XGBoost] --> XGB1[Train] --> XGB2[Eval] --> XGB3[Record]
     end
 
-    subgraph Models["For Each Model"]
-        E & F & G & H --> I[Train on k-1 folds]
-        I --> J[Evaluate on held-out fold]
-        J --> K[Record score]
-    end
+    F2 -.-> R2[...]
+    Fdots -.-> Rdots[...]
+    Fk -.-> Rk[...]
 
-    subgraph Select["Model Selection"]
-        K --> L[Average scores across folds]
-        L --> M{Best mean score?}
-        M -->|Winner| N[Selected Model]
-    end
+    LR3 & RF3 & XGB3 --> Avg[Average scores per model]
+    R2 & Rdots & Rk -.-> Avg
+    Avg --> Select[Select best model]
+    Select --> Retrain[Retrain best on ALL train+val]
+    Retrain --> Final[Evaluate on test set]
 
-    subgraph Final["Final Evaluation"]
-        N --> O[Retrain on ALL train+val data]
-        O --> P[Evaluate on Test Set]
-        P --> Q[Report Final Metrics]
-    end
-
-    style A fill:#e1f5fe
-    style Q fill:#c8e6c9
-    style N fill:#fff9c4
+    style FoldRow fill:none,stroke:none
 ```
 
 ### Code Snippet: Comparing Multiple Models

@@ -20,16 +20,13 @@ def load_fashion_mnist():
     y : np.ndarray
         Labels, shape (70000,), values 0-9
     """
-    from tensorflow.keras.datasets import fashion_mnist
+    from sklearn.datasets import fetch_openml
 
-    (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+    # Fetch Fashion-MNIST from OpenML (lighter than TensorFlow)
+    mnist = fetch_openml('Fashion-MNIST', version=1, as_frame=False, parser='auto')
 
-    # Combine train and test (students will do their own split)
-    X = np.vstack([X_train, X_test])
-    y = np.hstack([y_train, y_test])
-
-    # Flatten images: (N, 28, 28) -> (N, 784)
-    X = X.reshape(X.shape[0], -1).astype(np.float32)
+    X = mnist.data.astype(np.float32)
+    y = mnist.target.astype(np.int64)
 
     return X, y
 

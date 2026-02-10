@@ -232,7 +232,7 @@ The process:
 
 **Gradient descent** is the optimization algorithm that uses the gradients from backpropagation to update weights. Think of it as navigating a hilly landscape in fog — you can only feel the slope under your feet and step downhill. The "landscape" is the loss surface — a map of how the cost function changes as you adjust the network's weights. The lowest point on that surface is the set of weights that makes your model's predictions as close to the truth as possible.
 
-![gradient descent on a loss surface](media/gradient_descent.png) #FIXME
+![gradient descent on a loss surface](media/gradient_descent.png)
 
 The **learning rate** ($\alpha$) controls step size:
 

@@ -53,7 +53,7 @@ Applied Data Science with Python course materials (UCSF DataSci 223, Spring 2025
 - Main headings use a single `#` with real sub-sections via `##`/`###` (never bolded fake headings).
 - Prefer concise bullets over long prose with 4-space indents for nesting.
 - Each major section should usually include:
-  - brief intro
+  - freeform intro — can be multiple paragraphs; this is where concepts are explained, analogies drawn, and connections to previous lectures made. Prior years' lecture content (see `lectures_25/` and `lectures_24/`) is a good source of content to adapt here.
   - a visual/table/output (or `#FIXME` placeholder)
   - a `### Reference Card: ...` table
   - a short `### Code Snippet: ...`

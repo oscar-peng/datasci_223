@@ -2,35 +2,7 @@ Neural Networks: If I Only Had a Brain
 
 - hw06 #FIXME
 
-# References
-
-## Documentation
-
-- [Keras Documentation](https://keras.io/)
-- [Keras Getting Started](https://keras.io/getting_started/)
-- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
-- [PyTorch Tutorials](https://pytorch.org/tutorials/)
-
-## Books
-
-- _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition) — **the** Keras book, practical and accessible
-- _Dive into Deep Learning_ - [d2l.ai](https://d2l.ai) — hands-on with code examples
-- _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/) — comprehensive theory reference
-
-## Tutorials & Articles
-
-- [A Visual Introduction to Neural Networks](http://www.r2d3.us/visual-intro-to-machine-learning-part-1/)
-- [3Blue1Brown: Neural Networks](https://www.3blue1brown.com/topics/neural-networks) - excellent visual series
-- [TensorFlow Playground](https://playground.tensorflow.org/) - interactive neural network visualization
-- [Neural Network Zoo](https://www.asimovinstitute.org/neural-network-zoo/) - visual guide to network architectures
-
-## Health Data Science & Deep Learning
-
-- Miotto et al. (2018). Deep learning for healthcare: review, opportunities and challenges. _Briefings in Bioinformatics_
-- Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
-- Rajpurkar et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning
-
-![junior dev vs. NN](media/70wnk5kfr5hc1.jpeg)
+![junior dev vs. NN](media/junior_dev_vs_nn.jpeg)
 
 # Neural Networks Overview
 
@@ -155,7 +127,9 @@ Deeper networks with fewer neurons per layer tend to generalize better than very
 
 # Activation Functions
 
-Activation functions introduce **non-linearity** into neural networks. Without them, stacking layers of linear operations just produces another linear operation — no matter how deep the network, it would behave like a single linear model, unable to capture the complex patterns that make neural networks powerful.
+Remember the biological neuron's cell body — it receives inputs from dendrites and "decides" whether to fire. The activation function is the artificial version of that decision. It takes the weighted sum of inputs and transforms it into the neuron's output.
+
+Activation functions introduce **non-linearity** into neural networks. Without them, stacking layers of linear operations just produces another linear operation — no matter how deep the network, it would behave like a single linear model, unable to capture the complex patterns that make neural networks powerful. You've already seen one activation function in disguise: the sigmoid function that powers logistic regression from last lecture. Neural networks generalize this idea — every neuron gets its own activation function.
 
 Each activation function has trade-offs. The right choice depends on where in the network the function is used (hidden layer vs. output layer) and what kind of prediction you're making.
 
@@ -201,17 +175,125 @@ print(relu(x))  # [0 0 0 1 2]
 
 ![XKCD: Machine Learning](media/xkcd_machine_learning.png)
 
-# Training Neural Networks
+# How Neural Networks Learn
 
-In the last lecture, we trained classifiers with a single call to `.fit()` and evaluated them with train/test splits and cross-validation. Neural networks follow the same high-level pattern — split your data, fit on training, evaluate on validation — but the *training process itself* is more involved.
+In the last lecture, we trained classifiers — logistic regression, random forests, XGBoost — with a single call to `.fit()` and evaluated them with train/test splits, cross-validation, and metrics like precision, recall, and AUC. Neural networks follow the same high-level pattern — split your data, fit on training, evaluate on validation — and the same evaluation metrics apply. But the *training process itself* is more involved.
 
 Instead of a closed-form solution, neural networks learn iteratively: make a prediction, measure the error, adjust weights, repeat. Three concepts work together: a **cost function** measures error, **backpropagation** distributes that error to each weight, and **gradient descent** updates weights to reduce error.
 
 > **Remember from last lecture:** Always split your data before training. Fit preprocessors (like `StandardScaler`) on training data only to prevent data leakage. Use `stratify=y` when splitting classification datasets.
 
+## Cost Functions
+
+The cost function (or loss function) quantifies how wrong the model's predictions are. Training minimizes this value.
+
+Consider a concrete example: your model predicts a 30% chance of disease for a patient who actually has the disease. How bad is that mistake? What about predicting 90% for a healthy patient? The cost function answers these questions with a single number — and different cost functions answer them differently. Cross-entropy penalizes confident wrong answers harshly, while MSE treats all errors more uniformly.
+
+The choice of loss function depends on your task — just like choosing between accuracy, precision, and recall in the last lecture, different loss functions emphasize different kinds of errors.
+
+### Reference Card: Cost Functions
+
+| Function | Formula | Best For | Notes |
+|:---|:---|:---|:---|
+| **MSE** | $\frac{1}{n}\sum(y - \hat{y})^2$ | Regression | Penalizes large errors heavily |
+| **Cross-Entropy** | $-\sum y \log(\hat{y})$ | Multi-class classification | Works with softmax output |
+| **Binary Cross-Entropy** | $-[y\log(\hat{y}) + (1-y)\log(1-\hat{y})]$ | Binary classification | Works with sigmoid output |
+| **Huber Loss** | MSE when small, MAE when large | Robust regression | Less sensitive to outliers than MSE |
+
+## Backpropagation
+
+**Backpropagation** is the algorithm that makes neural network training possible. A neural network might have thousands or millions of weights — backpropagation efficiently computes how much each one contributed to the overall error, then distributes that error backward through the network.
+
+You don't need to implement this yourself (Keras handles it inside `model.fit()`), but understanding the idea helps you diagnose training problems.
+
+![backpropagation](media/backpropagation.png)
+
+The process:
+
+1. **Forward pass** — input flows through the network, producing a prediction
+2. **Compute loss** — compare prediction to true label using the cost function
+3. **Backward pass** — compute the gradient of the loss with respect to each weight using the **chain rule** of calculus
+4. **Update weights** — adjust each weight proportionally to its gradient
+
+### Reference Card: Backpropagation
+
+| Component | Details |
+|:---|:---|
+| **Purpose** | Compute gradients of the loss with respect to every weight in the network |
+| **Mechanism** | Apply the chain rule layer-by-layer, from output back to input |
+| **Forward Pass** | Compute and cache activations at each layer |
+| **Backward Pass** | Propagate error gradients from output to input layers |
+| **Key Insight** | Each weight's gradient tells us how much changing that weight would change the loss |
+| **In Keras** | Handled automatically by `model.fit()` — no manual implementation needed |
+
+![XKCD: Optimization](media/xkcd_optimization.png)
+
+## Gradient Descent
+
+**Gradient descent** is the optimization algorithm that uses the gradients from backpropagation to update weights. Think of it as navigating a hilly landscape in fog — you can only feel the slope under your feet and step downhill. The "landscape" is the loss surface — a map of how the cost function changes as you adjust the network's weights. The lowest point on that surface is the set of weights that makes your model's predictions as close to the truth as possible.
+
+![gradient descent on a loss surface](media/gradient_descent.png) #FIXME
+
+The **learning rate** ($\alpha$) controls step size:
+
+- Too large: overshoot the minimum, training diverges
+- Too small: training is painfully slow, may get stuck in local minima
+- Just right: converges efficiently to a good solution
+
+### Reference Card: Gradient Descent Variants
+
+| Variant | Batch Size | Pros | Cons |
+|:---|:---|:---|:---|
+| **Batch GD** | Entire dataset | Stable convergence | Slow, memory-intensive |
+| **Stochastic GD (SGD)** | Single sample | Fast updates, can escape local minima | Noisy, unstable |
+| **Mini-batch GD** | Small subset (32–512) | Best of both worlds | Requires batch size tuning |
+
+Modern practice almost always uses **mini-batch gradient descent** — that's what the `batch_size` parameter in `model.fit()` controls. The default is 32, which is a good starting point. Larger batches use more memory but give more stable gradients; smaller batches are noisier but can help escape local minima.
+
+The other key choice is the **optimizer**. **Adam** (the default in most Keras examples) automatically adjusts the learning rate for each parameter, so it works well out of the box. If you need more control, **SGD** with a tuned learning rate is the classic alternative.
+
+### Code Snippet: Optimizers
+
+```python
+# Adam — good default
+model.compile(optimizer='adam', loss='categorical_crossentropy')
+
+# SGD — when you want explicit control
+from keras.optimizers import SGD
+model.compile(optimizer=SGD(learning_rate=0.01), loss='categorical_crossentropy')
+```
+
+## Regularization
+
+We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. The classic sign: training accuracy keeps climbing while validation accuracy plateaus or drops.
+
+![overfitting training vs validation curves](media/overfitting_curves.png) #FIXME
+
+The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like. Regularization techniques constrain the model to generalize better.
+
+### Reference Card: Regularization Techniques
+
+| Technique | How It Works | Keras Usage |
+|:---|:---|:---|
+| **L1 Regularization** | Adds sum of absolute weights to loss; encourages sparsity | `Dense(64, kernel_regularizer='l1')` |
+| **L2 Regularization** | Adds sum of squared weights to loss; penalizes large weights | `Dense(64, kernel_regularizer='l2')` |
+| **Dropout** | Randomly zeros a fraction of neurons during training | `Dropout(0.5)` layer |
+| **Early Stopping** | Stops training when validation loss stops improving | `EarlyStopping` callback |
+| **Data Augmentation** | Applies random transformations to training data (rotation, flip, etc.) | `keras.layers.RandomFlip`, `RandomRotation`, etc. |
+
+### Reference Card: `Dropout`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Dropout(rate)` |
+| **Purpose** | Randomly set a fraction of input units to zero during training to prevent overfitting |
+| **Key Parameters** | `rate`: Fraction of inputs to drop (e.g., 0.5 = 50%) |
+| **Behavior** | Active during training only — at inference, all neurons are used (with scaled outputs) |
+| **Placement** | After Dense or Conv layers, before the next layer |
+
 ## Preparing Data for Neural Networks
 
-Neural networks are sensitive to input scale. Features with large values will dominate training, so normalizing or standardizing inputs is essential — not optional.
+Neural networks are sensitive to input scale. Features with large values will dominate training, so normalizing or standardizing inputs is essential — not optional. You already know `StandardScaler` from last lecture — the same tool applies here, along with a few neural-network-specific steps.
 
 ### Reference Card: Data Preparation
 
@@ -241,9 +323,9 @@ y_val = to_categorical(y_val, num_classes=10)
 
 ## Keras: The Framework We'll Use
 
-**Keras** is a high-level deep learning API (bundled with TensorFlow). It gives you the same define-compile-fit workflow you saw with scikit-learn, but with more control over model architecture.
+Now that you understand what cost functions, backpropagation, gradient descent, and regularization do, here's how you use them in practice. **Keras** is a high-level deep learning API that gives you the same define-compile-fit workflow you saw with scikit-learn, but with more control over model architecture.
 
-> **Import styles:** You'll see two import patterns in the wild: `from keras import Sequential` and `from tensorflow.keras import Sequential`. Both work — Keras ships as a standalone package and is also bundled inside TensorFlow. Our demos use `tensorflow.keras` since it's the most common in tutorials. Either is fine.
+> **Import styles:** You'll see two import patterns in the wild: `from keras import Sequential` (standalone Keras) and `from tensorflow.keras import Sequential` (TensorFlow-bundled). Both work. Standalone `keras` is the modern default (Keras 3+); `tensorflow.keras` is common in older tutorials. Either is fine for this course.
 
 The basic workflow:
 
@@ -295,19 +377,6 @@ predictions = model.predict(X_new)
 | **Key Parameters** | • `x, y`: Training data and labels<br>• `epochs`: Number of passes through the full dataset<br>• `batch_size`: Samples per gradient update (default 32)<br>• `validation_data`: Tuple `(X_val, y_val)` for monitoring<br>• `callbacks`: List of callback objects (EarlyStopping, etc.) |
 | **Returns** | `History` object with loss/metric values per epoch |
 
-## Cost Functions
-
-The cost function (or loss function) quantifies how wrong the model's predictions are. Training minimizes this value. The choice of loss function depends on your task — just like choosing between accuracy, precision, and recall in the last lecture, different loss functions emphasize different kinds of errors.
-
-### Reference Card: Cost Functions
-
-| Function | Formula | Best For | Notes |
-|:---|:---|:---|:---|
-| **MSE** | $\frac{1}{n}\sum(y - \hat{y})^2$ | Regression | Penalizes large errors heavily |
-| **Cross-Entropy** | $-\sum y \log(\hat{y})$ | Multi-class classification | Works with softmax output |
-| **Binary Cross-Entropy** | $-[y\log(\hat{y}) + (1-y)\log(1-\hat{y})]$ | Binary classification | Works with sigmoid output |
-| **Huber Loss** | MSE when small, MAE when large | Robust regression | Less sensitive to outliers than MSE |
-
 ### Code Snippet: Choosing a Loss Function
 
 ```python
@@ -320,93 +389,6 @@ model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accur
 # Regression — linear output + MSE
 model.compile(optimizer='adam', loss='mse')
 ```
-
-## Backpropagation
-
-**Backpropagation** is the algorithm that makes neural network training possible. A neural network might have thousands or millions of weights — backpropagation efficiently computes how much each one contributed to the overall error, then distributes that error backward through the network.
-
-You don't need to implement this yourself (Keras handles it inside `model.fit()`), but understanding the idea helps you diagnose training problems.
-
-![backpropagation](media/backpropagation.png)
-
-The process:
-
-1. **Forward pass** — input flows through the network, producing a prediction
-2. **Compute loss** — compare prediction to true label using the cost function
-3. **Backward pass** — compute the gradient of the loss with respect to each weight using the **chain rule** of calculus
-4. **Update weights** — adjust each weight proportionally to its gradient
-
-### Reference Card: Backpropagation
-
-| Component | Details |
-|:---|:---|
-| **Purpose** | Compute gradients of the loss with respect to every weight in the network |
-| **Mechanism** | Apply the chain rule layer-by-layer, from output back to input |
-| **Forward Pass** | Compute and cache activations at each layer |
-| **Backward Pass** | Propagate error gradients from output to input layers |
-| **Key Insight** | Each weight's gradient tells us how much changing that weight would change the loss |
-| **In Keras** | Handled automatically by `model.fit()` — no manual implementation needed |
-
-## Gradient Descent
-
-**Gradient descent** is the optimization algorithm that uses the gradients from backpropagation to update weights. Think of it as navigating a hilly landscape in fog — you can only feel the slope under your feet and step downhill.
-
-![XKCD: Optimization](media/xkcd_optimization.png)
-
-The **learning rate** ($\alpha$) controls step size:
-
-- Too large: overshoot the minimum, training diverges
-- Too small: training is painfully slow, may get stuck in local minima
-- Just right: converges efficiently to a good solution
-
-### Reference Card: Gradient Descent Variants
-
-| Variant | Batch Size | Pros | Cons |
-|:---|:---|:---|:---|
-| **Batch GD** | Entire dataset | Stable convergence | Slow, memory-intensive |
-| **Stochastic GD (SGD)** | Single sample | Fast updates, can escape local minima | Noisy, unstable |
-| **Mini-batch GD** | Small subset (32–512) | Best of both worlds | Requires batch size tuning |
-
-Modern practice almost always uses **mini-batch gradient descent** — that's what the `batch_size` parameter in `model.fit()` controls. The default is 32, which is a good starting point. Larger batches use more memory but give more stable gradients; smaller batches are noisier but can help escape local minima.
-
-The other key choice is the **optimizer**. **Adam** (the default in most Keras examples) automatically adjusts the learning rate for each parameter, so it works well out of the box. If you need more control, **SGD** with a tuned learning rate is the classic alternative.
-
-### Code Snippet: Optimizers
-
-```python
-# Adam — good default
-model.compile(optimizer='adam', loss='categorical_crossentropy')
-
-# SGD — when you want explicit control
-from keras.optimizers import SGD
-model.compile(optimizer=SGD(learning_rate=0.01), loss='categorical_crossentropy')
-```
-
-## Regularization
-
-We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. Regularization techniques constrain the model to generalize better.
-
-The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like.
-
-### Reference Card: Regularization Techniques
-
-| Technique | How It Works | Keras Usage |
-|:---|:---|:---|
-| **L1 Regularization** | Adds sum of absolute weights to loss; encourages sparsity | `Dense(64, kernel_regularizer='l1')` |
-| **L2 Regularization** | Adds sum of squared weights to loss; penalizes large weights | `Dense(64, kernel_regularizer='l2')` |
-| **Dropout** | Randomly zeros a fraction of neurons during training | `Dropout(0.5)` layer |
-| **Early Stopping** | Stops training when validation loss stops improving | `EarlyStopping` callback |
-| **Data Augmentation** | Applies random transformations to training data (rotation, flip, etc.) | `keras.layers.RandomFlip`, `RandomRotation`, etc. |
-
-### Reference Card: `Dropout`
-
-| Component | Details |
-|:---|:---|
-| **Function** | `keras.layers.Dropout(rate)` |
-| **Purpose** | Randomly set a fraction of input units to zero during training to prevent overfitting |
-| **Key Parameters** | `rate`: Fraction of inputs to drop (e.g., 0.5 = 50%) |
-| **Behavior** | Active during training only — at inference, all neurons are used (with scaled outputs) |
-| **Placement** | After Dense or Conv layers, before the next layer |
 
 ### Code Snippet: Regularization in Practice
 
@@ -479,11 +461,13 @@ Beyond Dense layers, Keras provides specialized layers for different data types.
 
 ## Convolutional Neural Networks (CNNs)
 
-Dense layers treat every input pixel independently. A **convolutional layer** instead slides a small filter (kernel) across the image, detecting local patterns — edges, textures, shapes — regardless of where they appear.
+Dense layers treat every input pixel independently — `Flatten` turns a 28x28 image into 784 numbers and the network has no idea which pixels are neighbors. A **convolutional layer** instead slides a small filter (kernel) across the image, detecting local patterns — edges, textures, shapes — regardless of where they appear.
+
+Imagine a tiny 3x3 window scanning across a chest X-ray. At each position, the filter multiplies its 9 learned values against the 9 pixels it overlaps, producing a single output number. A filter tuned to detect horizontal edges will "light up" wherever the image has a horizontal edge — whether that's in the top-left corner or bottom-right. This is why CNNs are so powerful for medical imaging: the same tumor edge pattern gets detected no matter where it appears in the scan.
 
 ![cat dog panda](media/cat_dog_panda.png)
 
-CNNs learn hierarchical features: early layers detect edges and textures, deeper layers recognize shapes and objects.
+CNNs learn hierarchical features: early layers detect edges and textures, deeper layers combine those into shapes and objects — much like how the visual cortex processes information in stages.
 
 ### Building a CNN Step by Step
 
@@ -542,7 +526,7 @@ Compare this to the Dense-only model: the first half (Conv2D + Pooling) extracts
 
 ## Recurrent Neural Networks (RNNs)
 
-Dense and convolutional layers process each input independently — they have no concept of "before" or "after." But some data has a meaningful **order** — a patient's vital signs over 24 hours, words in a clinical note, beats in an ECG trace. The order carries information, and ignoring it throws away signal.
+Every model we've seen so far — from logistic regression in the last lecture to CNNs above — treats each input as independent. A blood pressure reading is just a number; a pixel is just a value. But some data has a meaningful **order** — a patient's vital signs over 24 hours, words in a clinical note, beats in an ECG trace. The order carries information, and ignoring it throws away signal. A blood pressure of 180 means something very different if the previous reading was 120 (sudden spike) versus 175 (stable-high).
 
 RNNs maintain a **hidden state** that carries information from previous time steps, so the network can "remember" what it has seen.
 
@@ -642,6 +626,8 @@ Building a model is only half the job — you also need to manage the training p
 ## Training Callbacks
 
 Neural network training can take minutes to hours. You don't want to babysit it — and you definitely don't want to lose your best model because training ran too long and started overfitting. Callbacks hook into the training loop to save checkpoints, stop early, or log metrics — without modifying your training code.
+
+![training curves with early stopping](media/early_stopping_curves.png) #FIXME
 
 ### Reference Card: `ModelCheckpoint`
 
@@ -759,7 +745,7 @@ class SimpleNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(784, 128)
-        self.fc2 = nn.Linear(128, 47)
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -781,9 +767,11 @@ for inputs, targets in train_loader:
 
 # LIVE DEMO!!!
 
+![XKCD: Tasks](media/xkcd_tasks.png)
+
 # Neural Networks in Practice
 
-Neural networks are powerful but not magic. Knowing when to use them — and when a simpler model from last lecture will do — is an important skill. A random forest on well-engineered features often beats a poorly configured neural network, and it's far easier to explain to a clinician.
+Neural networks are powerful but not magic. Knowing when to use them — and when a simpler model from last lecture will do — is an important skill. Last week you compared logistic regression, random forests, XGBoost, and a simple neural network on handwritten digits — and the classical models held their own. A random forest on well-engineered features often beats a poorly configured neural network, and it's far easier to explain to a clinician.
 
 ### Reference Card: When to Use Neural Networks
 
@@ -822,3 +810,31 @@ When you do reach for a neural network, these established patterns help you get 
 - **Ensemble Methods:** Train multiple models and combine their predictions (averaging or voting). This almost always improves accuracy and makes predictions more robust.
 - **Normalization:** Batch normalization, layer normalization, and instance normalization all stabilize training by controlling the scale of values flowing through the network. Use `BatchNormalization()` in Keras when training is unstable.
 - **Residual Connections:** In very deep networks (50+ layers), skip connections let gradients flow directly through the network, preventing the vanishing gradient problem. This is how architectures like ResNet can be hundreds of layers deep.
+
+# References
+
+## Documentation
+
+- [Keras Documentation](https://keras.io/)
+- [Keras Getting Started](https://keras.io/getting_started/)
+- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
+- [PyTorch Tutorials](https://pytorch.org/tutorials/)
+
+## Books
+
+- _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition) — **the** Keras book, practical and accessible
+- _Dive into Deep Learning_ - [d2l.ai](https://d2l.ai) — hands-on with code examples
+- _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/) — comprehensive theory reference
+
+## Tutorials & Articles
+
+- [A Visual Introduction to Neural Networks](http://www.r2d3.us/visual-intro-to-machine-learning-part-1/)
+- [3Blue1Brown: Neural Networks](https://www.3blue1brown.com/topics/neural-networks) - excellent visual series
+- [TensorFlow Playground](https://playground.tensorflow.org/) - interactive neural network visualization
+- [Neural Network Zoo](https://www.asimovinstitute.org/neural-network-zoo/) - visual guide to network architectures
+
+## Health Data Science & Deep Learning
+
+- Miotto et al. (2018). Deep learning for healthcare: review, opportunities and challenges. _Briefings in Bioinformatics_
+- Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
+- Rajpurkar et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning

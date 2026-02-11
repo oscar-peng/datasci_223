@@ -30,17 +30,6 @@ jobs:
           pip install -r requirements.txt
           pip install jupytext papermill nbformat pytest
 
-      - name: Convert markdown to notebook (if needed)
-        run: |
-          if [ -f assignment.md ] && [ ! -f assignment.ipynb ]; then
-            jupytext --to notebook assignment.md
-          fi
-
-      - name: Execute assignment notebook
-        run: |
-          papermill assignment.ipynb executed_notebook.ipynb -k python3
-        continue-on-error: true
-
       - name: Download latest test files
         run: |
           mkdir -p .github/tests

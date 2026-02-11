@@ -47,6 +47,7 @@ from sklearn.metrics import confusion_matrix
 from helpers import (
     load_cifar10, load_ecg5000,
     plot_training_history, plot_confusion_matrix,
+    plot_sample_images, plot_ecg_traces, plot_predictions,
     CIFAR10_CLASSES, ECG_CLASSES,
 )
 
@@ -82,7 +83,13 @@ print(f"Train: {X_train.shape}, Test: {X_test.shape}")
 ```
 
 ```python
+# Visualize some training images to verify data loaded correctly
+plot_sample_images(X_train, y_train, CIFAR10_CLASSES)
+```
+
+```python
 # TODO: Build a Dense model using Sequential
+# Tip: call model_dense.summary() after building to verify your architecture
 # Requirements:
 #   - Input(shape=(32, 32, 3))
 #   - Flatten()
@@ -122,6 +129,13 @@ test_acc = None  # replace
 y_pred = None  # replace
 y_true = None  # replace
 cm = None  # replace
+```
+
+```python
+# Optional: visualize predictions and confusion matrix to diagnose issues
+# plot_predictions(X_test, y_true, y_pred, CIFAR10_CLASSES)
+# plot_confusion_matrix(y_true, y_pred, list(CIFAR10_CLASSES.values()),
+#                       os.path.join(OUTPUT_DIR, "part1_confusion_matrix.png"))
 ```
 
 ```python
@@ -169,6 +183,7 @@ print("-" * 40)
 #   - Flatten()
 #   - Dense hidden layer with ReLU + Dropout
 #   - Dense(10, activation='softmax') as output
+# Tip: call model_cnn.summary() after building to check layer shapes and param counts
 model_cnn = None  # replace with your Sequential model
 ```
 
@@ -212,6 +227,13 @@ cnn_acc = None  # replace
 y_pred_cnn = None  # replace
 y_true_cnn = None  # replace
 cm_cnn = None  # replace
+```
+
+```python
+# Optional: visualize predictions and confusion matrix to diagnose issues
+# plot_predictions(X_test, y_true_cnn, y_pred_cnn, CIFAR10_CLASSES)
+# plot_confusion_matrix(y_true_cnn, y_pred_cnn, list(CIFAR10_CLASSES.values()),
+#                       os.path.join(OUTPUT_DIR, "part2_confusion_matrix.png"))
 ```
 
 ```python
@@ -262,12 +284,18 @@ print(f"Classes: {list(ECG_CLASSES.values())}")
 ```
 
 ```python
+# Visualize ECG traces to understand the data
+plot_ecg_traces(X_train_ecg, y_train_ecg, ECG_CLASSES)
+```
+
+```python
 # TODO: Build an LSTM model using Sequential
 # Requirements:
 #   - Input(shape=(140, 1))
 #   - LSTM layer (e.g., 64 units)
 #   - Dropout
 #   - Dense(5, activation='softmax')
+# Tip: call model_lstm.summary() after building to verify your architecture
 model_lstm = None  # replace with your Sequential model
 ```
 
@@ -307,6 +335,12 @@ lstm_acc = None  # replace
 y_pred_ecg = None  # replace
 y_true_ecg = None  # replace
 cm_ecg = None  # replace
+```
+
+```python
+# Optional: visualize confusion matrix to see which heartbeat types are confused
+# plot_confusion_matrix(y_true_ecg, y_pred_ecg, list(ECG_CLASSES.values()),
+#                       os.path.join(OUTPUT_DIR, "part3_confusion_matrix.png"))
 ```
 
 ```python

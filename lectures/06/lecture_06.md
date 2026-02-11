@@ -1,18 +1,12 @@
 Neural Networks: If I Only Had a Brain
 
-- hw06 #FIXME
+- hw06 <https://classroom.github.com/a/h9aDWexL>
 
 # Links
 
-## Documentation
-
-- [Keras Documentation](https://keras.io/)
-- [Keras Getting Started](https://keras.io/getting_started/)
-- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
-- [PyTorch Tutorials](https://pytorch.org/tutorials/)
-
 ## Books
 
+- [Hands-on Machine Learning, Géron](https://learning.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) and companion [repository](https://github.com/ageron/handson-ml3) — practical Keras-focused, code-first introduction to ML and deep learning
 - _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition) — **the** Keras book, practical and accessible
 - _Dive into Deep Learning_ - [d2l.ai](https://d2l.ai) — hands-on with code examples
 - _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/) — comprehensive theory reference
@@ -23,6 +17,13 @@ Neural Networks: If I Only Had a Brain
 - [3Blue1Brown: Neural Networks](https://www.3blue1brown.com/topics/neural-networks) - excellent visual series
 - [TensorFlow Playground](https://playground.tensorflow.org/) - interactive neural network visualization
 - [Neural Network Zoo](https://www.asimovinstitute.org/neural-network-zoo/) - visual guide to network architectures
+
+## Documentation
+
+- [Keras Documentation](https://keras.io/)
+- [Keras Getting Started](https://keras.io/getting_started/)
+- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
+- [PyTorch Tutorials](https://pytorch.org/tutorials/)
 
 ## Health Data Science & Deep Learning
 

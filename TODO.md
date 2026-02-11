@@ -1,11 +1,12 @@
 # Dataset Options for Future Lectures
 
 **Lectures 6-8 (Neural Networks / Deep Learning):**
+
 - `cifar10` - 60k 32x32 color images, 10 classes (keras)
 - `fetch_20newsgroups` - ~18k text documents, 20 categories (sklearn)
-- `fetch_covtype` - 581k samples, forest cover type, 7 classes (sklearn)
 
 **MedMNIST options (unused - dermamnist/pneumoniamnist in Lecture 05 demos):**
+
 - `pathmnist` - pathology (colon cancer)
 - `chestmnist` - chest X-ray (14 diseases)
 - `octmnist` - retinal OCT
@@ -15,7 +16,9 @@
 - `tissuemnist` - kidney cortex microscopy
 - `organamnist/organcmnist/organsmnist` - abdominal CT (axial/coronal/sagittal)
 
----
+# Improve xkcd Fetching
+
+See: <https://xkcd.com/json.html> for API details. The current `fetch_xkcd_2x.py` tries to overengineer the problem.
 
 # Lecture 02 Follow-up Tasks
 

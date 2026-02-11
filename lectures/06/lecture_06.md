@@ -2,6 +2,34 @@ Neural Networks: If I Only Had a Brain
 
 - hw06 #FIXME
 
+# Links
+
+## Documentation
+
+- [Keras Documentation](https://keras.io/)
+- [Keras Getting Started](https://keras.io/getting_started/)
+- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
+- [PyTorch Tutorials](https://pytorch.org/tutorials/)
+
+## Books
+
+- _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition) — **the** Keras book, practical and accessible
+- _Dive into Deep Learning_ - [d2l.ai](https://d2l.ai) — hands-on with code examples
+- _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/) — comprehensive theory reference
+
+## Tutorials & Articles
+
+- [A Visual Introduction to Neural Networks](http://www.r2d3.us/visual-intro-to-machine-learning-part-1/)
+- [3Blue1Brown: Neural Networks](https://www.3blue1brown.com/topics/neural-networks) - excellent visual series
+- [TensorFlow Playground](https://playground.tensorflow.org/) - interactive neural network visualization
+- [Neural Network Zoo](https://www.asimovinstitute.org/neural-network-zoo/) - visual guide to network architectures
+
+## Health Data Science & Deep Learning
+
+- Miotto et al. (2018). Deep learning for healthcare: review, opportunities and challenges. _Briefings in Bioinformatics_
+- Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
+- Rajpurkar et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning
+
 ![junior dev vs. NN](media/junior_dev_vs_nn.jpeg)
 
 # Neural Networks Overview
@@ -53,7 +81,7 @@ In the 1980s, the Pentagon allegedly trained a neural network to detect tanks in
 
 ![image of not-a-tank](media/trees_no_tank.png)
 
-Then they tested on *new* photos. **The results were completely random.**
+Then they tested on _new_ photos. **The results were completely random.**
 
 After investigation, they discovered: all tank photos were taken on sunny days, while tree-only photos were taken on cloudy days. The military was the proud owner of a computer that could tell you if it was sunny.
 
@@ -177,7 +205,7 @@ print(relu(x))  # [0 0 0 1 2]
 
 # How Neural Networks Learn
 
-In the last lecture, we trained classifiers — logistic regression, random forests, XGBoost — with a single call to `.fit()` and evaluated them with train/test splits, cross-validation, and metrics like precision, recall, and AUC. Neural networks follow the same high-level pattern — split your data, fit on training, evaluate on validation — and the same evaluation metrics apply. But the *training process itself* is more involved.
+In the last lecture, we trained classifiers — logistic regression, random forests, XGBoost — with a single call to `.fit()` and evaluated them with train/test splits, cross-validation, and metrics like precision, recall, and AUC. Neural networks follow the same high-level pattern — split your data, fit on training, evaluate on validation — and the same evaluation metrics apply. But the _training process itself_ is more involved.
 
 Instead of a closed-form solution, neural networks learn iteratively: make a prediction, measure the error, adjust weights, repeat. Three concepts work together: a **cost function** measures error, **backpropagation** distributes that error to each weight, and **gradient descent** updates weights to reduce error.
 
@@ -765,8 +793,6 @@ for inputs, targets in train_loader:
 
 > **Keras vs. PyTorch:** Keras provides high-level APIs (`model.fit()`) that handle the training loop for you. PyTorch gives you explicit control over every step. Both are widely used — Keras for rapid prototyping, PyTorch for research flexibility.
 
-# LIVE DEMO!!!
-
 ![XKCD: Tasks](media/xkcd_tasks.png)
 
 # Neural Networks in Practice
@@ -790,7 +816,7 @@ The field moves fast. These directions are especially relevant to health data sc
 
 - **Few-Shot Learning:** In clinical settings, you might have only a handful of labeled examples (e.g., 20 X-rays of a rare condition). Few-shot methods learn useful representations from very limited labeled data, often by leveraging pre-trained models.
 - **Foundation Models:** Large models pre-trained on massive datasets (like GPT for text, or Med-PaLM for medical QA) that can be fine-tuned for specific tasks. This is transfer learning at scale — and it's transforming what's possible with small clinical datasets.
-- **Explainability (XAI):** Tools like SHAP, LIME, and attention visualization help interpret "black box" models. In healthcare, a model's prediction is only useful if clinicians can understand *why* it made that prediction. We'll see more of this in future lectures.
+- **Explainability (XAI):** Tools like SHAP, LIME, and attention visualization help interpret "black box" models. In healthcare, a model's prediction is only useful if clinicians can understand _why_ it made that prediction. We'll see more of this in future lectures.
 - **Federated Learning:** Trains a shared model across multiple hospitals without moving patient data. Each site trains locally and shares only model updates — not raw records. This is how you do multi-site studies without centralized data.
 
 ## Current Limitations
@@ -811,30 +837,4 @@ When you do reach for a neural network, these established patterns help you get 
 - **Normalization:** Batch normalization, layer normalization, and instance normalization all stabilize training by controlling the scale of values flowing through the network. Use `BatchNormalization()` in Keras when training is unstable.
 - **Residual Connections:** In very deep networks (50+ layers), skip connections let gradients flow directly through the network, preventing the vanishing gradient problem. This is how architectures like ResNet can be hundreds of layers deep.
 
-# References
-
-## Documentation
-
-- [Keras Documentation](https://keras.io/)
-- [Keras Getting Started](https://keras.io/getting_started/)
-- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
-- [PyTorch Tutorials](https://pytorch.org/tutorials/)
-
-## Books
-
-- _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition) — **the** Keras book, practical and accessible
-- _Dive into Deep Learning_ - [d2l.ai](https://d2l.ai) — hands-on with code examples
-- _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/) — comprehensive theory reference
-
-## Tutorials & Articles
-
-- [A Visual Introduction to Neural Networks](http://www.r2d3.us/visual-intro-to-machine-learning-part-1/)
-- [3Blue1Brown: Neural Networks](https://www.3blue1brown.com/topics/neural-networks) - excellent visual series
-- [TensorFlow Playground](https://playground.tensorflow.org/) - interactive neural network visualization
-- [Neural Network Zoo](https://www.asimovinstitute.org/neural-network-zoo/) - visual guide to network architectures
-
-## Health Data Science & Deep Learning
-
-- Miotto et al. (2018). Deep learning for healthcare: review, opportunities and challenges. _Briefings in Bioinformatics_
-- Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
-- Rajpurkar et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning
+# LIVE DEMO!!!

@@ -34,12 +34,10 @@ Adapted from Google Keras code example [Image classification from scratch](https
 # Install required packages
 %pip install -q numpy matplotlib tensorflow
 
-# If apple silicon install tensorflow-metal
-import os
-
-if os.uname().machine == "arm64":
+# Apple Silicon GPU acceleration
+import platform
+if platform.system() == "Darwin" and platform.machine() == "arm64":
     %pip install -q tensorflow-metal
-    pass
 
 %reset -f
 ```

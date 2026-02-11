@@ -21,7 +21,7 @@ Recurrent Neural Networks (RNNs) process sequences one step at a time, maintaini
 ## Setup
 
 ```python
-%pip install -q numpy matplotlib tensorflow seaborn scikit-learn
+%pip install -q -r requirements.txt
 
 # NOTE: We skip tensorflow-metal here — Metal GPU doesn't optimize RNN/LSTM
 # operations well, and CPU is actually faster for this small dataset.

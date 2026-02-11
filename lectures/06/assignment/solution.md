@@ -3,6 +3,17 @@
 ## Setup
 
 ```python
+%pip install -q -r requirements.txt
+
+# GPU acceleration (platform-specific)
+import platform
+if platform.system() == "Darwin" and platform.machine() == "arm64":
+    %pip install -q tensorflow-metal
+
+%reset -f
+```
+
+```python
 import os
 import json
 import numpy as np
@@ -13,6 +24,15 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import tensorflow as tf
 tf.random.set_seed(42)
 np.random.seed(42)
+
+# Report available accelerators
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    print(f"GPU acceleration: {len(gpus)} device(s)")
+    for gpu in gpus:
+        print(f"  {gpu.name}")
+else:
+    print("No GPU detected — using CPU")
 
 from tensorflow import keras
 from keras import Sequential

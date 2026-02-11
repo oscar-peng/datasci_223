@@ -40,7 +40,7 @@ class TestPart1:
         assert "confusion_matrix" in results, "Results should contain 'confusion_matrix'"
 
     def test_part1_accuracy_threshold(self):
-        """Dense model achieves >35% accuracy on CIFAR-10."""
+        """Dense model achieves >20% accuracy on CIFAR-10."""
         path = os.path.join(OUTPUT_DIR, "part1_results.json")
         if not os.path.exists(path):
             pytest.skip("part1_results.json not found")

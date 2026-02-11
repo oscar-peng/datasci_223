@@ -50,29 +50,6 @@ Information flows from dendrites to axon via the cell body. Axon connects to den
 - Synapses vary in strength
 - Synapses may be excitatory or inhibitory
 
-### Pigeons as Art Experts (Watanabe et al. 1995)
-
-Experiment:
-
-- Pigeon in Skinner box
-- Present paintings of two different artists (e.g. Chagall / Van Gogh)
-- Reward for pecking when presented a particular artist (e.g. Van Gogh)
-
-![pigeon in skinner box](media/pigeon_skinner_box.png)
-
-![van gogh painting](media/van_gogh_painting.png)
-
-![chagall painting](media/chagall_painting.png)
-
-Pigeons discriminated between Van Gogh and Chagall with 95% accuracy on training images and 85% on previously unseen paintings.
-
-Pigeons do not simply memorize the pictures!
-
-- They extract and recognize patterns (the "style")
-- They generalize from training data to make predictions
-
-This is what neural networks (biological and artificial) are good at.
-
 ### The Tank Detector Parable
 
 In the 1980s, the Pentagon allegedly trained a neural network to detect tanks in photos. They split their photos into training and test sets, and the network learned to identify every test photo correctly.
@@ -173,33 +150,7 @@ Each activation function has trade-offs. The right choice depends on where in th
 | **Leaky ReLU** | $\max(0.01x, x)$ | $(-\infty, \infty)$ | No dying neurons | Small negative gradient | When dying ReLU is a concern |
 | **Softmax** | $\frac{e^{x_i}}{\sum e^{x_j}}$ | $(0, 1)$ | Multi-class probabilities | Computationally expensive | Multi-class output layer |
 
-## Introducing: ReLU
-
-The **Rectified Linear Unit (ReLU)** is the default activation function for hidden layers in modern deep learning. It's popular because it's dead simple: pass positive values through unchanged, zero everything else.
-
-### Reference Card: ReLU
-
-| Component | Details |
-|:---|:---|
-| **Function** | $f(x) = \max(0, x)$ |
-| **Purpose** | Introduces non-linearity by zeroing negative values |
-| **Gradient** | 1 for $x > 0$, 0 for $x < 0$ (undefined at 0, typically set to 0) |
-| **Strengths** | Computationally efficient, mitigates vanishing gradient, sparse activation |
-| **Dying ReLU** | Neurons stuck at zero output if weights push all inputs negative — use Leaky ReLU or careful weight initialization to mitigate |
-
 ![ReLU graph](media/relu.png)
-
-### Code Snippet: ReLU
-
-```python
-import numpy as np
-
-def relu(x):
-    return np.maximum(0, x)
-
-x = np.array([-2, -1, 0, 1, 2])
-print(relu(x))  # [0 0 0 1 2]
-```
 
 ![XKCD: Machine Learning](media/xkcd_machine_learning.png)
 
@@ -560,38 +511,7 @@ RNNs maintain a **hidden state** that carries information from previous time ste
 
 ![RNN](media/rnn.png)
 
-### Building an RNN Step by Step
-
-For sequential data (e.g., predicting the next value in a time series):
-
-1. **SimpleRNN or LSTM** — process the sequence one step at a time, accumulating context
-2. **Dense** — map the final hidden state to a prediction
-
-### Reference Card: `SimpleRNN`
-
-| Component | Details |
-|:---|:---|
-| **Function** | `keras.layers.SimpleRNN()` |
-| **Purpose** | Basic RNN layer for sequential data |
-| **Key Parameters** | • `units`: Number of output units<br>• `activation`: Activation function (default `'tanh'`)<br>• `return_sequences`: Return full sequence or just last output<br>• `input_shape`: Tuple of (timesteps, features) |
-| **Use Cases** | Short sequences, simple patterns, educational demos |
-
-### Code Snippet: Simple RNN
-
-```python
-from keras import Sequential
-from keras.layers import SimpleRNN, Dense
-
-# Predict next value from a sequence of 10 time steps, each with 3 features
-model = Sequential([
-    SimpleRNN(32, input_shape=(10, 3)),  # Process sequence, output final hidden state
-    Dense(1)                              # Map to prediction
-])
-
-model.compile(optimizer='adam', loss='mse')
-```
-
-SimpleRNN works for short sequences, but struggles with long ones — gradients vanish over many time steps. **LSTM** adds a gating mechanism to control what information to keep, forget, and output.
+A basic RNN (`SimpleRNN`) processes sequences one step at a time, but struggles with long sequences — gradients vanish over many time steps. **LSTM** fixes this with a gating mechanism that controls what information to keep, forget, and output. We'll see both side-by-side in the demo.
 
 ### Long Short-Term Memory (LSTM)
 
@@ -632,20 +552,6 @@ model = Sequential([
 
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 ```
-
-## Specialized Architectures
-
-Beyond CNNs and RNNs, several other architectures address specific problem types. You don't need to build these from scratch — pre-trained versions are available through libraries like Hugging Face — but knowing what exists helps you choose the right tool. We'll cover transformers in the next lecture.
-
-### Reference Card: Specialized Architectures
-
-| Architecture | Key Idea | Health Data Use Cases |
-|:---|:---|:---|
-| **Transformers** | Attention mechanisms process all inputs in parallel | Clinical NLP, medical report generation, protein structure |
-| **GANs** | Two networks compete: one generates, one discriminates | Synthetic medical images, data augmentation for rare conditions |
-| **Autoencoders** | Compress input to a bottleneck, then reconstruct | Anomaly detection in lab results, dimensionality reduction |
-| **Graph Neural Networks** | Operate on graph-structured data | Molecular property prediction, drug interaction networks |
-| **Diffusion Models** | Iteratively remove noise to generate data | Medical image synthesis, super-resolution imaging |
 
 # Training in Practice
 
@@ -701,60 +607,17 @@ history = model.fit(X_train, y_train,
 
 ## Saving and Loading Models
 
-Training a model can take a long time — you don't want to retrain from scratch every time you need a prediction. Keras makes it easy to save and load models.
+Training can take hours — save checkpoints so you can resume or deploy without retraining. The `ModelCheckpoint` callback (above) handles this during training. For manual save/load:
 
-### Code Snippet: Saving Models (Keras)
+### Code Snippet: Save and Resume
 
 ```python
-# Save entire model (architecture + weights + optimizer state)
+# Save after training
 model.save('my_model.keras')
 
-# Load model
+# Resume later
 from keras.models import load_model
-loaded_model = load_model('my_model.keras')
-
-# Save weights only
-model.save_weights('model_weights.weights.h5')
-model.load_weights('model_weights.weights.h5')
-```
-
-### Code Snippet: Saving Models (PyTorch)
-
-```python
-import torch
-
-# Save model state dict
-torch.save(model.state_dict(), 'model.pth')
-
-# Load (requires model class definition)
-model.load_state_dict(torch.load('model.pth'))
-```
-
-## Monitoring with TensorBoard
-
-How do you know if training is going well? Watching numbers scroll by isn't great. TensorBoard provides real-time visualization of training metrics — loss curves, accuracy, weight distributions, and model architecture — in a web dashboard.
-
-### Reference Card: `TensorBoard`
-
-| Component | Details |
-|:---|:---|
-| **Function** | `keras.callbacks.TensorBoard()` |
-| **Purpose** | Log training metrics for real-time visualization in a web dashboard |
-| **Key Parameters** | • `log_dir`: Directory for log files (e.g., `'./logs'`)<br>• `histogram_freq`: Epoch interval for weight histograms (0 to disable)<br>• `write_graph`: Whether to log the model graph |
-| **Launch** | `tensorboard --logdir=./logs` in terminal, then open the URL in a browser |
-
-### Code Snippet: TensorBoard
-
-```python
-from keras.callbacks import TensorBoard
-
-tensorboard_cb = TensorBoard(
-    log_dir='./logs',
-    histogram_freq=1,
-    write_graph=True
-)
-
-model.fit(X_train, y_train, callbacks=[tensorboard_cb])
+model = load_model('my_model.keras')
 ```
 
 ## Keras vs. PyTorch
@@ -808,33 +671,6 @@ Neural networks are powerful but not magic. Knowing when to use them — and whe
 | **Time series / sequential data** | Yes (LSTM/RNN) | ARIMA for simple forecasts |
 | **Text / NLP** | Yes (Transformers) | Bag-of-words + LogReg for simple tasks |
 | **Structured data, interpretability required** | No | Decision trees, logistic regression |
-| **Small labeled dataset** | Transfer learning or no | Classical ML with feature engineering |
-
-## Areas of Active Research
-
-The field moves fast. These directions are especially relevant to health data science:
-
-- **Few-Shot Learning:** In clinical settings, you might have only a handful of labeled examples (e.g., 20 X-rays of a rare condition). Few-shot methods learn useful representations from very limited labeled data, often by leveraging pre-trained models.
-- **Foundation Models:** Large models pre-trained on massive datasets (like GPT for text, or Med-PaLM for medical QA) that can be fine-tuned for specific tasks. This is transfer learning at scale — and it's transforming what's possible with small clinical datasets.
-- **Explainability (XAI):** Tools like SHAP, LIME, and attention visualization help interpret "black box" models. In healthcare, a model's prediction is only useful if clinicians can understand _why_ it made that prediction. We'll see more of this in future lectures.
-- **Federated Learning:** Trains a shared model across multiple hospitals without moving patient data. Each site trains locally and shares only model updates — not raw records. This is how you do multi-site studies without centralized data.
-
-## Current Limitations
-
-Neural networks are powerful, but they come with real constraints — especially in clinical settings:
-
-- **Interpretability:** A neural network might achieve 95% accuracy, but "the model says so" isn't an acceptable diagnosis. Clinicians need to understand the reasoning. This is the biggest barrier to clinical adoption.
-- **Data Hunger:** High-performing deep learning models typically require thousands to millions of labeled examples. In medicine, labeled data is expensive — it requires expert annotation (radiologist reads, pathology reports).
-- **Computational Cost:** Training a large model requires GPUs (sometimes clusters of them) and significant energy and time. Inference is cheaper but still heavier than classical ML.
-- **Distribution Shift:** A model trained on data from one hospital may perform poorly at another — different scanners, patient populations, documentation practices. Always validate on data from the deployment environment.
-
-## Design Patterns
-
-When you do reach for a neural network, these established patterns help you get better results:
-
-- **Transfer Learning:** Start from a model pre-trained on a large dataset (like ImageNet for images), then fine-tune on your smaller dataset. Often the best approach when you have limited data — the model already knows about edges, textures, and shapes.
-- **Ensemble Methods:** Train multiple models and combine their predictions (averaging or voting). This almost always improves accuracy and makes predictions more robust.
-- **Normalization:** Batch normalization, layer normalization, and instance normalization all stabilize training by controlling the scale of values flowing through the network. Use `BatchNormalization()` in Keras when training is unstable.
-- **Residual Connections:** In very deep networks (50+ layers), skip connections let gradients flow directly through the network, preventing the vanishing gradient problem. This is how architectures like ResNet can be hundreds of layers deep.
+| **Small labeled dataset** | Transfer learning | Fine-tune a pre-trained model (e.g., ImageNet → your X-rays) instead of training from scratch |
 
 # LIVE DEMO!!!

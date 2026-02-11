@@ -140,11 +140,14 @@ plt.tight_layout()
 plt.show()
 ```
 
-Normal heartbeats dominate the dataset — common in clinical data. The model will likely perform best on the majority class.
+Normal heartbeats dominate the dataset — common in clinical data. The model will likely perform best on the majority class. Keep this imbalance in mind when we look at accuracy later: a model that just guesses "Normal" every time would already score ~60%.
 
 ## Prepare Data
 
-ECG voltage values aren't bounded to [0, 255] like pixels. We use `StandardScaler` (mean=0, std=1) instead of simple division. Then reshape for RNN input: `(samples, 140 timesteps, 1 feature)`.
+Two things to handle before training:
+
+1. **Scaling**: ECG voltage values aren't bounded to [0, 255] like pixels. We use `StandardScaler` (mean=0, std=1) — same as last lecture. Remember: fit on training data only, then transform both train and test.
+2. **Reshaping**: RNN layers expect 3D input — `(samples, timesteps, features)`. Our data is `(4000, 140)`, so we reshape to `(4000, 140, 1)` to tell Keras "each sample is a sequence of 140 time steps, each with 1 feature (voltage)."
 
 ```python
 scaler = StandardScaler()
@@ -168,6 +171,8 @@ print(f"Labels shape:    {y_train_cat.shape}")
 ## SimpleRNN: A First Attempt
 
 SimpleRNN processes one time step at a time, updating a hidden state at each step. For short sequences this works fine, but for 140 steps the gradients can vanish — early time steps barely influence the final output.
+
+Notice how minimal this model is compared to the CNN: just one `SimpleRNN` layer and an output layer. The recurrent layer handles the sequence processing internally — at each of the 140 time steps, it reads one voltage value and updates its hidden state. After the last step, it outputs a single vector summarizing the whole sequence.
 
 ```python
 model_rnn = Sequential([
@@ -217,7 +222,9 @@ print(f"SimpleRNN test accuracy: {rnn_acc:.2%}")
 
 ## LSTM: Long-Term Memory
 
-SimpleRNN struggles because gradients vanish over 140 time steps. LSTM adds three gates (forget, input, output) that control what information to keep, store, and pass on. This lets it retain relevant patterns across the full sequence.
+SimpleRNN struggles because gradients vanish over 140 time steps — the network effectively "forgets" what it saw at the beginning of the sequence by the time it reaches the end. LSTM fixes this with three gates (forget, input, output) that explicitly control what information to keep, store, and pass on.
+
+Compare the architecture below to the SimpleRNN: we've added Dropout (regularization — prevents overfitting) and an intermediate Dense layer. The LSTM itself has more parameters per unit than SimpleRNN because of those gates — `model.summary()` will show the difference.
 
 ```python
 model_lstm = Sequential([
@@ -274,14 +281,21 @@ print(f"LSTM test accuracy: {lstm_acc:.2%}")
 
 ## Training Curves
 
+Training curves are the first thing to check after training. Look for:
+
+- **Convergence**: Does accuracy plateau? If it's still climbing, the model might benefit from more epochs.
+- **Overfitting**: Does the gap between training and validation accuracy grow? That's the model memorizing rather than generalizing.
+- **Stability**: Is the validation curve smooth or erratic? Erratic curves may mean the learning rate is too high or the batch size too small.
+
 ```python
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 
 axes[0].plot(hist_rnn['accuracy'], label='Train', linewidth=2)
 axes[0].plot(hist_rnn['val_accuracy'], label='Validation', linewidth=2)
 axes[0].set_title('SimpleRNN', fontsize=13)
 axes[0].set_xlabel('Epoch')
 axes[0].set_ylabel('Accuracy')
+axes[0].set_ylim(0.8, 1.0)
 axes[0].legend()
 axes[0].grid(True, alpha=0.3)
 
@@ -289,7 +303,6 @@ axes[1].plot(hist_lstm['accuracy'], label='Train', linewidth=2)
 axes[1].plot(hist_lstm['val_accuracy'], label='Validation', linewidth=2)
 axes[1].set_title('LSTM', fontsize=13)
 axes[1].set_xlabel('Epoch')
-axes[1].set_ylabel('Accuracy')
 axes[1].legend()
 axes[1].grid(True, alpha=0.3)
 
@@ -299,6 +312,8 @@ plt.show()
 ```
 
 ## Evaluate the LSTM
+
+Overall accuracy is a starting point, but with imbalanced classes it can be misleading. The confusion matrix shows where the model actually succeeds and fails — which heartbeat types get confused with which. The classification report adds precision, recall, and F1 per class, the same metrics from last lecture.
 
 ```python
 # Confusion matrix
@@ -321,6 +336,10 @@ plt.show()
 # Per-class metrics
 print(classification_report(y_test_idx, y_pred_classes, target_names=ECG_CLASSES, zero_division=0))
 ```
+
+Look at recall for the minority classes — that tells you how often the model catches each heartbeat type. High accuracy overall but low recall on rare classes (like Fusion) means the model is mostly riding the Normal class majority.
+
+Now let's look at individual predictions. Green traces are correct, red are mistakes. The confidence percentage shows how sure the model was — interesting to see whether wrong predictions are high-confidence (the model is confidently wrong) or low-confidence (the model was uncertain).
 
 ```python
 # ECG prediction strips with confidence
@@ -366,6 +385,8 @@ plot_ecg_predictions(
 ```
 
 ## SimpleRNN vs. LSTM
+
+Side-by-side comparison. The key question: does the LSTM's extra complexity (more parameters, slower training) pay off in accuracy?
 
 ```python
 models_compared = ['SimpleRNN', 'LSTM']

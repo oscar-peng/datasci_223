@@ -319,7 +319,7 @@ plt.show()
 
 ```python
 # Per-class metrics
-print(classification_report(y_test_idx, y_pred_classes, target_names=ECG_CLASSES))
+print(classification_report(y_test_idx, y_pred_classes, target_names=ECG_CLASSES, zero_division=0))
 ```
 
 ```python
@@ -393,7 +393,7 @@ Across Demos 2 and 3, we've built three types of models:
 | Architecture | Dataset | Structure Exploited | Approx. Accuracy |
 |:---|:---|:---|:---|
 | **Dense** | CIFAR-10 (images) | None (flattened) | ~38% |
-| **CNN** | CIFAR-10 (images) | Spatial (2D neighbors) | ~57% |
+| **CNN** | CIFAR-10 (images) | Spatial (2D neighbors) | ~64% |
 | **LSTM** | ECG5000 (time series) | Temporal (sequence order) | ~94% |
 
 The lesson: **match the architecture to your data's structure.** Dense layers are a baseline. CNNs see spatial patterns. RNNs remember sequences. Choosing the right architecture matters more than tuning hyperparameters.

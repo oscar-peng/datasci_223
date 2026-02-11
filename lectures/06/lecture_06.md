@@ -245,11 +245,13 @@ model.compile(optimizer=SGD(learning_rate=0.01), loss='categorical_crossentropy'
 
 ## Regularization
 
-We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. The classic sign: training accuracy keeps climbing while validation accuracy plateaus or drops.
+**Regularization** is any technique that constrains a model to prevent it from fitting the training data _too_ closely — trading a small increase in training error for much better performance on new data. The core idea: a model with fewer effective degrees of freedom is forced to learn general patterns rather than memorizing noise.
+
+Why does this matter for neural networks? We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. The classic sign: training accuracy keeps climbing while validation accuracy plateaus or drops.
 
 ![](media/overfitting_curves.png)
 
-The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like. Regularization techniques constrain the model to generalize better.
+The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like. Regularization techniques — adding penalties to large weights, randomly dropping neurons, or stopping training early — push the model toward simpler, more generalizable solutions.
 
 ### Reference Card: Regularization Techniques
 
@@ -260,16 +262,6 @@ The tank detector parable from earlier is a perfect example: the network overfit
 | **Dropout** | Randomly zeros a fraction of neurons during training | `Dropout(0.5)` layer |
 | **Early Stopping** | Stops training when validation loss stops improving | `EarlyStopping` callback |
 | **Data Augmentation** | Applies random transformations to training data (rotation, flip, etc.) | `keras.layers.RandomFlip`, `RandomRotation`, etc. |
-
-### Reference Card: `Dropout`
-
-| Component | Details |
-|:---|:---|
-| **Function** | `keras.layers.Dropout(rate)` |
-| **Purpose** | Randomly set a fraction of input units to zero during training to prevent overfitting |
-| **Key Parameters** | `rate`: Fraction of inputs to drop (e.g., 0.5 = 50%) |
-| **Behavior** | Active during training only — at inference, all neurons are used (with scaled outputs) |
-| **Placement** | After Dense or Conv layers, before the next layer |
 
 ## Preparing Data for Neural Networks
 
@@ -432,12 +424,32 @@ Beyond Dense layers, Keras provides specialized layers for different data types.
 
 | Layer Type | Purpose | When to Use |
 |:---|:---|:---|
-| **Dense/Linear** | Fully connected layer | Final layers, tabular data |
-| **Conv2D** | Spatial feature extraction | Images, medical imaging |
-| **LSTM/GRU** | Sequential data with memory | Time series, clinical notes |
-| **Embedding** | Map indices to dense vectors | Text, categorical data |
+| **Dense** | Fully connected layer | Final layers, tabular data |
 | **BatchNorm** | Normalize layer inputs | Deep networks, unstable training |
 | **Dropout** | Prevent overfitting | After Dense or Conv layers |
+| **Embedding** | Map indices to dense vectors | Text, categorical data |
+| **Conv2D** | Spatial feature extraction | Images, medical imaging |
+| **LSTM/GRU** | Sequential data with memory | Time series, clinical notes |
+
+### Reference Card: `Dropout`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Dropout(rate)` |
+| **Purpose** | Randomly set a fraction of input units to zero during training to prevent overfitting |
+| **Key Parameters** | `rate`: Fraction of inputs to drop (e.g., 0.5 = 50%) |
+| **Behavior** | Active during training only — at inference, all neurons are used (with scaled outputs) |
+| **Placement** | After Dense or Conv layers, before the next layer |
+
+### Reference Card: `BatchNormalization`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.BatchNormalization()` |
+| **Purpose** | Normalize each layer's inputs to zero mean and unit variance, stabilizing and accelerating training |
+| **Key Parameters** | • `momentum`: Running mean/variance update rate (default 0.99)<br>• `epsilon`: Small constant for numerical stability |
+| **Behavior** | Uses batch statistics during training; uses running averages during inference |
+| **Placement** | Typically after a Dense or Conv layer, before the activation function |
 
 ## Convolutional Neural Networks (CNNs)
 
@@ -453,10 +465,12 @@ CNNs learn hierarchical features: early layers detect edges and textures, deeper
 
 Start with the same image classification task, but replace the Dense-only approach:
 
-1. **Conv2D** — scan the image with learnable filters to detect local patterns
-2. **MaxPooling2D** — shrink the feature maps, keeping the strongest signals
-3. **Repeat** — stack more Conv2D + Pooling to learn higher-level features
-4. **Flatten + Dense** — convert the feature maps to a classification
+| Step | Layer | Purpose |
+|:---|:---|:---|
+| 1 | **Conv2D** | Scan the image with learnable filters to detect local patterns |
+| 2 | **MaxPooling2D** | Shrink the feature maps, keeping the strongest signals |
+| 3 | **Repeat** | Stack more Conv2D + Pooling to learn higher-level features |
+| 4 | **Flatten + Dense** | Convert the feature maps to a classification |
 
 ### Reference Card: `Conv2D`
 
@@ -475,6 +489,16 @@ Start with the same image classification task, but replace the Dense-only approa
 | **Purpose** | Downsample by taking maximum value in each window |
 | **Key Parameters** | • `pool_size`: Window size (e.g., (2,2))<br>• `strides`: Step size (defaults to pool_size)<br>• `padding`: `'valid'` or `'same'` |
 | **Effect** | Reduces spatial dimensions; helps detect features regardless of exact position |
+
+### Reference Card: `Flatten`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Flatten(input_shape=None)` |
+| **Purpose** | Reshape a multi-dimensional tensor into a 1D vector so it can be fed to Dense layers |
+| **Key Parameters** | `input_shape`: Required only on the first layer (e.g., `(28, 28, 1)` for grayscale images) |
+| **Typical Placement** | Between Conv2D/Pooling layers and Dense classification layers |
+| **Note** | Destroys spatial structure — use only when transitioning from feature extraction to classification |
 
 ### Code Snippet: Building a CNN
 
@@ -553,6 +577,16 @@ model = Sequential([
 
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 ```
+
+### Reference Card: `Embedding`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Embedding(input_dim, output_dim, input_length=None)` |
+| **Purpose** | Map integer indices (e.g., word IDs) to dense vectors the network can learn from |
+| **Key Parameters** | • `input_dim`: Size of the vocabulary (max integer index + 1)<br>• `output_dim`: Dimension of the dense embedding vectors<br>• `input_length`: Length of input sequences (required for downstream Dense layers) |
+| **Output Shape** | (batch_size, input_length, output_dim) |
+| **Use Cases** | Text inputs for LSTM/GRU, categorical features with many levels |
 
 # Training in Practice
 

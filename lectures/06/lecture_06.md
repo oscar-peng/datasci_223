@@ -1,6 +1,6 @@
 Neural Networks: If I Only Had a Brain
 
-- hw06 <https://classroom.github.com/a/h9aDWexL>
+- hw06 #FIXME:URL
 
 # Links
 
@@ -31,7 +31,7 @@ Neural Networks: If I Only Had a Brain
 - Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
 - Rajpurkar et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning
 
-![junior dev vs. NN](media/junior_dev_vs_nn.jpeg)
+![](media/junior_dev_vs_nn.jpeg)
 
 # Neural Networks Overview
 
@@ -39,7 +39,7 @@ Neural networks are computing systems loosely inspired by biological brains. The
 
 ## Biological Inspiration
 
-![biological neuron](media/biological_neuron.png)
+![](media/biological_neuron.png)
 
 A **neuron** has:
 
@@ -55,9 +55,9 @@ Information flows from dendrites to axon via the cell body. Axon connects to den
 
 In the 1980s, the Pentagon allegedly trained a neural network to detect tanks in photos. They split their photos into training and test sets, and the network learned to identify every test photo correctly.
 
-![image of tank](media/tank_photo.png)
+![](media/tank_photo.png)
 
-![image of not-a-tank](media/trees_no_tank.png)
+![](media/trees_no_tank.png)
 
 Then they tested on _new_ photos. **The results were completely random.**
 
@@ -78,15 +78,15 @@ Neural networks draw inspiration from biological neural networks. The mapping is
 
 A single artificial neuron takes multiple inputs, multiplies each by a weight, sums them up, and passes the result through an activation function:
 
-![simplified neuron](media/simplified_neuron.png)
+![](media/simplified_neuron.png)
 
 Mathematically, this is a weighted sum plus bias, passed through a non-linear function $f$:
 
-![NN equation](media/ann.png)
+![](media/ann.png)
 
 Stack these neurons into layers — input, hidden, output — and you get a neural network:
 
-![basic neural net](media/nn_overview.png)
+![](media/nn_overview.png)
 
 Each neuron:
 
@@ -121,11 +121,11 @@ An **epoch** is one complete pass through the entire training dataset. Training 
 
 One of the most profound aspects of neural networks: a feedforward network with a single hidden layer can approximate any continuous function, given sufficient neurons and appropriate activation functions.
 
-![universal approximation](media/universal_approximation.mp4)
+![](media/universal_approximation.mp4)
 
 In practice, this means a sufficiently large network can learn to map any input to any output — classifying images, predicting patient outcomes, or translating languages. Here's the intuition: given enough neurons, the network can approximate the decision boundary between "cat" and "dog" (or any other categories) to arbitrary precision.
 
-![neural network classification](media/approximation.png)
+![](media/approximation.png)
 
 Deeper networks with fewer neurons per layer tend to generalize better than very wide, shallow networks.
 
@@ -151,9 +151,9 @@ Each activation function has trade-offs. The right choice depends on where in th
 | **Leaky ReLU** | $\max(0.01x, x)$ | $(-\infty, \infty)$ | No dying neurons | Small negative gradient | When dying ReLU is a concern |
 | **Softmax** | $\frac{e^{x_i}}{\sum e^{x_j}}$ | $(0, 1)$ | Multi-class probabilities | Computationally expensive | Multi-class output layer |
 
-![ReLU graph](media/relu.png)
+![](media/relu.png)
 
-![XKCD: Machine Learning](media/xkcd_machine_learning.png)
+![](media/xkcd_machine_learning.png)
 
 # How Neural Networks Learn
 
@@ -186,7 +186,7 @@ The choice of loss function depends on your task — just like choosing between 
 
 You don't need to implement this yourself (Keras handles it inside `model.fit()`), but understanding the idea helps you diagnose training problems.
 
-![backpropagation](media/backpropagation.png)
+![](media/backpropagation.png)
 
 The process:
 
@@ -206,13 +206,13 @@ The process:
 | **Key Insight** | Each weight's gradient tells us how much changing that weight would change the loss |
 | **In Keras** | Handled automatically by `model.fit()` — no manual implementation needed |
 
-![XKCD: Optimization](media/xkcd_optimization.png)
+![](media/xkcd_optimization.png)
 
 ## Gradient Descent
 
 **Gradient descent** is the optimization algorithm that uses the gradients from backpropagation to update weights. Think of it as navigating a hilly landscape in fog — you can only feel the slope under your feet and step downhill. The "landscape" is the loss surface — a map of how the cost function changes as you adjust the network's weights. The lowest point on that surface is the set of weights that makes your model's predictions as close to the truth as possible.
 
-![gradient descent on a loss surface](media/gradient_descent.png)
+![](media/gradient_descent.png)
 
 The **learning rate** ($\alpha$) controls step size:
 
@@ -247,7 +247,7 @@ model.compile(optimizer=SGD(learning_rate=0.01), loss='categorical_crossentropy'
 
 We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. The classic sign: training accuracy keeps climbing while validation accuracy plateaus or drops.
 
-![overfitting training vs validation curves](media/overfitting_curves.png) #FIXME
+![](media/overfitting_curves.png)
 
 The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like. Regularization techniques constrain the model to generalize better.
 
@@ -445,7 +445,7 @@ Dense layers treat every input pixel independently — `Flatten` turns a 28x28 i
 
 Imagine a tiny 3x3 window scanning across a chest X-ray. At each position, the filter multiplies its 9 learned values against the 9 pixels it overlaps, producing a single output number. A filter tuned to detect horizontal edges will "light up" wherever the image has a horizontal edge — whether that's in the top-left corner or bottom-right. This is why CNNs are so powerful for medical imaging: the same tumor edge pattern gets detected no matter where it appears in the scan.
 
-![cat dog panda](media/cat_dog_panda.png)
+![](media/cat_dog_panda.png)
 
 CNNs learn hierarchical features: early layers detect edges and textures, deeper layers combine those into shapes and objects — much like how the visual cortex processes information in stages.
 
@@ -502,7 +502,7 @@ model = Sequential([
 
 Compare this to the Dense-only model: the first half (Conv2D + Pooling) extracts spatial features that the Dense layers can then classify. This typically improves accuracy on image tasks significantly.
 
-![XKCD: Trained a Neural Net](media/xkcd_trained_neural_net.png)
+![](media/xkcd_trained_neural_net.png)
 
 ## Recurrent Neural Networks (RNNs)
 
@@ -510,7 +510,7 @@ Every model we've seen so far — from logistic regression in the last lecture t
 
 RNNs maintain a **hidden state** that carries information from previous time steps, so the network can "remember" what it has seen.
 
-![RNN](media/rnn.png)
+![](media/rnn.png)
 
 A basic RNN (`SimpleRNN`) processes sequences one step at a time, but struggles with long sequences — gradients vanish over many time steps. **LSTM** fixes this with a gating mechanism that controls what information to keep, forget, and output. We'll see both side-by-side in the demo.
 
@@ -531,11 +531,11 @@ A basic RNN (`SimpleRNN`) processes sequences one step at a time, but struggles 
 | **Key Parameters** | • `units`: Dimensionality of output space<br>• `return_sequences`: Return full sequence (`True`) or just last output (`False`)<br>• `dropout`: Fraction of units to drop for inputs<br>• `recurrent_dropout`: Fraction to drop for recurrent state |
 | **Use Cases** | Time series forecasting, text generation, clinical sequence data |
 
-![LSTM vs GRU](media/LSTMvsGRU.png)
+![](media/LSTMvsGRU.png)
 
 The internal architecture shows how LSTM's three gates (forget, input, output) and GRU's simpler two-gate design (reset, update) control information flow. GRU is faster to train with fewer parameters, while LSTM is more expressive for complex sequences:
 
-![LSTM and GRU gate details](media/lstmvsgru2.png)
+![](media/lstmvsgru2.png)
 
 ### Code Snippet: LSTM for Time Series
 
@@ -562,7 +562,7 @@ Building a model is only half the job — you also need to manage the training p
 
 Neural network training can take minutes to hours. You don't want to babysit it — and you definitely don't want to lose your best model because training ran too long and started overfitting. Callbacks hook into the training loop to save checkpoints, stop early, or log metrics — without modifying your training code.
 
-![training curves with early stopping](media/early_stopping_curves.png) #FIXME
+![](media/early_stopping_curves.png)
 
 ### Reference Card: `ModelCheckpoint`
 
@@ -657,7 +657,7 @@ for inputs, targets in train_loader:
 
 > **Keras vs. PyTorch:** Keras provides high-level APIs (`model.fit()`) that handle the training loop for you. PyTorch gives you explicit control over every step. Both are widely used — Keras for rapid prototyping, PyTorch for research flexibility.
 
-![XKCD: Tasks](media/xkcd_tasks.png)
+![](media/xkcd_tasks.png)
 
 # Neural Networks in Practice
 

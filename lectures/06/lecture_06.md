@@ -578,6 +578,12 @@ model = Sequential([
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 ```
 
+## Embeddings
+
+Neural networks need numeric inputs, but many real-world features are categorical — words, diagnosis codes, medication names. One-hot encoding works for a handful of categories, but a vocabulary of 10,000 words would produce 10,000-dimensional sparse vectors where each word is equally "distant" from every other word. That's wasteful and misses relationships: "aspirin" and "ibuprofen" should be closer together than "aspirin" and "stethoscope."
+
+An **embedding layer** solves this by learning a compact, dense vector for each category. Instead of a 10,000-element one-hot vector, each word gets mapped to (say) a 64-dimensional vector — and the network learns those vectors during training so that similar items end up with similar representations. Embeddings are the standard first layer for any model that processes text or high-cardinality categorical data.
+
 ### Reference Card: `Embedding`
 
 | Component | Details |
@@ -587,6 +593,31 @@ model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accur
 | **Key Parameters** | • `input_dim`: Size of the vocabulary (max integer index + 1)<br>• `output_dim`: Dimension of the dense embedding vectors<br>• `input_length`: Length of input sequences (required for downstream Dense layers) |
 | **Output Shape** | (batch_size, input_length, output_dim) |
 | **Use Cases** | Text inputs for LSTM/GRU, categorical features with many levels |
+
+### Code Snippet: Embedding + LSTM for Text Classification
+
+```python
+from keras import Sequential
+from keras.layers import Embedding, LSTM, Dense
+
+# Classify patient reviews as satisfied/unsatisfied
+# Input: sequences of word IDs, padded to 200 tokens
+model = Sequential([
+    Embedding(input_dim=10000, output_dim=64, input_length=200),
+    LSTM(64),
+    Dense(1, activation='sigmoid')  # Output: probability between 0 and 1
+])
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# The labels define the task — the architecture just defines the shape
+# X_train: array of word ID sequences, shape (num_reviews, 200)
+# y_train: array of 0s and 1s (unsatisfied/satisfied)
+model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
+
+# Predict on a new review (preprocessed to word IDs, padded to 200 tokens)
+model.predict(new_review)  # e.g., 0.87 → 87% chance satisfied
+```
 
 # Training in Practice
 
@@ -622,18 +653,25 @@ Neural network training can take minutes to hours. You don't want to babysit it 
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 callbacks = [
+    # Save only the best model (overwrites the file each time the metric improves)
     ModelCheckpoint(
         'best_model.keras',
         save_best_only=True,
         monitor='val_accuracy'
     ),
+    # Save every epoch (useful for resuming interrupted training)
+    ModelCheckpoint(
+        'checkpoints/epoch_{epoch:02d}.keras'  # epoch_01.keras, epoch_02.keras, ...
+    ),
     EarlyStopping(
         monitor='val_loss',
-        patience=5,
-        restore_best_weights=True
+        patience=5,              # Stop if val_loss doesn't improve for 5 epochs
+        restore_best_weights=True  # Roll back to the best epoch's weights
     )
 ]
 
+# With both callbacks: training stops before overfitting gets bad,
+# and the saved file always contains the best model seen during training
 history = model.fit(X_train, y_train,
                     validation_data=(X_val, y_val),
                     epochs=100,

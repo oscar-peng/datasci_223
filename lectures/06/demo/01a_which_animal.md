@@ -32,9 +32,9 @@ Adapted from Google Keras code example [Image classification from scratch](https
 
 ```python
 # Install required packages
-%pip install -q numpy matplotlib tensorflow
+%pip install -q -r requirements.txt
 
-# Apple Silicon GPU acceleration
+# GPU acceleration (platform-specific)
 import platform
 if platform.system() == "Darwin" and platform.machine() == "arm64":
     %pip install -q tensorflow-metal
@@ -72,6 +72,15 @@ ZIP_HASH = 'eedec42a8a363b8ff299a0f2d6eedadafc3af3e7'
 MODEL_PATH = 'models/animals.keras'
 HISTORY_PATH = MODEL_PATH + '.history.pkl'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # 2 for most warnings, 3 to suppress all warnings
+
+# Report available accelerators
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    print(f"GPU acceleration: {len(gpus)} device(s)")
+    for gpu in gpus:
+        print(f"  {gpu.name}")
+else:
+    print("No GPU detected — using CPU")
 ```
 
 <!-- #region id="KzMAsDe_7M_s" -->

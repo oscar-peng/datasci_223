@@ -21,9 +21,9 @@ Convolutional Neural Networks (CNNs) fix this. Instead of connecting every pixel
 ## Setup
 
 ```python
-%pip install -q numpy matplotlib tensorflow seaborn scikit-learn
+%pip install -q -r requirements.txt
 
-# Apple Silicon GPU acceleration
+# GPU acceleration (platform-specific)
 import platform
 if platform.system() == "Darwin" and platform.machine() == "arm64":
     %pip install -q tensorflow-metal
@@ -45,6 +45,15 @@ from tensorflow import keras
 from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
+
+# Report available accelerators
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    print(f"GPU acceleration: {len(gpus)} device(s)")
+    for gpu in gpus:
+        print(f"  {gpu.name}")
+else:
+    print("No GPU detected — using CPU")
 
 REBUILD = False
 NUM_CLASSES = 10

@@ -3,6 +3,17 @@
 ## Setup
 
 ```python
+%pip install -q -r requirements.txt
+
+# GPU acceleration (platform-specific)
+import platform
+if platform.system() == "Darwin" and platform.machine() == "arm64":
+    %pip install -q tensorflow-metal
+
+%reset -f
+```
+
+```python
 import os
 import json
 import numpy as np
@@ -13,6 +24,15 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import tensorflow as tf
 tf.random.set_seed(42)
 np.random.seed(42)
+
+# Report available accelerators
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    print(f"GPU acceleration: {len(gpus)} device(s)")
+    for gpu in gpus:
+        print(f"  {gpu.name}")
+else:
+    print("No GPU detected — using CPU")
 
 from tensorflow import keras
 from keras import Sequential
@@ -25,6 +45,7 @@ from sklearn.metrics import confusion_matrix
 from helpers import (
     load_cifar10, load_ecg5000,
     plot_training_history, plot_confusion_matrix,
+    plot_sample_images, plot_ecg_traces, plot_predictions,
     CIFAR10_CLASSES, ECG_CLASSES,
 )
 
@@ -44,6 +65,10 @@ print("-" * 40)
 
 X_train, y_train, X_test, y_test = load_cifar10()
 print(f"Train: {X_train.shape}, Test: {X_test.shape}")
+```
+
+```python
+plot_sample_images(X_train, y_train, CIFAR10_CLASSES)
 ```
 
 ```python
@@ -116,7 +141,6 @@ model_cnn = Sequential([
     MaxPooling2D((2, 2)),
     Conv2D(64, (3, 3), activation="relu"),
     MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation="relu"),
     Flatten(),
     Dropout(0.5),
     Dense(64, activation="relu"),
@@ -198,6 +222,10 @@ print("-" * 40)
 X_train_ecg, y_train_ecg, X_test_ecg, y_test_ecg = load_ecg5000()
 print(f"Train: {X_train_ecg.shape}, Test: {X_test_ecg.shape}")
 print(f"Classes: {list(ECG_CLASSES.values())}")
+```
+
+```python
+plot_ecg_traces(X_train_ecg, y_train_ecg, ECG_CLASSES)
 ```
 
 ```python

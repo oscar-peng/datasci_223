@@ -151,3 +151,92 @@ def plot_confusion_matrix(y_true, y_pred, class_names, save_path):
     os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
     plt.savefig(save_path, dpi=150)
     plt.close()
+
+
+def plot_sample_images(X, y, class_names=None, n=20, cols=5):
+    """Display a grid of sample images with labels.
+
+    Useful for verifying data loaded correctly.
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 32, 32, 3), pixel values in [0, 1]
+    y : ndarray, shape (N, num_classes), one-hot encoded labels
+    class_names : dict mapping int to str (default: CIFAR10_CLASSES)
+    n : int, number of images to show
+    cols : int, columns in the grid
+    """
+    if class_names is None:
+        class_names = CIFAR10_CLASSES
+    labels = np.argmax(y, axis=1)
+    rows = (n + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(2.5 * cols, 2.5 * rows))
+    for i, ax in enumerate(axes.flat):
+        if i >= n:
+            ax.axis("off")
+            continue
+        ax.imshow(X[i])
+        ax.set_title(class_names[labels[i]], fontsize=10)
+        ax.axis("off")
+    plt.suptitle("Sample Images", fontsize=13)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_ecg_traces(X, y, class_names=None, n_per_class=1):
+    """Plot example ECG traces for each heartbeat class.
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 140, 1), ECG voltage time series
+    y : ndarray, shape (N, 5), one-hot encoded labels
+    class_names : dict mapping int to str (default: ECG_CLASSES)
+    n_per_class : int, traces to show per class
+    """
+    if class_names is None:
+        class_names = ECG_CLASSES
+    labels = np.argmax(y, axis=1)
+    n_classes = len(class_names)
+    fig, axes = plt.subplots(n_classes, 1, figsize=(12, 2.5 * n_classes), sharex=True)
+    for cls in range(n_classes):
+        idx = np.where(labels == cls)[0]
+        for j in range(min(n_per_class, len(idx))):
+            axes[cls].plot(X[idx[j]].flatten(), linewidth=1, alpha=0.8)
+        axes[cls].set_title(f"Class {cls}: {class_names[cls]}", fontsize=11)
+        axes[cls].set_ylabel("Voltage")
+        axes[cls].grid(True, alpha=0.3)
+    axes[-1].set_xlabel("Time Step")
+    plt.suptitle("ECG Heartbeat Types", fontsize=13)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_predictions(X, y_true, y_pred, class_names, n=12, cols=4):
+    """Show images with predicted labels, color-coded green (correct) / red (wrong).
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 32, 32, 3), images in [0, 1]
+    y_true : array-like of int, true class indices
+    y_pred : array-like of int, predicted class indices
+    class_names : dict mapping int to str
+    n : int, number of images to show
+    cols : int, columns in the grid
+    """
+    rows = (n + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(3 * cols, 3 * rows))
+    for i, ax in enumerate(axes.flat):
+        if i >= n:
+            ax.axis("off")
+            continue
+        ax.imshow(X[i])
+        correct = y_pred[i] == y_true[i]
+        color = "green" if correct else "red"
+        ax.set_title(
+            f"{class_names[y_pred[i]]} (true: {class_names[y_true[i]]})",
+            color=color, fontsize=9,
+        )
+        ax.axis("off")
+    plt.suptitle("Green = correct, Red = wrong", fontsize=12)
+    plt.tight_layout()
+    plt.show()

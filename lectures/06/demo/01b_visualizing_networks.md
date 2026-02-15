@@ -19,9 +19,9 @@ Neural networks learn to draw boundaries between groups. In this demo, we'll wat
 ## Setup
 
 ```python
-%pip install -q tensorflow matplotlib numpy scikit-learn
+%pip install -q -r requirements.txt
 
-# Apple Silicon GPU acceleration
+# GPU acceleration (platform-specific)
 import platform
 if platform.system() == "Darwin" and platform.machine() == "arm64":
     %pip install -q tensorflow-metal
@@ -36,6 +36,15 @@ warnings.filterwarnings('ignore')
 
 import tensorflow as tf
 tf.config.run_functions_eagerly(True)
+
+# Report available accelerators
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    print(f"GPU acceleration: {len(gpus)} device(s)")
+    for gpu in gpus:
+        print(f"  {gpu.name}")
+else:
+    print("No GPU detected — using CPU")
 
 import numpy as np
 import matplotlib.pyplot as plt

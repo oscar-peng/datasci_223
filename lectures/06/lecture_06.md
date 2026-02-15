@@ -1,18 +1,12 @@
 Neural Networks: If I Only Had a Brain
 
-- hw06 #FIXME
+- hw06 #FIXME:URL
 
 # Links
 
-## Documentation
-
-- [Keras Documentation](https://keras.io/)
-- [Keras Getting Started](https://keras.io/getting_started/)
-- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
-- [PyTorch Tutorials](https://pytorch.org/tutorials/)
-
 ## Books
 
+- [Hands-on Machine Learning, Géron](https://learning.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) and companion [repository](https://github.com/ageron/handson-ml3) — practical Keras-focused, code-first introduction to ML and deep learning
 - _Deep Learning with Python_, Chollet - [Manning](https://www.manning.com/books/deep-learning-with-python-second-edition) — **the** Keras book, practical and accessible
 - _Dive into Deep Learning_ - [d2l.ai](https://d2l.ai) — hands-on with code examples
 - _Deep Learning_, Goodfellow, Bengio & Courville - [free online](https://www.deeplearningbook.org/) — comprehensive theory reference
@@ -24,13 +18,20 @@ Neural Networks: If I Only Had a Brain
 - [TensorFlow Playground](https://playground.tensorflow.org/) - interactive neural network visualization
 - [Neural Network Zoo](https://www.asimovinstitute.org/neural-network-zoo/) - visual guide to network architectures
 
+## Documentation
+
+- [Keras Documentation](https://keras.io/)
+- [Keras Getting Started](https://keras.io/getting_started/)
+- [TensorFlow Tutorials](https://www.tensorflow.org/tutorials)
+- [PyTorch Tutorials](https://pytorch.org/tutorials/)
+
 ## Health Data Science & Deep Learning
 
 - Miotto et al. (2018). Deep learning for healthcare: review, opportunities and challenges. _Briefings in Bioinformatics_
 - Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
 - Rajpurkar et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning
 
-![junior dev vs. NN](media/junior_dev_vs_nn.jpeg)
+![](media/junior_dev_vs_nn.jpeg)
 
 # Neural Networks Overview
 
@@ -38,7 +39,7 @@ Neural networks are computing systems loosely inspired by biological brains. The
 
 ## Biological Inspiration
 
-![biological neuron](media/biological_neuron.png)
+![](media/biological_neuron.png)
 
 A **neuron** has:
 
@@ -54,9 +55,9 @@ Information flows from dendrites to axon via the cell body. Axon connects to den
 
 In the 1980s, the Pentagon allegedly trained a neural network to detect tanks in photos. They split their photos into training and test sets, and the network learned to identify every test photo correctly.
 
-![image of tank](media/tank_photo.png)
+![](media/tank_photo.png)
 
-![image of not-a-tank](media/trees_no_tank.png)
+![](media/trees_no_tank.png)
 
 Then they tested on _new_ photos. **The results were completely random.**
 
@@ -77,15 +78,15 @@ Neural networks draw inspiration from biological neural networks. The mapping is
 
 A single artificial neuron takes multiple inputs, multiplies each by a weight, sums them up, and passes the result through an activation function:
 
-![simplified neuron](media/simplified_neuron.png)
+![](media/simplified_neuron.png)
 
 Mathematically, this is a weighted sum plus bias, passed through a non-linear function $f$:
 
-![NN equation](media/ann.png)
+![](media/ann.png)
 
 Stack these neurons into layers — input, hidden, output — and you get a neural network:
 
-![basic neural net](media/nn_overview.png)
+![](media/nn_overview.png)
 
 Each neuron:
 
@@ -120,11 +121,11 @@ An **epoch** is one complete pass through the entire training dataset. Training 
 
 One of the most profound aspects of neural networks: a feedforward network with a single hidden layer can approximate any continuous function, given sufficient neurons and appropriate activation functions.
 
-![universal approximation](media/universal_approximation.mp4)
+![](media/universal_approximation.mp4)
 
 In practice, this means a sufficiently large network can learn to map any input to any output — classifying images, predicting patient outcomes, or translating languages. Here's the intuition: given enough neurons, the network can approximate the decision boundary between "cat" and "dog" (or any other categories) to arbitrary precision.
 
-![neural network classification](media/approximation.png)
+![](media/approximation.png)
 
 Deeper networks with fewer neurons per layer tend to generalize better than very wide, shallow networks.
 
@@ -150,9 +151,9 @@ Each activation function has trade-offs. The right choice depends on where in th
 | **Leaky ReLU** | $\max(0.01x, x)$ | $(-\infty, \infty)$ | No dying neurons | Small negative gradient | When dying ReLU is a concern |
 | **Softmax** | $\frac{e^{x_i}}{\sum e^{x_j}}$ | $(0, 1)$ | Multi-class probabilities | Computationally expensive | Multi-class output layer |
 
-![ReLU graph](media/relu.png)
+![](media/relu.png)
 
-![XKCD: Machine Learning](media/xkcd_machine_learning.png)
+![](media/xkcd_machine_learning.png)
 
 # How Neural Networks Learn
 
@@ -185,7 +186,7 @@ The choice of loss function depends on your task — just like choosing between 
 
 You don't need to implement this yourself (Keras handles it inside `model.fit()`), but understanding the idea helps you diagnose training problems.
 
-![backpropagation](media/backpropagation.png)
+![](media/backpropagation.png)
 
 The process:
 
@@ -205,13 +206,13 @@ The process:
 | **Key Insight** | Each weight's gradient tells us how much changing that weight would change the loss |
 | **In Keras** | Handled automatically by `model.fit()` — no manual implementation needed |
 
-![XKCD: Optimization](media/xkcd_optimization.png)
+![](media/xkcd_optimization.png)
 
 ## Gradient Descent
 
 **Gradient descent** is the optimization algorithm that uses the gradients from backpropagation to update weights. Think of it as navigating a hilly landscape in fog — you can only feel the slope under your feet and step downhill. The "landscape" is the loss surface — a map of how the cost function changes as you adjust the network's weights. The lowest point on that surface is the set of weights that makes your model's predictions as close to the truth as possible.
 
-![gradient descent on a loss surface](media/gradient_descent.png)
+![](media/gradient_descent.png)
 
 The **learning rate** ($\alpha$) controls step size:
 
@@ -244,11 +245,13 @@ model.compile(optimizer=SGD(learning_rate=0.01), loss='categorical_crossentropy'
 
 ## Regularization
 
-We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. The classic sign: training accuracy keeps climbing while validation accuracy plateaus or drops.
+**Regularization** is any technique that constrains a model to prevent it from fitting the training data _too_ closely — trading a small increase in training error for much better performance on new data. The core idea: a model with fewer effective degrees of freedom is forced to learn general patterns rather than memorizing noise.
 
-![overfitting training vs validation curves](media/overfitting_curves.png) #FIXME
+Why does this matter for neural networks? We saw overfitting in the last lecture — a model that memorizes training data (including its noise) rather than learning general patterns. Neural networks are especially prone to this because they have so many parameters. The classic sign: training accuracy keeps climbing while validation accuracy plateaus or drops.
 
-The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like. Regularization techniques constrain the model to generalize better.
+![](media/overfitting_curves.png)
+
+The tank detector parable from earlier is a perfect example: the network overfit to weather patterns in the training photos instead of learning what tanks actually look like. Regularization techniques — adding penalties to large weights, randomly dropping neurons, or stopping training early — push the model toward simpler, more generalizable solutions.
 
 ### Reference Card: Regularization Techniques
 
@@ -259,16 +262,6 @@ The tank detector parable from earlier is a perfect example: the network overfit
 | **Dropout** | Randomly zeros a fraction of neurons during training | `Dropout(0.5)` layer |
 | **Early Stopping** | Stops training when validation loss stops improving | `EarlyStopping` callback |
 | **Data Augmentation** | Applies random transformations to training data (rotation, flip, etc.) | `keras.layers.RandomFlip`, `RandomRotation`, etc. |
-
-### Reference Card: `Dropout`
-
-| Component | Details |
-|:---|:---|
-| **Function** | `keras.layers.Dropout(rate)` |
-| **Purpose** | Randomly set a fraction of input units to zero during training to prevent overfitting |
-| **Key Parameters** | `rate`: Fraction of inputs to drop (e.g., 0.5 = 50%) |
-| **Behavior** | Active during training only — at inference, all neurons are used (with scaled outputs) |
-| **Placement** | After Dense or Conv layers, before the next layer |
 
 ## Preparing Data for Neural Networks
 
@@ -431,12 +424,32 @@ Beyond Dense layers, Keras provides specialized layers for different data types.
 
 | Layer Type | Purpose | When to Use |
 |:---|:---|:---|
-| **Dense/Linear** | Fully connected layer | Final layers, tabular data |
-| **Conv2D** | Spatial feature extraction | Images, medical imaging |
-| **LSTM/GRU** | Sequential data with memory | Time series, clinical notes |
-| **Embedding** | Map indices to dense vectors | Text, categorical data |
+| **Dense** | Fully connected layer | Final layers, tabular data |
 | **BatchNorm** | Normalize layer inputs | Deep networks, unstable training |
 | **Dropout** | Prevent overfitting | After Dense or Conv layers |
+| **Embedding** | Map indices to dense vectors | Text, categorical data |
+| **Conv2D** | Spatial feature extraction | Images, medical imaging |
+| **LSTM/GRU** | Sequential data with memory | Time series, clinical notes |
+
+### Reference Card: `Dropout`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Dropout(rate)` |
+| **Purpose** | Randomly set a fraction of input units to zero during training to prevent overfitting |
+| **Key Parameters** | `rate`: Fraction of inputs to drop (e.g., 0.5 = 50%) |
+| **Behavior** | Active during training only — at inference, all neurons are used (with scaled outputs) |
+| **Placement** | After Dense or Conv layers, before the next layer |
+
+### Reference Card: `BatchNormalization`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.BatchNormalization()` |
+| **Purpose** | Normalize each layer's inputs to zero mean and unit variance, stabilizing and accelerating training |
+| **Key Parameters** | • `momentum`: Running mean/variance update rate (default 0.99)<br>• `epsilon`: Small constant for numerical stability |
+| **Behavior** | Uses batch statistics during training; uses running averages during inference |
+| **Placement** | Typically after a Dense or Conv layer, before the activation function |
 
 ## Convolutional Neural Networks (CNNs)
 
@@ -444,7 +457,7 @@ Dense layers treat every input pixel independently — `Flatten` turns a 28x28 i
 
 Imagine a tiny 3x3 window scanning across a chest X-ray. At each position, the filter multiplies its 9 learned values against the 9 pixels it overlaps, producing a single output number. A filter tuned to detect horizontal edges will "light up" wherever the image has a horizontal edge — whether that's in the top-left corner or bottom-right. This is why CNNs are so powerful for medical imaging: the same tumor edge pattern gets detected no matter where it appears in the scan.
 
-![cat dog panda](media/cat_dog_panda.png)
+![](media/cat_dog_panda.png)
 
 CNNs learn hierarchical features: early layers detect edges and textures, deeper layers combine those into shapes and objects — much like how the visual cortex processes information in stages.
 
@@ -452,10 +465,12 @@ CNNs learn hierarchical features: early layers detect edges and textures, deeper
 
 Start with the same image classification task, but replace the Dense-only approach:
 
-1. **Conv2D** — scan the image with learnable filters to detect local patterns
-2. **MaxPooling2D** — shrink the feature maps, keeping the strongest signals
-3. **Repeat** — stack more Conv2D + Pooling to learn higher-level features
-4. **Flatten + Dense** — convert the feature maps to a classification
+| Step | Layer | Purpose |
+|:---|:---|:---|
+| 1 | **Conv2D** | Scan the image with learnable filters to detect local patterns |
+| 2 | **MaxPooling2D** | Shrink the feature maps, keeping the strongest signals |
+| 3 | **Repeat** | Stack more Conv2D + Pooling to learn higher-level features |
+| 4 | **Flatten + Dense** | Convert the feature maps to a classification |
 
 ### Reference Card: `Conv2D`
 
@@ -474,6 +489,16 @@ Start with the same image classification task, but replace the Dense-only approa
 | **Purpose** | Downsample by taking maximum value in each window |
 | **Key Parameters** | • `pool_size`: Window size (e.g., (2,2))<br>• `strides`: Step size (defaults to pool_size)<br>• `padding`: `'valid'` or `'same'` |
 | **Effect** | Reduces spatial dimensions; helps detect features regardless of exact position |
+
+### Reference Card: `Flatten`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Flatten(input_shape=None)` |
+| **Purpose** | Reshape a multi-dimensional tensor into a 1D vector so it can be fed to Dense layers |
+| **Key Parameters** | `input_shape`: Required only on the first layer (e.g., `(28, 28, 1)` for grayscale images) |
+| **Typical Placement** | Between Conv2D/Pooling layers and Dense classification layers |
+| **Note** | Destroys spatial structure — use only when transitioning from feature extraction to classification |
 
 ### Code Snippet: Building a CNN
 
@@ -501,7 +526,7 @@ model = Sequential([
 
 Compare this to the Dense-only model: the first half (Conv2D + Pooling) extracts spatial features that the Dense layers can then classify. This typically improves accuracy on image tasks significantly.
 
-![XKCD: Trained a Neural Net](media/xkcd_trained_neural_net.png)
+![](media/xkcd_trained_neural_net.png)
 
 ## Recurrent Neural Networks (RNNs)
 
@@ -509,7 +534,7 @@ Every model we've seen so far — from logistic regression in the last lecture t
 
 RNNs maintain a **hidden state** that carries information from previous time steps, so the network can "remember" what it has seen.
 
-![RNN](media/rnn.png)
+![](media/rnn.png)
 
 A basic RNN (`SimpleRNN`) processes sequences one step at a time, but struggles with long sequences — gradients vanish over many time steps. **LSTM** fixes this with a gating mechanism that controls what information to keep, forget, and output. We'll see both side-by-side in the demo.
 
@@ -530,11 +555,11 @@ A basic RNN (`SimpleRNN`) processes sequences one step at a time, but struggles 
 | **Key Parameters** | • `units`: Dimensionality of output space<br>• `return_sequences`: Return full sequence (`True`) or just last output (`False`)<br>• `dropout`: Fraction of units to drop for inputs<br>• `recurrent_dropout`: Fraction to drop for recurrent state |
 | **Use Cases** | Time series forecasting, text generation, clinical sequence data |
 
-![LSTM vs GRU](media/LSTMvsGRU.png)
+![](media/LSTMvsGRU.png)
 
 The internal architecture shows how LSTM's three gates (forget, input, output) and GRU's simpler two-gate design (reset, update) control information flow. GRU is faster to train with fewer parameters, while LSTM is more expressive for complex sequences:
 
-![LSTM and GRU gate details](media/lstmvsgru2.png)
+![](media/lstmvsgru2.png)
 
 ### Code Snippet: LSTM for Time Series
 
@@ -553,6 +578,47 @@ model = Sequential([
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 ```
 
+## Embeddings
+
+Neural networks need numeric inputs, but many real-world features are categorical — words, diagnosis codes, medication names. One-hot encoding works for a handful of categories, but a vocabulary of 10,000 words would produce 10,000-dimensional sparse vectors where each word is equally "distant" from every other word. That's wasteful and misses relationships: "aspirin" and "ibuprofen" should be closer together than "aspirin" and "stethoscope."
+
+An **embedding layer** solves this by learning a compact, dense vector for each category. Instead of a 10,000-element one-hot vector, each word gets mapped to (say) a 64-dimensional vector — and the network learns those vectors during training so that similar items end up with similar representations. Embeddings are the standard first layer for any model that processes text or high-cardinality categorical data.
+
+### Reference Card: `Embedding`
+
+| Component | Details |
+|:---|:---|
+| **Function** | `keras.layers.Embedding(input_dim, output_dim, input_length=None)` |
+| **Purpose** | Map integer indices (e.g., word IDs) to dense vectors the network can learn from |
+| **Key Parameters** | • `input_dim`: Size of the vocabulary (max integer index + 1)<br>• `output_dim`: Dimension of the dense embedding vectors<br>• `input_length`: Length of input sequences (required for downstream Dense layers) |
+| **Output Shape** | (batch_size, input_length, output_dim) |
+| **Use Cases** | Text inputs for LSTM/GRU, categorical features with many levels |
+
+### Code Snippet: Embedding + LSTM for Text Classification
+
+```python
+from keras import Sequential
+from keras.layers import Embedding, LSTM, Dense
+
+# Classify patient reviews as satisfied/unsatisfied
+# Input: sequences of word IDs, padded to 200 tokens
+model = Sequential([
+    Embedding(input_dim=10000, output_dim=64, input_length=200),
+    LSTM(64),
+    Dense(1, activation='sigmoid')  # Output: probability between 0 and 1
+])
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# The labels define the task — the architecture just defines the shape
+# X_train: array of word ID sequences, shape (num_reviews, 200)
+# y_train: array of 0s and 1s (unsatisfied/satisfied)
+model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
+
+# Predict on a new review (preprocessed to word IDs, padded to 200 tokens)
+model.predict(new_review)  # e.g., 0.87 → 87% chance satisfied
+```
+
 # Training in Practice
 
 Building a model is only half the job — you also need to manage the training process. This section covers the tools Keras provides for monitoring, saving, and controlling training runs.
@@ -561,7 +627,7 @@ Building a model is only half the job — you also need to manage the training p
 
 Neural network training can take minutes to hours. You don't want to babysit it — and you definitely don't want to lose your best model because training ran too long and started overfitting. Callbacks hook into the training loop to save checkpoints, stop early, or log metrics — without modifying your training code.
 
-![training curves with early stopping](media/early_stopping_curves.png) #FIXME
+![](media/early_stopping_curves.png)
 
 ### Reference Card: `ModelCheckpoint`
 
@@ -587,18 +653,25 @@ Neural network training can take minutes to hours. You don't want to babysit it 
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 callbacks = [
+    # Save only the best model (overwrites the file each time the metric improves)
     ModelCheckpoint(
         'best_model.keras',
         save_best_only=True,
         monitor='val_accuracy'
     ),
+    # Save every epoch (useful for resuming interrupted training)
+    ModelCheckpoint(
+        'checkpoints/epoch_{epoch:02d}.keras'  # epoch_01.keras, epoch_02.keras, ...
+    ),
     EarlyStopping(
         monitor='val_loss',
-        patience=5,
-        restore_best_weights=True
+        patience=5,              # Stop if val_loss doesn't improve for 5 epochs
+        restore_best_weights=True  # Roll back to the best epoch's weights
     )
 ]
 
+# With both callbacks: training stops before overfitting gets bad,
+# and the saved file always contains the best model seen during training
 history = model.fit(X_train, y_train,
                     validation_data=(X_val, y_val),
                     epochs=100,
@@ -656,7 +729,7 @@ for inputs, targets in train_loader:
 
 > **Keras vs. PyTorch:** Keras provides high-level APIs (`model.fit()`) that handle the training loop for you. PyTorch gives you explicit control over every step. Both are widely used — Keras for rapid prototyping, PyTorch for research flexibility.
 
-![XKCD: Tasks](media/xkcd_tasks.png)
+![](media/xkcd_tasks.png)
 
 # Neural Networks in Practice
 

@@ -64,13 +64,13 @@ In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences
     - **Skip-gram**: input word used to predict context
     - Precursors to **Attention**
 
-#FIXME: word2vec diagram showing skip-gram/CBOW
+#FIXME: word2vec skip-gram CBOW architecture diagram predict context window neural network
 
 ## Sequence-to-Sequence & RNNs (2014)
 
 **Encoder-decoder architecture**: Transform one sequence into another
 
-#FIXME: encoder-decoder architecture diagram
+#FIXME: sequence to sequence encoder decoder architecture diagram RNN input output fixed representation
 
 - Encoder processes input into fixed representation
 - Decoder generates output from that representation
@@ -125,7 +125,7 @@ The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/
 - [**The Illustrated Transformer**](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's step-by-step visual walkthrough
 - [**Everything About Transformers**](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
 
-#FIXME: more detailed transformer architecture diagram (showing encoder stack, decoder stack, attention connections, and data flow). Candidate: tx_moderate.png already in media/, or a simplified version of the full architecture from the Illustrated Transformer article
+#FIXME: transformer architecture diagram encoder decoder stack multi-head attention feed forward layer normalization residual connections data flow
 
 ![Basic Transformer Architecture](media/tx_basic.png)
 
@@ -198,7 +198,7 @@ Unlike RNNs, which inherently know word order (they process sequentially), trans
 
 Positional encodings fix this by adding a unique vector to each token's embedding. The original paper uses sine and cosine functions at different frequencies: low-frequency waves capture broad structure (beginning vs. end of sequence), while high-frequency waves capture fine-grained position (adjacent tokens). Together, they create a unique "positional fingerprint" for every position.
 
-#FIXME: positional encoding visualization (sine/cosine wave pattern)
+#FIXME: transformer positional encoding visualization sine cosine wave pattern heatmap token position frequency
 
 ## Putting It All Together
 
@@ -233,7 +233,7 @@ The key principle: attention works on any sequence where order and relationships
 
 Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) demonstrates that a working GPT can be built in ~200 lines of Python with zero dependencies.
 
-#FIXME: decoder-only GPT architecture diagram (tokens in → embedding → stacked attention blocks → output probabilities). Candidate: diagram from microGPT blog post or simplified version of the decoder half of tx_basic.png
+#FIXME: GPT decoder-only transformer architecture diagram token embedding positional encoding stacked attention blocks output probabilities next token prediction
 
 The key pieces:
 
@@ -255,7 +255,7 @@ These models learn from their training data. *All* of it. Including whatever bia
 | **Embedding Layer** | Maps each token to a dense vector + adds positional encoding. |
 | **Attention Blocks** | Stacked self-attention + feedforward layers. Each block refines the representation. |
 | **Output Head** | Linear layer projecting back to vocabulary size → softmax → next-token probabilities. |
-| **Training** | Autoregressive (each token predicted from all previous tokens): compute cross-entropy loss, backprop, Adam update. |
+| **Training** | Autoregressive — each token is predicted from all previous tokens (the model never "peeks ahead"): compute cross-entropy loss, backprop, Adam update. |
 | **Inference** | Sample from output distribution. Temperature controls randomness (0 = greedy, 1 = diverse). |
 
 ### Code Snippet: Minimal Attention Block
@@ -305,9 +305,9 @@ Embeddings aren't limited to text, either. In recommendation systems, users and 
 | Method | What It Embeds | Key Properties |
 |:---|:---|:---|
 | **Word2Vec** (2013) | Individual words | Skip-gram / CBOW; similar words cluster together |
-| **GloVe** | Individual words | Global co-occurrence statistics; pre-trained on large corpora |
+| **GloVe** (Global Vectors) | Individual words | Global co-occurrence statistics; pre-trained on large corpora |
 | **FastText** | Subwords → words | Handles out-of-vocabulary words via character n-grams |
-| **BERT Embeddings** | Words in context | Same word gets different vectors in different sentences |
+| **BERT** (Bidirectional Encoder Representations from Transformers) | Words in context | Same word gets different vectors in different sentences |
 | **Sentence Transformers** | Full sentences/paragraphs | Purpose-built for similarity tasks; fixed-size output vectors |
 
 The key evolution: Word2Vec gives one vector per word regardless of context. BERT and Sentence Transformers give *contextualized* embeddings — "bank" near "river" gets a different vector than "bank" near "money."
@@ -327,9 +327,9 @@ Embeddings enable a family of powerful applications:
 | Method | Description | Use Cases |
 |:---|:---|:---|
 | **Word2Vec** | Skip-gram or CBOW to learn word vectors | Text similarity, analogy tasks |
-| **GloVe** | Global vectors from co-occurrence statistics | Pre-trained embeddings for NLP |
+| **GloVe** (Global Vectors) | Global vectors from co-occurrence statistics | Pre-trained embeddings for NLP |
 | **FastText** | Subword embeddings (handles out-of-vocabulary words) | Morphologically rich languages |
-| **BERT Embeddings** | Contextualized embeddings from transformers | State-of-the-art NLP tasks |
+| **BERT** | Contextualized embeddings from transformers | State-of-the-art NLP tasks |
 | **Sentence Transformers** | Full sentence/paragraph embeddings | Semantic search, clustering |
 
 ### Reference Card: `SentenceTransformer`
@@ -385,7 +385,7 @@ A "vector database" is used for production applications of embeddings with many 
 | Database | Type | Strengths |
 |:---|:---|:---|
 | **ChromaDB** | In-memory/persistent | Simple API, good for prototyping |
-| **FAISS** | In-memory | Fast, scalable, from Meta AI |
+| **FAISS** (Facebook AI Similarity Search) | In-memory | Fast, scalable, from Meta AI |
 | **Pinecone** | Cloud service | Managed, production-ready |
 | **Weaviate** | Self-hosted/cloud | Full-text + vector search |
 | **pgvector** | PostgreSQL extension | Integrate with existing DB |
@@ -421,11 +421,13 @@ Vector databases will come back in Lecture 8 when we build RAG pipelines.
 
 # LLMs and General-Purpose Models
 
-Recent years have seen the emergence of large language models (LLMs) like GPT-4, Claude, and Gemini — massive, **general-purpose models** capable of understanding and generating human-like text across a wide range of tasks.
+Recent years have seen the emergence of large language models (LLMs) like GPT-4, Claude, and Gemini — massive, **general-purpose models** capable of understanding and generating human-like text across a wide range of tasks. This represents a paradigm shift: instead of training a separate model for each task (one for translation, another for summarization, another for classification), a single model pre-trained on a vast corpus of text can be adapted to any of these tasks with minimal effort.
 
-What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and emergent capabilities that weren't explicitly trained. The same model can translate, summarize, classify, write code, and reason about problems.
+What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and **emergent capabilities** — abilities that weren't explicitly trained but arise from scale. The same model can translate, summarize, classify, write code, and reason about problems. These capabilities improve unpredictably as models get larger, which is why the field has pushed toward ever-bigger models (GPT-1's 117M parameters → GPT-3's 175B → GPT-4's estimated 1.8T).
 
-#FIXME: model size comparison visual (parameter counts over time, or pre-train → fine-tune → prompt pipeline diagram). Candidate: adapt the timeline from L25 Whirlwind Tour or create a simple bar chart of GPT-1 (117M) → GPT-2 (1.5B) → GPT-3 (175B) → GPT-4 (rumored 1.8T)
+The practical consequence: you no longer need to build a custom NLP pipeline for every new task. A well-crafted prompt to a general-purpose model often matches or exceeds the performance of a task-specific model that took weeks to train — especially when you don't have large labeled datasets (which is common in healthcare).
+
+#FIXME: LLM model size comparison bar chart parameter count GPT-1 117M GPT-2 1.5B GPT-3 175B GPT-4 scaling over time
 
 ## Fine-Tuning vs Prompt Engineering
 
@@ -481,7 +483,15 @@ trainer.train()
 
 ## Hallucination
 
-There is no general solution to preventing model hallucination — think of it like regression extrapolating beyond training data. Key mitigations include RAG (grounding in documents), careful prompt design, and human-in-the-loop review. We'll cover failure modes and defenses in depth in Lecture 8.
+There is no general solution to preventing model hallucination — think of it like regression extrapolating beyond training data. When the model encounters inputs outside its training distribution, it doesn't say "I don't know." It confidently generates plausible-sounding text that may be completely wrong.
+
+Mitigations exist but none are foolproof:
+
+- **RAG (Retrieval-Augmented Generation)**: Ground the model's responses in actual documents (covered in Lecture 8)
+- **Prompt and output design**: Constrain what the model can say — structured outputs, schema enforcement, explicit instructions to cite sources
+- **Human-in-the-loop**: Expert review of outputs, especially for high-stakes decisions
+
+We'll cover failure modes and defenses in depth in Lecture 8.
 
 > [!WARNING]  
 > If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
@@ -588,11 +598,11 @@ troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterizatio
 
 ![xkcd: Standards](media/xkcd_standards.png)
 
-Students need API access working before Lecture 8's applied work.
+#FIXME: set up shared API key for students to use in demos and assignment
 
 ## API Access Patterns
 
-#FIXME: API request/response flow diagram (Your Code → HTTP POST with JSON → Provider API → JSON response with generated text). Candidate: simple sequence diagram or flowchart
+#FIXME: REST API request response flow diagram HTTP POST JSON prompt LLM provider API key authentication sequence diagram
 
 - **REST APIs**: HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text
 - **SDKs (Software Development Kits)**: Client libraries like OpenAI Python and Anthropic SDK provide convenient wrappers; OpenAI-compatible providers (OpenRouter, Together, etc.) reuse the same SDK with a different `base_url`
@@ -631,6 +641,7 @@ print(response.choices[0].message.content)
 OpenRouter aggregates models from every major provider behind a single OpenAI-compatible API. You use the same `openai` SDK — just change the `base_url`.
 
 ```python
+import os
 from openai import OpenAI
 
 client = OpenAI(

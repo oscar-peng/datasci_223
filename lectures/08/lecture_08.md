@@ -608,7 +608,7 @@ Understanding how LLMs fail helps you design better systems and set appropriate 
 
 | Failure Mode | What Happens | Mitigation |
 |:---|:---|:---|
-| **Hallucinations** | Fabricated citations, confident incorrect answers | RAG, fact-checking, citations, temperature=0 |
+| **Hallucinations** | Fabricated citations, confident incorrect answers | RAG, fact-checking, citations, temperature=0, training data curation |
 | **Prompt injection** | User input overrides system instructions | Input sanitization, delimiters, XML tags |
 | **Inconsistency** | Same input → different outputs | temperature=0, seeded states, validation |
 | **Context overflow** | Important information at edges gets lost | Strategic positioning, chunking, hierarchical summarization |
@@ -620,7 +620,7 @@ Understanding how LLMs fail helps you design better systems and set appropriate 
 
 **Why**: Models generate statistically likely continuations, not verified facts. Think of it like regression — when extrapolating beyond the training data, assumptions may not hold.
 
-**Mitigations**: RAG (ground in documents), fact-checking pipelines, require citations, use lower temperature for factual tasks
+**Mitigations**: RAG (ground in documents), fact-checking pipelines, require citations, use lower temperature for factual tasks, curate high-quality training/fine-tuning data
 
 ## Prompt Injection
 

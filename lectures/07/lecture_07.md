@@ -33,8 +33,10 @@ Transformers: More than Meets the Eye
 
 ## Healthcare AI
 
-- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool
+- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool (sunsetting soon)
+- [UCSF ChatGPT Enterprise](https://ai.ucsf.edu/ucsf-chatgpt-enterprise) — Versa replacement (coming online March 2026)
 - [Google Med-PaLM](https://sites.research.google/med-palm/) — medical LLM research
+- [Azure Text Analytics for Health](https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/overview)
 
 ## Prompt Engineering Guides
 
@@ -62,7 +64,7 @@ In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences
 - Used **Continuous Bag of Words** and **Skip-gram** algorithms for building context
     - **CBOW**: surrounding words used to predict word in the middle
     - **Skip-gram**: input word used to predict context
-    - Precursors to **Attention**
+- Key idea: words that appear in similar contexts get similar vectors — this notion of "context determines meaning" reappears throughout the transformer story
 
 #FIXME: word2vec skip-gram CBOW architecture diagram predict context window neural network
 
@@ -79,7 +81,7 @@ In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences
 
 ### RNNs, LSTM, and Limitations
 
-RNNs introduced "memory" to neural networks — the same innovation with LSTMs in Lecture 6. But they hit two walls:
+RNNs introduced "memory" to neural networks — the same innovation as LSTMs in Lecture 6. But they hit two walls:
 
 **1. Vanishing gradients**: Error signals shrink as they propagate backward through time. Early words in a sequence get minimal learning signal. LSTMs improved this with gating mechanisms, but the fundamental issue remained for very long sequences.
 
@@ -104,19 +106,23 @@ RNNs introduced "memory" to neural networks — the same innovation with LSTMs i
 
 ## The Scale-Up Era (2018–2026)
 
+Once transformers removed the sequential bottleneck, the race was on: bigger models, more data, faster hardware. Each generation unlocked capabilities that the previous generation couldn't achieve — from basic text completion to multi-turn reasoning and tool use. The progression happened faster than anyone predicted.
+
 ### Reference Card: NLP Model Evolution
 
-| Year | Innovation | Key Insight |
-|:---|:---|:---|
-| **2013** | Word2Vec | Words as vectors; similar meanings cluster together |
-| **2014** | Seq2Seq / RNNs | Encode input → decode output; sequential processing |
-| **2015** | Attention | Decoder can focus on relevant input parts dynamically |
-| **2017** | Transformer | Attention *is* the architecture; parallel processing |
-| **2018** | GPT (170M params), BERT | Pre-train on massive text, fine-tune for tasks |
-| **2020** | GPT-3 (175B params) | Few-shot learning — examples in the prompt, no retraining |
-| **2022** | ChatGPT + RLHF (Reinforcement Learning from Human Feedback) | Human feedback alignment; 100M users in 2 months |
-| **2024** | GPT-4, Claude 3.5, Gemini, Llama 3 | 200K+ token context windows; multimodal |
-| **2025–26** | Claude 4, GPT-4o, reasoning models | Agentic workflows; tool use; structured outputs |
+| Year        | Innovation                                                       | Key Insight                                                      |
+| :---------- | :--------------------------------------------------------------- | :--------------------------------------------------------------- |
+| **2013**    | Word2Vec                                                         | Words as vectors; similar meanings cluster together              |
+| **2014**    | Seq2Seq / RNNs                                                   | Encode input → decode output; sequential processing              |
+| **2015**    | Attention ([Bahdanau et al.](https://arxiv.org/abs/1409.0473))   | Decoder can focus on relevant input parts dynamically            |
+| **2017**    | Transformer ([Vaswani et al.](https://arxiv.org/abs/1706.03762)) | Attention _is_ the architecture; parallel processing             |
+| **2018**    | GPT (117M params), BERT                                          | Pre-train on massive text, fine-tune for tasks                   |
+| **2019**    | GPT-2 (1.5B params)                                              | "Too dangerous to release" — coherent multi-paragraph generation |
+| **2020**    | GPT-3 (175B params)                                              | Few-shot learning — examples in the prompt, no retraining        |
+| **2022**    | ChatGPT + RLHF (Reinforcement Learning from Human Feedback)      | Human feedback alignment; 100M users in 2 months                 |
+| **2023**    | GPT-4, Llama 2, Claude 2                                         | Multimodal input (images + text); open-weight models             |
+| **2024**    | Claude 3.5, Gemini, Llama 3                                      | 200K+ token context windows; widespread API access               |
+| **2025–26** | Claude 4, GPT-4o, reasoning models                               | Agentic workflows; tool use; structured outputs                  |
 
 # Transformer Architecture
 
@@ -139,7 +145,7 @@ The pipeline: **Tokenize → Embed → Add positional encodings → Stack attent
 
 ## Self-Attention: The Core Innovation
 
-Consider the sentence: *"The animal didn't cross the street because **it** was too tired."* When processing "it," the model needs to figure out that "it" refers to "the animal" — not "the street."
+Consider the sentence: _"The animal didn't cross the street because **it** was too tired."_ When processing "it," the model needs to figure out that "it" refers to "the animal" — not "the street."
 
 Self-attention solves this. Each token computes how much it should "attend to" every other token in the sequence. This lets the model capture long-range dependencies directly, without needing to pass information token-by-token through a chain of hidden states.
 
@@ -147,9 +153,9 @@ Self-attention solves this. Each token computes how much it should "attend to" e
 
 Think of it like a search engine. For each token, the model creates three vectors:
 
-- **Query (Q)**: What this token is *looking for* — like what's typed into a search bar
-- **Key (K)**: What this token *offers* to others — like the title of a web page
-- **Value (V)**: The actual *content* to retrieve — like the web page itself
+- **Query (Q)**: What this token is _looking for_ — like what's typed into a search bar
+- **Key (K)**: What this token _offers_ to others — like the title of a web page
+- **Value (V)**: The actual _content_ to retrieve — like the web page itself
 
 The attention mechanism computes a dot product between each Query and every Key. High dot product = high relevance. These scores are normalized with **softmax** (converting raw scores into probabilities that sum to 1), then used to create a weighted combination of Values.
 
@@ -157,13 +163,13 @@ The scores are divided by $\sqrt{d_k}$ (the square root of the key dimension) to
 
 ### Reference Card: Scaled Dot-Product Attention
 
-| Component | Details |
-|:---|:---|
-| **Formula** | $\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ |
-| **Q (Query)** | What we're looking for — "which other tokens matter to me?" |
-| **K (Key)** | What each token offers — "here's what I represent" |
-| **V (Value)** | The actual information to retrieve |
-| **Scaling** | $\sqrt{d_k}$ prevents dot products from growing too large with high dimensions |
+| Component     | Details                                                                           |
+| :------------ | :-------------------------------------------------------------------------------- |
+| **Formula**   | $\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ |
+| **Q (Query)** | What we're looking for — "which other tokens matter to me?"                       |
+| **K (Key)**   | What each token offers — "here's what I represent"                                |
+| **V (Value)** | The actual information to retrieve                                                |
+| **Scaling**   | $\sqrt{d_k}$ prevents dot products from growing too large with high dimensions    |
 
 ### Code Snippet: Simplified Attention
 
@@ -182,13 +188,13 @@ def scaled_dot_product_attention(query, key, value):
 
 A single attention pass captures one type of relationship. But language has many simultaneous relationships — syntax, semantics, entity references, temporal ordering.
 
-Multi-head attention runs multiple attention operations in parallel, each with its own learned Q/K/V weight matrices. With the sentence *"He swung the bat with incredible force"*: one head might focus on "swung ↔ bat" (action–object), another on "incredible ↔ force" (modifier–noun), and another on resolving that "bat" means a baseball bat, not an animal.
+Multi-head attention runs multiple attention operations in parallel, each with its own learned Q/K/V weight matrices. With the sentence _"He swung the bat with incredible force"_: one head might focus on "swung ↔ bat" (action–object), another on "incredible ↔ force" (modifier–noun), and another on resolving that "bat" means a baseball bat, not an animal.
 
 The original transformer uses 8 heads with 512-dimensional embeddings, giving each head 64 dimensions (512 ÷ 8). Too few heads and each must learn too many relationship types; too many and each becomes too small to represent anything meaningful.
 
 ![Attention Mechanism Visualization](media/attention.png)
 
-*The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token "lazy" selected.*
+_The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token "lazy" selected._
 
 ![Simple Attention Animation](media/simple-pretty-gif.gif)
 
@@ -204,16 +210,16 @@ Positional encodings fix this by adding a unique vector to each token's embeddin
 
 ### Reference Card: Transformer Components
 
-| Component | Purpose | Details |
-|:---|:---|:---|
-| **Input Embedding** | Convert tokens to vectors | Maps discrete tokens to continuous space |
-| **Positional Encoding** | Add order information | Since attention is order-agnostic, position must be injected |
+| Component                | Purpose                            | Details                                                                       |
+| :----------------------- | :--------------------------------- | :---------------------------------------------------------------------------- |
+| **Input Embedding**      | Convert tokens to vectors          | Maps discrete tokens to continuous space                                      |
+| **Positional Encoding**  | Add order information              | Since attention is order-agnostic, position must be injected                  |
 | **Multi-Head Attention** | Learn different relationship types | Each head focuses on different aspects (syntax, semantics, entity references) |
-| **Feed-Forward Network** | Add non-linearity | Applied to each position independently |
-| **Layer Normalization** | Stabilize training | Normalize activations within a layer |
-| **Residual Connections** | Enable gradient flow | Skip connections around sublayers; preserve information through deep stacks |
+| **Feed-Forward Network** | Add non-linearity                  | Applied to each position independently                                        |
+| **Layer Normalization**  | Stabilize training                 | Normalize activations within a layer                                          |
+| **Residual Connections** | Enable gradient flow               | Skip connections around sublayers; preserve information through deep stacks   |
 
-Each encoder/decoder layer combines these components: self-attention → residual connection + normalization → feedforward → residual connection + normalization. Stack 6+ of these layers, and 💥 have a transformer.
+Each encoder/decoder layer combines these components: self-attention → residual connection + normalization → feedforward → residual connection + normalization. Stack 6+ of these layers and you 💥 have a transformer.
 
 **Want to explore interactively?** [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — step through a working transformer model and see what each component does.
 
@@ -237,7 +243,7 @@ Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) de
 
 The key pieces:
 
-- **Tokenization** (character-level): split text into individual characters as tokens. Production models use **BPE (Byte Pair Encoding)** instead, which groups common character sequences into subword tokens (~4 characters per token on average). Models process 64K–200K+ tokens per request.
+- **Tokenization** (character-level): split text into individual characters as tokens. Production models use **BPE (Byte Pair Encoding)** instead, which groups common character sequences into subword tokens (~4 characters per token on average). Modern models have context windows of 64K–200K+ tokens — that's the total amount of text the model can "see" at once.
 - **Autograd engine**: compute gradients automatically for backpropagation
 - **Multi-head attention blocks**: the core transformer layer — self-attention + feedforward
 - **Training loop**: forward pass → compute loss (cross-entropy: measures how far predictions are from the correct next token) → backprop → update weights using the Adam optimizer (an adaptive learning rate method)
@@ -245,32 +251,35 @@ The key pieces:
 
 The surprising thing: scaling from microGPT to GPT-4 changes the tokenizer (BPE instead of characters), the data (terabytes instead of kilobytes), and the compute (thousands of GPUs) — but the core algorithm doesn't much change.
 
-These models learn from their training data. *All* of it. Including whatever biases exist in the text. If we're lucky, we might guess at the biases we introduce — but not always.
+These models learn from their training data. _All_ of it. Including whatever biases exist in the text. If we're lucky, we might guess at the biases we introduce — but not always.
 
 ### Reference Card: GPT Components
 
-| Component | Details |
-|:---|:---|
-| **Tokenizer** | Splits text into tokens (characters, subwords, or words). BPE is standard for production models. |
-| **Embedding Layer** | Maps each token to a dense vector + adds positional encoding. |
-| **Attention Blocks** | Stacked self-attention + feedforward layers. Each block refines the representation. |
-| **Output Head** | Linear layer projecting back to vocabulary size → softmax → next-token probabilities. |
-| **Training** | Autoregressive — each token is predicted from all previous tokens (the model never "peeks ahead"): compute cross-entropy loss, backprop, Adam update. |
-| **Inference** | Sample from output distribution. Temperature controls randomness (0 = greedy, 1 = diverse). |
+| Component            | Details                                                                                                                                               |
+| :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tokenizer**        | Splits text into tokens (characters, subwords, or words). BPE is standard for production models.                                                      |
+| **Embedding Layer**  | Maps each token to a dense vector + adds positional encoding.                                                                                         |
+| **Attention Blocks** | Stacked self-attention + feedforward layers. Each block refines the representation.                                                                   |
+| **Output Head**      | Linear layer projecting back to vocabulary size → softmax → next-token probabilities.                                                                 |
+| **Training**         | Autoregressive — each token is predicted from all previous tokens (the model never "peeks ahead"): compute cross-entropy loss, backprop, Adam update. |
+| **Inference**        | Sample from output distribution. Temperature controls randomness (0 = greedy, 1 = diverse).                                                           |
 
-### Code Snippet: Minimal Attention Block
+### Code Snippet: Attention Block with Learned Projections
+
+The earlier attention snippet took pre-computed Q, K, V as inputs. In a real transformer, the model _learns_ how to create Q, K, V from the input — that's what the weight matrices do:
 
 ```python
 import numpy as np
 
 class AttentionBlock:
-    """Simplified single-head attention block (conceptual)."""
+    """Single-head attention with learned Q/K/V projections."""
     def __init__(self, dim):
-        self.wq = np.random.randn(dim, dim) * 0.02  # query weights
-        self.wk = np.random.randn(dim, dim) * 0.02  # key weights
-        self.wv = np.random.randn(dim, dim) * 0.02  # value weights
+        self.wq = np.random.randn(dim, dim) * 0.02  # learned query projection
+        self.wk = np.random.randn(dim, dim) * 0.02  # learned key projection
+        self.wv = np.random.randn(dim, dim) * 0.02  # learned value projection
 
     def forward(self, x):
+        # Project input into Q, K, V spaces (this is what the model learns)
         q, k, v = x @ self.wq, x @ self.wk, x @ self.wv
         scores = q @ k.T / np.sqrt(x.shape[-1])
         weights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)
@@ -278,6 +287,7 @@ class AttentionBlock:
 ```
 
 **Resources:**
+
 - [microGPT visualizer](https://microgpt.boratto.ca) — interactive visualization of GPT internals
 - [Let's Build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY) — Karpathy's video walkthrough
 - [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
@@ -298,19 +308,19 @@ Embeddings aren't limited to text, either. In recommendation systems, users and 
 
 ![Word embedding space](media/word_embedding_distributed.webp)
 
-*Semantic similarity in embedding space: "king" - "man" + "woman" ≈ "queen" — geometry captures analogies*
+_Semantic similarity in embedding space: "king" - "man" + "woman" ≈ "queen" — geometry captures analogies_
 
 ## From Words to Sentences
 
-| Method | What It Embeds | Key Properties |
-|:---|:---|:---|
-| **Word2Vec** (2013) | Individual words | Skip-gram / CBOW; similar words cluster together |
-| **GloVe** (Global Vectors) | Individual words | Global co-occurrence statistics; pre-trained on large corpora |
-| **FastText** | Subwords → words | Handles out-of-vocabulary words via character n-grams |
-| **BERT** (Bidirectional Encoder Representations from Transformers) | Words in context | Same word gets different vectors in different sentences |
-| **Sentence Transformers** | Full sentences/paragraphs | Purpose-built for similarity tasks; fixed-size output vectors |
+| Method                                                             | What It Embeds            | Key Properties                                                |
+| :----------------------------------------------------------------- | :------------------------ | :------------------------------------------------------------ |
+| **Word2Vec** (2013)                                                | Individual words          | Skip-gram / CBOW; similar words cluster together              |
+| **GloVe** (Global Vectors)                                         | Individual words          | Global co-occurrence statistics; pre-trained on large corpora |
+| **FastText**                                                       | Subwords → words          | Handles out-of-vocabulary words via character n-grams         |
+| **BERT** (Bidirectional Encoder Representations from Transformers) | Words in context          | Same word gets different vectors in different sentences       |
+| **Sentence Transformers**                                          | Full sentences/paragraphs | Purpose-built for similarity tasks; fixed-size output vectors |
 
-The key evolution: Word2Vec gives one vector per word regardless of context. BERT and Sentence Transformers give *contextualized* embeddings — "bank" near "river" gets a different vector than "bank" near "money."
+The key evolution: Word2Vec gives one vector per word regardless of context. BERT and Sentence Transformers give _contextualized_ embeddings — "bank" near "river" gets a different vector than "bank" near "money." This matters in clinical text, where abbreviations like "PT" can mean "physical therapy," "prothrombin time," or "patient" depending on context.
 
 ## Practical Usage
 
@@ -324,32 +334,32 @@ Embeddings enable a family of powerful applications:
 
 ### Reference Card: Common Embedding Methods
 
-| Method | Description | Use Cases |
-|:---|:---|:---|
-| **Word2Vec** | Skip-gram or CBOW to learn word vectors | Text similarity, analogy tasks |
-| **GloVe** (Global Vectors) | Global vectors from co-occurrence statistics | Pre-trained embeddings for NLP |
-| **FastText** | Subword embeddings (handles out-of-vocabulary words) | Morphologically rich languages |
-| **BERT** | Contextualized embeddings from transformers | State-of-the-art NLP tasks |
-| **Sentence Transformers** | Full sentence/paragraph embeddings | Semantic search, clustering |
+| Method                     | Description                                          | Use Cases                      |
+| :------------------------- | :--------------------------------------------------- | :----------------------------- |
+| **Word2Vec**               | Skip-gram or CBOW to learn word vectors              | Text similarity, analogy tasks |
+| **GloVe** (Global Vectors) | Global vectors from co-occurrence statistics         | Pre-trained embeddings for NLP |
+| **FastText**               | Subword embeddings (handles out-of-vocabulary words) | Morphologically rich languages |
+| **BERT**                   | Contextualized embeddings from transformers          | State-of-the-art NLP tasks     |
+| **Sentence Transformers**  | Full sentence/paragraph embeddings                   | Semantic search, clustering    |
 
 ### Reference Card: `SentenceTransformer`
 
-| Component | Details |
-|:---|:---|
-| **Library** | `sentence-transformers` (`pip install sentence-transformers`) |
-| **Purpose** | Generate dense vector embeddings for sentences/paragraphs |
-| **Key Method** | `model.encode(sentences)` — returns numpy array of embeddings |
-| **Popular Models** | `all-MiniLM-L6-v2` (fast), `all-mpnet-base-v2` (accurate) |
-| **Output** | Fixed-size vectors (e.g., 384 or 768 dimensions) |
+| Component          | Details                                                       |
+| :----------------- | :------------------------------------------------------------ |
+| **Library**        | `sentence-transformers` (`pip install sentence-transformers`) |
+| **Purpose**        | Generate dense vector embeddings for sentences/paragraphs     |
+| **Key Method**     | `model.encode(sentences)` — returns numpy array of embeddings |
+| **Popular Models** | `all-MiniLM-L6-v2` (fast), `all-mpnet-base-v2` (accurate)     |
+| **Output**         | Fixed-size vectors (e.g., 384 or 768 dimensions)              |
 
 ### Reference Card: `cosine_similarity`
 
-| Component | Details |
-|:---|:---|
-| **Function** | `sklearn.metrics.pairwise.cosine_similarity()` |
-| **Purpose** | Measure similarity between vectors (1 = identical, 0 = orthogonal, -1 = opposite) |
-| **Input** | Two arrays of shape (n_samples, n_features) |
-| **Use Case** | Compare embeddings to find semantically similar texts |
+| Component    | Details                                                                           |
+| :----------- | :-------------------------------------------------------------------------------- |
+| **Function** | `sklearn.metrics.pairwise.cosine_similarity()`                                    |
+| **Purpose**  | Measure similarity between vectors (1 = identical, 0 = orthogonal, -1 = opposite) |
+| **Input**    | Two arrays of shape (n_samples, n_features)                                       |
+| **Use Case** | Compare embeddings to find semantically similar texts                             |
 
 ### Code Snippet: Computing and Comparing Embeddings
 
@@ -382,13 +392,13 @@ A "vector database" is used for production applications of embeddings with many 
 
 ### Reference Card: Vector Database Options
 
-| Database | Type | Strengths |
-|:---|:---|:---|
-| **ChromaDB** | In-memory/persistent | Simple API, good for prototyping |
-| **FAISS** (Facebook AI Similarity Search) | In-memory | Fast, scalable, from Meta AI |
-| **Pinecone** | Cloud service | Managed, production-ready |
-| **Weaviate** | Self-hosted/cloud | Full-text + vector search |
-| **pgvector** | PostgreSQL extension | Integrate with existing DB |
+| Database                                  | Type                 | Strengths                        |
+| :---------------------------------------- | :------------------- | :------------------------------- |
+| **ChromaDB**                              | In-memory/persistent | Simple API, good for prototyping |
+| **FAISS** (Facebook AI Similarity Search) | In-memory            | Fast, scalable, from Meta AI     |
+| **Pinecone**                              | Cloud service        | Managed, production-ready        |
+| **Weaviate**                              | Self-hosted/cloud    | Full-text + vector search        |
+| **pgvector**                              | PostgreSQL extension | Integrate with existing DB       |
 
 ### Code Snippet: ChromaDB Vector Search
 
@@ -415,7 +425,7 @@ results = collection.query(
 )
 ```
 
-Vector databases will come back in Lecture 8 when we build RAG pipelines.
+We'll use vector databases again in Lecture 8 when we build RAG pipelines.
 
 ![xkcd: Similarities](media/xkcd_similarities.png)
 
@@ -423,7 +433,7 @@ Vector databases will come back in Lecture 8 when we build RAG pipelines.
 
 Recent years have seen the emergence of large language models (LLMs) like GPT-4, Claude, and Gemini — massive, **general-purpose models** capable of understanding and generating human-like text across a wide range of tasks. This represents a paradigm shift: instead of training a separate model for each task (one for translation, another for summarization, another for classification), a single model pre-trained on a vast corpus of text can be adapted to any of these tasks with minimal effort.
 
-What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and **emergent capabilities** — abilities that weren't explicitly trained but arise from scale. The same model can translate, summarize, classify, write code, and reason about problems. These capabilities improve unpredictably as models get larger, which is why the field has pushed toward ever-bigger models (GPT-1's 117M parameters → GPT-3's 175B → GPT-4's estimated 1.8T).
+What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and **emergent capabilities** — abilities that weren't explicitly trained but arise from scale. The same model can translate, summarize, classify, write code, and reason about problems. These capabilities improve unpredictably as models get larger, which is why the field has pushed toward ever-bigger models (GPT-1's 117M parameters → GPT-2's 1.5B → GPT-3's 175B → GPT-4's undisclosed but much larger count).
 
 The practical consequence: you no longer need to build a custom NLP pipeline for every new task. A well-crafted prompt to a general-purpose model often matches or exceeds the performance of a task-specific model that took weeks to train — especially when you don't have large labeled datasets (which is common in healthcare).
 
@@ -433,43 +443,38 @@ The practical consequence: you no longer need to build a custom NLP pipeline for
 
 Two approaches to adapting an LLM to the task:
 
-| Approach | When to Use | Effort | Cost |
-|:---|:---|:---|:---|
-| **Prompting** (recommended default) | Most tasks; fast iteration | Minutes to test | Lower |
-| **Fine-tuning** (specialized cases) | Specialized vocabulary, domain patterns | Days–weeks | Higher |
+| Approach                            | When to Use                             | Effort          | Cost   |
+| :---------------------------------- | :-------------------------------------- | :-------------- | :----- |
+| **Prompting** (recommended default) | Most tasks; fast iteration              | Minutes to test | Lower  |
+| **Fine-tuning** (specialized cases) | Specialized vocabulary, domain patterns | Days–weeks      | Higher |
 
-**Prompting** is the recommended starting point:
-- Fast iteration (minutes to test)
-- No data collection needed
-- Works across many tasks
-- Lower cost
-
-**Fine-tuning** is for specialized cases only:
-- Adapt pre-trained model to specific data
-- Requires 100s–1000s labeled examples
-- Lengthy dataset preparation and training
+**Prompting** is almost always the right starting point — you can test ideas in minutes and iterate quickly. Save **fine-tuning** for cases where you need a model to learn specialized vocabulary or patterns (e.g., pathology report terminology, rare disease phenotypes) and you have hundreds or thousands of labeled examples to train on.
 
 ### Reference Card: Fine-Tuning with Hugging Face
 
-| Component | Details |
-|:---|:---|
-| **Purpose** | Adapt pre-trained model to specific task/domain |
-| **Data Needed** | 100s–1000s labeled examples typically |
-| **Key Classes** | `Trainer`, `TrainingArguments`, `AutoModel` |
+| Component       | Details                                          |
+| :-------------- | :----------------------------------------------- |
+| **Purpose**     | Adapt pre-trained model to specific task/domain  |
+| **Data Needed** | 100s–1000s labeled examples typically            |
+| **Key Classes** | `Trainer`, `TrainingArguments`, `AutoModel`      |
 | **When to Use** | Specialized vocabulary, domain-specific patterns |
-| **Alternative** | Prompt engineering (faster, no training) |
+| **Alternative** | Prompt engineering (faster, no training)         |
 
 ### Code Snippet: Fine-Tuning a GPT
 
 ```python
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, Trainer, TrainingArguments
+from datasets import Dataset
 
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+tokenizer.pad_token = tokenizer.eos_token
 model = GPT2LMHeadModel.from_pretrained('gpt2')
 
-# Prepare the dataset
-texts = ["Clinical notes", "More clinical text"]
-inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+# Tokenize and wrap in a Dataset (Trainer requires this format)
+texts = ["Clinical notes about diabetes management", "More clinical text about hypertension"]
+tokenized = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+tokenized["labels"] = tokenized["input_ids"].clone()
+dataset = Dataset.from_dict({k: v.tolist() for k, v in tokenized.items()})
 
 training_args = TrainingArguments(
     output_dir="./results",
@@ -477,7 +482,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
 )
 
-trainer = Trainer(model=model, args=training_args, train_dataset=inputs)
+trainer = Trainer(model=model, args=training_args, train_dataset=dataset)
 trainer.train()
 ```
 
@@ -493,11 +498,8 @@ Mitigations exist but none are foolproof:
 
 We'll cover failure modes and defenses in depth in Lecture 8.
 
-> [!WARNING]  
-> If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
-
-!!! warn
-	If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
+!!! warning
+If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
 
 # Prompt Engineering
 
@@ -517,14 +519,18 @@ Not every prompt needs all five sections, but thinking in these terms helps craf
 
 ## Zero-Shot, One-Shot, and Few-Shot Learning
 
+One of the most remarkable capabilities of LLMs is performing tasks they were never explicitly trained on. A **zero-shot** prompt describes only the task — no examples. **One-shot** gives a single example to establish the pattern. **Few-shot** provides 2–5 examples, which is often enough for the model to learn complex output formats or domain-specific conventions.
+
+The more ambiguous or structured the task, the more examples help. For simple classification ("is this positive or negative?"), zero-shot often suffices. For extracting structured JSON from clinical notes, a few-shot prompt with representative examples dramatically improves consistency.
+
 ### Reference Card: Prompting Techniques
 
-| Technique | Description | When to Use |
-|:---|:---|:---|
-| **Zero-shot** | Task description only, no examples | Simple, well-defined tasks |
-| **One-shot** | Single example provided | When pattern is clear from one case |
-| **Few-shot** | 2–5 examples provided | Complex patterns, structured output |
-| **Chain-of-thought** | Ask model to show reasoning steps | Multi-step reasoning tasks |
+| Technique            | Description                                               | When to Use                                        |
+| :------------------- | :-------------------------------------------------------- | :------------------------------------------------- |
+| **Zero-shot**        | Task description only, no examples                        | Simple, well-defined tasks                         |
+| **One-shot**         | Single example provided                                   | When pattern is clear from one case                |
+| **Few-shot**         | 2–5 examples provided                                     | Complex patterns, structured output                |
+| **Chain-of-thought** | Ask model to show reasoning step-by-step before answering | Multi-step reasoning tasks (expanded in Lecture 8) |
 
 ### Code Snippet: Few-Shot Prompting
 
@@ -552,7 +558,7 @@ The traditional approach — parsing free text with regex — is fragile and err
 
 ![Structured outputs](media/structured_outputs.png)
 
-### Why does it matter in health data science?
+### Structured Outputs in Health Data Science
 
 - **Reliability:** Structured outputs are easier to validate and less prone to hallucination
 - **Interoperability:** Can be directly consumed by other systems (EHRs, analytics pipelines)
@@ -567,12 +573,12 @@ The traditional approach — parsing free text with regex — is fragile and err
 
 ### Reference Card: Structured Output Prompting
 
-| Component | Details |
-|:---|:---|
+| Component             | Details                                    |
+| :-------------------- | :----------------------------------------- |
 | **Schema Definition** | Explicitly define JSON structure in prompt |
-| **Required Fields** | List all mandatory fields with types |
-| **Validation** | Parse and validate output programmatically |
-| **Fallback** | Handle parsing errors gracefully |
+| **Required Fields**   | List all mandatory fields with types       |
+| **Validation**        | Parse and validate output programmatically |
+| **Fallback**          | Handle parsing errors gracefully           |
 
 ### Code Snippet: Schema-Based Prompting
 
@@ -610,12 +616,12 @@ troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterizatio
 
 ### Reference Card: LLM API Providers
 
-| Provider | Models | Strengths |
-|:---|:---|:---|
-| **OpenAI** | GPT-4o, o1, o3 | Best general-purpose, function calling, structured outputs |
-| **Anthropic** | Claude 4, Claude 4.5 | Long context, safety focus, tool use |
-| **Google** | Gemini | Multimodal, large context |
-| **OpenRouter** | All of the above + open models | OpenAI-compatible SDK, cheap, wide model selection |
+| Provider       | Models                         | Strengths                                                  |
+| :------------- | :----------------------------- | :--------------------------------------------------------- |
+| **OpenAI**     | GPT-4o, o1, o3                 | Best general-purpose, function calling, structured outputs |
+| **Anthropic**  | Claude 4, Claude 4.5           | Long context, safety focus, tool use                       |
+| **Google**     | Gemini                         | Multimodal, large context                                  |
+| **OpenRouter** | All of the above + open models | OpenAI-compatible SDK, cheap, wide model selection         |
 
 ### Code Snippet: OpenAI API
 
@@ -661,22 +667,23 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-## Function Calling: Enforcing Schema Compliance
+## Function Calling
 
-Modern LLM APIs support **function calling** — define a schema for expected output, and the model returns a response conforming to that schema.
+Modern LLM APIs support **function calling** (also called **tool use**) — you define functions the model can invoke, and the model decides when and how to call them. This is different from structured outputs (where the model formats its response as JSON). With function calling, the model actually _requests that your code execute a function_ and returns the arguments it wants to pass.
 
-- Guides the model to return only data matching a structure (required fields, types)
-- Reduces hallucinated or malformed outputs
-- Makes LLM integration into production systems practical — especially in healthcare where data quality is critical
+- The model chooses which function to call and with what arguments
+- Your code executes the function and returns the result to the model
+- Enables LLMs to interact with external systems — databases, calculators, APIs
+- In healthcare: the model extracts data from text and calls a function with typed, validated arguments
 
 ### Reference Card: Function Calling
 
-| Component | Details |
-|:---|:---|
-| **Purpose** | Enforce structured output schema |
-| **Definition** | JSON schema with properties and types |
-| **Required Fields** | Specify mandatory fields in schema |
-| **Validation** | Model attempts to conform to schema |
+| Component           | Details                               |
+| :------------------ | :------------------------------------ |
+| **Purpose**         | Enforce structured output schema      |
+| **Definition**      | JSON schema with properties and types |
+| **Required Fields** | Specify mandatory fields in schema    |
+| **Validation**      | Model attempts to conform to schema   |
 
 ### Code Snippet: Function Calling
 
@@ -709,10 +716,7 @@ response = client.chat.completions.create(
 
 ## Building a Complete LLM Chat Application
 
-When building applications that interact with LLMs, separate code into distinct components:
-
-1. **LLM Client Library**: Handles API communication, error handling, conversation formatting
-2. **Command Line Interface**: Provides a user interface leveraging the client library
+When building applications that interact with LLMs, wrap the API in a reusable client class that handles conversation history, retries, and error handling. This separates API communication from application logic — the same client can power a CLI, a web app, or a batch pipeline.
 
 ### Code Snippet: LLM Client Class
 
@@ -753,10 +757,11 @@ class LLMClient:
 
 ## Error Handling Best Practices
 
-- **Rate limiting**: Implement exponential backoff for rate limits
-- **Timeout handling**: Set appropriate timeouts for connection issues
-- **Response validation**: Always validate structure and content of API responses
-- **Cost management**: Monitor token usage and implement budgets
+The `LLMClient` above demonstrates the key pattern: retry with exponential backoff. Beyond that:
+
+- **Rate limiting**: Most providers return HTTP 429 when you exceed rate limits — back off and retry
+- **Timeout handling**: Set appropriate timeouts; long prompts or large `max_tokens` can take 30+ seconds
+- **Response validation**: Always check that the response structure matches expectations before using it
+- **Cost management**: Monitor token usage (`response.usage.total_tokens`) and set budgets — a runaway loop can burn through credits quickly
 
 # LIVE DEMO!!!
-

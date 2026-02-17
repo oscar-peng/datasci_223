@@ -52,7 +52,7 @@ Transformers: More than Meets the Eye
 
 ![xkcd: Transformers](media/xkcd_transformers.png)
 
-In Lecture 6 you trained dense networks, CNNs, and LSTMs. LSTMs process sequences one token at a time — what if we could process them all at once?
+In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences one token at a time — what if we could process them all at once?
 
 The path from biological inspiration to modern LLMs involved solving several fundamental problems in sequence processing. Each breakthrough unlocked the next.
 
@@ -77,7 +77,7 @@ The path from biological inspiration to modern LLMs involved solving several fun
 
 ### RNNs, LSTM, and Limitations
 
-RNNs introduced "memory" to neural networks — the same innovation you saw with LSTMs in Lecture 6. But they hit two walls:
+RNNs introduced "memory" to neural networks — the same innovation with LSTMs in Lecture 6. But they hit two walls:
 
 **1. Vanishing gradients**: Error signals shrink as they propagate backward through time. Early words in a sequence get minimal learning signal. LSTMs improved this with gating mechanisms, but the fundamental issue remained for very long sequences.
 
@@ -145,7 +145,7 @@ Self-attention solves this. Each token computes how much it should "attend to" e
 
 Think of it like a search engine. For each token, the model creates three vectors:
 
-- **Query (Q)**: What this token is *looking for* — like what you type into a search bar
+- **Query (Q)**: What this token is *looking for* — like what's typed into a search bar
 - **Key (K)**: What this token *offers* to others — like the title of a web page
 - **Value (V)**: The actual *content* to retrieve — like the web page itself
 
@@ -209,7 +209,7 @@ Positional encodings fix this by adding a unique vector to each token's embeddin
 | **Layer Normalization** | Stabilize training | Normalize activations within a layer |
 | **Residual Connections** | Enable gradient flow | Skip connections around sublayers; preserve information through deep stacks |
 
-Each encoder/decoder layer combines these components: self-attention → residual connection + normalization → feedforward → residual connection + normalization. Stack 6+ of these layers, and you have a transformer.
+Each encoder/decoder layer combines these components: self-attention → residual connection + normalization → feedforward → residual connection + normalization. Stack 6+ of these layers, and 💥 have a transformer.
 
 **Want to explore interactively?** [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — step through a working transformer model and see what each component does.
 
@@ -237,7 +237,7 @@ The key pieces:
 - **Training loop**: forward pass → compute loss (cross-entropy: measures how far predictions are from the correct next token) → backprop → update weights using the Adam optimizer (an adaptive learning rate method)
 - **Inference/sampling with temperature**: generate text by repeatedly predicting the next token
 
-The surprising thing: scaling from microGPT to GPT-4 changes the tokenizer (BPE instead of characters), the data (terabytes instead of kilobytes), and the compute (thousands of GPUs instead of your laptop) — but the core algorithm doesn't change.
+The surprising thing: scaling from microGPT to GPT-4 changes the tokenizer (BPE instead of characters), the data (terabytes instead of kilobytes), and the compute (thousands of GPUs) — but the core algorithm doesn't much change.
 
 These models learn from their training data. *All* of it. Including whatever biases exist in the text. If we're lucky, we might guess at the biases we introduce — but not always.
 
@@ -374,7 +374,7 @@ for doc, sim in sorted(zip(docs, similarities), key=lambda x: -x[1]):
 
 ## Vector Databases
 
-For production applications with many documents, you need a vector database — a data store optimized for similarity search over embedding vectors.
+A "vector database" is used for production applications of embeddings with many "documents" (whatever the unit of analysis is) — a data store optimized for similarity search over embedding vectors.
 
 ### Reference Card: Vector Database Options
 
@@ -423,7 +423,7 @@ What makes them "general purpose"? Pre-training on enormous text corpora gives t
 
 ## Fine-Tuning vs Prompt Engineering
 
-Two approaches to adapting an LLM to your task:
+Two approaches to adapting an LLM to the task:
 
 | Approach | When to Use | Effort | Cost |
 |:---|:---|:---|:---|
@@ -437,7 +437,7 @@ Two approaches to adapting an LLM to your task:
 - Lower cost
 
 **Fine-tuning** is for specialized cases only:
-- Adapt pre-trained model on your specific data
+- Adapt pre-trained model to specific data
 - Requires 100s–1000s labeled examples
 - Lengthy dataset preparation and training
 
@@ -459,8 +459,8 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel, Trainer, TrainingArgume
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 model = GPT2LMHeadModel.from_pretrained('gpt2')
 
-# Prepare your dataset
-texts = ["Your clinical notes", "More clinical text"]
+# Prepare the dataset
+texts = ["Clinical notes", "More clinical text"]
 inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
 
 training_args = TrainingArguments(
@@ -483,7 +483,11 @@ Approaches include:
 - **Human-in-the-loop:** Incorporate human feedback to identify and correct hallucinations
 - **Retrieval-Augmented Generation (RAG):** Ground model responses in retrieved documents — we'll build this in Lecture 8
 
-If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
+> [!WARNING]  
+> If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
+
+!!! warn
+	If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
 
 # Prompt Engineering
 
@@ -493,7 +497,7 @@ A useful template for structuring prompts:
 
 ```
 [ROLE]        Who the model should act as
-[TASK]        What you need done
+[TASK]        What needs to be done
 [FORMAT]      How to structure the output
 [CONSTRAINTS] Boundaries and requirements
 [EXAMPLES]    Concrete input/output pairs
@@ -536,7 +540,7 @@ Diagnosis:"""
 
 A **structured response** is output that follows a specific, machine-readable format — JSON, XML, or a table — rather than free-form text.
 
-The traditional approach — parsing free text with regex — is fragile and error-prone. Structured outputs let the model guarantee schema conformance, giving you simpler prompts, reliable downstream processing, and enforceable output formats via function calling.
+The traditional approach — parsing free text with regex — is fragile and error-prone. Structured outputs let the model guarantee schema conformance, giving simpler prompts, reliable downstream processing, and enforceable output formats via function calling.
 
 ![Structured outputs](media/structured_outputs.png)
 
@@ -549,7 +553,7 @@ The traditional approach — parsing free text with regex — is fragile and err
 
 ### How to get structured responses
 
-- Use **schema-based prompting**: "Provide your answer in the following JSON format: { ... }"
+- Use **schema-based prompting**: "Provide an answer in the following JSON format: { ... }"
 - Be explicit about required fields and data types
 - Validate the output programmatically
 
@@ -594,7 +598,7 @@ Building applications with language models requires understanding how to interac
 
 ## API Access Patterns
 
-- **REST APIs**: HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text
+- **REST APIs**: HTTP endpoints that accept JSON payloads containing the prompt and parameters, returning generated text
 - **SDK/Libraries**: Client libraries like OpenAI Python, Anthropic SDK, and Hugging Face provide convenient wrappers
 - **Authentication**: API keys stored securely as environment variables or in a secrets manager
 
@@ -628,9 +632,9 @@ print(response.choices[0].message.content)
 
 ## Function Calling: Enforcing Schema Compliance
 
-Modern LLM APIs support **function calling** — you define a schema for expected output, and the model returns a response conforming to that schema.
+Modern LLM APIs support **function calling** — define a schema for expected output, and the model returns a response conforming to that schema.
 
-- Guides the model to return only data matching your structure (required fields, types)
+- Guides the model to return only data matching a structure (required fields, types)
 - Reduces hallucinated or malformed outputs
 - Makes LLM integration into production systems practical — especially in healthcare where data quality is critical
 
@@ -674,7 +678,7 @@ response = client.chat.completions.create(
 
 ## Building a Complete LLM Chat Application
 
-When building applications that interact with LLMs, separate your code into distinct components:
+When building applications that interact with LLMs, separate code into distinct components:
 
 1. **LLM Client Library**: Handles API communication, error handling, conversation formatting
 2. **Command Line Interface**: Provides a user interface leveraging the client library

@@ -540,24 +540,24 @@ Both lectures have been rewritten per this plan and reviewed for quality. Status
 
 These items were identified during review but left for the instructor to decide:
 
-1. **L07 "From Neural Networks to Transformers"**: Has a reference card (timeline table) but no code snippet. This is a history section, so a code snippet may not be appropriate — but it's the only major section without one.
+1. **L07 "From Neural Networks to Transformers"**: Has a reference card (timeline table) but no code snippet. This is a history section — a code snippet may not be appropriate, but it's the only major `#` section without one. Consider a minimal RNN/attention comparison snippet if desired.
 
-2. **L07 "LLMs and General-Purpose Models"**: Has a fine-tuning code snippet and ref card, but no standalone visual. The fine-tuning vs prompting comparison table serves this role.
+2. **L07 "LLMs and General-Purpose Models"**: Has a fine-tuning code snippet and ref card, but no standalone visual. The fine-tuning vs prompting comparison table serves the visual role. Could add a model size comparison diagram.
 
-3. **L07 "LLM API Integration"**: No visual/diagram for the API call flow. The Standards XKCD is placed here but a flow diagram could help.
+3. **L07 "LLM API Integration"**: No visual/diagram for the API call flow. The Standards XKCD is placed here. Consider adding an API request/response flow diagram (`media/` would need a new image).
 
-4. **L07 microGPT URL** (`https://karpathy.github.io/2026/02/12/microgpt/`): This URL was specified in the plan's external resources table. Verify it's a real, reachable URL — the date (Feb 2026) suggests it may not exist yet or may be a placeholder.
+4. ~~**L07 microGPT URL**~~: Verified — `https://karpathy.github.io/2026/02/12/microgpt/` is live and correct (Karpathy blog post, Feb 2026).
 
-5. **L07 Demo 2 and Demo 3 both reference `demo/03-api_prompt_engineering.md`**: The plan shows them as separate topics (embedding search vs API prompting) but both point to the same demo file. May need a second demo file, or this may be intentional (one long demo split into two phases).
+5. ~~**L07 Demo 2+3 share `demo/03-api_prompt_engineering.md`**~~: Intentional — single multi-part demo split across two breaks (embedding search first half, API prompting second half).
 
-6. **L08 Demo 2 and Demo 3 both reference `demo/03_agentic_workflow.md`**: Similar situation — plan shows workflow building vs practical failures, but both point to the same file.
+6. ~~**L08 Demo 2+3 share `demo/03_agentic_workflow.md`**~~: Intentional — single multi-part demo split across two breaks (workflow building first half, failure demos second half).
 
 7. **Content from past years not yet integrated** (lower priority — instructor may want to add selectively):
     - Latent space as bridge concept (autoencoders → embeddings) from 2024 lecture
     - Embeddings for categorical data / recommendation systems from 2024 lecture
     - Hugging Face REST API example (alternative to SDK pattern) from 2024 lecture
 
-8. **Image filenames with `media` prefix** (e.g., `media/mediaword2vec_concept.png`, `media/mediaagents_landscape.png`): These are Notion export artifacts. The paths are technically correct but the filenames are ugly. Renaming would require updating both the files and the markdown references.
+8. ~~**Image filenames with `media` prefix**~~: Fixed — renamed `mediaword2vec_concept.png` → `word2vec_concept.png`, `mediaword_embedding_distributed.webp` → `word_embedding_distributed.webp`, `mediaagents_landscape.png` → `agents_landscape.png`, `medialangchain_parallelization.png` → `langchain_parallelization.png`, `mediafew_shot.png` → `few_shot.png`. Markdown references updated.
 
 ### XKCD comics inventory
 

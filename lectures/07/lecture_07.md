@@ -225,11 +225,11 @@ See: [demo/02-nanogpt_attention.md](demo/02-nanogpt_attention.md)
 
 Embeddings map discrete tokens (words, sentences, documents) to continuous vectors where **meaning is geometry**. Similar items cluster together; relationships become directions in space.
 
-![Word embedding concept](media/mediaword2vec_concept.png)
+![Word embedding concept](media/word2vec_concept.png)
 
 This idea connects back to Lecture 4's word vectors — but modern embedding models go far beyond individual words.
 
-![Word embedding space](media/mediaword_embedding_distributed.webp)
+![Word embedding space](media/word_embedding_distributed.webp)
 
 *Semantic similarity in embedding space: "king" - "man" + "woman" ≈ "queen" — geometry captures analogies*
 

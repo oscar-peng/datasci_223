@@ -16,7 +16,7 @@ Last week you learned to talk to an LLM — send a prompt, get a response. Now: 
 
 Agentic LLMs go beyond single request-response patterns. They autonomously plan and execute multi-step tasks, using tools, gathering information, and iterating until the job is done.
 
-![LLM tools landscape](media/mediaagents_landscape.png)
+![LLM tools landscape](media/agents_landscape.png)
 
 ## Traditional vs Agentic LLM Use
 

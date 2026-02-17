@@ -96,7 +96,7 @@ nav:
       - '05. Classification': 05/lecture_05.md
       - '06. Neural Networks': 06/lecture_06.md
       - '07. Transformers': 07/lecture_07.md
-      - '08. LLMs – DIY': 08/lecture_08.md
+      - '08. LLM Workflows': 08/lecture_08.md
       # - '09. LLMs – API & Workflows': 09/lecture_09.md
       # - '10. Time Series': 10/lecture_10.md
       # - '11. TBD': 11/lecture_11.md

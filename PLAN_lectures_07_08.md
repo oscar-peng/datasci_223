@@ -541,10 +541,13 @@ Both lectures have been rewritten per this plan and reviewed for quality. Status
 These items were identified during review but left for the instructor to decide:
 
 1. **L07 "From Neural Networks to Transformers"**: Has a reference card (timeline table) but no code snippet. This is a history section — a code snippet may not be appropriate, but it's the only major `#` section without one. Consider a minimal RNN/attention comparison snippet if desired.
+    - **Past content to pull**: `lectures_24/06/lecture_06.md` lines 800–836 have three healthcare LSTM code examples (clinical note classification, vital signs prediction, patient monitoring) that could serve as a "before" counterpoint. Lines 863–871 have an LSTM vs Transformer comparison table. The `lectures_25/2025/🌪️ Whirlwind Tour...` lines 23–68 narrate the RNN→attention→transformer progression with concrete details on sequential bottleneck and parallel processing speedup.
 
 2. **L07 "LLMs and General-Purpose Models"**: Has a fine-tuning code snippet and ref card, but no standalone visual. The fine-tuning vs prompting comparison table serves the visual role. Could add a model size comparison diagram.
+    - **Past content to pull**: `lectures_24/07/media/Intro_to_Deep_Learning_Transformers.pdf` (and annotated version) contain transformer architecture and LLM evolution diagrams. `lectures_24/07/lecture_07.md` lines 169–182 have the "LLMs and the Rise of General-Purpose Models" narrative. `lectures_25/2025/🌪️ Whirlwind Tour...` lines 241–255 cover the fine-tuning vs prompt engineering decision framework with practical guidance.
 
 3. **L07 "LLM API Integration"**: No visual/diagram for the API call flow. The Standards XKCD is placed here. Consider adding an API request/response flow diagram (`media/` would need a new image).
+    - **Past content to pull**: `lectures_24/07/lecture_07.md` lines 302–399 have a complete API section with provider comparison, OpenAI and Hugging Face code examples (including HTTP request/response structure), function calling with JSON schema, and error handling best practices. `lectures_24/07/demo/03-api_prompt_engineering.md` has a full API setup walkthrough with key configuration and request/response flow. Either could be adapted into a flow diagram or expanded code example.
 
 4. ~~**L07 microGPT URL**~~: Verified — `https://karpathy.github.io/2026/02/12/microgpt/` is live and correct (Karpathy blog post, Feb 2026).
 
@@ -553,9 +556,9 @@ These items were identified during review but left for the instructor to decide:
 6. ~~**L08 Demo 2+3 share `demo/03_agentic_workflow.md`**~~: Intentional — single multi-part demo split across two breaks (workflow building first half, failure demos second half).
 
 7. **Content from past years not yet integrated** (lower priority — instructor may want to add selectively):
-    - Latent space as bridge concept (autoencoders → embeddings) from 2024 lecture
-    - Embeddings for categorical data / recommendation systems from 2024 lecture
-    - Hugging Face REST API example (alternative to SDK pattern) from 2024 lecture
+    - **Latent space as bridge concept** (autoencoders → embeddings): `lectures_24/07/lecture_07.md` lines 135–153 cover latent space in depth; `lectures_24/06/lecture_06.md` has autoencoder/VAE architecture discussions that frame latent space as the conceptual bridge to embeddings. Could enrich the L07 Embeddings freeform intro.
+    - **Embeddings for categorical data / recommendation systems**: `lectures_24/07/lecture_07.md` lines 154–167 cover embeddings beyond NLP (categorical features, recommendation systems, drug interactions). Would broaden the L07 Embeddings section beyond text-only examples.
+    - **Hugging Face REST API example** (alternative to SDK pattern): `lectures_24/07/lecture_07.md` lines 331–348 have a complete Hugging Face Inference API example with HTTP POST, headers, and JSON payload — an alternative to the SDK-based pattern currently in L07. Good for showing students the raw API before SDK abstraction.
 
 8. ~~**Image filenames with `media` prefix**~~: Fixed — renamed `mediaword2vec_concept.png` → `word2vec_concept.png`, `mediaword_embedding_distributed.webp` → `word_embedding_distributed.webp`, `mediaagents_landscape.png` → `agents_landscape.png`, `medialangchain_parallelization.png` → `langchain_parallelization.png`, `mediafew_shot.png` → `few_shot.png`. Markdown references updated.
 

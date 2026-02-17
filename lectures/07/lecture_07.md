@@ -1,12 +1,52 @@
 Transformers: More than Meets the Eye
 
-- From Neural Networks to Transformers
-- Transformer Architecture and Attention
-- Building a GPT from Scratch
-- Embeddings
-- LLMs and General-Purpose Models
-- Prompt Engineering and Structured Responses
-- LLM API Integration
+- hw07 #FIXME:URL
+
+# Links
+
+## Transformers & Attention
+
+- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's visual walkthrough (essential reading)
+- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference (essential reading)
+- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — interactive tool
+- [Attention is All You Need](https://arxiv.org/abs/1706.03762) — the original 2017 paper
+- [Attention mechanism paper (2015)](https://arxiv.org/abs/1409.0473) — Bahdanau attention
+- [Building Transformers from Scratch](https://vectorfold.studio/blog/transformers) — code-first guide
+- [Visual introduction to Attention](https://erdem.pl/2021/05/introduction-to-attention-mechanism)
+- [Multi-head attention deep dive](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
+
+## Building GPTs
+
+- [microGPT blog](https://karpathy.github.io/2026/02/12/microgpt/) — 200-line, zero-dependency GPT
+- [microGPT visualizer](https://microgpt.boratto.ca) — interactive GPT internals visualization
+- [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
+- [Karpathy's Zero to Hero](https://karpathy.ai/zero-to-hero.html) — neural network video series
+- [Let's Build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY) — building GPT from scratch
+- [GPT-2 WebGL visualizer](https://github.com/nathan-barry/gpt2-webgl)
+
+## LLMs
+
+- [List of open source LLMs](https://github.com/eugeneyan/open-llms)
+- [GPT (2018) paper](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
+- [RLHF paper](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback
+- [DistilBERT paper](https://arxiv.org/pdf/1910.01108v4.pdf) — knowledge distillation
+
+## Healthcare AI
+
+- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool
+- [Google Med-PaLM](https://sites.research.google/med-palm/) — medical LLM research
+
+## Prompt Engineering Guides
+
+- **Anthropic**: [docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **OpenAI**: [platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
+- **OpenAI examples**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
+
+## Where to Play Around
+
+- [Hugging Face NLP Course](https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt)
+- [Google Vertex AI](https://cloud.google.com/vertex-ai)
+- [OpenAI Platform](https://platform.openai.com/)
 
 # From Neural Networks to Transformers
 
@@ -78,49 +118,40 @@ RNNs introduced "memory" to neural networks — the same innovation you saw with
 
 # Transformer Architecture
 
-Transformers have redefined the landscape of neural network architectures. By introducing a structure that leverages attention mechanisms, transformers offer a significant departure from sequential recurrent models.
+The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/1706.03762) (2017), published by researchers at Google. For a deep understanding, read at least one of these two articles — they explain the architecture better than any summary can:
 
-The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/1706.03762) (2017), published by researchers at Google.
+- [**The Illustrated Transformer**](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's step-by-step visual walkthrough
+- [**Everything About Transformers**](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
 
-Transformers have rapidly become the architecture of choice for NLP, computer vision, audio processing, and more — achieving state-of-the-art results across domains.
+What follows is a condensed version — the articles above go deeper.
 
 ![Basic Transformer Architecture](media/tx_basic.png)
 
-![Moderate Transformer Architecture](media/tx_moderate.png)
+## The Big Picture
 
-![Transformer Architecture Overview](media/1_vrSX_Ku3EmGPyqF_E-2_Vg.png)
+A transformer takes an input sequence and produces an output sequence. The **encoder** turns input into a numerical representation; the **decoder** uses that to generate output one token at a time.
 
-## How Transformers Work
+The key difference from RNNs: transformers process the entire sequence at once, in parallel. No waiting for word 1 to finish before starting word 2.
 
-- **Parallel Processing:** Unlike RNNs/LSTMs, transformers process entire sequences simultaneously. This eliminates the sequential bottleneck and enables massive training speedups.
-- **Self-Attention:** At the heart of the architecture. Each token computes how much it should "attend to" every other token in the sequence. This lets the model capture long-range dependencies directly.
-- **Layered Structure:** Stacked layers of self-attention and position-wise feedforward networks. Each layer processes the full input in parallel.
+The pipeline: **Tokenize → Embed → Add positional encodings → Stack attention layers → Generate output**
 
-The process: Tokenize → Embed → Add positional encodings → Stack attention layers → Generate output
+## Self-Attention: The Core Innovation
 
-### Reference Card: Transformer Components
+Consider the sentence: *"The animal didn't cross the street because **it** was too tired."* When processing "it," the model needs to figure out that "it" refers to "the animal" — not "the street."
 
-| Component | Purpose | Details |
-|:---|:---|:---|
-| **Input Embedding** | Convert tokens to vectors | Maps discrete tokens to continuous space |
-| **Positional Encoding** | Add order information | Since attention is order-agnostic, position must be injected |
-| **Multi-Head Attention** | Learn different relationship types | Each head focuses on different aspects (syntax, semantics, entity references) |
-| **Feed-Forward Network** | Add non-linearity | Applied to each position independently |
-| **Layer Normalization** | Stabilize training | Normalize activations within a layer |
-| **Residual Connections** | Enable gradient flow | Skip connections around sublayers; preserve information through deep stacks |
+Self-attention solves this. Each token computes how much it should "attend to" every other token in the sequence. This lets the model capture long-range dependencies directly, without needing to pass information token-by-token through a chain of hidden states.
 
-## Attention Mechanism
+### How It Works: Query, Key, Value
 
-The attention mechanism allows transformers to consider the entire context of the input sequence regardless of the distance between elements. This global view is particularly advantageous for tasks that require understanding long-range dependencies.
+Think of it like a search engine. For each token, the model creates three vectors:
 
-![Attention Mechanism Visualization](media/attention.png)
+- **Query (Q)**: What this token is *looking for* — like what you type into a search bar
+- **Key (K)**: What this token *offers* to others — like the title of a web page
+- **Value (V)**: The actual *content* to retrieve — like the web page itself
 
-The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token *lazy* selected.
+The attention mechanism computes a dot product between each Query and every Key. High dot product = high relevance. These scores are normalized with **softmax** (converting raw scores into probabilities that sum to 1), then used to create a weighted combination of Values.
 
-![Simple Attention Animation](media/simple-pretty-gif.gif)
-
-- **Scaled Dot-Product Attention:** Compute the dot product of the query with all keys, divide by the square root of the dimension, then apply **softmax** (a function that converts raw scores into probabilities summing to 1) to get weights on the values. Efficiently captures how relevant each token is to every other token.
-- **Multi-Head Attention:** Run multiple attention operations in parallel, each "head" focusing on different aspects. One head might learn syntactic relationships, another semantic similarity, another entity co-references. This diversity enhances the model's representational power.
+The scores are divided by $\sqrt{d_k}$ (the square root of the key dimension) to prevent dot products from growing too large in high dimensions, which would push softmax into regions with tiny gradients.
 
 ### Reference Card: Scaled Dot-Product Attention
 
@@ -145,10 +176,42 @@ def scaled_dot_product_attention(query, key, value):
     return weights @ value
 ```
 
-**Want to explore interactively?**
-- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — interactive tool for understanding transformer internals
-- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's visual walkthrough
-- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
+## Multi-Head Attention
+
+A single attention pass captures one type of relationship. But language has many simultaneous relationships — syntax, semantics, entity references, temporal ordering.
+
+Multi-head attention runs multiple attention operations in parallel, each with its own learned Q/K/V weight matrices. With the sentence *"He swung the bat with incredible force"*: one head might focus on "swung ↔ bat" (action–object), another on "incredible ↔ force" (modifier–noun), and another on resolving that "bat" means a baseball bat, not an animal.
+
+The original transformer uses 8 heads with 512-dimensional embeddings, giving each head 64 dimensions (512 ÷ 8). Too few heads and each must learn too many relationship types; too many and each becomes too small to represent anything meaningful.
+
+![Attention Mechanism Visualization](media/attention.png)
+
+*The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token "lazy" selected.*
+
+![Simple Attention Animation](media/simple-pretty-gif.gif)
+
+## Positional Encoding
+
+Unlike RNNs, which inherently know word order (they process sequentially), transformers see the entire input at once — and have no built-in sense of order. "The cat sat on the mat" and "The mat sat on the cat" would look identical.
+
+Positional encodings fix this by adding a unique vector to each token's embedding. The original paper uses sine and cosine functions at different frequencies: low-frequency waves capture broad structure (beginning vs. end of sequence), while high-frequency waves capture fine-grained position (adjacent tokens). Together, they create a unique "positional fingerprint" for every position.
+
+## Putting It All Together
+
+### Reference Card: Transformer Components
+
+| Component | Purpose | Details |
+|:---|:---|:---|
+| **Input Embedding** | Convert tokens to vectors | Maps discrete tokens to continuous space |
+| **Positional Encoding** | Add order information | Since attention is order-agnostic, position must be injected |
+| **Multi-Head Attention** | Learn different relationship types | Each head focuses on different aspects (syntax, semantics, entity references) |
+| **Feed-Forward Network** | Add non-linearity | Applied to each position independently |
+| **Layer Normalization** | Stabilize training | Normalize activations within a layer |
+| **Residual Connections** | Enable gradient flow | Skip connections around sublayers; preserve information through deep stacks |
+
+Each encoder/decoder layer combines these components: self-attention → residual connection + normalization → feedforward → residual connection + normalization. Stack 6+ of these layers, and you have a transformer.
+
+**Want to explore interactively?** [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — step through a working transformer model and see what each component does.
 
 ## Beyond Text
 
@@ -668,48 +731,3 @@ Zero-, one-, and few-shot prompting via API — clinical text classification, di
 
 See: [demo/03-api_prompt_engineering.md](demo/03-api_prompt_engineering.md)
 
-# Resources
-
-## Transformers & Attention
-
-- [Attention is All You Need](https://arxiv.org/abs/1706.03762) — the original 2017 paper
-- [Attention mechanism paper (2015)](https://arxiv.org/abs/1409.0473) — Bahdanau attention
-- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — visual walkthrough
-- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven reference
-- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — interactive tool
-- [Building Transformers from Scratch](https://vectorfold.studio/blog/transformers) — code-first guide
-- [Visual introduction to Attention](https://erdem.pl/2021/05/introduction-to-attention-mechanism) — supplementary visual
-- [Multi-head attention deep dive](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853) — detailed explanation
-
-## Building GPTs
-
-- [microGPT blog](https://karpathy.github.io/2026/02/12/microgpt/) — 200-line, zero-dependency GPT
-- [microGPT visualizer](https://microgpt.boratto.ca) — interactive GPT internals visualization
-- [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
-- [Karpathy's Zero to Hero](https://karpathy.ai/zero-to-hero.html) — neural network video series
-- [Let's Build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY) — building GPT from scratch
-- [GPT-2 WebGL visualizer](https://github.com/nathan-barry/gpt2-webgl)
-
-## LLMs
-
-- [List of open source LLMs](https://github.com/eugeneyan/open-llms) — comprehensive open-model list
-- [GPT (2018) paper](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
-- [RLHF paper](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback
-- [DistilBERT paper](https://arxiv.org/pdf/1910.01108v4.pdf) — knowledge distillation
-
-## Healthcare AI
-
-- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool
-- [Google Med-PaLM](https://sites.research.google/med-palm/) — medical LLM research
-
-## Prompt Engineering Guides
-
-- **Anthropic**: [docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
-- **OpenAI**: [platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
-- **OpenAI examples**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
-
-## Where to Play Around
-
-- [Hugging Face NLP Course](https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt)
-- [Google Vertex AI](https://cloud.google.com/vertex-ai)
-- [OpenAI Platform](https://platform.openai.com/)

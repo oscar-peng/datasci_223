@@ -5,8 +5,6 @@ These are provided for you — do not modify this file.
 
 import os
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
@@ -153,7 +151,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names, save_path):
     plt.close()
 
 
-def plot_sample_images(X, y, class_names=None, n=20, cols=5):
+def plot_sample_images(X, y, class_names=None, n=20, cols=5, save_path=None):
     """Display a grid of sample images with labels.
 
     Useful for verifying data loaded correctly.
@@ -165,6 +163,7 @@ def plot_sample_images(X, y, class_names=None, n=20, cols=5):
     class_names : dict mapping int to str (default: CIFAR10_CLASSES)
     n : int, number of images to show
     cols : int, columns in the grid
+    save_path : str, optional path to save the figure
     """
     if class_names is None:
         class_names = CIFAR10_CLASSES
@@ -180,10 +179,15 @@ def plot_sample_images(X, y, class_names=None, n=20, cols=5):
         ax.axis("off")
     plt.suptitle("Sample Images", fontsize=13)
     plt.tight_layout()
-    plt.show()
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+        plt.savefig(save_path, dpi=150)
+        plt.close()
+    else:
+        plt.show()
 
 
-def plot_ecg_traces(X, y, class_names=None, n_per_class=1):
+def plot_ecg_traces(X, y, class_names=None, n_per_class=1, save_path=None):
     """Plot example ECG traces for each heartbeat class.
 
     Parameters
@@ -192,6 +196,7 @@ def plot_ecg_traces(X, y, class_names=None, n_per_class=1):
     y : ndarray, shape (N, 5), one-hot encoded labels
     class_names : dict mapping int to str (default: ECG_CLASSES)
     n_per_class : int, traces to show per class
+    save_path : str, optional path to save the figure
     """
     if class_names is None:
         class_names = ECG_CLASSES
@@ -208,10 +213,15 @@ def plot_ecg_traces(X, y, class_names=None, n_per_class=1):
     axes[-1].set_xlabel("Time Step")
     plt.suptitle("ECG Heartbeat Types", fontsize=13)
     plt.tight_layout()
-    plt.show()
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+        plt.savefig(save_path, dpi=150)
+        plt.close()
+    else:
+        plt.show()
 
 
-def plot_predictions(X, y_true, y_pred, class_names, n=12, cols=4):
+def plot_predictions(X, y_true, y_pred, class_names, n=12, cols=4, save_path=None):
     """Show images with predicted labels, color-coded green (correct) / red (wrong).
 
     Parameters
@@ -222,6 +232,7 @@ def plot_predictions(X, y_true, y_pred, class_names, n=12, cols=4):
     class_names : dict mapping int to str
     n : int, number of images to show
     cols : int, columns in the grid
+    save_path : str, optional path to save the figure
     """
     rows = (n + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=(3 * cols, 3 * rows))
@@ -239,4 +250,9 @@ def plot_predictions(X, y_true, y_pred, class_names, n=12, cols=4):
         ax.axis("off")
     plt.suptitle("Green = correct, Red = wrong", fontsize=12)
     plt.tight_layout()
-    plt.show()
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+        plt.savefig(save_path, dpi=150)
+        plt.close()
+    else:
+        plt.show()

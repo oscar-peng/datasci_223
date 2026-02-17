@@ -1,12 +1,70 @@
 LLM Applications & Workflows
 
-- Agentic LLMs
-- Retrieval-Augmented Generation (RAG)
-- Model Context Protocol (MCP)
-- Workflow Orchestration Patterns
-- When to Use LLMs
-- Common Failure Modes
-- Practical Recommendations
+- hw08 #FIXME:URL
+
+# Links
+
+## Prompt Engineering Guides
+
+- **Anthropic**: [docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **OpenAI**: [platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
+- **OpenAI examples**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
+
+## Agent & Workflow Frameworks
+
+- [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) — primary framework
+- [OpenAI Agents SDK docs](https://openai.github.io/openai-agents-python)
+- [OpenAI Agent Builder](https://platform.openai.com/agent-builder) — visual workflow builder
+- [OpenAI Agents guide](https://platform.openai.com/docs/guides/agents)
+- [LangChain](https://python.langchain.com/docs) — chains and agents
+- [LangGraph](https://www.langchain.com/langgraph) — stateful agent graphs
+- [`abe_froman`](https://github.com/christopherseaman/abe_froman) — human-readable custom workflow example (LangGraph)
+- [AutoGen](https://microsoft.github.io/autogen/stable//index.html) — multi-agent conversations
+- [smolagents](https://huggingface.co/docs/smolagents/index) — lightweight agents
+- [AI SDK](https://ai-sdk.dev/docs/agents/overview) — TypeScript web-integrated agents
+
+## MCP
+
+- [MCP Documentation](https://modelcontextprotocol.io)
+- [MCP servers repo](https://github.com/modelcontextprotocol/servers)
+- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
+
+## Self-Hosting & Tools
+
+- [Ollama](https://ollama.com) — desktop model hosting
+- [PocketPal](https://github.com/a-ghorbani/pocketpal-ai) — mobile model hosting
+- [IBM Granite 4.0](https://www.ibm.com/new/announcements/ibm-granite-4-0-hyper-efficient-high-performance-hybrid-models) — efficient open models
+- [OpenAI open-source models](https://openai.com/index/introducing-gpt-oss/)
+
+## Healthcare AI
+
+- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool
+- [Suki AI](https://www.suki.ai/) — clinical AI assistant
+- [Google Med-PaLM](https://sites.research.google/med-palm/) — medical LLM research
+
+## Developer Tools
+
+- [Claude Code](https://www.claude.com/product/claude-code) — CLI-based agentic coding
+- [Cursor](https://cursor.com/) — AI-powered editor
+- [OpenAI Codex](https://openai.com/codex/) — code generation
+
+## Cookbooks & Guides
+
+- [Anthropic Cookbook](https://github.com/anthropics/anthropic-cookbook)
+- [OpenAI Cookbook](https://cookbook.openai.com/)
+- [OpenAI Evals](https://github.com/openai/evals) — evaluation framework
+
+## Workflow Orchestrators
+
+- [Kestra](https://kestra.io) — data orchestration
+- [Inngest](https://www.inngest.com) — event-driven workflows
+- [Temporal](https://temporal.io) — durable execution
+
+## Papers
+
+- [Apple "Illusion of Thinking"](https://machinelearning.apple.com/research/illusion-of-thinking) — LLM reasoning limitations
+- [GPT (2018)](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
+- [RLHF](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback
 
 # Agentic LLMs
 
@@ -678,66 +736,3 @@ These are bias machines. They learn from whatever data and labels we give them. 
 
 If you don't know how to do something yourself, you won't know if an LLM is doing it well. Domain expertise is the irreplaceable ingredient.
 
-# Resources
-
-## Prompt Engineering Guides
-
-- **Anthropic**: [docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
-- **OpenAI**: [platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
-- **OpenAI examples**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
-
-## Agent & Workflow Frameworks
-
-- [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) — primary framework
-- [OpenAI Agents SDK docs](https://openai.github.io/openai-agents-python)
-- [OpenAI Agent Builder](https://platform.openai.com/agent-builder) — visual workflow builder
-- [OpenAI Agents guide](https://platform.openai.com/docs/guides/agents)
-- [LangChain](https://python.langchain.com/docs) — chains and agents
-- [LangGraph](https://www.langchain.com/langgraph) — stateful agent graphs
-- [`abe_froman`](https://github.com/christopherseaman/abe_froman) — human-readable custom workflow example (LangGraph)
-- [AutoGen](https://microsoft.github.io/autogen/stable//index.html) — multi-agent conversations
-- [smolagents](https://huggingface.co/docs/smolagents/index) — lightweight agents
-- [AI SDK](https://ai-sdk.dev/docs/agents/overview) — TypeScript web-integrated agents
-
-## MCP
-
-- [MCP Documentation](https://modelcontextprotocol.io)
-- [MCP servers repo](https://github.com/modelcontextprotocol/servers)
-- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-
-## Self-Hosting & Tools
-
-- [Ollama](https://ollama.com) — desktop model hosting
-- [PocketPal](https://github.com/a-ghorbani/pocketpal-ai) — mobile model hosting
-- [IBM Granite 4.0](https://www.ibm.com/new/announcements/ibm-granite-4-0-hyper-efficient-high-performance-hybrid-models) — efficient open models
-- [OpenAI open-source models](https://openai.com/index/introducing-gpt-oss/)
-
-## Healthcare AI
-
-- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool
-- [Suki AI](https://www.suki.ai/) — clinical AI assistant
-- [Google Med-PaLM](https://sites.research.google/med-palm/) — medical LLM research
-
-## Developer Tools
-
-- [Claude Code](https://www.claude.com/product/claude-code) — CLI-based agentic coding
-- [Cursor](https://cursor.com/) — AI-powered editor
-- [OpenAI Codex](https://openai.com/codex/) — code generation
-
-## Cookbooks & Guides
-
-- [Anthropic Cookbook](https://github.com/anthropics/anthropic-cookbook)
-- [OpenAI Cookbook](https://cookbook.openai.com/)
-- [OpenAI Evals](https://github.com/openai/evals) — evaluation framework
-
-## Workflow Orchestrators
-
-- [Kestra](https://kestra.io) — data orchestration
-- [Inngest](https://www.inngest.com) — event-driven workflows
-- [Temporal](https://temporal.io) — durable execution
-
-## Papers
-
-- [Apple "Illusion of Thinking"](https://machinelearning.apple.com/research/illusion-of-thinking) — LLM reasoning limitations
-- [GPT (2018)](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
-- [RLHF](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback

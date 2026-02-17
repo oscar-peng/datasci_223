@@ -1,15 +1,20 @@
 Transformers: More than Meets the Eye
 
-- A Brief History of Transformers
+- From Neural Networks to Transformers
 - Transformer Architecture and Attention
-- Latent Space and Embeddings
+- Building a GPT from Scratch
+- Embeddings
 - LLMs and General-Purpose Models
 - Prompt Engineering and Structured Responses
 - LLM API Integration
 
-# A Brief History of Transformers
+# From Neural Networks to Transformers
 
-Understanding where we came from helps appreciate where we are. The path to modern LLMs involved solving several fundamental problems in sequence processing.
+![xkcd: Transformers](media/xkcd_transformers.png)
+
+In Lecture 6 you trained dense networks, CNNs, and LSTMs. LSTMs process sequences one token at a time — what if we could process them all at once?
+
+The path from biological inspiration to modern LLMs involved solving several fundamental problems in sequence processing. Each breakthrough unlocked the next.
 
 ## Word Embeddings (2013)
 
@@ -32,13 +37,11 @@ Understanding where we came from helps appreciate where we are. The path to mode
 
 ### RNNs, LSTM, and Limitations
 
-Introduce "memory" to neural networks
+RNNs introduced "memory" to neural networks — the same innovation you saw with LSTMs in Lecture 6. But they hit two walls:
 
-**Two critical problems**:
+**1. Vanishing gradients**: Error signals shrink as they propagate backward through time. Early words in a sequence get minimal learning signal. LSTMs improved this with gating mechanisms, but the fundamental issue remained for very long sequences.
 
-**1. Vanishing gradients**: Error signals shrink as they propagate backward through time. Early words in sequence get minimal learning signal.
-
-**2. Sequential bottleneck**: Must process word-by-word (word 1 → word 2 → word 3…). Cannot parallelize training. Slow and doesn't scale.
+**2. Sequential bottleneck**: Must process word-by-word (word 1 → word 2 → word 3...). Cannot parallelize training. Slow and doesn't scale.
 
 ## Attention Mechanism (2015)
 
@@ -46,34 +49,40 @@ Introduce "memory" to neural networks
 
 - Dynamically weights which inputs matter most
 - Solves information bottleneck
+- But still used RNNs underneath — attention was an add-on, not a replacement
 
 ## Transformers (2017)
 
 **"Attention is All You Need"**: Eliminated sequential processing entirely
-
-**Transformer solution**:
 
 - Process entire sequence simultaneously (parallel)
 - All tokens relate to all others via attention
 - No vanishing gradient problem
 - 100x+ training speedup enables web-scale datasets
 
-## The Scale-Up Era (2018-2024)
+## The Scale-Up Era (2018–2026)
 
-| Year | Milestone |
-|------|-----------|
-| **2018** | GPT (170M parameters), BERT |
-| **2020** | GPT-3 (175B parameters), few-shot learning |
-| **2022** | ChatGPT with RLHF (Reinforcement Learning from Human Feedback), 100M users in 2 months |
-| **2024** | GPT-4, Claude 3.5, Gemini, Llama 3 (200K+ token context windows) |
+### Reference Card: NLP Model Evolution
 
-# Transformers and Attention
+| Year | Innovation | Key Insight |
+|:---|:---|:---|
+| **2013** | Word2Vec | Words as vectors; similar meanings cluster together |
+| **2014** | Seq2Seq / RNNs | Encode input → decode output; sequential processing |
+| **2015** | Attention | Decoder can focus on relevant input parts dynamically |
+| **2017** | Transformer | Attention *is* the architecture; parallel processing |
+| **2018** | GPT (170M params), BERT | Pre-train on massive text, fine-tune for tasks |
+| **2020** | GPT-3 (175B params) | Few-shot learning — examples in the prompt, no retraining |
+| **2022** | ChatGPT + RLHF (Reinforcement Learning from Human Feedback) | Human feedback alignment; 100M users in 2 months |
+| **2024** | GPT-4, Claude 3.5, Gemini, Llama 3 | 200K+ token context windows; multimodal |
+| **2025–26** | Claude 4, GPT-4o, reasoning models | Agentic workflows; tool use; structured outputs |
 
-**Transformers** have redefined the landscape of neural network architectures, particularly in the field of Natural Language Processing (NLP) and beyond. By introducing a novel structure that leverages the power of attention mechanisms, transformers offer a significant departure from traditional recurrent models.
+# Transformer Architecture
 
-The first appearance of transformers is in the paper [**Attention is All You Need**](https://arxiv.org/abs/1706.03762) (2017), published by researchers at Google.
+Transformers have redefined the landscape of neural network architectures. By introducing a structure that leverages attention mechanisms, transformers offer a significant departure from sequential recurrent models.
 
-Transformers have rapidly become the architecture of choice for a wide range of NLP tasks, achieving state-of-the-art results in machine translation, text generation, sentiment analysis, and more. Their flexibility and efficiency have also inspired adaptations of the transformer architecture to other domains, such as computer vision and audio processing, marking a significant evolution in the field of deep learning.
+The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/1706.03762) (2017), published by researchers at Google.
+
+Transformers have rapidly become the architecture of choice for NLP, computer vision, audio processing, and more — achieving state-of-the-art results across domains.
 
 ![Basic Transformer Architecture](media/tx_basic.png)
 
@@ -81,97 +90,170 @@ Transformers have rapidly become the architecture of choice for a wide range of 
 
 ![Transformer Architecture Overview](media/1_vrSX_Ku3EmGPyqF_E-2_Vg.png)
 
-## Transformer Architecture
+## How Transformers Work
 
-- **Parallel Processing:** Unlike their recurrent predecessors, transformers process entire sequences simultaneously, which eliminates the sequential computation inherent in RNNs and LSTMs. This characteristic allows for substantial improvements in training efficiency and model scalability.
-- **Self-Attention:** At the heart of the transformer architecture is the self-attention mechanism, which computes the representation of a sequence by relating different positions of a single sequence. This mechanism enables the model to dynamically weigh the importance of each part of the input data, enhancing its ability to capture complex relationships within the data.
-- **Layered Structure:** Transformers are composed of stacked layers of self-attention and position-wise feedforward networks. Each layer in the transformer processes the entire input data in parallel, which contributes to the model's exceptional efficiency and effectiveness.
+- **Parallel Processing:** Unlike RNNs/LSTMs, transformers process entire sequences simultaneously. This eliminates the sequential bottleneck and enables massive training speedups.
+- **Self-Attention:** At the heart of the architecture. Each token computes how much it should "attend to" every other token in the sequence. This lets the model capture long-range dependencies directly.
+- **Layered Structure:** Stacked layers of self-attention and position-wise feedforward networks. Each layer processes the full input in parallel.
+
+The process: Tokenize → Embed → Add positional encodings → Stack attention layers → Generate output
 
 ### Reference Card: Transformer Components
 
 | Component | Purpose | Details |
 |:---|:---|:---|
 | **Input Embedding** | Convert tokens to vectors | Maps discrete tokens to continuous space |
-| **Positional Encoding** | Add order information | Since attention is order-agnostic |
-| **Multi-Head Attention** | Learn different relationship types | Each head focuses on different aspects |
+| **Positional Encoding** | Add order information | Since attention is order-agnostic, position must be injected |
+| **Multi-Head Attention** | Learn different relationship types | Each head focuses on different aspects (syntax, semantics, entity references) |
 | **Feed-Forward Network** | Add non-linearity | Applied to each position independently |
 | **Layer Normalization** | Stabilize training | Normalize activations within a layer |
-| **Residual Connections** | Enable gradient flow | Skip connections around sublayers |
+| **Residual Connections** | Enable gradient flow | Skip connections around sublayers; preserve information through deep stacks |
 
 ## Attention Mechanism
 
-The **attention** mechanism allows transformers to consider the entire context of the input sequence, or any subset of it, regardless of the distance between elements in the sequence. This global view is particularly advantageous for tasks that require understanding long-range dependencies, such as document summarization or question-answering.
+The attention mechanism allows transformers to consider the entire context of the input sequence regardless of the distance between elements. This global view is particularly advantageous for tasks that require understanding long-range dependencies.
 
 ![Attention Mechanism Visualization](media/attention.png)
 
-The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token _lazy_ selected
+The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token *lazy* selected.
 
 ![Simple Attention Animation](media/simple-pretty-gif.gif)
 
-- **Scaled Dot-Product Attention:** The most commonly used attention mechanism in transformers involves computing the dot product of the query with all keys, dividing each by the square root of the dimension of the keys, applying a softmax function to obtain the weights on the values. This approach efficiently captures the relevance of different parts of the input data to each other.
-- **Multi-Head Attention:** Transformers further extend the capabilities of the attention mechanism through the use of multi-head attention. This involves running multiple attention operations in parallel, with each "head" focusing on different parts of the input data. This diversity allows the model to attend to different aspects of the data, enhancing its representational power.
+- **Scaled Dot-Product Attention:** Compute the dot product of the query with all keys, divide by the square root of the dimension, then apply **softmax** (a function that converts raw scores into probabilities summing to 1) to get weights on the values. Efficiently captures how relevant each token is to every other token.
+- **Multi-Head Attention:** Run multiple attention operations in parallel, each "head" focusing on different aspects. One head might learn syntactic relationships, another semantic similarity, another entity co-references. This diversity enhances the model's representational power.
 
 ### Reference Card: Scaled Dot-Product Attention
 
 | Component | Details |
 |:---|:---|
 | **Formula** | $\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ |
-| **Q (Query)** | What we're looking for |
-| **K (Key)** | What each token offers |
+| **Q (Query)** | What we're looking for — "which other tokens matter to me?" |
+| **K (Key)** | What each token offers — "here's what I represent" |
 | **V (Value)** | The actual information to retrieve |
-| **Scaling** | $\sqrt{d_k}$ prevents dot products from growing too large |
+| **Scaling** | $\sqrt{d_k}$ prevents dot products from growing too large with high dimensions |
 
 ### Code Snippet: Simplified Attention
 
 ```python
-import torch
-import torch.nn.functional as F
+import numpy as np
 
 def scaled_dot_product_attention(query, key, value):
-    """Compute scaled dot-product attention."""
-    d_k = query.size(-1)
-    scores = torch.matmul(query, key.transpose(-2, -1)) / (d_k ** 0.5)
-    attention_weights = F.softmax(scores, dim=-1)
-    return torch.matmul(attention_weights, value)
+    """Compute scaled dot-product attention (pure numpy)."""
+    d_k = query.shape[-1]
+    scores = query @ key.T / np.sqrt(d_k)
+    weights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)  # softmax
+    return weights @ value
 ```
 
-- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/)
+**Want to explore interactively?**
+- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — interactive tool for understanding transformer internals
+- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's visual walkthrough
+- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
+
+## Beyond Text
+
+Transformers aren't just for language. The attention mechanism generalizes to any sequential data:
+
+- **Vision Transformers (ViT)**: images split into patches, each patch treated as a token
+- **Time-series**: EHR data, sensor readings, financial sequences
+- **Multimodal models**: GPT-4o, Gemini, Claude process text, images, and audio together
+
+The key principle: attention works on any sequence where order and relationships matter.
+
+![xkcd: Machine Learning Captcha](media/xkcd_ml_captcha.png)
+
+# Building a GPT from Scratch
+
+What does it actually take to build a language model? Less than you might think. Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) demonstrates that a working GPT can be built in ~200 lines of Python with zero dependencies.
+
+The key pieces:
+
+- **Tokenization** (character-level): split text into individual characters as tokens. Production models use **BPE (Byte Pair Encoding)** instead, which groups common character sequences into subword tokens (~4 characters per token on average). Models process 64K–200K+ tokens per request.
+- **Autograd engine**: compute gradients automatically for backpropagation
+- **Multi-head attention blocks**: the core transformer layer — self-attention + feedforward
+- **Training loop**: forward pass → compute loss (cross-entropy: measures how far predictions are from the correct next token) → backprop → update weights using the Adam optimizer (an adaptive learning rate method)
+- **Inference/sampling with temperature**: generate text by repeatedly predicting the next token
+
+The surprising thing: scaling from microGPT to GPT-4 changes the tokenizer (BPE instead of characters), the data (terabytes instead of kilobytes), and the compute (thousands of GPUs instead of your laptop) — but the core algorithm doesn't change.
+
+These models learn from their training data. *All* of it. Including whatever biases exist in the text. If we're lucky, we might guess at the biases we introduce — but not always.
+
+### Reference Card: GPT Components
+
+| Component | Details |
+|:---|:---|
+| **Tokenizer** | Splits text into tokens (characters, subwords, or words). BPE is standard for production models. |
+| **Embedding Layer** | Maps each token to a dense vector + adds positional encoding. |
+| **Attention Blocks** | Stacked self-attention + feedforward layers. Each block refines the representation. |
+| **Output Head** | Linear layer projecting back to vocabulary size → softmax → next-token probabilities. |
+| **Training** | Autoregressive: predict next token, compute cross-entropy loss, backprop, Adam update. |
+| **Inference** | Sample from output distribution. Temperature controls randomness (0 = greedy, 1 = diverse). |
+
+### Code Snippet: Minimal Attention Block
+
+```python
+import numpy as np
+
+class AttentionBlock:
+    """Simplified single-head attention block (conceptual)."""
+    def __init__(self, dim):
+        self.wq = np.random.randn(dim, dim) * 0.02  # query weights
+        self.wk = np.random.randn(dim, dim) * 0.02  # key weights
+        self.wv = np.random.randn(dim, dim) * 0.02  # value weights
+
+    def forward(self, x):
+        q, k, v = x @ self.wq, x @ self.wk, x @ self.wv
+        scores = q @ k.T / np.sqrt(x.shape[-1])
+        weights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)
+        return weights @ v
+```
+
+**Resources:**
+- [microGPT visualizer](https://microgpt.boratto.ca) — interactive visualization of GPT internals
+- [Let's Build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY) — Karpathy's video walkthrough
+- [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
 
 # LIVE DEMO!
 
-Exploring nanoGPT to see how attention works under the hood—visualizing what the model "looks at" when processing text.
+Exploring attention visualization with nanoGPT — seeing what the model "looks at" when processing text.
 
 See: [demo/02-nanogpt_attention.md](demo/02-nanogpt_attention.md)
 
-# Latent Space and Embeddings
+![xkcd: Attention Span](media/xkcd_attention_span.png)
 
-The concept of latent space is particularly relevant in the context of autoencoders and generative models within neural network architectures. Latent space refers to the compressed representation that these models learn, which captures the essential information of the input data in a lower-dimensional form.
+# Embeddings
 
-## Understanding Latent Space
-
-- **Role in Autoencoders:** In autoencoders, the encoder part of the model compresses the input into a latent space representation, and the decoder part attempts to reconstruct the input from this latent representation. The latent space thus acts as a bottleneck, forcing the autoencoder to learn the most salient features of the data.
-- **Generative Model Applications:** In generative models like VAEs and GANs, the latent space representation can be sampled to generate new data points that are similar to the original data. For example, in the case of images, by sampling different points in the latent space, a model can generate new images that share characteristics with the training set but are not identical replicas.
-
-### Significance of Latent Space
-
-- **Data Compression:** Latent space representations allow for efficient data compression, reducing the dimensionality of the data while retaining its critical features. This aspect is particularly useful in tasks that involve high-dimensional data, such as images or complex sensor data.
-- **Feature Learning:** The process of learning a latent space encourages the model to discover and encode meaningful patterns and relationships in the data, often leading to representations that can be useful for other machine learning tasks.
-- **Interpretability and Exploration:** Examining the latent space can provide insights into the data's underlying structure. In some cases, latent space representations can be manipulated to explore variations of the generated data, offering a tool for understanding how different features contribute to the data generation process.
-
-## Embeddings
-
-**Embeddings** are a natural extension of the latent space, particularly in the context of handling high-dimensional categorical data. They transform sparse, discrete input features into a continuous, lower-dimensional space, much like the latent representations in autoencoders and generative models.
+Embeddings map discrete tokens (words, sentences, documents) to continuous vectors where **meaning is geometry**. Similar items cluster together; relationships become directions in space.
 
 ![Word embedding concept](media/mediaword2vec_concept.png)
 
-Embeddings map high-dimensional data, such as words or categorical variables, to a dense vector space where semantically similar items are positioned closely together. This transformation facilitates the neural network's task of discerning patterns and relationships in the data.
+This idea connects back to Lecture 4's word vectors — but modern embedding models go far beyond individual words.
 
 ![Word embedding space](media/mediaword_embedding_distributed.webp)
 
 *Semantic similarity in embedding space: "king" - "man" + "woman" ≈ "queen" — geometry captures analogies*
 
-- **Application in NLP:** In the realm of Natural Language Processing, embeddings like Word2Vec and GloVe have transformed the way text is represented, enabling models to capture and utilize the semantic and syntactic nuances of language. Each word is represented as a vector, encapsulating its meaning based on the context in which it appears.
-- **Categorical Data Representation:** Beyond text, embeddings are instrumental in representing categorical data in tasks beyond NLP. For example, in recommendation systems, embeddings can represent users and items in a shared vector space, capturing preferences and item characteristics that drive personalized recommendations.
+## From Words to Sentences
+
+| Method | What It Embeds | Key Properties |
+|:---|:---|:---|
+| **Word2Vec** (2013) | Individual words | Skip-gram / CBOW; similar words cluster together |
+| **GloVe** | Individual words | Global co-occurrence statistics; pre-trained on large corpora |
+| **FastText** | Subwords → words | Handles out-of-vocabulary words via character n-grams |
+| **BERT Embeddings** | Words in context | Same word gets different vectors in different sentences |
+| **Sentence Transformers** | Full sentences/paragraphs | Purpose-built for similarity tasks; fixed-size output vectors |
+
+The key evolution: Word2Vec gives one vector per word regardless of context. BERT and Sentence Transformers give *contextualized* embeddings — "bank" near "river" gets a different vector than "bank" near "money."
+
+## Practical Usage
+
+Embeddings enable a family of powerful applications:
+
+- **Semantic search**: Find documents by meaning, not just keywords — "cardiac symptoms" matches "chest pain and shortness of breath"
+- **Document clustering**: Group related documents automatically
+- **Similarity matching**: Find duplicates, related items, or near-misses
+- **Anomaly detection**: Identify outliers in embedding space
+- **Classification features**: Use embeddings as input to downstream models
 
 ### Reference Card: Common Embedding Methods
 
@@ -189,7 +271,7 @@ Embeddings map high-dimensional data, such as words or categorical variables, to
 |:---|:---|
 | **Library** | `sentence-transformers` (`pip install sentence-transformers`) |
 | **Purpose** | Generate dense vector embeddings for sentences/paragraphs |
-| **Key Method** | `model.encode(sentences)` - returns numpy array of embeddings |
+| **Key Method** | `model.encode(sentences)` — returns numpy array of embeddings |
 | **Popular Models** | `all-MiniLM-L6-v2` (fast), `all-mpnet-base-v2` (accurate) |
 | **Output** | Fixed-size vectors (e.g., 384 or 768 dimensions) |
 
@@ -202,47 +284,106 @@ Embeddings map high-dimensional data, such as words or categorical variables, to
 | **Input** | Two arrays of shape (n_samples, n_features) |
 | **Use Case** | Compare embeddings to find semantically similar texts |
 
-### Code Snippet: Using Pre-trained Embeddings
+### Code Snippet: Computing and Comparing Embeddings
 
 ```python
 from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Load a pre-trained model
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Generate embeddings for sentences
-sentences = ["The patient has diabetes.", "Blood glucose levels are elevated."]
-embeddings = model.encode(sentences)
+# Clinical documents
+docs = [
+    "Patient presents with chest pain and shortness of breath",
+    "Lab results show elevated troponin levels",
+    "Patient reports headache and nausea",
+]
 
-# Compute similarity
-from sklearn.metrics.pairwise import cosine_similarity
-similarity = cosine_similarity([embeddings[0]], [embeddings[1]])
-print(f"Similarity: {similarity[0][0]:.3f}")  # Output: ~0.6-0.8
+embeddings = model.encode(docs)
+
+# Find most similar to a query
+query_emb = model.encode(["cardiac symptoms"])
+similarities = cosine_similarity(query_emb, embeddings)[0]
+
+for doc, sim in sorted(zip(docs, similarities), key=lambda x: -x[1]):
+    print(f"{sim:.3f}  {doc}")
 ```
 
-### Advantages of Embeddings
+## Vector Databases
 
-- **Efficiency and Dimensionality Reduction:** Embeddings reduce the computational burden on neural networks by condensing high-dimensional data into more manageable forms without sacrificing the richness of the data's semantic and syntactic properties.
-- **Enhanced Semantic Understanding:** By embedding high-dimensional data into a continuous space, neural networks can more easily capture and leverage the inherent similarities and differences within the data, leading to more accurate and nuanced predictions.
-- **Facilitating Transfer Learning:** Similar to latent space representations, embeddings can be employed in a transfer learning context, where knowledge from one domain can enhance performance in related but distinct tasks.
+For production applications with many documents, you need a vector database — a data store optimized for similarity search over embedding vectors.
 
-# LLMs and the Rise of General-Purpose Models
+### Reference Card: Vector Database Options
 
-Recent years have seen the emergence of large language models (LLMs) like GPT-3, BERT, and their successors, which represent a paradigm shift towards training massive, **general-purpose models**. These models are capable of understanding and generating human-like text and can be adapted to a wide range of tasks, from translation and summarization to question-answering and creative writing.
+| Database | Type | Strengths |
+|:---|:---|:---|
+| **ChromaDB** | In-memory/persistent | Simple API, good for prototyping |
+| **FAISS** | In-memory | Fast, scalable, from Meta AI |
+| **Pinecone** | Cloud service | Managed, production-ready |
+| **Weaviate** | Self-hosted/cloud | Full-text + vector search |
+| **pgvector** | PostgreSQL extension | Integrate with existing DB |
 
-## Fine-Tuning
+### Code Snippet: ChromaDB Vector Search
 
-Training an existing transformer-based model on new data is called **fine-tuning**. It is one possible way to extend its capability.
+```python
+import chromadb
+from sentence_transformers import SentenceTransformer
 
-- **Adaptability:** Fine-tuning involves taking a model that has been pre-trained on a vast corpus of data and adjusting its parameters slightly to specialize in a more narrow task. This process leverages the broad understanding these models have developed to achieve high performance on specific tasks with relatively minimal additional training.
-- **Efficiency:** By starting with a pre-trained model, researchers and practitioners can bypass the need for extensive computational resources required to train large models from scratch. Fine-tuning allows for the customization of these powerful models to specific needs while retaining the general knowledge they have already acquired.
+model = SentenceTransformer('all-MiniLM-L6-v2')
+client = chromadb.Client()
+collection = client.create_collection("clinical_notes")
+
+# Add documents
+documents = ["Note 1...", "Note 2...", "Note 3..."]
+collection.add(
+    documents=documents,
+    ids=[f"doc_{i}" for i in range(len(documents))],
+    embeddings=model.encode(documents).tolist()
+)
+
+# Query
+results = collection.query(
+    query_embeddings=model.encode(["chest pain symptoms"]).tolist(),
+    n_results=3
+)
+```
+
+Vector databases will come back in Lecture 8 when we build RAG pipelines.
+
+![xkcd: Similarities](media/xkcd_similarities.png)
+
+# LLMs and General-Purpose Models
+
+Recent years have seen the emergence of large language models (LLMs) like GPT-4, Claude, and Gemini — massive, **general-purpose models** capable of understanding and generating human-like text across a wide range of tasks.
+
+What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and emergent capabilities that weren't explicitly trained. The same model can translate, summarize, classify, write code, and reason about problems.
+
+## Fine-Tuning vs Prompt Engineering
+
+Two approaches to adapting an LLM to your task:
+
+| Approach | When to Use | Effort | Cost |
+|:---|:---|:---|:---|
+| **Prompting** (recommended default) | Most tasks; fast iteration | Minutes to test | Lower |
+| **Fine-tuning** (specialized cases) | Specialized vocabulary, domain patterns | Days–weeks | Higher |
+
+**Prompting** is the recommended starting point:
+- Fast iteration (minutes to test)
+- No data collection needed
+- Works across many tasks
+- Lower cost
+
+**Fine-tuning** is for specialized cases only:
+- Adapt pre-trained model on your specific data
+- Requires 100s–1000s labeled examples
+- Lengthy dataset preparation and training
 
 ### Reference Card: Fine-Tuning with Hugging Face
 
 | Component | Details |
 |:---|:---|
 | **Purpose** | Adapt pre-trained model to specific task/domain |
-| **Data Needed** | 100s-1000s labeled examples typically |
+| **Data Needed** | 100s–1000s labeled examples typically |
 | **Key Classes** | `Trainer`, `TrainingArguments`, `AutoModel` |
 | **When to Use** | Specialized vocabulary, domain-specific patterns |
 | **Alternative** | Prompt engineering (faster, no training) |
@@ -269,39 +410,37 @@ trainer = Trainer(model=model, args=training_args, train_dataset=inputs)
 trainer.train()
 ```
 
-## Fine-Tuning vs Prompt Engineering
+## Addressing Hallucination
 
-| Approach | When to Use | Effort | Cost |
-|----------|-------------|--------|------|
-| **Prompting** | Default choice, fast iteration | Minutes to test | Lower |
-| **Fine-tuning** | Specialized vocabulary, domain patterns | Days-weeks | Higher |
+There is no general solution to preventing model hallucination. One way to think of it: like regression, when extrapolating beyond the training data you run the risk of assumptions that no longer hold.
 
-**Prompting** (recommended default):
+Approaches include:
+- **Training Data Curation:** High-quality, accurate training data reduces hallucination likelihood
+- **Prompt and Output Design:** Careful prompts and output constraints mitigate hallucination in generative tasks
+- **Human-in-the-loop:** Incorporate human feedback to identify and correct hallucinations
+- **Retrieval-Augmented Generation (RAG):** Ground model responses in retrieved documents — we'll build this in Lecture 8
 
-- Fast iteration (minutes to test)
-- No data collection needed
-- Works across many tasks
-- Lower cost
-
-**Fine-tuning** (specialized cases only):
-
-- Adapt pre-trained model on your specific data
-- Requires 100s-1000s labeled examples
-- Lengthy dataset preparation and training
-
-# LIVE DEMO!!
-
-Systematic model comparison using cross-validation techniques from Lecture 5, applied to a healthcare dataset.
-
-See: [demo/01-model_selection.md](demo/01-model_selection.md)
+If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
 
 # Prompt Engineering
 
-Prompt engineering is the art of crafting input prompts that guide the model to generate desired outputs. This technique exploits the model's ability to understand context and generate relevant responses, making it possible to "program" the model for new tasks without explicit retraining.
+Prompt engineering is the practice of crafting input prompts that guide the model to generate desired outputs. This exploits the model's ability to understand context and generate relevant responses — "programming" the model for new tasks without retraining.
 
-## One-Shot and Few-Shot Learning
+A useful template for structuring prompts:
 
-One of the most remarkable capabilities of modern LLMs is their ability to perform tasks with minimal examples — sometimes just **one or a few (few-shot learning)**. This ability stems from their extensive pre-training, which provides a rich context for understanding and generating text.
+```
+[ROLE]        Who the model should act as
+[TASK]        What you need done
+[FORMAT]      How to structure the output
+[CONSTRAINTS] Boundaries and requirements
+[EXAMPLES]    Concrete input/output pairs
+```
+
+Not every prompt needs all five sections, but thinking in these terms helps craft more effective prompts.
+
+## Zero-Shot, One-Shot, and Few-Shot Learning
+
+One of the most remarkable capabilities of modern LLMs is their ability to perform tasks with minimal examples.
 
 ### Reference Card: Prompting Techniques
 
@@ -309,7 +448,7 @@ One of the most remarkable capabilities of modern LLMs is their ability to perfo
 |:---|:---|:---|
 | **Zero-shot** | Task description only, no examples | Simple, well-defined tasks |
 | **One-shot** | Single example provided | When pattern is clear from one case |
-| **Few-shot** | 2-5 examples provided | Complex patterns, structured output |
+| **Few-shot** | 2–5 examples provided | Complex patterns, structured output |
 | **Chain-of-thought** | Ask model to show reasoning steps | Multi-step reasoning tasks |
 
 ### Code Snippet: Few-Shot Prompting
@@ -330,24 +469,26 @@ Note: "Patient has persistent cough, fever, and infiltrates on chest X-ray."
 Diagnosis:"""
 ```
 
-## Structured Responses: Why and How
+## Structured Responses
 
-A **structured response** is output from a language model that follows a specific, machine-readable format—such as JSON, XML, or a table—rather than free-form text.
+A **structured response** is output that follows a specific, machine-readable format — JSON, XML, or a table — rather than free-form text.
+
+The traditional approach — parsing free text with regex — is fragile and error-prone. Structured outputs let the model guarantee schema conformance, giving you simpler prompts, reliable downstream processing, and enforceable output formats via function calling.
 
 ![Structured outputs](media/structured_outputs.png)
 
 ### Why does it matter in health data science?
 
-- **Reliability:** Structured outputs are easier to validate and less prone to hallucination.
-- **Interoperability:** They can be directly used by other software systems (e.g., EHRs, analytics pipelines).
-- **Automation:** Structured data enables downstream processing, such as automated coding, reporting, or alerting.
-- **Auditability:** It's easier to check for missing or inconsistent information.
+- **Reliability:** Structured outputs are easier to validate and less prone to hallucination
+- **Interoperability:** Can be directly consumed by other systems (EHRs, analytics pipelines)
+- **Automation:** Enables downstream processing — automated coding, reporting, alerting
+- **Auditability:** Easier to check for missing or inconsistent information
 
-### How do you get a structured response from an LLM?
+### How to get structured responses
 
 - Use **schema-based prompting**: "Provide your answer in the following JSON format: { ... }"
-- Be explicit about required fields and data types.
-- Validate the output programmatically.
+- Be explicit about required fields and data types
+- Validate the output programmatically
 
 ### Reference Card: Structured Output Prompting
 
@@ -369,52 +510,49 @@ prompt = """Extract the following information from the clinical note and return 
   "reasoning": "<brief explanation>"
 }
 
-Clinical Note: "65-year-old male with chest pain, ST elevation in leads V1-V4, 
+Clinical Note: "65-year-old male with chest pain, ST elevation in leads V1-V4,
 troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterization."
 """
 ```
 
-## Addressing Hallucination
+![xkcd: Predictive Models](media/xkcd_predictive_models.png)
 
-There is no general solution to preventing model hallucination. One way I like to think of it is akin to regression: when extrapolating beyond the training data you run the risk of making assumptions that no longer hold.
+# LIVE DEMO!!
 
-Approaches include:
+Embedding similarity search and prompt engineering techniques — finding semantically similar clinical documents and structuring LLM outputs.
 
-- **Training Data Curation:** Carefully curating and vetting training datasets can reduce the likelihood of hallucination by ensuring that models learn from high-quality, accurate data.
-- **Prompt and Output Design:** In generative models, carefully designing input prompts and setting constraints on outputs can mitigate hallucination effects. This is particularly relevant in NLP applications where the context and phrasing of prompts can significantly influence the model's output.
-- **Human-in-the-loop:** Incorporating human feedback into the training loop can help identify and correct hallucinations, leading to models that better align with factual accuracy and user expectations.
-- **Retrieval-Augmented Generation (RAG):** Ground model responses in retrieved documents, providing verifiable sources.
+See: [demo/03-api_prompt_engineering.md](demo/03-api_prompt_engineering.md)
 
 # LLM API Integration
 
-Building applications with language models requires understanding how to interact with their APIs effectively.
+![xkcd: Standards](media/xkcd_standards.png)
+
+Building applications with language models requires understanding how to interact with their APIs effectively. Students need API access working before Lecture 8's applied work.
 
 ## API Access Patterns
 
-- **REST APIs**: Most LLM providers offer HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text responses
-- **SDK/Libraries**: Client libraries like OpenAI Python, Hugging Face Transformers, and LangChain provide convenient wrappers around the raw APIs
-- **Authentication**: API keys are typically required and should be stored securely as environment variables or in a secrets manager
-
-## Common LLM API Providers
+- **REST APIs**: HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text
+- **SDK/Libraries**: Client libraries like OpenAI Python, Anthropic SDK, and Hugging Face provide convenient wrappers
+- **Authentication**: API keys stored securely as environment variables or in a secrets manager
 
 ### Reference Card: LLM API Providers
 
 | Provider | Models | Strengths |
 |:---|:---|:---|
-| **OpenAI** | GPT-4, GPT-4o, o1 | Best general-purpose, function calling |
-| **Anthropic** | Claude 3.5, Claude 4 | Long context, safety focus |
+| **OpenAI** | GPT-4o, o1, o3 | Best general-purpose, function calling, structured outputs |
+| **Anthropic** | Claude 4, Claude 4.5 | Long context, safety focus, tool use |
 | **Google** | Gemini | Multimodal, large context |
 | **Hugging Face** | Various open models | Free tier, open source options |
 
 ### Code Snippet: OpenAI API
 
 ```python
-import openai
+from openai import OpenAI
 
-client = openai.OpenAI()  # Uses OPENAI_API_KEY env var
+client = OpenAI()  # Uses OPENAI_API_KEY env var
 
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-4o-mini",
     messages=[
         {"role": "system", "content": "You are a helpful medical assistant."},
         {"role": "user", "content": "What are the symptoms of diabetes?"}
@@ -425,31 +563,13 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-### Code Snippet: Hugging Face Inference API
-
-```python
-import requests
-
-API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
-headers = {"Authorization": f"Bearer {your_api_key}"}
-
-def query(payload):
-    response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
-
-output = query({"inputs": "What are the symptoms of diabetes?"})
-print(output)
-```
-
 ## Function Calling: Enforcing Schema Compliance
 
-Modern LLM APIs (like OpenAI's GPT-4) support a feature called **function calling**. This allows you to define a schema (function signature) for the expected output, and the model will return a response that matches this schema—helping to ensure the output is well-structured and reliable.
+Modern LLM APIs support **function calling** — you define a schema for expected output, and the model returns a response conforming to that schema.
 
-**Why is this useful?**
-
-- The model is guided to only return data that fits your specified structure (e.g., required fields, data types).
-- Reduces the risk of hallucinated or malformed outputs.
-- Makes it easier to integrate LLMs into production systems, especially in healthcare where data quality is critical.
+- Guides the model to return only data matching your structure (required fields, types)
+- Reduces hallucinated or malformed outputs
+- Makes LLM integration into production systems practical — especially in healthcare where data quality is critical
 
 ### Reference Card: Function Calling
 
@@ -463,17 +583,20 @@ Modern LLM APIs (like OpenAI's GPT-4) support a feature called **function callin
 ### Code Snippet: Function Calling
 
 ```python
-functions = [
+tools = [
     {
-        "name": "extract_diagnosis",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "diagnosis": {"type": "string"},
-                "confidence": {"type": "number"},
-                "reasoning": {"type": "string"}
-            },
-            "required": ["diagnosis", "confidence", "reasoning"]
+        "type": "function",
+        "function": {
+            "name": "extract_diagnosis",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "diagnosis": {"type": "string"},
+                    "confidence": {"type": "number"},
+                    "reasoning": {"type": "string"}
+                },
+                "required": ["diagnosis", "confidence", "reasoning"]
+            }
         }
     }
 ]
@@ -481,118 +604,112 @@ functions = [
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "user", "content": "Extract the diagnosis from this note..."}],
-    functions=functions,
-    function_call={"name": "extract_diagnosis"}
+    tools=tools,
+    tool_choice={"type": "function", "function": {"name": "extract_diagnosis"}}
 )
 ```
 
-## Error Handling and Best Practices
-
-- **Rate limiting**: Implement exponential backoff to handle rate limits gracefully
-- **Timeout handling**: Set appropriate timeouts and handle connection issues
-- **Response validation**: Always validate the structure and content of API responses
-- **Caching**: Consider caching responses for identical or similar prompts to reduce costs
-- **Prompt engineering**: Craft clear, specific prompts to get better responses
-- **Cost management**: Monitor token usage and implement budgeting controls
-
 ## Building a Complete LLM Chat Application
 
-When building applications that interact with LLMs, it's good practice to separate your code into distinct components with clear responsibilities:
+When building applications that interact with LLMs, separate your code into distinct components:
 
-1. **LLM Client Library**: Handles the low-level API communication, error handling, and conversation formatting
-2. **Command Line Interface**: Provides a user interface that leverages the client library
+1. **LLM Client Library**: Handles API communication, error handling, conversation formatting
+2. **Command Line Interface**: Provides a user interface leveraging the client library
 
 This separation of concerns makes the code more maintainable, testable, and reusable.
 
 ### Code Snippet: LLM Client Class
 
 ```python
-import requests
 import time
 import logging
+from openai import OpenAI
 
 class LLMClient:
-    """Client for interacting with LLM APIs"""
-    
-    def __init__(self, model_name="google/flan-t5-base", api_key=None, max_retries=3):
-        self.model_name = model_name
-        self.api_key = api_key
+    """Client for interacting with LLM APIs."""
+
+    def __init__(self, model="gpt-4o-mini", max_retries=3):
+        self.client = OpenAI()
+        self.model = model
         self.max_retries = max_retries
-        self.api_url = f"https://api-inference.huggingface.co/models/{model_name}"
-        self.headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
-    
-    def generate_text(self, prompt):
-        """Generate text from the LLM based on the prompt"""
+        self.history = []
+
+    def chat(self, message, system_prompt=None):
+        """Send a message and get a response, with retry logic."""
+        if system_prompt and not self.history:
+            self.history.append({"role": "system", "content": system_prompt})
+        self.history.append({"role": "user", "content": message})
+
         for attempt in range(self.max_retries):
             try:
-                response = requests.post(
-                    self.api_url, headers=self.headers,
-                    json={"inputs": prompt}, timeout=30
+                response = self.client.chat.completions.create(
+                    model=self.model, messages=self.history
                 )
-                if response.status_code == 200:
-                    return response.json()[0]["generated_text"]
-                elif response.status_code == 429:
-                    time.sleep(int(response.headers.get("Retry-After", 30)))
-                else:
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                reply = response.choices[0].message.content
+                self.history.append({"role": "assistant", "content": reply})
+                return reply
             except Exception as e:
-                logging.error(f"Error: {e}")
+                logging.error(f"Attempt {attempt + 1} failed: {e}")
                 time.sleep(2 ** attempt)
+
         return "Error generating response."
 ```
 
-### Benefits of This Architecture
+## Error Handling Best Practices
 
-1. **Separation of concerns**: The LLMClient handles API communication, while the CLI handles user interaction
-2. **Reusability**: The LLMClient can be used in other applications (web apps, APIs, etc.)
-3. **Maintainability**: Changes to the API interaction logic only need to be made in one place
-4. **Testability**: Each component can be tested independently
-5. **Flexibility**: The CLI can be easily modified without changing the core client logic
+- **Rate limiting**: Implement exponential backoff for rate limits
+- **Timeout handling**: Set appropriate timeouts for connection issues
+- **Response validation**: Always validate structure and content of API responses
+- **Cost management**: Monitor token usage and implement budgets
 
 # LIVE DEMO!!!
 
-Zero-, One-, and Few-Shot Learning with API prompt engineering.
+Zero-, one-, and few-shot prompting via API — clinical text classification, diagnosis extraction, and structured output generation.
 
 See: [demo/03-api_prompt_engineering.md](demo/03-api_prompt_engineering.md)
 
-# Resources and Links
+# Resources
 
-## Transformers and Attention
+## Transformers & Attention
 
-- Attention Paper - [https://arxiv.org/abs/1409.0473](https://arxiv.org/abs/1409.0473)
-- Visual introduction to Attention - [https://erdem.pl/2021/05/introduction-to-attention-mechanism](https://erdem.pl/2021/05/introduction-to-attention-mechanism)
-- "Attention is all you need" paper [https://arxiv.org/abs/1706.03762](https://arxiv.org/abs/1706.03762)
-- The Illustrated Transformer [https://jalammar.github.io/illustrated-transformer/](https://jalammar.github.io/illustrated-transformer/)
-- [Building Transformers from Scratch](https://vectorfold.studio/blog/transformers)
-- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/)
-- Multi head attention - [https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
+- [Attention is All You Need](https://arxiv.org/abs/1706.03762) — the original 2017 paper
+- [Attention mechanism paper (2015)](https://arxiv.org/abs/1409.0473) — Bahdanau attention
+- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — visual walkthrough
+- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven reference
+- [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — interactive tool
+- [Building Transformers from Scratch](https://vectorfold.studio/blog/transformers) — code-first guide
+- [Visual introduction to Attention](https://erdem.pl/2021/05/introduction-to-attention-mechanism) — supplementary visual
+- [Multi-head attention deep dive](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853) — detailed explanation
 
-## DIY nanoGPT
+## Building GPTs
 
-- DIY nanoGPT from scratch - [https://github.com/karpathy/nanoGPT/blob/master/train.py](https://github.com/karpathy/nanoGPT/blob/master/train.py)
-- Karpathy's Neural Networks: Zero to Hero - [https://karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
-- Let's build GPT: from scratch, in code, spelled out [https://www.youtube.com/watch?v=kCc8FmEb1nY](https://www.youtube.com/watch?v=kCc8FmEb1nY)
-- [Visualize GPT-2 using WebGL](https://github.com/nathan-barry/gpt2-webgl)
+- [microGPT blog](https://karpathy.github.io/2026/02/12/microgpt/) — 200-line, zero-dependency GPT
+- [microGPT visualizer](https://microgpt.boratto.ca) — interactive GPT internals visualization
+- [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
+- [Karpathy's Zero to Hero](https://karpathy.ai/zero-to-hero.html) — neural network video series
+- [Let's Build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY) — building GPT from scratch
+- [GPT-2 WebGL visualizer](https://github.com/nathan-barry/gpt2-webgl)
 
 ## LLMs
 
-- [ChatGPT or Grok? Gemini or Claude?: Which AIs do which tasks best, explained.](https://www.vox.com/future-perfect/411924/artificial-intelligence-chatbots-openai-chatgpt-anthropic-google-gemini-claude-grok)
-- List of open source LLMS: [https://github.com/eugeneyan/open-llms](https://github.com/eugeneyan/open-llms)
-- GPT (2018) [https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
-- Reinforcement Learning with Human Feedback - [https://arxiv.org/abs/2203.02155](https://arxiv.org/abs/2203.02155)
+- [List of open source LLMs](https://github.com/eugeneyan/open-llms) — comprehensive open-model list
+- [GPT (2018) paper](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
+- [RLHF paper](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback
+- [DistilBERT paper](https://arxiv.org/pdf/1910.01108v4.pdf) — knowledge distillation
 
 ## Healthcare AI
 
-- UCSF Versa! [https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa)
-- [https://sites.research.google/med-palm/](https://sites.research.google/med-palm/)
+- [UCSF Versa](https://ai.ucsf.edu/platforms-tools-and-resources/ucsf-versa) — institutional LLM tool
+- [Google Med-PaLM](https://sites.research.google/med-palm/) — medical LLM research
 
 ## Prompt Engineering Guides
 
-- **Anthropic**: [https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
-- **OpenAI**: [https://platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
+- **Anthropic**: [docs.anthropic.com/en/docs/build-with-claude/prompt-engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **OpenAI**: [platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
+- **OpenAI examples**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
 
 ## Where to Play Around
 
-- [https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt](https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt)
-- [https://cloud.google.com/vertex-ai](https://cloud.google.com/vertex-ai)
-- [https://platform.openai.com/](https://platform.openai.com/)
+- [Hugging Face NLP Course](https://huggingface.co/learn/nlp-course/chapter3/2?fw=pt)
+- [Google Vertex AI](https://cloud.google.com/vertex-ai)
+- [OpenAI Platform](https://platform.openai.com/)

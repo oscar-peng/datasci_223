@@ -492,17 +492,88 @@ Content:
 
 Per `CLAUDE.md` and `refs/instructions.md`:
 
-- [ ] Title is plain text (no `#`)
+- [x] Title is plain text (no `#`)
 - [ ] Every major section has: freeform intro → visual/table → Reference Card → Code Snippet
-- [ ] Freeform intros draw from previous years' content where applicable
-- [ ] Reference cards use standard formats (multi-method table or single-function deep-dive)
-- [ ] Code snippets are short, focused, runnable, with health data examples
-- [ ] Exactly 3 demo markers: `# LIVE DEMO!`, `# LIVE DEMO!!`, `# LIVE DEMO!!!`
-- [ ] Humor/visuals placed between sections (not inside core explanations)
-- [ ] No time estimates
-- [ ] No summary sections
-- [ ] No fluff (academic discounts, conceptual check-ins)
-- [ ] Images use relative paths (`media/...`)
-- [ ] No `#FIXME` markers remain (or explicitly flagged for follow-up)
-- [ ] Resources section at end with categorized links
-- [ ] Recurring themes woven in: bias machines, domain expertise required
+- [x] Freeform intros draw from previous years' content where applicable
+- [x] Reference cards use standard formats (multi-method table or single-function deep-dive)
+- [x] Code snippets are short, focused, runnable, with health data examples
+- [x] Exactly 3 demo markers: `# LIVE DEMO!`, `# LIVE DEMO!!`, `# LIVE DEMO!!!`
+- [x] Humor/visuals placed between sections (not inside core explanations)
+- [x] No time estimates
+- [x] No summary sections
+- [x] No fluff (academic discounts, conceptual check-ins)
+- [x] Images use relative paths (`media/...`)
+- [x] No `#FIXME` markers remain (or explicitly flagged for follow-up)
+- [x] Resources section at end with categorized links
+- [x] Recurring themes woven in: bias machines, domain expertise required
+- [x] XKCD comics between sections (no duplication with other lectures)
+- [x] No undefined jargon (BPE, RLHF, softmax, ReAct, etc. all defined)
+
+---
+
+## Implementation Status & Review Notes
+
+### What's been implemented
+
+Both lectures have been rewritten per this plan and reviewed for quality. Status as of 2026-02-17:
+
+**Lecture 07** — 700+ lines, 14 reference cards, 10 code snippets, 6 XKCD comics
+**Lecture 08** — 700+ lines, 9 reference cards, 8 code snippets, 6 XKCD comics
+
+### Changes made during review (beyond original plan)
+
+| Change | Lecture | Rationale |
+|:---|:---|:---|
+| Added "Beyond Text" subsection (ViT, time-series, multimodal) | 07 | Missing from plan; key concept from 2025 lecture about transformers generalizing beyond NLP |
+| Added prompt template format `[ROLE]/[TASK]/[FORMAT]/[CONSTRAINTS]/[EXAMPLES]` | 07 | Practical scaffold from 2025 lecture; helps students structure prompts |
+| Added "regex → schema" framing for structured outputs | 07 | Concrete motivation from 2025 lecture; explains *why* structured outputs matter |
+| Added tokenization concrete numbers (~4 chars/token, 64K–200K context) | 07 | From 2025 lecture; students need practical intuition for token counts |
+| Expanded parallelization sub-patterns (divide-and-conquer, voting, first-to-finish) | 08 | Plan only had a bullet; 2025 lecture had full treatment |
+| Added Reference Card: LLM Decision Framework + validation code snippet | 08 | "When to Use" section had no ref card or code per plan section outline |
+| Added Reference Card: Getting Started Checklist | 08 | "Practical Recommendations" section had no ref card per plan section outline |
+| Added Code Snippet: Prompt Injection Defense | 08 | "Failure Modes" section had no code snippet per plan section outline |
+| Added `routing_logic.png` image | 08 | Existing unused media; adds visual to Advanced Patterns |
+| Defined jargon: BPE, RLHF, softmax, cross-entropy, Adam optimizer, ReAct, MRN | 07+08 | Plan says "beginner-friendly, define terms when introduced" |
+| Updated "Claude 3.5 Haiku" → "Claude Haiku" | 08 | Outdated model name |
+
+### Remaining gaps (for manual review)
+
+These items were identified during review but left for the instructor to decide:
+
+1. **L07 "From Neural Networks to Transformers"**: Has a reference card (timeline table) but no code snippet. This is a history section, so a code snippet may not be appropriate — but it's the only major section without one.
+
+2. **L07 "LLMs and General-Purpose Models"**: Has a fine-tuning code snippet and ref card, but no standalone visual. The fine-tuning vs prompting comparison table serves this role.
+
+3. **L07 "LLM API Integration"**: No visual/diagram for the API call flow. The Standards XKCD is placed here but a flow diagram could help.
+
+4. **L07 microGPT URL** (`https://karpathy.github.io/2026/02/12/microgpt/`): This URL was specified in the plan's external resources table. Verify it's a real, reachable URL — the date (Feb 2026) suggests it may not exist yet or may be a placeholder.
+
+5. **L07 Demo 2 and Demo 3 both reference `demo/03-api_prompt_engineering.md`**: The plan shows them as separate topics (embedding search vs API prompting) but both point to the same demo file. May need a second demo file, or this may be intentional (one long demo split into two phases).
+
+6. **L08 Demo 2 and Demo 3 both reference `demo/03_agentic_workflow.md`**: Similar situation — plan shows workflow building vs practical failures, but both point to the same file.
+
+7. **Content from past years not yet integrated** (lower priority — instructor may want to add selectively):
+    - Latent space as bridge concept (autoencoders → embeddings) from 2024 lecture
+    - Embeddings for categorical data / recommendation systems from 2024 lecture
+    - Hugging Face REST API example (alternative to SDK pattern) from 2024 lecture
+
+8. **Image filenames with `media` prefix** (e.g., `media/mediaword2vec_concept.png`, `media/mediaagents_landscape.png`): These are Notion export artifacts. The paths are technically correct but the filenames are ugly. Renaming would require updating both the files and the markdown references.
+
+### XKCD comics inventory
+
+| Lecture | Comic | XKCD # | Placement |
+|:---|:---|:---|:---|
+| 07 | Transformers | 1336 | Opening, before history intro |
+| 07 | Machine Learning Captcha | 2228 | After "Beyond Text", before Building GPT |
+| 07 | Attention Span | 2005 | After Demo 1, before Embeddings |
+| 07 | Similarities | 1585 | After Vector DBs, before LLMs section |
+| 07 | Predictive Models | 2169 | After Schema-Based Prompting, before Demo 2 |
+| 07 | Standards | 927 | Before API Integration |
+| 08 | Skynet | 1046 | Opening, before Agentic intro |
+| 08 | Robot Future | 1968 | After Agentic, before RAG |
+| 08 | AI Research | 1696 | After MCP, before Demo 1 |
+| 08 | AI Methodology | 2451 | After Demo 2, before "When to Use" |
+| 08 | Exploits of a Mom | 327 | In Prompt Injection subsection |
+| 08 | Hallucinations | 203 | In Practical Recommendations |
+
+No duplicates with lectures 01–06 or between 07 and 08.

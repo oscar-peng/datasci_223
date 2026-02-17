@@ -6,8 +6,8 @@ Transformers: More than Meets the Eye
 
 ## Transformers & Attention
 
-- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's visual walkthrough (essential reading)
-- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference (essential reading)
+- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's visual walkthrough
+- [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
 - [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — interactive tool
 - [Attention is All You Need](https://arxiv.org/abs/1706.03762) — the original 2017 paper
 - [Attention mechanism paper (2015)](https://arxiv.org/abs/1409.0473) — Bahdanau attention
@@ -52,7 +52,7 @@ Transformers: More than Meets the Eye
 
 ![xkcd: Transformers](media/xkcd_transformers.png)
 
-In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences one token at a time — what if we could process them all at once?
+In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences one token at a time — _what if we could process them all at once?_
 
 The path from biological inspiration to modern LLMs involved solving several fundamental problems in sequence processing. Each breakthrough unlocked the next.
 

@@ -198,7 +198,12 @@ Content:
 ### # LIVE DEMO!!!
 - Zero-, one-, and few-shot prompting via API (clinical text examples)
 
-### # Resources and Links
+### Assignment API
+- Provider: **OpenRouter** (OpenAI-compatible API)
+- Model: `minimax/minimax-m2.5`
+- API key: shared key created for students this quarter (instructor to distribute)
+
+### # Links (at top, after title + hw link — matches L04–L06 pattern)
 - Transformers & attention
 - Building GPTs
 - LLMs & healthcare AI
@@ -355,7 +360,7 @@ Content:
 ### # LIVE DEMO!!!
 - Practical examples and easy failures (hallucination demos, prompt injection, showing where LLMs break)
 
-### # Resources
+### # Links (at top, after title + hw link — matches L04–L06 pattern)
 - Prompt engineering guides
 - Workflow tools & agent frameworks
 - Self-hosting options
@@ -533,21 +538,21 @@ Both lectures have been rewritten per this plan and reviewed for quality. Status
 | Added Reference Card: Getting Started Checklist | 08 | "Practical Recommendations" section had no ref card per plan section outline |
 | Added Code Snippet: Prompt Injection Defense | 08 | "Failure Modes" section had no code snippet per plan section outline |
 | Added `routing_logic.png` image | 08 | Existing unused media; adds visual to Advanced Patterns |
-| Defined jargon: BPE, RLHF, softmax, cross-entropy, Adam optimizer, ReAct, MRN | 07+08 | Plan says "beginner-friendly, define terms when introduced" |
+| Defined jargon: BPE, RLHF, softmax, cross-entropy, Adam optimizer, ReAct, MRN, autoregressive, GloVe, BERT, FAISS | 07+08 | Plan says "beginner-friendly, define terms when introduced" |
 | Updated "Claude 3.5 Haiku" → "Claude Haiku" | 08 | Outdated model name |
+| Improved all `#FIXME` image placeholders with Google Image search terms | 07 | Easier to find replacement images |
+| Added missing `import os` to OpenRouter code snippet | 07 | Bug fix — `os.environ` used without import |
+| Converted instructor speaking note to `#FIXME` (shared API key setup) | 07 | Was not student-facing content |
 
 ### Remaining gaps (for manual review)
 
 These items were identified during review but left for the instructor to decide:
 
-1. **L07 "From Neural Networks to Transformers"**: Has a reference card (timeline table) but no code snippet. This is a history section — a code snippet may not be appropriate, but it's the only major `#` section without one. Consider a minimal RNN/attention comparison snippet if desired.
-    - **Past content to pull**: `lectures_24/06/lecture_06.md` lines 800–836 have three healthcare LSTM code examples (clinical note classification, vital signs prediction, patient monitoring) that could serve as a "before" counterpoint. Lines 863–871 have an LSTM vs Transformer comparison table. The `lectures_25/2025/🌪️ Whirlwind Tour...` lines 23–68 narrate the RNN→attention→transformer progression with concrete details on sequential bottleneck and parallel processing speedup.
+1. ~~**L07 "From Neural Networks to Transformers"**: Has a reference card (timeline table) but no code snippet.~~ Resolved — conceptual/history sections do not need code snippets.
 
-2. **L07 "LLMs and General-Purpose Models"**: Has a fine-tuning code snippet and ref card, but no standalone visual. The fine-tuning vs prompting comparison table serves the visual role. Could add a model size comparison diagram.
-    - **Past content to pull**: `lectures_24/07/media/Intro_to_Deep_Learning_Transformers.pdf` (and annotated version) contain transformer architecture and LLM evolution diagrams. `lectures_24/07/lecture_07.md` lines 169–182 have the "LLMs and the Rise of General-Purpose Models" narrative. `lectures_25/2025/🌪️ Whirlwind Tour...` lines 241–255 cover the fine-tuning vs prompt engineering decision framework with practical guidance.
+2. **L07 "LLMs and General-Purpose Models"**: Has a fine-tuning code snippet and ref card, but no standalone visual. `#FIXME` placeholder with image search terms added to lecture. The fine-tuning vs prompting comparison table partially fills the visual role.
 
-3. **L07 "LLM API Integration"**: No visual/diagram for the API call flow. The Standards XKCD is placed here. Consider adding an API request/response flow diagram (`media/` would need a new image).
-    - **Past content to pull**: `lectures_24/07/lecture_07.md` lines 302–399 have a complete API section with provider comparison, OpenAI and Hugging Face code examples (including HTTP request/response structure), function calling with JSON schema, and error handling best practices. `lectures_24/07/demo/03-api_prompt_engineering.md` has a full API setup walkthrough with key configuration and request/response flow. Either could be adapted into a flow diagram or expanded code example.
+3. **L07 "LLM API Integration"**: No visual/diagram for the API call flow. `#FIXME` placeholder with image search terms added to lecture.
 
 4. ~~**L07 microGPT URL**~~: Verified — `https://karpathy.github.io/2026/02/12/microgpt/` is live and correct (Karpathy blog post, Feb 2026).
 
@@ -556,9 +561,9 @@ These items were identified during review but left for the instructor to decide:
 6. ~~**L08 Demo 2+3 share `demo/03_agentic_workflow.md`**~~: Intentional — single multi-part demo split across two breaks (workflow building first half, failure demos second half).
 
 7. **Content from past years not yet integrated** (lower priority — instructor may want to add selectively):
-    - **Latent space as bridge concept** (autoencoders → embeddings): `lectures_24/07/lecture_07.md` lines 135–153 cover latent space in depth; `lectures_24/06/lecture_06.md` has autoencoder/VAE architecture discussions that frame latent space as the conceptual bridge to embeddings. Could enrich the L07 Embeddings freeform intro.
-    - **Embeddings for categorical data / recommendation systems**: `lectures_24/07/lecture_07.md` lines 154–167 cover embeddings beyond NLP (categorical features, recommendation systems, drug interactions). Would broaden the L07 Embeddings section beyond text-only examples.
-    - **Hugging Face REST API example** (alternative to SDK pattern): `lectures_24/07/lecture_07.md` lines 331–348 have a complete Hugging Face Inference API example with HTTP POST, headers, and JSON payload — an alternative to the SDK-based pattern currently in L07. Good for showing students the raw API before SDK abstraction.
+    - ~~**Latent space as bridge concept**~~: Already integrated — L07 Embeddings intro (line 295) connects autoencoders/latent space to embeddings.
+    - ~~**Embeddings for categorical data / recommendation systems**~~: Already integrated — L07 Embeddings intro (line 297) covers recommendation systems, drug interactions, diagnostic codes, categorical variables.
+    - **Hugging Face REST API example** (alternative to SDK pattern): `lectures_24/07/lecture_07.md` lines 331–348 have a complete Hugging Face Inference API example with HTTP POST, headers, and JSON payload — an alternative to the SDK-based pattern currently in L07. Replaced by OpenRouter in current plan; low priority.
 
 8. ~~**Image filenames with `media` prefix**~~: Fixed — renamed `mediaword2vec_concept.png` → `word2vec_concept.png`, `mediaword_embedding_distributed.webp` → `word_embedding_distributed.webp`, `mediaagents_landscape.png` → `agents_landscape.png`, `medialangchain_parallelization.png` → `langchain_parallelization.png`, `mediafew_shot.png` → `few_shot.png`. Markdown references updated.
 

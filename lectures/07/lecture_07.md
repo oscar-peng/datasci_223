@@ -54,8 +54,6 @@ Transformers: More than Meets the Eye
 
 In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences one token at a time — _what if we could process them all at once?_
 
-The path from biological inspiration to modern LLMs involved solving several fundamental problems in sequence processing. Each breakthrough unlocked the next.
-
 ## Word Embeddings (2013)
 
 **word2vec**: Represent words as vectors in high-dimensional space
@@ -66,9 +64,13 @@ The path from biological inspiration to modern LLMs involved solving several fun
     - **Skip-gram**: input word used to predict context
     - Precursors to **Attention**
 
+#FIXME: word2vec skip-gram CBOW architecture diagram predict context window neural network
+
 ## Sequence-to-Sequence & RNNs (2014)
 
 **Encoder-decoder architecture**: Transform one sequence into another
+
+#FIXME: sequence to sequence encoder decoder architecture diagram RNN input output fixed representation
 
 - Encoder processes input into fixed representation
 - Decoder generates output from that representation
@@ -118,12 +120,12 @@ RNNs introduced "memory" to neural networks — the same innovation with LSTMs i
 
 # Transformer Architecture
 
-The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/1706.03762) (2017), published by researchers at Google. For a deep understanding, read at least one of these two articles — they explain the architecture better than any summary can:
+The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/1706.03762) (2017), published by researchers at Google. What follows is a condensed overview — these two articles explain the architecture far better than any summary can, and you should read at least one:
 
 - [**The Illustrated Transformer**](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's step-by-step visual walkthrough
 - [**Everything About Transformers**](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
 
-What follows is a condensed version — the articles above go deeper.
+#FIXME: transformer architecture diagram encoder decoder stack multi-head attention feed forward layer normalization residual connections data flow
 
 ![Basic Transformer Architecture](media/tx_basic.png)
 
@@ -196,6 +198,8 @@ Unlike RNNs, which inherently know word order (they process sequentially), trans
 
 Positional encodings fix this by adding a unique vector to each token's embedding. The original paper uses sine and cosine functions at different frequencies: low-frequency waves capture broad structure (beginning vs. end of sequence), while high-frequency waves capture fine-grained position (adjacent tokens). Together, they create a unique "positional fingerprint" for every position.
 
+#FIXME: transformer positional encoding visualization sine cosine wave pattern heatmap token position frequency
+
 ## Putting It All Together
 
 ### Reference Card: Transformer Components
@@ -227,7 +231,9 @@ The key principle: attention works on any sequence where order and relationships
 
 # Building a GPT from Scratch
 
-What does it actually take to build a language model? Less than you might think. Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) demonstrates that a working GPT can be built in ~200 lines of Python with zero dependencies.
+Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) demonstrates that a working GPT can be built in ~200 lines of Python with zero dependencies.
+
+#FIXME: GPT decoder-only transformer architecture diagram token embedding positional encoding stacked attention blocks output probabilities next token prediction
 
 The key pieces:
 
@@ -249,7 +255,7 @@ These models learn from their training data. *All* of it. Including whatever bia
 | **Embedding Layer** | Maps each token to a dense vector + adds positional encoding. |
 | **Attention Blocks** | Stacked self-attention + feedforward layers. Each block refines the representation. |
 | **Output Head** | Linear layer projecting back to vocabulary size → softmax → next-token probabilities. |
-| **Training** | Autoregressive: predict next token, compute cross-entropy loss, backprop, Adam update. |
+| **Training** | Autoregressive — each token is predicted from all previous tokens (the model never "peeks ahead"): compute cross-entropy loss, backprop, Adam update. |
 | **Inference** | Sample from output distribution. Temperature controls randomness (0 = greedy, 1 = diverse). |
 
 ### Code Snippet: Minimal Attention Block
@@ -278,10 +284,6 @@ class AttentionBlock:
 
 # LIVE DEMO!
 
-Exploring attention visualization with nanoGPT — seeing what the model "looks at" when processing text.
-
-See: [demo/02-nanogpt_attention.md](demo/02-nanogpt_attention.md)
-
 ![xkcd: Attention Span](media/xkcd_attention_span.png)
 
 # Embeddings
@@ -290,7 +292,9 @@ Embeddings map discrete tokens (words, sentences, documents) to continuous vecto
 
 ![Word embedding concept](media/word2vec_concept.png)
 
-This idea connects back to Lecture 4's word vectors — but modern embedding models go far beyond individual words.
+This idea connects back to Lecture 4's word vectors — but modern embedding models go far beyond individual words. If you've seen autoencoders (Lecture 6), the concept is related: an autoencoder compresses input into a compact **latent space** representation, then reconstructs the original. Embeddings are the same idea applied to discrete inputs — the model learns to place similar items near each other in a continuous space, creating a compressed representation that captures meaning rather than raw features.
+
+Embeddings aren't limited to text, either. In recommendation systems, users and items can share an embedding space — a patient's preferences and a treatment's characteristics become vectors whose proximity predicts relevance. Drug interactions, diagnostic codes, and categorical variables can all be embedded the same way. Anywhere you have discrete categories with hidden relationships, embeddings can surface them.
 
 ![Word embedding space](media/word_embedding_distributed.webp)
 
@@ -301,9 +305,9 @@ This idea connects back to Lecture 4's word vectors — but modern embedding mod
 | Method | What It Embeds | Key Properties |
 |:---|:---|:---|
 | **Word2Vec** (2013) | Individual words | Skip-gram / CBOW; similar words cluster together |
-| **GloVe** | Individual words | Global co-occurrence statistics; pre-trained on large corpora |
+| **GloVe** (Global Vectors) | Individual words | Global co-occurrence statistics; pre-trained on large corpora |
 | **FastText** | Subwords → words | Handles out-of-vocabulary words via character n-grams |
-| **BERT Embeddings** | Words in context | Same word gets different vectors in different sentences |
+| **BERT** (Bidirectional Encoder Representations from Transformers) | Words in context | Same word gets different vectors in different sentences |
 | **Sentence Transformers** | Full sentences/paragraphs | Purpose-built for similarity tasks; fixed-size output vectors |
 
 The key evolution: Word2Vec gives one vector per word regardless of context. BERT and Sentence Transformers give *contextualized* embeddings — "bank" near "river" gets a different vector than "bank" near "money."
@@ -323,9 +327,9 @@ Embeddings enable a family of powerful applications:
 | Method | Description | Use Cases |
 |:---|:---|:---|
 | **Word2Vec** | Skip-gram or CBOW to learn word vectors | Text similarity, analogy tasks |
-| **GloVe** | Global vectors from co-occurrence statistics | Pre-trained embeddings for NLP |
-| **FastText** | Subword embeddings (handles OOV words) | Morphologically rich languages |
-| **BERT Embeddings** | Contextualized embeddings from transformers | State-of-the-art NLP tasks |
+| **GloVe** (Global Vectors) | Global vectors from co-occurrence statistics | Pre-trained embeddings for NLP |
+| **FastText** | Subword embeddings (handles out-of-vocabulary words) | Morphologically rich languages |
+| **BERT** | Contextualized embeddings from transformers | State-of-the-art NLP tasks |
 | **Sentence Transformers** | Full sentence/paragraph embeddings | Semantic search, clustering |
 
 ### Reference Card: `SentenceTransformer`
@@ -381,7 +385,7 @@ A "vector database" is used for production applications of embeddings with many 
 | Database | Type | Strengths |
 |:---|:---|:---|
 | **ChromaDB** | In-memory/persistent | Simple API, good for prototyping |
-| **FAISS** | In-memory | Fast, scalable, from Meta AI |
+| **FAISS** (Facebook AI Similarity Search) | In-memory | Fast, scalable, from Meta AI |
 | **Pinecone** | Cloud service | Managed, production-ready |
 | **Weaviate** | Self-hosted/cloud | Full-text + vector search |
 | **pgvector** | PostgreSQL extension | Integrate with existing DB |
@@ -417,9 +421,13 @@ Vector databases will come back in Lecture 8 when we build RAG pipelines.
 
 # LLMs and General-Purpose Models
 
-Recent years have seen the emergence of large language models (LLMs) like GPT-4, Claude, and Gemini — massive, **general-purpose models** capable of understanding and generating human-like text across a wide range of tasks.
+Recent years have seen the emergence of large language models (LLMs) like GPT-4, Claude, and Gemini — massive, **general-purpose models** capable of understanding and generating human-like text across a wide range of tasks. This represents a paradigm shift: instead of training a separate model for each task (one for translation, another for summarization, another for classification), a single model pre-trained on a vast corpus of text can be adapted to any of these tasks with minimal effort.
 
-What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and emergent capabilities that weren't explicitly trained. The same model can translate, summarize, classify, write code, and reason about problems.
+What makes them "general purpose"? Pre-training on enormous text corpora gives them broad knowledge and **emergent capabilities** — abilities that weren't explicitly trained but arise from scale. The same model can translate, summarize, classify, write code, and reason about problems. These capabilities improve unpredictably as models get larger, which is why the field has pushed toward ever-bigger models (GPT-1's 117M parameters → GPT-3's 175B → GPT-4's estimated 1.8T).
+
+The practical consequence: you no longer need to build a custom NLP pipeline for every new task. A well-crafted prompt to a general-purpose model often matches or exceeds the performance of a task-specific model that took weeks to train — especially when you don't have large labeled datasets (which is common in healthcare).
+
+#FIXME: LLM model size comparison bar chart parameter count GPT-1 117M GPT-2 1.5B GPT-3 175B GPT-4 scaling over time
 
 ## Fine-Tuning vs Prompt Engineering
 
@@ -473,15 +481,17 @@ trainer = Trainer(model=model, args=training_args, train_dataset=inputs)
 trainer.train()
 ```
 
-## Addressing Hallucination
+## Hallucination
 
-There is no general solution to preventing model hallucination. One way to think of it: like regression, when extrapolating beyond the training data you run the risk of assumptions that no longer hold.
+There is no general solution to preventing model hallucination — think of it like regression extrapolating beyond training data. When the model encounters inputs outside its training distribution, it doesn't say "I don't know." It confidently generates plausible-sounding text that may be completely wrong.
 
-Approaches include:
-- **Training Data Curation:** High-quality, accurate training data reduces hallucination likelihood
-- **Prompt and Output Design:** Careful prompts and output constraints mitigate hallucination in generative tasks
-- **Human-in-the-loop:** Incorporate human feedback to identify and correct hallucinations
-- **Retrieval-Augmented Generation (RAG):** Ground model responses in retrieved documents — we'll build this in Lecture 8
+Mitigations exist but none are foolproof:
+
+- **RAG (Retrieval-Augmented Generation)**: Ground the model's responses in actual documents (covered in Lecture 8)
+- **Prompt and output design**: Constrain what the model can say — structured outputs, schema enforcement, explicit instructions to cite sources
+- **Human-in-the-loop**: Expert review of outputs, especially for high-stakes decisions
+
+We'll cover failure modes and defenses in depth in Lecture 8.
 
 > [!WARNING]  
 > If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
@@ -491,7 +501,7 @@ Approaches include:
 
 # Prompt Engineering
 
-Prompt engineering is the practice of crafting input prompts that guide the model to generate desired outputs. This exploits the model's ability to understand context and generate relevant responses — "programming" the model for new tasks without retraining.
+Prompt engineering crafts input prompts that guide models to produce desired outputs — effectively "programming" the model without retraining.
 
 A useful template for structuring prompts:
 
@@ -506,8 +516,6 @@ A useful template for structuring prompts:
 Not every prompt needs all five sections, but thinking in these terms helps craft more effective prompts.
 
 ## Zero-Shot, One-Shot, and Few-Shot Learning
-
-One of the most remarkable capabilities of modern LLMs is their ability to perform tasks with minimal examples.
 
 ### Reference Card: Prompting Techniques
 
@@ -586,20 +594,18 @@ troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterizatio
 
 # LIVE DEMO!!
 
-Embedding similarity search and prompt engineering techniques — finding semantically similar clinical documents and structuring LLM outputs.
-
-See: [demo/03-api_prompt_engineering.md](demo/03-api_prompt_engineering.md)
-
 # LLM API Integration
 
 ![xkcd: Standards](media/xkcd_standards.png)
 
-Building applications with language models requires understanding how to interact with their APIs effectively. Students need API access working before Lecture 8's applied work.
+#FIXME: set up shared API key for students to use in demos and assignment
 
 ## API Access Patterns
 
-- **REST APIs**: HTTP endpoints that accept JSON payloads containing the prompt and parameters, returning generated text
-- **SDK/Libraries**: Client libraries like OpenAI Python, Anthropic SDK, and Hugging Face provide convenient wrappers
+#FIXME: REST API request response flow diagram HTTP POST JSON prompt LLM provider API key authentication sequence diagram
+
+- **REST APIs**: HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text
+- **SDKs (Software Development Kits)**: Client libraries like OpenAI Python and Anthropic SDK provide convenient wrappers; OpenAI-compatible providers (OpenRouter, Together, etc.) reuse the same SDK with a different `base_url`
 - **Authentication**: API keys stored securely as environment variables or in a secrets manager
 
 ### Reference Card: LLM API Providers
@@ -609,7 +615,7 @@ Building applications with language models requires understanding how to interac
 | **OpenAI** | GPT-4o, o1, o3 | Best general-purpose, function calling, structured outputs |
 | **Anthropic** | Claude 4, Claude 4.5 | Long context, safety focus, tool use |
 | **Google** | Gemini | Multimodal, large context |
-| **Hugging Face** | Various open models | Free tier, open source options |
+| **OpenRouter** | All of the above + open models | OpenAI-compatible SDK, cheap, wide model selection |
 
 ### Code Snippet: OpenAI API
 
@@ -623,6 +629,31 @@ response = client.chat.completions.create(
     messages=[
         {"role": "system", "content": "You are a helpful medical assistant."},
         {"role": "user", "content": "What are the symptoms of diabetes?"}
+    ],
+    max_tokens=150
+)
+
+print(response.choices[0].message.content)
+```
+
+### Code Snippet: OpenRouter (OpenAI-Compatible)
+
+OpenRouter aggregates models from every major provider behind a single OpenAI-compatible API. You use the same `openai` SDK — just change the `base_url`.
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
+
+response = client.chat.completions.create(
+    model="anthropic/claude-sonnet-4",  # or "openai/gpt-4o-mini", etc.
+    messages=[
+        {"role": "system", "content": "You are a helpful medical assistant."},
+        {"role": "user", "content": "Summarize: Patient presents with chest pain and elevated troponin."}
     ],
     max_tokens=150
 )
@@ -683,8 +714,6 @@ When building applications that interact with LLMs, separate code into distinct 
 1. **LLM Client Library**: Handles API communication, error handling, conversation formatting
 2. **Command Line Interface**: Provides a user interface leveraging the client library
 
-This separation of concerns makes the code more maintainable, testable, and reusable.
-
 ### Code Snippet: LLM Client Class
 
 ```python
@@ -730,8 +759,4 @@ class LLMClient:
 - **Cost management**: Monitor token usage and implement budgets
 
 # LIVE DEMO!!!
-
-Zero-, one-, and few-shot prompting via API — clinical text classification, diagnosis extraction, and structured output generation.
-
-See: [demo/03-api_prompt_engineering.md](demo/03-api_prompt_engineering.md)
 

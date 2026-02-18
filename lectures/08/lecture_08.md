@@ -51,6 +51,7 @@ LLM Applications & Workflows
 
 ## Cookbooks & Guides
 
+- [Fighting With AI](https://www.fightingwithai.com/) — practical guide to failure modes, prompt engineering, and guardrails for AI coding tools
 - [Anthropic Cookbook](https://github.com/anthropics/anthropic-cookbook)
 - [OpenAI Cookbook](https://cookbook.openai.com/)
 - [OpenAI Evals](https://github.com/openai/evals) — evaluation framework
@@ -618,7 +619,7 @@ def validated_llm_call(prompt: str, required_fields: list[str]) -> dict:
 
 # Common Failure Modes
 
-Understanding how LLMs fail helps you design better systems and set appropriate expectations.
+Understanding how LLMs fail helps you design better systems and set appropriate expectations. [Fighting With AI](https://www.fightingwithai.com/) is a practical guide that covers these patterns in depth — context collapse, false confidence, spiraling, and more — with actionable mitigation strategies.
 
 ## Hallucinations
 

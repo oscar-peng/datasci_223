@@ -266,7 +266,8 @@ training_args = TrainingArguments(
     logging_steps=10,
     save_strategy="no",
     report_to="none",
-    use_cpu=(device.type == "cpu"),  # let Trainer use detected device
+    use_cpu=(device.type == "cpu"),
+    dataloader_pin_memory=False,
 )
 
 trainer = Trainer(

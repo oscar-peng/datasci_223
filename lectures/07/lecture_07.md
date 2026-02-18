@@ -51,15 +51,13 @@ Transformers: More than Meets the Eye
 - [Google Vertex AI](https://cloud.google.com/vertex-ai)
 - [OpenAI Platform](https://platform.openai.com/)
 
-# From Neural Networks to Transformers
-
 ![](media/xkcd_transformers.png)
+
+# From Neural Networks to Transformers
 
 ![](media/nlp_timeline_new.png)
 
 ![](media/svgchart.svg)
-
-![](media/seq2seq.webp)
 
 ## The Scale-Up Era (2018–)
 
@@ -77,6 +75,8 @@ Transformers: More than Meets the Eye
 
 ![](media/llm-model-size.jpg)
 
+![](media/xkcd_ai_hiring.png)
+
 # Transformer Architecture
 
 ## The Problem: Processing Everything at Once
@@ -90,9 +90,15 @@ The original transformer uses an **encoder-decoder** structure:
 - Both are stacks of 6 identical layers (same structure, different learned weights)
 - Pipeline: **Tokenize → Embed → Add positional encodings → Stack attention layers → Generate output**
 
+Modern LLMs have largely converged on a **decoder-only** design. It turns out you don't need a separate "understanding" step. Instead of encode-then-decode, concatenate everything: context, question, partial answer. Then train a single decoder stack to predict the next token.
+
 ## Self-Attention: Letting Tokens Talk
 
-_"The animal didn't cross the street because **it** was too tired."_ — what does "it" refer to? Self-attention lets every token compute how much it should attend to every other token, resolving this in a single step.
+- _"The animal didn't cross the street because **it** was too tired."_ — what does "it" refer to?
+- _"The doctor told the nurse that **she** would handle the next patient after **she** finished the paperwork."_ Which "she" is which?
+- _"The trophy didn't fit in the suitcase because **it** was too big."_ — is "it" the trophy or the suitcase?
+
+These ambiguities are trivial(ish) for humans but require the model to weigh every token's relationship to every other token simultaneously. Self-attention does exactly that — each token computes how much it should attend to every other token, resolving these references in a single step.
 
 ### How It Works: Query, Key, Value
 
@@ -116,6 +122,8 @@ Repeat for every token. That's self-attention.
 
 ### Code Snippet: Simplified Attention
 
+The function below implements the core attention calculation in pure numpy. It takes query, key, and value matrices, computes scaled dot-product scores between all pairs of tokens, normalizes them with softmax to get attention weights, then uses those weights to blend the value vectors into context-aware representations.
+
 ```python
 import numpy as np
 
@@ -136,15 +144,20 @@ Language has many simultaneous relationships — syntax, semantics, entity refer
 
 ![](media/attention.png)
 
-_The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token "lazy" selected._
-
 ![](media/simple-pretty-gif.gif)
 
 ## Putting It Together
 
 ![](media/full_transformer_architecture.svg)
 
-**How training works**: The encoder reads the source sequence; the decoder generates the target one token at a time. **Cross-attention** bridges the two: the decoder's queries attend to the encoder's keys and values. Cross-entropy loss measures prediction error, gradients flow back, and the Adam optimizer updates weights. Repeat over billions of examples.
+**How training works**:
+
+1. The encoder reads the source sequence; the decoder generates the target one token at a time.
+2. **Cross-attention** bridges the two — in the architecture diagram, it's the middle attention block in each decoder layer where the decoder's queries attend to the encoder's keys and values.
+
+This is how the decoder "reads" the input: it asks "given what I've generated so far, what parts of the input should I focus on next?" Cross-entropy loss measures prediction error, gradients flow back, and the Adam optimizer updates weights.
+
+Repeat over billions of examples...
 
 ### Reference Card: Transformer Components
 
@@ -165,6 +178,11 @@ _The left and center figures represent different layers / attention heads. The r
 - **Time-series**: EHR data, sensor readings, financial sequences
 - **Protein structure**: AlphaFold uses attention over amino acid sequences
 - **Multimodal models**: GPT-4o, Gemini, Claude process text, images, and audio together
+- **Clinical EHR modeling**: sequences of diagnosis codes, medications, and lab values over time — each event is a "token" and attention learns which prior events matter for predicting outcomes
+- **Code and version history**: git diffs, code completion (Copilot, Cursor), and automated code review all use transformer architectures
+- **Music and audio**: Whisper (speech-to-text), Jukebox (music generation) treat audio spectrograms as sequences
+
+![](media/xkcd_watson_medical.png)
 
 # Building a GPT from Scratch
 
@@ -184,8 +202,6 @@ A working GPT in ~200 lines of Python — Karpathy's [microGPT](https://karpathy
 | **Training** | Cross-entropy loss (how wrong?) → backprop → Adam optimizer updates weights |
 | **Inference** | Sample from probability distribution; temperature controls randomness |
 
-**Tokenization**: microGPT uses characters. Production models use **BPE (Byte Pair Encoding)** — subword tokens averaging ~4 characters each. Modern context windows: 64K–200K+ tokens.
-
 Scaling to GPT-4 changes the tokenizer, the data (terabytes), and the compute (thousands of GPUs) — but the core algorithm is the same.
 
 # LIVE DEMO!
@@ -194,17 +210,13 @@ Scaling to GPT-4 changes the tokenizer, the data (terabytes), and the compute (t
 
 # Embeddings
 
-Embeddings map discrete tokens to continuous vectors where **meaning is geometry**. Similar items cluster together; relationships become directions.
+Embeddings map discrete tokens to continuous vectors where **meaning is geometry**. Similar items cluster together; relationships become directions. Every layer of a transformer produces embeddings — they're the model's internal representation of meaning. LLMs like GPT-4 produce rich, high-dimensional embeddings internally, but for practical tasks like search and comparison we typically use smaller, purpose-built models (like Sentence Transformers) because their embeddings are compact enough to store and compare at scale. These representations emerge through training in a self-organizing, unsupervised manner — no one labels which words should be near each other; the geometry arises from patterns in the data.
 
 ![](media/word2vec.png)
-
-_Word2Vec's two training approaches: CBOW predicts a target word from context; Skip-gram predicts context from a target word_
 
 The idea generalizes beyond text — recommendation systems, drug interactions, diagnostic codes, and categorical variables can all be embedded.
 
 ![](media/word_embedding_distributed.webp)
-
-_"king" − "man" + "woman" ≈ "queen" — geometry captures analogies_
 
 Key applications: semantic search, document clustering, similarity matching, anomaly detection, classification features.
 
@@ -230,6 +242,23 @@ Key applications: semantic search, document clustering, similarity matching, ano
 | **Key Method**     | `model.encode(sentences)` — returns numpy array of embeddings |
 | **Popular Models** | `all-MiniLM-L6-v2` (fast), `all-mpnet-base-v2` (accurate)     |
 | **Output**         | Fixed-size vectors (e.g., 384 or 768 dimensions)              |
+
+### Code Snippet: SentenceTransformer
+
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+sentences = [
+    "Patient presents with chest pain",
+    "Acute myocardial infarction suspected",
+    "Scheduled for routine dental cleaning",
+]
+
+embeddings = model.encode(sentences)
+print(embeddings.shape)  # (3, 384) — three sentences, 384 dimensions each
+```
 
 ## Cosine Similarity
 
@@ -304,9 +333,9 @@ print(results["documents"])  # [['Elevated troponin, chest pain']]
 
 ![](media/xkcd_similarities.png)
 
-# General Models → Specific Details
+# General Models → Getting the Details Right
 
-LLMs are **general-purpose** — the same model translates, summarizes, classifies, writes code, and reasons. No custom pipeline needed per task.
+LLMs are **general-purpose** — the same model translates, summarizes, classifies, writes code, and reasons. No custom pipeline needed per task. Open-source and open-weight models (Llama, Mistral, DeepSeek) now match or exceed what was state-of-the-art just a year ago — models that would cost millions to train from scratch are freely available as starting points. The practical question isn't "how do I build a model?" but "how do I get an existing model to do what I need?"
 
 ![](media/llm-params.jpg)
 
@@ -321,15 +350,14 @@ Two approaches to go from a general model to your specific task:
 
 Continue training a pre-trained model on your domain data. Save it for specialized vocabulary or patterns (e.g., pathology report terminology) where you have hundreds+ labeled examples.
 
-### Reference Card: Fine-Tuning with Hugging Face
+### Reference Card: `Trainer`
 
-| Component       | Details                                          |
-| :-------------- | :----------------------------------------------- |
-| **Purpose**     | Adapt pre-trained model to specific task/domain  |
-| **Data Needed** | 100s–1000s labeled examples typically            |
-| **Key Classes** | `Trainer`, `TrainingArguments`, `AutoModel`      |
-| **When to Use** | Specialized vocabulary, domain-specific patterns |
-| **Alternative** | Prompt engineering (faster, no training)         |
+| Component | Details |
+| :--- | :--- |
+| **Signature** | `Trainer(model, args, train_dataset, eval_dataset=None, data_collator=None)` |
+| **Purpose** | High-level training loop that handles batching, optimization, logging, and checkpointing for fine-tuning pre-trained models. |
+| **Parameters** | • **model**: A pre-trained `AutoModel` instance (e.g., `GPT2LMHeadModel`).<br>• **args** (`TrainingArguments`): Configures output dir, epochs, batch size, learning rate, etc.<br>• **train_dataset** (`Dataset`): Tokenized training data in Hugging Face `Dataset` format.<br>• **eval_dataset** (`Dataset`, optional): Evaluation data for metrics during training. |
+| **Returns** | `TrainOutput` with training loss and metrics. Call `trainer.train()` to start. |
 
 ### Code Snippet: Fine-Tuning a GPT
 
@@ -357,7 +385,7 @@ trainer = Trainer(model=model, args=training_args, train_dataset=dataset)
 trainer.train()
 ```
 
-### Making Fine-Tuning Practical
+## Making Fine-Tuning Practical
 
 Full fine-tuning updates every weight in the model — expensive and often unnecessary. Several strategies reduce cost and tailor the model to your domain:
 
@@ -367,8 +395,6 @@ Full fine-tuning updates every weight in the model — expensive and often unnec
 - **Pruning**: Remove redundant weights or attention heads after training to shrink the model for deployment. Useful when you need inference speed on limited hardware without sacrificing much accuracy.
 
 In practice, most teams start with prompting, move to head replacement or LoRA if needed, and rarely do full fine-tuning unless they have substantial compute and data.
-
-![](media/xkcd_ai_hiring.png)
 
 ## Hallucination
 
@@ -382,21 +408,30 @@ Mitigations (none foolproof):
 
 ![](media/xkcd_broken_model.png)
 
-![](media/xkcd_watson_medical.png)
-
 # LIVE DEMO!!
 
 # Prompt Engineering
 
-"Programming" the model without retraining.
+"Programming" the model without retraining. Every prompt has the same building blocks:
 
-```text
-[ROLE]        Who the model should act as
-[TASK]        What needs to be done
-[FORMAT]      How to structure the output
-[CONSTRAINTS] Boundaries and requirements
-[EXAMPLES]    Concrete input/output pairs
-```
+> **[ROLE]** Who the model should act as
+> **[TASK]** What needs to be done
+> **[FORMAT]** How to structure the output
+> **[CONSTRAINTS]** Boundaries and requirements
+> **[EXAMPLES]** Concrete input/output pairs
+
+### Reference Card: Prompting Techniques
+
+| Technique              | Description                                                   | When to Use                                        |
+| :--------------------- | :------------------------------------------------------------ | :------------------------------------------------- |
+| **Zero-shot**          | Task description only, no examples                            | Simple, well-defined tasks                         |
+| **One-shot**           | Single example provided                                       | When pattern is clear from one case                |
+| **Few-shot**           | 2–5 examples provided                                         | Complex patterns, structured output                |
+| **Chain-of-thought**   | Ask model to show reasoning step-by-step before answering     | Multi-step reasoning tasks (expanded in Lecture 8) |
+| **Explicit structure** | Use XML tags or numbered steps to separate prompt components  | Complex prompts with multiple data sources         |
+| **Grounding**          | Ask the model to extract relevant quotes before answering     | Clinical decision support, traceability required   |
+| **Self-verification**  | Ask the model to check its own output before finishing        | Structured extraction, high-stakes tasks           |
+| **Document ordering**  | Place documents at top, questions at bottom                   | Multi-document analysis (20K+ tokens)              |
 
 ## Zero-Shot, One-Shot, and Few-Shot Learning
 
@@ -406,57 +441,77 @@ Mitigations (none foolproof):
 
 The more structured the task, the more examples help.
 
-### Reference Card: Prompting Techniques
+### Example: Few-Shot Prompting
 
-| Technique            | Description                                               | When to Use                                        |
-| :------------------- | :-------------------------------------------------------- | :------------------------------------------------- |
-| **Zero-shot**        | Task description only, no examples                        | Simple, well-defined tasks                         |
-| **One-shot**         | Single example provided                                   | When pattern is clear from one case                |
-| **Few-shot**         | 2–5 examples provided                                     | Complex patterns, structured output                |
-| **Chain-of-thought** | Ask model to show reasoning step-by-step before answering | Multi-step reasoning tasks (expanded in Lecture 8) |
-
-### Code Snippet: Few-Shot Prompting
-
-```python
-prompt = """Extract diagnoses from clinical notes.
-
-Example 1:
-Note: "Patient presents with elevated blood glucose and polyuria."
-Diagnosis: Type 2 Diabetes Mellitus
-
-Example 2:
-Note: "Chest pain radiating to left arm, elevated troponin."
-Diagnosis: Acute Myocardial Infarction
-
-Now extract the diagnosis:
-Note: "Patient has persistent cough, fever, and infiltrates on chest X-ray."
-Diagnosis:"""
-```
+> Extract diagnoses from clinical notes.
+>
+> Example 1:
+> Note: "Patient presents with elevated blood glucose and polyuria."
+> Diagnosis: Type 2 Diabetes Mellitus
+>
+> Example 2:
+> Note: "Chest pain radiating to left arm, elevated troponin."
+> Diagnosis: Acute Myocardial Infarction
+>
+> Now extract the diagnosis:
+> Note: "Patient has persistent cough, fever, and infiltrates on chest X-ray."
+> Diagnosis:
 
 ## System Prompts
 
-Sets the model's persona, constraints, and default behavior for the entire conversation.
+Sets the model's persona, constraints, and default behavior for the entire conversation. System prompts are sent as a separate message role that persists across the conversation.
 
-```python
-messages = [
-    {"role": "system", "content": """You are a clinical documentation assistant.
-Rules:
-- Use ICD-10 codes when identifying diagnoses
-- Flag any findings that need follow-up
-- Never provide treatment recommendations"""},
-    {"role": "user", "content": "Summarize this note: ..."}
-]
-```
+### Example: System Prompt
+
+> You are a clinical documentation assistant.
+>
+> Rules:
+>
+> - Use ICD-10 codes when identifying diagnoses
+> - Flag any findings that need follow-up
+> - Never provide treatment recommendations
+
+## Explicit Structure and Grounding
+
+For complex prompts with multiple inputs, use XML tags or clear section markers to separate components. This reduces errors when the model needs to handle instructions, data, and formatting rules simultaneously.
+
+Ask the model to extract and cite relevant quotes from the source material before generating its answer — this "grounds" the response in evidence and reduces hallucination.
+
+### Example: Structured Prompt with Grounding
+
+> \<instructions\>
+> Review the clinical note below. First, extract key quotes that support your assessment. Then provide a structured diagnosis.
+> \</instructions\>
+>
+> \<clinical_note\>
+> 65-year-old male with chest pain, ST elevation in leads V1-V4, troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterization.
+> \</clinical_note\>
+>
+> \<output_format\>
+>
+> 1. Supporting quotes from the note
+> 2. Primary diagnosis with ICD-10 code
+> 3. Confidence level (high/medium/low)
+>
+> \</output_format\>
+
+## Self-Verification and Chain-of-Thought
+
+Ask the model to reason step-by-step before answering (**chain-of-thought**), or to check its own output before finishing (**self-verification**). Both improve accuracy on multi-step reasoning tasks.
+
+### Example: Chain-of-Thought with Self-Verification
+
+> Review this patient's medication list for interactions. Think through each pair step by step. After completing your analysis, verify that you checked every combination and didn't miss any.
+>
+> Medications: metformin, lisinopril, warfarin, aspirin, omeprazole
 
 ## Prompt Chaining
 
 Break complex tasks into sequential steps where each prompt's output feeds into the next.
 
-```text
-Step 1: Extract medications from clinical note → list
-Step 2: For each medication, check for interactions → table
-Step 3: Summarize findings for clinician → report
-```
+> Step 1: Extract medications from clinical note → list
+> Step 2: For each medication, check for interactions → table
+> Step 3: Summarize findings for clinician → report
 
 This is the foundation of agentic workflows (Lecture 8).
 
@@ -475,21 +530,20 @@ Machine-readable output (JSON, XML, table) instead of free text. Specify the sch
 | **Validation**        | Parse and validate output programmatically |
 | **Fallback**          | Handle parsing errors gracefully           |
 
-### Code Snippet: Schema-Based Prompting
+### Example: Schema-Based Prompt
 
-```python
-prompt = """Extract the following information from the clinical note and return it as JSON:
-{
-  "diagnosis": "<primary diagnosis>",
-  "confidence": <0.0-1.0>,
-  "icd_code": "<ICD-10 code if known>",
-  "reasoning": "<brief explanation>"
-}
-
-Clinical Note: "65-year-old male with chest pain, ST elevation in leads V1-V4,
-troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterization."
-"""
-```
+> Extract the following information from the clinical note and return it as JSON:
+>
+> ```json
+> {
+>   "diagnosis": "<primary diagnosis>",
+>   "confidence": "<0.0-1.0>",
+>   "icd_code": "<ICD-10 code if known>",
+>   "reasoning": "<brief explanation>"
+> }
+> ```
+>
+> Clinical Note: "65-year-old male with chest pain, ST elevation in leads V1-V4, troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterization."
 
 # LLM API Integration
 
@@ -512,7 +566,7 @@ response = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
         {"role": "system", "content": "You are a helpful medical assistant."},
-        {"role": "user", "content": "What are the symptoms of diabetes?"}
+        {"role": "user", "content": "Summarize: Patient presents with chest pain and elevated troponin."}
     ],
     max_tokens=150
 )

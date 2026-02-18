@@ -35,6 +35,15 @@
 - `cosine_similarity(query_embedding, embeddings)` returns a 2D array — take `[0]` for the 1D scores
 - Use `sorted()` or `np.argsort()` to rank by score
 
+## Part 3: Tiny LLM (optional)
+
+Part 3 provides full working code — just read through it, run each cell, and experiment. The code is heavily commented to explain what each piece does.
+
+- Both datasets (`dnd_spells.lst` and `icecream_flavors.lst`) work the same way — just change the filename
+- If loss stays above ~3.0 after 1000 steps, make sure you ran the model definition cell first
+- The ice cream dataset is smaller (232 items vs 520), so it may train faster but produce less variety
+- `batch_first=True` in `TransformerDecoderLayer` means input shape is `(batch, sequence, embedding)` — this is already set in the provided code
+
 ## Common Issues
 
 - **`ModuleNotFoundError: sentence_transformers`**: Run `pip install sentence-transformers`

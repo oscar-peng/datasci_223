@@ -19,6 +19,7 @@ jupyter:
 ```python
 %pip install -q -r requirements.txt
 
+# Clear state after installing packages. If you re-run cells out of order later, re-run this cell first.
 %reset -f
 ```
 
@@ -318,3 +319,155 @@ print(f"Saved {len(search_results)} search results to output/search_results.json
 ```python
 print("Run 'python -m pytest .github/tests/ -v' in your terminal to check your work.")
 ```
+
+---
+
+## Part 3: Build a Tiny LLM *(optional, not graded)*
+
+Train a character-level transformer to generate new text from a dataset of short strings. This mirrors the microGPT demo from lecture — same architecture, different data, using PyTorch's built-in modules instead of writing everything from scratch.
+
+**Choose your dataset** (or use both!):
+
+| Dataset | File | Items | Description |
+|:---|:---|:---|:---|
+| D&D Spells | `dnd_spells.lst` | 520 | Official spell names from Dungeons & Dragons |
+| Ice Cream | `icecream_flavors.lst` | 450 | Ice cream flavor names from a [CMU student survey](https://www.cs.cmu.edu/~15110-f23/slides/all-icecream.csv) |
+
+The code below uses D&D spells — swap the filename and variable names if you prefer ice cream.
+
+```python
+import torch
+import torch.nn as nn
+from torch.nn import functional as F
+```
+
+### Load and prepare data
+
+```python
+# Choose your dataset: "dnd_spells.lst" or "icecream_flavors.lst"
+datafile = "dnd_spells.lst"
+
+with open(datafile) as f:
+    lines = f.read().strip().split("\n")
+items = [line.strip() for line in lines[1:] if line.strip()]
+
+text = "\n".join(items)
+chars = sorted(set(text))
+vocab_size = len(chars)
+
+stoi = {ch: i for i, ch in enumerate(chars)}
+itos = {i: ch for ch, i in stoi.items()}
+encode = lambda s: [stoi[c] for c in s]
+decode = lambda l: "".join([itos[i] for i in l])
+
+data = torch.tensor(encode(text), dtype=torch.long)
+print(f"{len(items)} items from {datafile}")
+print(f"{len(chars)} unique characters, {len(data)} total tokens")
+print(f"Vocabulary: {''.join(chars)}")
+```
+
+### Define the model
+
+```python
+block_size = 32
+n_embd = 64
+n_head = 4
+n_layer = 2
+dropout = 0.1
+
+
+class CharGPT(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.tok_emb = nn.Embedding(vocab_size, n_embd)
+        self.pos_emb = nn.Embedding(block_size, n_embd)
+        self.drop = nn.Dropout(dropout)
+
+        decoder_layer = nn.TransformerDecoderLayer(
+            d_model=n_embd,
+            nhead=n_head,
+            dim_feedforward=4 * n_embd,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.transformer = nn.TransformerDecoder(decoder_layer, num_layers=n_layer)
+        self.ln = nn.LayerNorm(n_embd)
+        self.head = nn.Linear(n_embd, vocab_size)
+
+    def forward(self, idx, targets=None):
+        B, T = idx.shape
+        tok = self.tok_emb(idx)
+        pos = self.pos_emb(torch.arange(T, device=idx.device))
+        x = self.drop(tok + pos)
+
+        mask = nn.Transformer.generate_square_subsequent_mask(T, device=idx.device)
+        x = self.transformer(x, x, tgt_mask=mask, memory_mask=mask)
+        x = self.ln(x)
+        logits = self.head(x)
+
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, vocab_size), targets.view(-1))
+        return logits, loss
+
+
+device = get_device()
+char_model = CharGPT().to(device)
+print(f"CharGPT: {sum(p.numel() for p in char_model.parameters()):,} parameters on {device}")
+```
+
+### Train
+
+```python
+optimizer = torch.optim.AdamW(char_model.parameters(), lr=3e-4)
+batch_size = 32
+steps = 2000
+
+for step in range(steps):
+    ix = torch.randint(len(data) - block_size - 1, (batch_size,))
+    x = torch.stack([data[i : i + block_size] for i in ix]).to(device)
+    y = torch.stack([data[i + 1 : i + block_size + 1] for i in ix]).to(device)
+
+    logits, loss = char_model(x, y)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if step % 500 == 0 or step == steps - 1:
+        print(f"step {step:4d} | loss {loss.item():.4f}")
+```
+
+### Generate
+
+```python
+@torch.no_grad()
+def generate(model, max_new_tokens=500, temperature=0.8):
+    model.eval()
+    idx = torch.tensor([[stoi["\n"]]], device=device)
+    for _ in range(max_new_tokens):
+        context = idx[:, -block_size:]
+        logits, _ = model(context)
+        logits = logits[:, -1, :] / temperature
+        probs = F.softmax(logits, dim=-1)
+        next_id = torch.multinomial(probs, num_samples=1)
+        idx = torch.cat([idx, next_id], dim=1)
+    model.train()
+    return decode(idx[0].tolist())
+
+
+for temp in [0.5, 0.8, 1.2]:
+    print(f"\n--- Temperature {temp} ---")
+    output = generate(char_model, temperature=temp)
+    names = [s.strip() for s in output.split("\n") if s.strip()]
+    for name in names[:10]:
+        print(f"  {name}")
+```
+
+### Experiment (optional)
+
+Try changing things and see what happens:
+
+- Switch datasets — do ice cream flavors vs spell names produce different quality output?
+- Increase `n_layer` to 4 or `n_embd` to 128 — does the model improve? How much slower is training?
+- Train for 5000 steps instead of 2000
+- What happens at very low temperature (0.2) vs very high (2.0)?

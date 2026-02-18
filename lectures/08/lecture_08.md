@@ -713,6 +713,35 @@ messages = safe_prompt(
 
 **Mitigations**: `temperature=0` for extraction tasks, seeded random states, validation and retry logic
 
+## Math Errors
+
+**What**: Arithmetic and unit-conversion calculations produce wrong answers silently
+
+**Why**: LLMs approximate numbers through pattern matching — they don't execute arithmetic. Multi-step calculations with unit conversions (e.g., mcg/kg/min → mL/hr) fail more often than simple ones.
+
+**Mitigations**: Never rely on LLM arithmetic for critical values. Two approaches:
+
+- **Tool use**: Give the model a calculator or Python tool — it can call it instead of computing in-context. But this isn't guaranteed: the model may still attempt arithmetic itself and skip the tool, especially for "simple-looking" calculations.
+- **Deterministic pipeline**: Use LLM only to extract values from text; Python does the math. Guaranteed correct regardless of model behavior.
+
+### Code Snippet: LLM Extracts, Python Computes
+
+```python
+import json
+
+# LLM extracts the values; Python does the math
+raw = llm_call(
+    'Extract values as JSON: {"weight_kg": <n>, "dose_mcg_kg_min": <n>, "drug_mg": <n>, "volume_ml": <n>}\n\n'
+    "Patient: 85 kg. Dopamine 5 mcg/kg/min. Bag: 400 mg in 250 mL D5W."
+)
+data = json.loads(raw)
+
+# Python computes the infusion rate — guaranteed correct
+rate_ml_hr = (data["dose_mcg_kg_min"] * data["weight_kg"] / 1000) \
+             / (data["drug_mg"] / data["volume_ml"]) * 60
+print(f"Infusion rate: {rate_ml_hr:.2f} mL/hr")
+```
+
 ## Context Overflow
 
 **What**: Important information at edges of context gets lost or ignored
@@ -736,6 +765,7 @@ messages = safe_prompt(
 | **Hallucinations** | Fabricated citations, confident incorrect answers | RAG, fact-checking, citations, temperature=0, training data curation |
 | **Prompt injection** | User input overrides system instructions | Input sanitization, delimiters, XML tags |
 | **Inconsistency** | Same input → different outputs | temperature=0, seeded states, validation |
+| **Math errors** | Arithmetic fails silently, especially multi-step unit conversions | Tool use (not guaranteed); or LLM extracts values, Python computes |
 | **Context overflow** | Important information at edges gets lost | Strategic positioning, chunking, hierarchical summarization |
 | **Task/expertise mismatch** | User can't identify LLM errors | Expert review, reference materials, limit autonomy |
 

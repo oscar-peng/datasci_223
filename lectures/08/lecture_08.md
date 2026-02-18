@@ -72,7 +72,7 @@ LLM Applications & Workflows
 
 ![xkcd: Skynet](media/xkcd_skynet.png)
 
-Last week you learned to talk to an LLM — send a prompt, get a response. Now: what can you *build* with it?
+You can send a prompt and get a response. Now: what can you *build* with it?
 
 Agentic LLMs go beyond single request-response patterns. They autonomously plan and execute multi-step tasks, using tools, gathering information, and iterating until the job is done.
 
@@ -169,6 +169,52 @@ def agent_loop(task, tools, max_steps=10):
     return "Max steps reached"
 ```
 
+## Function Calling (Tool Use)
+
+Modern LLM APIs support **function calling** (also called **tool use**) — you define functions the model can invoke, and the model decides when and how to call them. This is the mechanism that makes agents work: the model *requests that your code execute a function* and returns the arguments it wants to pass.
+
+- The model chooses which function to call and with what arguments
+- Your code executes the function and returns the result to the model
+- Enables LLMs to interact with external systems — databases, calculators, APIs
+
+### Reference Card: Function Calling
+
+| Component           | Details                               |
+| :------------------ | :------------------------------------ |
+| **Purpose**         | Let the model invoke external tools   |
+| **Definition**      | JSON schema with properties and types |
+| **Required Fields** | Specify mandatory fields in schema    |
+| **Validation**      | Model attempts to conform to schema   |
+
+### Code Snippet: Function Calling
+
+```python
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "extract_diagnosis",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "diagnosis": {"type": "string"},
+                    "confidence": {"type": "number"},
+                    "reasoning": {"type": "string"}
+                },
+                "required": ["diagnosis", "confidence", "reasoning"]
+            }
+        }
+    }
+]
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Extract the diagnosis from this note..."}],
+    tools=tools,
+    tool_choice={"type": "function", "function": {"name": "extract_diagnosis"}}
+)
+```
+
 ## Prompting Techniques for Agents
 
 Standard prompts tell the model *what to answer*. Agent prompts tell the model *how to think and act* — structuring its reasoning, planning tool use, and deciding when to stop.
@@ -195,7 +241,7 @@ Agents inherit all the biases of the underlying model, plus whatever biases the 
 
 # Retrieval-Augmented Generation (RAG)
 
-The core problem with LLMs: they only know what was in their training data, and they'll confidently make things up when they don't know. **RAG** (Retrieval-Augmented Generation) solves this by giving the model relevant documents *at query time* — instead of hoping the model knows something, you look it up first and include it in the prompt. This builds directly on the embeddings and vector databases from Lecture 7.
+The core problem with LLMs: they only know what was in their training data, and they'll confidently make things up when they don't know. **RAG** (Retrieval-Augmented Generation) solves this by giving the model relevant documents *at query time* — instead of hoping the model knows something, you look it up first and include it in the prompt.
 
 ## Why RAG?
 
@@ -206,7 +252,7 @@ The core problem with LLMs: they only know what was in their training data, and 
 
 ## The RAG Pipeline
 
-Building on the embeddings and vector databases from Lecture 7:
+The pipeline:
 
 ![RAG pipeline diagram](media/rag_pipeline.png)
 
@@ -625,7 +671,7 @@ Understanding how LLMs fail helps you design better systems and set appropriate 
 
 **What**: Fabricated citations, confident incorrect answers, plausible-sounding but false information
 
-**Why**: Models generate statistically likely continuations, not verified facts. As we saw in Lecture 7, when an LLM encounters inputs outside its training distribution, it doesn't say "I don't know" — it generates plausible-sounding text that may be completely wrong.
+**Why**: Models generate statistically likely continuations, not verified facts. When an LLM encounters inputs outside its training distribution, it doesn't say "I don't know" — it generates plausible-sounding text that may be completely wrong.
 
 **Mitigations**: RAG (ground in documents), fact-checking pipelines, require citations, use lower temperature for factual tasks, curate high-quality training/fine-tuning data
 

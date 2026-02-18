@@ -12,16 +12,18 @@ from openai import OpenAI
 # Load environment variables
 load_dotenv()
 
-# Configure OpenAI client
-api_key = os.getenv("OPENAI_API_KEY")
+# Configure OpenRouter client (OpenAI-compatible), with OpenAI fallback
+api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
 if not api_key:
-    print(
-        "Error: No OpenAI API key found. Please set the OPENAI_API_KEY environment variable."
-    )
+    print("Error: No API key found. Set OPENROUTER_API_KEY or OPENAI_API_KEY.")
     exit(1)
 
-client = OpenAI(api_key=api_key)
-MODEL_NAME = "gpt-4o-mini"  # Using a smaller, more cost-effective model
+if os.getenv("OPENROUTER_API_KEY"):
+    client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+    MODEL_NAME = "openai/gpt-4o-mini"
+else:
+    client = OpenAI(api_key=api_key)
+    MODEL_NAME = "gpt-4o-mini"
 
 
 def test_json_response(prompt, system_role="You are a helpful assistant."):

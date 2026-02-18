@@ -66,13 +66,13 @@ In Lecture 6 we trained dense networks, CNNs, and LSTMs. LSTMs process sequences
     - **Skip-gram**: input word used to predict context
 - Key idea: words that appear in similar contexts get similar vectors — this notion of "context determines meaning" reappears throughout the transformer story
 
-#FIXME: word2vec skip-gram CBOW architecture diagram predict context window neural network
+![](media/word2vec.png)
 
 ## Sequence-to-Sequence & RNNs (2014)
 
 **Encoder-decoder architecture**: Transform one sequence into another
 
-#FIXME: sequence to sequence encoder decoder architecture diagram RNN input output fixed representation
+![](media/seq2seq.webp)
 
 - Encoder processes input into fixed representation
 - Decoder generates output from that representation
@@ -108,21 +108,32 @@ RNNs introduced "memory" to neural networks — the same innovation as LSTMs in 
 
 Once transformers removed the sequential bottleneck, the race was on: bigger models, more data, faster hardware. Each generation unlocked capabilities that the previous generation couldn't achieve — from basic text completion to multi-turn reasoning and tool use. The progression happened faster than anyone predicted.
 
+A few key moments in this timeline:
+
+- **ELMo (2018)** from Allen AI introduced _contextualized_ word embeddings — the same word gets different vectors depending on surrounding context. This was a major step beyond Word2Vec's static vectors.
+- **BERT (2018)** from Google used _bidirectional_ training (reading left-to-right AND right-to-left simultaneously) to build deep contextual understanding. BERT dominated NLP benchmarks and became the foundation for most task-specific models.
+- **GPT (2018)** from OpenAI took the opposite approach: _unidirectional_ (left-to-right only), trained to predict the next token. This autoregressive design turned out to be the key to generation — and is how all modern LLMs work.
+- **T5 (2019)** from Google reframed every NLP task as text-to-text — translation, summarization, classification, and Q&A all use the same "text in, text out" format. This unified approach simplified multi-task training.
+- **GPT-3 (2020)** demonstrated that scale alone could produce qualitative leaps: with 175B parameters, it could perform tasks from just a few examples in the prompt (few-shot learning), with no fine-tuning needed.
+- **ChatGPT (2022)** combined GPT-3.5 with RLHF (Reinforcement Learning from Human Feedback) — training the model to align with human preferences through a reward signal. This made LLMs conversational and useful to non-technical users, reaching 100M users within two months.
+- **Open-weight models** like Meta's Llama series (2023–) made competitive models freely available, enabling local deployment and domain-specific fine-tuning without depending on API providers.
+
 ### Reference Card: NLP Model Evolution
 
-| Year        | Innovation                                                       | Key Insight                                                      |
-| :---------- | :--------------------------------------------------------------- | :--------------------------------------------------------------- |
-| **2013**    | Word2Vec                                                         | Words as vectors; similar meanings cluster together              |
-| **2014**    | Seq2Seq / RNNs                                                   | Encode input → decode output; sequential processing              |
-| **2015**    | Attention ([Bahdanau et al.](https://arxiv.org/abs/1409.0473))   | Decoder can focus on relevant input parts dynamically            |
-| **2017**    | Transformer ([Vaswani et al.](https://arxiv.org/abs/1706.03762)) | Attention _is_ the architecture; parallel processing             |
-| **2018**    | GPT (117M params), BERT                                          | Pre-train on massive text, fine-tune for tasks                   |
-| **2019**    | GPT-2 (1.5B params)                                              | "Too dangerous to release" — coherent multi-paragraph generation |
-| **2020**    | GPT-3 (175B params)                                              | Few-shot learning — examples in the prompt, no retraining        |
-| **2022**    | ChatGPT + RLHF (Reinforcement Learning from Human Feedback)      | Human feedback alignment; 100M users in 2 months                 |
-| **2023**    | GPT-4, Llama 2, Claude 2                                         | Multimodal input (images + text); open-weight models             |
-| **2024**    | Claude 3.5, Gemini, Llama 3                                      | 200K+ token context windows; widespread API access               |
-| **2025–26** | Claude 4, GPT-4o, reasoning models                               | Agentic workflows; tool use; structured outputs                  |
+| Year        | Innovation                                                       | Organization | Key Insight                                                      |
+| :---------- | :--------------------------------------------------------------- | :----------- | :--------------------------------------------------------------- |
+| **1997**    | LSTM                                                             | Hochreiter & Schmidhuber | Gating mechanism for long-range memory in sequences |
+| **2013**    | Word2Vec                                                         | Google       | Words as vectors; similar meanings cluster together              |
+| **2014**    | Seq2Seq / RNNs                                                   | Google       | Encode input → decode output; sequential processing              |
+| **2015**    | Attention ([Bahdanau et al.](https://arxiv.org/abs/1409.0473))   | Bengio Lab   | Decoder can focus on relevant input parts dynamically            |
+| **2017**    | Transformer ([Vaswani et al.](https://arxiv.org/abs/1706.03762)) | Google       | Attention _is_ the architecture; parallel processing             |
+| **2018**    | ELMo, GPT (117M), BERT                                          | Allen AI, OpenAI, Google | Contextualized embeddings; pre-train then fine-tune |
+| **2019**    | GPT-2 (1.5B), T5                                                | OpenAI, Google | Coherent generation; all tasks as text-to-text                 |
+| **2020**    | GPT-3 (175B)                                                     | OpenAI       | Few-shot learning — examples in the prompt, no retraining        |
+| **2022**    | ChatGPT + RLHF                                                   | OpenAI       | Human feedback alignment; 100M users in 2 months                 |
+| **2023**    | GPT-4, Llama 2, Claude 2                                         | OpenAI, Meta, Anthropic | Multimodal input; open-weight models             |
+| **2024**    | Claude 3.5, Gemini, Llama 3                                      | Anthropic, Google, Meta | 200K+ token context windows; widespread API access |
+| **2025–26** | Claude 4, GPT-4o, reasoning models                               | Anthropic, OpenAI, et al. | Agentic workflows; tool use; structured outputs  |
 
 # Transformer Architecture
 
@@ -131,17 +142,23 @@ The foundational paper is [**Attention is All You Need**](https://arxiv.org/abs/
 - [**The Illustrated Transformer**](https://jalammar.github.io/illustrated-transformer/) — Jay Alammar's step-by-step visual walkthrough
 - [**Everything About Transformers**](https://www.krupadave.com/articles/everything-about-transformers) — story-driven visual reference
 
-#FIXME: transformer architecture diagram encoder decoder stack multi-head attention feed forward layer normalization residual connections data flow
-
 ![Basic Transformer Architecture](media/tx_basic.png)
 
 ## The Big Picture
 
-A transformer takes an input sequence and produces an output sequence. The **encoder** turns input into a numerical representation; the **decoder** uses that to generate output one token at a time.
+A transformer takes an input sequence and produces an output sequence. The **encoder** reads the entire input at once and builds a rich numerical representation; the **decoder** uses that representation to generate output one token at a time.
 
 The key difference from RNNs: transformers process the entire sequence at once, in parallel. No waiting for word 1 to finish before starting word 2.
 
 The pipeline: **Tokenize → Embed → Add positional encodings → Stack attention layers → Generate output**
+
+![Encoder-Decoder Stack](media/tx_moderate.png)
+
+The original transformer stacks 6 encoder layers and 6 decoder layers. Each encoder layer has identical structure (self-attention → feed-forward) but learns its own weights. Each decoder layer adds a third sublayer: **cross-attention** that lets the decoder attend to the encoder's output — this is how the decoder knows what the input said.
+
+![Transformer Architecture Detail](media/transformer_architecture_detailed.svg)
+
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — the full architecture with its evolutionary lineage from RNNs and LSTMs_
 
 ## Self-Attention: The Core Innovation
 
@@ -157,9 +174,18 @@ Think of it like a search engine. For each token, the model creates three vector
 - **Key (K)**: What this token _offers_ to others — like the title of a web page
 - **Value (V)**: The actual _content_ to retrieve — like the web page itself
 
-The attention mechanism computes a dot product between each Query and every Key. High dot product = high relevance. These scores are normalized with **softmax** (converting raw scores into probabilities that sum to 1), then used to create a weighted combination of Values.
+The step-by-step process (following [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)):
 
-The scores are divided by $\sqrt{d_k}$ (the square root of the key dimension) to prevent dot products from growing too large in high dimensions, which would push softmax into regions with tiny gradients.
+1. **Create Q, K, V** — multiply each token's embedding by three learned weight matrices to produce Query, Key, and Value vectors
+2. **Score** — compute the dot product of the current token's Query against every token's Key. High dot product = high relevance
+3. **Scale** — divide scores by $\sqrt{d_k}$ (the square root of the key dimension) to prevent dot products from growing too large in high dimensions, which would push softmax into regions with tiny gradients
+4. **Normalize** — apply **softmax** to convert raw scores into probabilities that sum to 1
+5. **Weight** — multiply each Value vector by its softmax score
+6. **Sum** — add up the weighted Values to produce the output for this token — a representation that encodes how every other token relates to it
+
+![Self-attention: creating Q, K, V from embeddings](media/self_attention_qkv.svg)
+
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — each token's embedding is multiplied by learned weight matrices to produce Query, Key, and Value vectors_
 
 ### Reference Card: Scaled Dot-Product Attention
 
@@ -204,9 +230,40 @@ Unlike RNNs, which inherently know word order (they process sequentially), trans
 
 Positional encodings fix this by adding a unique vector to each token's embedding. The original paper uses sine and cosine functions at different frequencies: low-frequency waves capture broad structure (beginning vs. end of sequence), while high-frequency waves capture fine-grained position (adjacent tokens). Together, they create a unique "positional fingerprint" for every position.
 
-#FIXME: transformer positional encoding visualization sine cosine wave pattern heatmap token position frequency
+![Positional encoding with input embeddings](media/positional_encoding_krupadave.svg)
+
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers)_
+
+![Positional encoding heatmap](media/positional_encoding_heatmap.png)
+
+_From [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — each row is a position's encoding vector; the pattern of sine (left half) and cosine (right half) creates a unique fingerprint for every position_
 
 ## Putting It All Together
+
+### Feed-Forward Networks
+
+After attention, each token independently passes through a two-layer feed-forward network: expand to 4x the embedding dimension, apply a non-linear activation (ReLU or GELU), then project back down to the original dimension. This is where the model detects higher-level features — attention figures out _which_ tokens matter, and the feed-forward network figures out _what to do_ with that information.
+
+### Residual Connections and Layer Normalization
+
+Two mechanisms keep deep transformers trainable:
+
+- **Residual connections** (skip connections): the input to each sublayer is added back to its output. This creates a direct path for gradients to flow through the network — without them, a 6+ layer transformer would be effectively untrainable.
+- **Layer normalization**: rescales activations to have mean 0 and variance 1 within each layer, preventing values from exploding or vanishing as they pass through many layers.
+
+Every sublayer follows the same pattern: `LayerNorm(x + Sublayer(x))`.
+
+![Residual connections and layer normalization](media/residual_layer_norm.png)
+
+_From [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — the Add & Norm pattern wrapping each sublayer_
+
+### Masked Attention in the Decoder
+
+Encoders can attend to the full input sequence (bidirectional). Decoders cannot — when generating token 5, the model must not peek at tokens 6, 7, 8... (they don't exist yet during inference). **Masked self-attention** sets future positions to $-\infty$ before softmax, zeroing out their attention weights. This ensures the decoder is autoregressive: each token can only attend to earlier tokens and itself.
+
+![Masked self-attention](media/masked_attention.svg)
+
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — the look-ahead mask prevents the decoder from attending to future positions_
 
 ### Reference Card: Transformer Components
 
@@ -215,11 +272,13 @@ Positional encodings fix this by adding a unique vector to each token's embeddin
 | **Input Embedding**      | Convert tokens to vectors          | Maps discrete tokens to continuous space                                      |
 | **Positional Encoding**  | Add order information              | Since attention is order-agnostic, position must be injected                  |
 | **Multi-Head Attention** | Learn different relationship types | Each head focuses on different aspects (syntax, semantics, entity references) |
-| **Feed-Forward Network** | Add non-linearity                  | Applied to each position independently                                        |
-| **Layer Normalization**  | Stabilize training                 | Normalize activations within a layer                                          |
+| **Cross-Attention**      | Connect encoder to decoder         | Decoder queries attend to encoder keys/values — "what did the input say?"     |
+| **Feed-Forward Network** | Transform representations          | Two-layer network (expand 4x → activate → contract) at each position         |
+| **Layer Normalization**  | Stabilize training                 | Rescale activations to mean=0, variance=1 within each layer                   |
 | **Residual Connections** | Enable gradient flow               | Skip connections around sublayers; preserve information through deep stacks   |
+| **Masking**              | Prevent peeking at future tokens   | Decoder self-attention masks future positions to $-\infty$                    |
 
-Each encoder/decoder layer combines these components: self-attention → residual connection + normalization → feedforward → residual connection + normalization. Stack 6+ of these layers and you 💥 have a transformer.
+Each encoder layer: self-attention → add & normalize → feed-forward → add & normalize. Each decoder layer adds cross-attention between those two steps. Stack 6+ of these layers and you have a transformer.
 
 **Want to explore interactively?** [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) — step through a working transformer model and see what each component does.
 
@@ -239,7 +298,7 @@ The key principle: attention works on any sequence where order and relationships
 
 Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) demonstrates that a working GPT can be built in ~200 lines of Python with zero dependencies.
 
-#FIXME: GPT decoder-only transformer architecture diagram token embedding positional encoding stacked attention blocks output probabilities next token prediction
+![](media/microgpt-arch.png)
 
 The key pieces:
 
@@ -288,9 +347,12 @@ class AttentionBlock:
 
 **Resources:**
 
+- [microGPT Explainer blog](https://karpathy.github.io/2026/02/12/microgpt/)
+- [microGPT in a single web page](https://karpathy.ai/microgpt.html)
 - [microGPT visualizer](https://microgpt.boratto.ca) — interactive visualization of GPT internals
-- [Let's Build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY) — Karpathy's video walkthrough
-- [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
+- Older Karpathy
+    - [Let's Build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY) — Karpathy's video walkthrough
+    - [nanoGPT repo](https://github.com/karpathy/nanoGPT) — minimal GPT training code
 
 # LIVE DEMO!
 
@@ -437,7 +499,7 @@ What makes them "general purpose"? Pre-training on enormous text corpora gives t
 
 The practical consequence: you no longer need to build a custom NLP pipeline for every new task. A well-crafted prompt to a general-purpose model often matches or exceeds the performance of a task-specific model that took weeks to train — especially when you don't have large labeled datasets (which is common in healthcare).
 
-#FIXME: LLM model size comparison bar chart parameter count GPT-1 117M GPT-2 1.5B GPT-3 175B GPT-4 scaling over time
+![](media/llm-params.jpg)
 
 ## Fine-Tuning vs Prompt Engineering
 
@@ -500,6 +562,8 @@ We'll cover failure modes and defenses in depth in Lecture 8.
 
 !!! warning
 If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
+
+# LIVE DEMO!!
 
 # Prompt Engineering
 
@@ -598,17 +662,12 @@ troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterizatio
 
 ![xkcd: Predictive Models](media/xkcd_predictive_models.png)
 
-# LIVE DEMO!!
 
 # LLM API Integration
 
-![xkcd: Standards](media/xkcd_standards.png)
-
-#FIXME: set up shared API key for students to use in demos and assignment
-
 ## API Access Patterns
 
-#FIXME: REST API request response flow diagram HTTP POST JSON prompt LLM provider API key authentication sequence diagram
+![](media/openai_params.jpg)
 
 - **REST APIs**: HTTP endpoints that accept JSON payloads containing your prompt and parameters, returning generated text
 - **SDKs (Software Development Kits)**: Client libraries like OpenAI Python and Anthropic SDK provide convenient wrappers; OpenAI-compatible providers (OpenRouter, Together, etc.) reuse the same SDK with a different `base_url`
@@ -666,6 +725,8 @@ response = client.chat.completions.create(
 
 print(response.choices[0].message.content)
 ```
+
+![xkcd: Standards](media/xkcd_standards.png)
 
 ## Function Calling
 

@@ -14,25 +14,30 @@ def get_client():
     """
     Initialize the LLM client based on available API keys.
 
+    Checks for OpenRouter first (preferred), then falls back to OpenAI.
+    Both use the same openai SDK.
+
     Returns
     -------
     tuple
-        (client, provider) where provider is 'openai' or 'huggingface'
+        (client, provider) where provider is 'openrouter' or 'openai'
     """
-    # Check for OpenAI API key
-    if os.environ.get("OPENAI_API_KEY"):
-        from openai import OpenAI
+    from openai import OpenAI
 
+    # Check for OpenRouter API key (preferred)
+    if os.environ.get("OPENROUTER_API_KEY"):
+        client = OpenAI(
+            api_key=os.environ["OPENROUTER_API_KEY"],
+            base_url="https://openrouter.ai/api/v1",
+        )
+        return client, "openrouter"
+
+    # Fallback to OpenAI API key
+    if os.environ.get("OPENAI_API_KEY"):
         return OpenAI(), "openai"
 
-    # Check for Hugging Face API key
-    if os.environ.get("HUGGINGFACE_API_KEY"):
-        import requests
-
-        return None, "huggingface"
-
     raise ValueError(
-        "No API key found. Set OPENAI_API_KEY or HUGGINGFACE_API_KEY"
+        "No API key found. Set OPENROUTER_API_KEY or OPENAI_API_KEY"
     )
 
 
@@ -84,54 +89,38 @@ def call_llm(prompt: str, provider: str, client=None) -> str:
     """
     Call the LLM API with the given prompt.
 
+    Both OpenRouter and OpenAI use the same openai SDK interface.
+
     Parameters
     ----------
     prompt : str
         The prompt to send
     provider : str
-        'openai' or 'huggingface'
+        'openrouter' or 'openai'
     client : optional
-        The OpenAI client if using OpenAI
+        The OpenAI-compatible client
 
     Returns
     -------
     str
         The raw response text
     """
-    if provider == "openai":
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use a cost-effective model
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a medical information extraction assistant.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0,  # Deterministic for extraction
-            max_tokens=500,
-        )
-        return response.choices[0].message.content
+    # Select model name based on provider
+    model = "openai/gpt-4o-mini" if provider == "openrouter" else "gpt-4o-mini"
 
-    elif provider == "huggingface":
-        import requests
-
-        api_key = os.environ.get("HUGGINGFACE_API_KEY")
-        headers = {"Authorization": f"Bearer {api_key}"}
-
-        # Using a capable open model
-        api_url = "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct"
-
-        response = requests.post(
-            api_url, headers=headers, json={"inputs": prompt}, timeout=60
-        )
-
-        if response.status_code == 200:
-            return response.json()[0]["generated_text"]
-        else:
-            raise Exception(f"API error: {response.status_code}")
-
-    raise ValueError(f"Unknown provider: {provider}")
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a medical information extraction assistant.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0,
+        max_tokens=500,
+    )
+    return response.choices[0].message.content
 
 
 def extract_entities(note: str, few_shot: bool = False) -> dict:

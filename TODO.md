@@ -29,10 +29,6 @@ Options: remove the copy from whichever lecture doesn't reference it, or swap on
 - `tissuemnist` - kidney cortex microscopy
 - `organamnist/organcmnist/organsmnist` - abdominal CT (axial/coronal/sagittal)
 
-# Improve xkcd Fetching
-
-See: <https://xkcd.com/json.html> for API details. The current `fetch_xkcd_2x.py` tries to overengineer the problem.
-
 # Lecture 02 Follow-up Tasks
 
 - [x] Build lecture visuals (#FIXME graphics: memory vs dataset chart, row/column diagram, updated Polars benchmark, lazy-plan diagram, monitoring screenshot).

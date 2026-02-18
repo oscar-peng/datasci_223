@@ -53,15 +53,23 @@ Transformers: More than Meets the Eye
 
 # From Neural Networks to Transformers
 
-![xkcd: Transformers](media/xkcd_transformers.png)
+![](media/xkcd_transformers.png)
 
 LSTMs process sequences one token at a time — _what if we could process them all at once?_
 
-![NLP Model Evolution](media/nlp_evolution_chart.svg)
+![](media/nlp_timeline_new.png)
 
-_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — from word vectors (2013) through RNNs, attention, and the transformer breakthrough (2017)_
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — the abbreviated timeline from feedforward networks to transformers_
 
-The key milestones: **word2vec** (2013) showed that words could be represented as vectors where similar meanings cluster together. **RNNs** and **seq2seq** models (2014) introduced memory and encoder-decoder architectures for translation and summarization — but processed tokens sequentially, creating a speed bottleneck and losing information over long distances. The **attention mechanism** (2015) let decoders focus on relevant input parts dynamically, but still ran on top of RNNs. Then **transformers** (2017) eliminated sequential processing entirely: process the full sequence in parallel, let every token attend to every other token, and scale to web-sized datasets. That's the architecture we'll dissect below.
+![](media/svgchart.svg)
+
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — detailed history of language models up to the transformer breakthrough (2017)_
+
+The key milestones: **word2vec** (2013) showed that words could be represented as vectors where similar meanings cluster together. **RNNs** and **seq2seq** (sequence-to-sequence) models (2014) introduced memory and encoder-decoder architectures for translation and summarization — but processed tokens sequentially, creating a speed bottleneck and losing information over long distances.
+
+![](media/seq2seq.webp)
+
+The **attention mechanism** (2015) let decoders focus on relevant input parts dynamically, but still ran on top of RNNs. Then **transformers** (2017) eliminated sequential processing entirely: process the full sequence in parallel, let every token attend to every other token, and scale to web-sized datasets. That's the architecture we'll dissect below.
 
 ## The Scale-Up Era (2018–2026)
 
@@ -79,13 +87,13 @@ A few key moments in this timeline:
 
 # Transformer Architecture
 
-![Basic Transformer Architecture](media/tx_basic.png)
+![](media/tx_basic.png)
 
 ## The Problem: Processing Everything at Once
 
 RNNs process sequences token-by-token — slow, and information degrades over long distances. Transformers process the full sequence in parallel, but that creates a new problem: **how does any token know about any other token?** The answer is **attention**.
 
-![Encoder-Decoder Stack](media/tx_moderate.png)
+![](media/tx_moderate.png)
 
 The original transformer uses an **encoder-decoder** structure:
 
@@ -111,12 +119,12 @@ Here's what that looks like with concrete numbers. Take a 3-token input — "cat
 1. **Score**: Compute the dot product of $Q_\text{cat}$ against every token's Key:
     - $Q_\text{cat} \cdot K_\text{cat} = 112$, $Q_\text{cat} \cdot K_\text{sat} = 96$, $Q_\text{cat} \cdot K_\text{mat} = 78$
 2. **Scale**: Divide by $\sqrt{d_k} = \sqrt{4} = 2$: scores become $56, 48, 39$
-3. **Softmax**: Convert to probabilities: $[0.73, 0.22, 0.05]$ — "cat" attends mostly to itself and somewhat to "sat"
+3. **Softmax** (convert scores to probabilities summing to 1): $[0.73, 0.22, 0.05]$ — "cat" attends mostly to itself and somewhat to "sat"
 4. **Weighted sum**: Multiply each Value vector by its weight and sum: $0.73 \cdot V_\text{cat} + 0.22 \cdot V_\text{sat} + 0.05 \cdot V_\text{mat}$ — the output is a new representation of "cat" that blends information from the whole sequence
 
 Repeat for every token, and you get a new set of representations where each token "knows about" every other token. That's self-attention.
 
-![Self-attention: creating Q, K, V from embeddings](media/self_attention_qkv.svg)
+![](media/self_attention_qkv.svg)
 
 _From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — each token's embedding is multiplied by learned weight matrices to produce Query, Key, and Value vectors_
 
@@ -150,11 +158,11 @@ A single attention pass averages all relationship types into one set of weights.
 - Original transformer: 8 heads, 512-dimensional embeddings → 64 dimensions per head
 - After all heads compute, results are concatenated and projected back to the full dimension
 
-![Attention Mechanism Visualization](media/attention.png)
+![](media/attention.png)
 
 _The left and center figures represent different layers / attention heads. The right figure depicts the same layer/head as the center figure, but with the token "lazy" selected._
 
-![Simple Attention Animation](media/simple-pretty-gif.gif)
+![](media/simple-pretty-gif.gif)
 
 ## Positional Encoding
 
@@ -163,11 +171,11 @@ Self-attention is a set operation — "The cat sat on the mat" and "The mat sat 
 - **Sine/cosine** (original paper): low frequencies distinguish broad position (start vs. end), high frequencies distinguish adjacent tokens. Key property: position $p + k$ is a linear function of position $p$, so the model learns _relative_ positions.
 - **Modern alternatives**: learned positional embeddings or rotary positional embeddings (RoPE) — same principle, different implementation.
 
-![Positional encoding with input embeddings](media/positional_encoding_krupadave.svg)
+![](media/positional_encoding_krupadave.svg)
 
 _From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers)_
 
-![Positional encoding heatmap](media/positional_encoding_heatmap.png)
+![](media/positional_encoding_heatmap.png)
 
 _From [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — each row is a position's encoding vector; the pattern of sine (left half) and cosine (right half) creates a unique fingerprint for every position_
 
@@ -175,7 +183,7 @@ _From [The Illustrated Transformer](https://jalammar.github.io/illustrated-trans
 
 ### Feed-Forward Networks
 
-Attention blends representations but can't transform them. The feed-forward network handles that: each token passes through a two-layer network (expand 4x → activate with ReLU/GELU → project back down). Attention gathers evidence; the feed-forward layer draws conclusions.
+Attention blends representations but can't transform them. The feed-forward network handles that: each token passes through a two-layer network (expand 4x → apply activation function → project back down). Attention gathers evidence; the feed-forward layer draws conclusions.
 
 ### Residual Connections and Layer Normalization
 
@@ -186,7 +194,7 @@ Deep networks suffer from vanishing gradients — early layers stop learning. Tw
 
 Every sublayer follows: `LayerNorm(x + Sublayer(x))`.
 
-![Residual connections and layer normalization](media/residual_layer_norm.png)
+![](media/residual_layer_norm.png)
 
 _From [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — the Add & Norm pattern wrapping each sublayer_
 
@@ -194,7 +202,7 @@ _From [The Illustrated Transformer](https://jalammar.github.io/illustrated-trans
 
 Encoders attend to the full input (bidirectional). Decoders can't — future tokens don't exist yet during generation. **Masked self-attention** sets future positions to $-\infty$ before softmax, zeroing their weights. This makes the decoder autoregressive: each token attends only to earlier tokens and itself.
 
-![Masked self-attention](media/masked_attention.svg)
+![](media/masked_attention.svg)
 
 _From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — the look-ahead mask prevents the decoder from attending to future positions_
 
@@ -207,7 +215,15 @@ _From [Everything About Transformers](https://www.krupadave.com/articles/everyth
 
 Stack 6 of each and you have the original transformer.
 
-![Transformer Architecture Detail](media/transformer_architecture_detailed.svg)
+![](media/full_transformer_architecture.svg)
+
+_From [Everything About Transformers](https://www.krupadave.com/articles/everything-about-transformers) — the complete encoder-decoder architecture with all sublayers_
+
+**How training works**: Two sequences are involved — the source (encoder input, left side) and the target (decoder input, right side). During training, the decoder receives the target sequence shifted one position right, starting with a `<start>` token, so each position only sees previous tokens.
+
+The bridge between the two sides is **cross-attention**: the encoder's output provides Keys and Values, while the decoder's hidden states provide Queries. This lets the decoder attend across sequences — aligning what it's generating with what the encoder understood from the input.
+
+At the top of the decoder, a linear layer projects to vocabulary size and softmax converts to probabilities. That's where the model's prediction meets the actual next token: **cross-entropy loss** measures the gap, gradients flow back through the entire network, and the **Adam optimizer** updates all weights. Repeat over billions of examples.
 
 ### Reference Card: Transformer Components
 
@@ -231,13 +247,13 @@ Anything with sequential or structured data can (in theory) be transformer'd. Th
 - **Protein structure**: AlphaFold uses attention over amino acid sequences
 - **Multimodal models**: GPT-4o, Gemini, Claude process text, images, and audio together
 
-![xkcd: Machine Learning Captcha](media/xkcd_ml_captcha.png)
+![](media/xkcd_ml_captcha.png)
 
 # Building a GPT from Scratch
 
 Andrej Karpathy's [microGPT](https://karpathy.github.io/2026/02/12/microgpt/) demonstrates that a working GPT can be built in ~200 lines of Python with zero dependencies.
 
-![microGPT Architecture](media/microgpt-arch.png)
+![](media/microgpt-arch.png)
 
 Follow the colored bands top-to-bottom:
 
@@ -267,7 +283,7 @@ These models learn from their training data. _All_ of it. Including whatever bia
 | **Embedding Layer**  | Maps each token to a dense vector + adds positional encoding.                                                                                         |
 | **Attention Blocks** | Stacked self-attention + feedforward layers. Each block refines the representation.                                                                   |
 | **Output Head**      | Linear layer projecting back to vocabulary size → softmax → next-token probabilities.                                                                 |
-| **Training**         | Autoregressive — each token is predicted from all previous tokens (the model never "peeks ahead"): compute cross-entropy loss, backprop, Adam update. |
+| **Training**         | Autoregressive — each token is predicted from all previous tokens (the model never "peeks ahead"): cross-entropy loss (how wrong were the predictions?), backprop, Adam optimizer (adaptive learning rates). |
 | **Inference**        | Sample from output distribution. Temperature controls randomness (0 = greedy, 1 = diverse).                                                           |
 
 ### Code Snippet: Attention Block with Learned Projections
@@ -296,23 +312,34 @@ class AttentionBlock:
 
 Explore attention and GPT internals with the [microGPT visualizer](https://microgpt.boratto.ca).
 
-![xkcd: Attention Span](media/xkcd_attention_span.png)
+![](media/xkcd_attention_span.png)
 
 # Embeddings
 
 Embeddings map discrete tokens (words, sentences, documents) to continuous vectors where **meaning is geometry**. Similar items cluster together; relationships become directions in space.
 
-![Word embedding concept](media/word2vec_concept.png)
+![](media/word2vec_concept.png)
 
-Embeddings aren't limited to text. In recommendation systems, users and items share an embedding space — proximity predicts relevance. Drug interactions, diagnostic codes, and categorical variables can all be embedded the same way. Anywhere you have discrete categories with hidden relationships, embeddings can surface them.
+![](media/word2vec.png)
 
-![Word embedding space](media/word_embedding_distributed.webp)
+_Word2Vec's two training approaches: CBOW predicts a target word from context; Skip-gram predicts context from a target word_
 
-_Semantic similarity in embedding space: "king" - "man" + "woman" ≈ "queen" — geometry captures analogies_
+The idea generalizes beyond text — recommendation systems, drug interactions, diagnostic codes, and categorical variables can all be embedded.
 
-## Practical Usage
+![](media/word_embedding_distributed.webp)
 
-Embeddings enable a family of powerful applications: **semantic search** (find by meaning, not keywords), **document clustering**, **similarity matching**, **anomaly detection**, and using embeddings as **classification features** for downstream models.
+_"king" − "man" + "woman" ≈ "queen" — geometry captures analogies_
+
+Key applications: semantic search, document clustering, similarity matching, anomaly detection, classification features.
+
+### Reference Card: Common Embedding Methods
+
+| Method | Type | Key Characteristic |
+| :--- | :--- | :--- |
+| **Word2Vec** | Word-level, static | Learned from co-occurrence; fast to train |
+| **GloVe** (Global Vectors) | Word-level, static | Factorizes co-occurrence matrix; similar to Word2Vec |
+| **FastText** | Subword-level, static | Character n-grams handle misspellings and rare words |
+| **Sentence Transformers** | Sentence-level, contextual | Same word gets different vectors by context; purpose-built for similarity |
 
 ## Sentence Transformers
 
@@ -380,7 +407,7 @@ For production-scale similarity search, a **vector database** stores and indexes
 | **Weaviate**                              | Self-hosted/cloud    | Full-text + vector search        |
 | **pgvector**                              | PostgreSQL extension | Integrate with existing DB       |
 
-![xkcd: Similarities](media/xkcd_similarities.png)
+![](media/xkcd_similarities.png)
 
 # General Models → Specific Details
 
@@ -501,7 +528,7 @@ Diagnosis:"""
 
 **Structured responses** follow a machine-readable format (JSON, XML, table) rather than free text. Instead of parsing free text with fragile regex, the model guarantees schema conformance.
 
-![Structured outputs](media/structured_outputs.png)
+![](media/structured_outputs.png)
 
 Why this matters for health data:
 
@@ -536,7 +563,7 @@ troponin elevated at 2.5 ng/mL. Cardiology consulted for emergent catheterizatio
 """
 ```
 
-![xkcd: Predictive Models](media/xkcd_predictive_models.png)
+![](media/xkcd_predictive_models.png)
 
 
 # LLM API Integration
@@ -602,6 +629,6 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-![xkcd: Standards](media/xkcd_standards.png)
+![](media/xkcd_standards.png)
 
 # LIVE DEMO!!!

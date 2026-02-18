@@ -70,13 +70,13 @@ LLM Applications & Workflows
 
 # Agentic LLMs
 
-![xkcd: Skynet](media/xkcd_skynet.png)
+![](media/xkcd_skynet.png)
 
 You can send a prompt and get a response. Now: what can you *build* with it?
 
 Agentic LLMs go beyond single request-response patterns. They autonomously plan and execute multi-step tasks, using tools, gathering information, and iterating until the job is done.
 
-![LLM tools landscape](media/agents_landscape.png)
+![](media/agents_landscape.png)
 
 ## Traditional vs Agentic LLM Use
 
@@ -219,7 +219,7 @@ response = client.chat.completions.create(
 
 Standard prompts tell the model *what to answer*. Agent prompts tell the model *how to think and act* — structuring its reasoning, planning tool use, and deciding when to stop.
 
-![Agentic prompting patterns](media/agentic_prompting.png)
+![](media/agentic_prompting.png)
 
 ### Reference Card: Advanced Prompting Patterns
 
@@ -237,7 +237,7 @@ Standard prompts tell the model *what to answer*. Agent prompts tell the model *
 
 Agents inherit all the biases of the underlying model, plus whatever biases the tool selection and prompt design introduce.
 
-![xkcd: Robot Future](media/xkcd_robot_future.png)
+![](media/xkcd_robot_future.png)
 
 # Retrieval-Augmented Generation (RAG)
 
@@ -254,7 +254,7 @@ The core problem with LLMs: they only know what was in their training data, and 
 
 The pipeline:
 
-![RAG pipeline diagram](media/rag_pipeline.png)
+![](media/rag_pipeline.png)
 
 ```
 Query → Embed → Retrieve Similar Chunks → Add to Prompt → Generate Response
@@ -401,7 +401,7 @@ async def get_mcp_tools():
 - [Pre-built servers](https://github.com/modelcontextprotocol/servers)
 - [Python SDK](https://github.com/modelcontextprotocol/python-sdk)
 
-![xkcd: AI Research](media/xkcd_ai_research.png)
+![](media/xkcd_ai_research.png)
 
 # LIVE DEMO!
 
@@ -420,7 +420,7 @@ Real tasks often span multiple steps and decision points. Workflows provide stru
 
 Why not put everything in one big prompt? Because each step in a chain is simpler, more testable, and produces an intermediate artifact you can inspect. If step 2 fails, you know exactly where — and you can fix that step without touching the others. Chaining also lets you use different models or temperatures per step (e.g., a cheap model for extraction, an expensive one for synthesis).
 
-![Prompt chaining](media/prompt_chaining.png)
+![](media/prompt_chaining.png)
 
 We'll define a simple `llm_call()` wrapper here and reuse it throughout the rest of this lecture:
 
@@ -452,7 +452,7 @@ def extract_classify_summarize(document: str) -> dict:
 
 **Concept**: Input/output monitors that enforce safety and compliance rules
 
-![Guardrails](media/guardrails.png)
+![](media/guardrails.png)
 
 ### Reference Card: Common Guardrails
 
@@ -545,15 +545,15 @@ Beyond the three core patterns above, several more address specific challenges:
 
 **Orchestrator-Workers**: A central agent breaks a task into subtasks and delegates each to a specialist worker. The orchestrator coordinates results. Useful when a task requires multiple types of expertise (e.g., one worker extracts medications, another checks drug interactions, a third writes the summary).
 
-![Orchestrator-workers pattern](media/orchestrator_workers.png)
+![](media/orchestrator_workers.png)
 
 **Evaluator-Optimizer**: Generate a response, evaluate its quality (with a second LLM call or deterministic checks), then refine. This loop repeats until the output meets a quality threshold — useful for drafting clinical letters, generating structured reports, or any task where "good enough" needs to be verified.
 
-![Evaluator-optimizer pattern](media/evaluator_optimizer.png)
+![](media/evaluator_optimizer.png)
 
 **Routing & Logic**: Classify the input first, then route to the appropriate handler. For example: classify a patient inquiry as "medication question," "appointment request," or "symptom report," then route each to a specialized prompt or workflow.
 
-![Routing and logic pattern](media/routing_logic.png)
+![](media/routing_logic.png)
 
 **Human-in-the-loop**: Pause for human review before high-stakes actions — prescriptions, diagnosis confirmation, sending communications. The workflow continues only after explicit approval.
 
@@ -608,7 +608,7 @@ print(result.final_output)
 
 # LIVE DEMO!!
 
-![xkcd: AI Methodology](media/xkcd_ai_methodology.png)
+![](media/xkcd_ai_methodology.png)
 
 # When to Use LLMs
 
@@ -677,7 +677,7 @@ Understanding how LLMs fail helps you design better systems and set appropriate 
 
 ## Prompt Injection
 
-![xkcd: Exploits of a Mom](media/xkcd_exploits_of_a_mom.png)
+![](media/xkcd_exploits_of_a_mom.png)
 
 **What**: User input overrides system instructions, causing unintended behavior
 
@@ -787,7 +787,7 @@ Choose tasks that you can meaningfully oversee. Think of LLMs as prolific intern
 | **5. Upgrade** | Switch to a larger model only if the smaller one can't handle it |
 | **6. Monitor** | Track costs, latency, and output quality in production |
 
-![xkcd: Hallucinations](media/xkcd_hallucinations.png)
+![](media/xkcd_hallucinations.png)
 
 ## The Recurring Theme
 

@@ -330,7 +330,7 @@ Train a character-level transformer to generate new text from a dataset of short
 
 | Dataset | File | Items | Description |
 |:---|:---|:---|:---|
-| D&D Spells | `dnd_spells.lst` | 520 | Official spell names from Dungeons & Dragons |
+| D&D Spells | `dnd_spells.lst` | 518 | Official spell names from Dungeons & Dragons |
 | Ice Cream | `icecream_flavors.lst` | 450 | Ice cream flavor names from a [CMU student survey](https://www.cs.cmu.edu/~15110-f23/slides/all-icecream.csv) |
 
 The code below uses D&D spells — swap the filename and variable names if you prefer ice cream.

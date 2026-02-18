@@ -41,7 +41,7 @@ Part 3 provides full working code — just read through it, run each cell, and e
 
 - Both datasets (`dnd_spells.lst` and `icecream_flavors.lst`) work the same way — just change the filename
 - If loss stays above ~3.0 after 1000 steps, make sure you ran the model definition cell first
-- The ice cream dataset is smaller (232 items vs 520), so it may train faster but produce less variety
+- The ice cream dataset is smaller (450 items vs 518), so it may train faster but produce less variety
 - `batch_first=True` in `TransformerDecoderLayer` means input shape is `(batch, sequence, embedding)` — this is already set in the provided code
 
 ## Common Issues

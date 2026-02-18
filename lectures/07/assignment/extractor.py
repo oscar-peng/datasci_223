@@ -207,10 +207,12 @@ def parse_json_response(response_text: str) -> Optional[dict]:
 if __name__ == "__main__":
     # Example usage
     sample_note = """
-    Patient is a 58-year-old male presenting with chest pain radiating to the left arm. 
-    Blood pressure 145/92 mmHg, heart rate 88 bpm. Troponin elevated at 0.8 ng/mL.
-    ECG shows ST elevation in leads V1-V4. Patient started on aspirin 325mg and 
-    heparin drip. Diagnosis: Acute ST-elevation myocardial infarction (STEMI).
+    The patient, a 55-year-old female with a history of type 2 diabetes mellitus,
+    was admitted to the hospital after reporting nausea, vomiting, and polyuria for
+    the past 24 hours. Lab tests revealed acidosis with an anion gap of 32 mmol/L
+    and acute kidney injury. Serum glucose concentration of 366 mg/dL. The patient
+    received a continuous insulin infusion and was transitioned to metformin and
+    glipizide. Diagnosis: Diabetic ketoacidosis (DKA).
     """
 
     print("Testing entity extraction...")

@@ -136,6 +136,10 @@ print(f"dz/dy = {y.grad}")      # x = 3.0
 
 ## Model Parameters
 
+Here's the full architecture we're building — every box below maps to code in this notebook:
+
+![microGPT Architecture](../media/microgpt-arch.png)
+
 Initialize all the learned weights. These random numbers are what the model "knows" — training will adjust them to capture patterns in the data.
 
 The architecture follows GPT-2 (with minor simplifications):
@@ -173,6 +177,8 @@ print(f"for comparison: GPT-2 has 124M params, GPT-3 has 175B")
 ```
 
 ## The GPT Forward Pass
+
+> **Try it live:** The [microGPT visualizer](https://microgpt.boratto.ca) lets you step through this exact forward pass interactively — watch tokens flow through embeddings, attention, and the MLP in real time. Open it in a second tab while reading the code below.
 
 This is the core algorithm. For each token, the model:
 
@@ -400,6 +406,53 @@ for temp in [0.2, 0.5, 1.0]:
     for name in names:
         print(f"  {name}")
     print()
+```
+
+## Interactive Mode: Complete a Name
+
+Type a starting prefix (or leave blank for a random start) and watch the model complete it character by character. This is the same autoregressive loop ChatGPT uses — just at character scale.
+
+```python
+def complete(prefix="", temperature=0.5, num_samples=5):
+    """Generate name completions from a starting prefix."""
+    samples = []
+    for _ in range(num_samples):
+        keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
+        # Feed prefix tokens
+        if prefix:
+            token_ids = [BOS] + [uchars.index(ch) for ch in prefix.lower() if ch in uchars]
+        else:
+            token_ids = [BOS]
+        # Forward through prefix to build up KV cache
+        for pos_id, token_id in enumerate(token_ids):
+            logits = gpt(token_id, pos_id, keys, values)
+        # Generate remaining characters
+        chars = list(prefix.lower())
+        token_id = random.choices(range(vocab_size), weights=[softmax([l / temperature for l in logits])[i].data for i in range(vocab_size)])[0]
+        if token_id != BOS:
+            chars.append(uchars[token_id])
+            for pos_id in range(len(token_ids), block_size):
+                logits = gpt(token_id, pos_id, keys, values)
+                probs = softmax([l / temperature for l in logits])
+                token_id = random.choices(range(vocab_size), weights=[p.data for p in probs])[0]
+                if token_id == BOS:
+                    break
+                chars.append(uchars[token_id])
+        samples.append(''.join(chars))
+    return samples
+
+# Try it! Change the prefix to steer generation.
+prefix = "ka"
+print(f"Completions starting with '{prefix}':\n")
+for i, name in enumerate(complete(prefix, temperature=0.5), 1):
+    print(f"  {i}. {name}")
+```
+
+```python
+# Edit these and re-run to explore! Try your own name, initials, or random letters.
+for prefix in ["mar", "ch", "al", "zi"]:
+    names = complete(prefix, temperature=0.5, num_samples=3)
+    print(f"  '{prefix}' → {', '.join(names)}")
 ```
 
 **Further reading:**

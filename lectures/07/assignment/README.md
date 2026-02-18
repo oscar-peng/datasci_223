@@ -2,16 +2,9 @@
 
 Extract structured data from clinical notes using LLM prompt engineering, then build a semantic search system using sentence embeddings.
 
-**Dataset**: 4 clinical notes in `clinical_notes.txt` covering STEMI, diabetes, pneumonia, and bacterial meningitis.
+**Dataset**: 75 synthetic discharge summaries from [Asclepius-Synthetic-Clinical-Notes](https://huggingface.co/datasets/aisc-team-a1/Asclepius-Synthetic-Clinical-Notes) (Kweon et al., 2023) in `asclepius_notes.json`. Part 2 also uses 4 curated notes in `clinical_notes.txt`.
 
-## Learning Objectives
-
-- Build effective prompts for structured data extraction (zero-shot and few-shot)
-- Parse and validate JSON responses from LLM APIs
-- Generate sentence embeddings from clinical text
-- Implement cosine-similarity-based semantic search
-
-## Setup
+## Getting Started
 
 ```bash
 pip install -r requirements.txt
@@ -23,94 +16,30 @@ Part 1 requires an LLM API key. We use [OpenRouter](https://openrouter.ai) (Open
 
 1. Sign up at [openrouter.ai](https://openrouter.ai)
 2. Create an API key under "Keys"
-3. Set it as an environment variable:
+3. Copy the example env file and fill in your key:
    ```bash
-   export OPENROUTER_API_KEY=your_key_here
+   cp example.env .env
    ```
-   Or create a `.env` file: `OPENROUTER_API_KEY=your_key_here`
 
-OpenAI keys also work — set `OPENAI_API_KEY` instead.
+OpenAI keys also work — set `OPENAI_API_KEY` in `.env` instead.
 
 Part 2 (embeddings) runs locally and does not need an API key.
 
-## Your Tasks
+## Workflow
 
-### Part 1: Clinical Entity Extraction (`extractor.py`)
+Open `assignment.md` as a Jupyter notebook (convert with `jupytext --to notebook assignment.md` if needed) and work through both parts:
 
-Complete the TODO functions in `extractor.py` to extract structured medical data from clinical notes.
+1. **Part 1: Clinical Entity Extraction** — Implement `build_prompt`, `parse_json_response`, `validate_response`, and `extract_entities`
+2. **Part 2: Semantic Search** — Implement `load_notes`, `embed_notes`, `find_similar`, and `save_results`
 
-**What to implement:**
-
-1. **`build_prompt(note, few_shot=False)`** — Build a prompt that:
-    - Describes the extraction task clearly
-    - Specifies the expected JSON output schema (diagnosis, medications, lab_values, confidence)
-    - When `few_shot=True`, includes 1-2 example input/output pairs before the target note
-    - Includes the clinical note text
-
-2. **`parse_json_response(response_text)`** — Extract JSON from LLM response text:
-    - Handle clean JSON strings
-    - Handle JSON wrapped in `` ```json ... ``` `` markdown blocks
-    - Return `None` if parsing fails
-
-3. **`validate_response(response)`** — Check that a parsed response dict contains all required keys:
-    - `diagnosis` (str)
-    - `medications` (list)
-    - `lab_values` (dict)
-    - `confidence` (float, 0-1)
-    - Return `True` if valid, `False` otherwise
-
-4. **`extract_entities(note, few_shot=False)`** — Orchestrate the full pipeline:
-    - Get the LLM client
-    - Build the prompt
-    - Call the LLM
-    - Parse the JSON response
-    - Validate and return the result
-
-**Test your work:**
-```bash
-python extractor.py
-```
-
-### Part 2: Semantic Search (`search.py`)
-
-Create `search.py` to embed clinical notes and search them by meaning.
-
-**What to implement:**
-
-1. **`load_notes(filepath)`** — Parse `clinical_notes.txt` into a list of note strings
-    - Split on `## Note` headers
-    - Strip whitespace, skip empty strings
-    - Return a list of note text strings
-
-2. **`embed_notes(notes)`** — Generate embeddings for a list of notes
-    - Use `SentenceTransformer("all-MiniLM-L6-v2")`
-    - Return a numpy array of shape `(n_notes, embedding_dim)`
-
-3. **`find_similar(query, notes, embeddings, top_k=2)`** — Semantic search
-    - Embed the query using the same model
-    - Compute cosine similarity against all note embeddings
-    - Return a list of dicts: `[{"note": str, "score": float}, ...]` sorted by score descending
-    - Limit to `top_k` results
-
-4. **`save_results(results, filepath="search_results.json")`** — Write results to JSON file
-
-**Test your work:**
-```bash
-python search.py
-```
-
-Running `search.py` should:
-- Load the 4 clinical notes
-- Embed them
-- Run a sample query (e.g., "heart attack symptoms")
-- Print results and save to `search_results.json`
+The notebook includes "do not modify" save cells that write your implementations to `extractor.py` and `search.py` for autograding.
 
 ## Output Files
 
 | File | Part | Description |
 |:---|:---|:---|
-| `extractor.py` | 1 | Completed entity extraction functions |
-| `search.py` | 2 | Semantic search implementation |
+| `extractor.py` | 1 | Entity extraction functions (saved by notebook) |
+| `search.py` | 2 | Semantic search functions (saved by notebook) |
 | `search_results.json` | 2 | JSON output from semantic search |
 
 ## Checking Your Work

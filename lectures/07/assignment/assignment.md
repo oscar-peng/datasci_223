@@ -12,7 +12,11 @@ jupyter:
     name: python3
 ---
 
-# Assignment 7: Clinical NLP with LLMs and Embeddings — Solution
+# Assignment 7: Clinical NLP with LLMs and Embeddings
+
+Extract structured data from clinical notes using LLM prompt engineering, then build a semantic search system using sentence embeddings.
+
+**Dataset:** 75 synthetic discharge summaries from [Asclepius-Synthetic-Clinical-Notes](https://huggingface.co/datasets/aisc-team-a1/Asclepius-Synthetic-Clinical-Notes) (Kweon et al., 2023) in `asclepius_notes.json`. Part 2 also uses 4 curated notes in `clinical_notes.txt`.
 
 ## Setup
 
@@ -33,6 +37,17 @@ load_dotenv()
 print("Setup complete!")
 ```
 
+### API Key
+
+Part 1 requires an [OpenRouter](https://openrouter.ai) API key (OpenAI keys also work). Copy the example and fill in your key:
+
+```bash
+cp example.env .env
+# Then edit .env with your actual key
+```
+
+Part 2 runs locally and does not need an API key.
+
 ### Load Asclepius Notes
 
 ```python
@@ -44,10 +59,12 @@ print(f"Keys: {list(asclepius[0].keys())}")
 ```
 
 ```python
+# Preview a sample note
 print(asclepius[0]["note"][:500] + "...")
 ```
 
 ```python
+# Select 4 notes for entity extraction (Part 1)
 random.seed(2026)
 sample = random.sample(asclepius, 4)
 notes_p1 = [s["note"] for s in sample]
@@ -62,6 +79,14 @@ for i, n in enumerate(notes_p1, 1):
 
 ## Part 1: Clinical Entity Extraction
 
+Implement functions to extract structured medical data from clinical notes using LLM prompt engineering.
+
+`extractor.py` provides two functions already:
+- `get_client()` — initializes the OpenRouter/OpenAI client
+- `call_llm(prompt, provider, client)` — sends a prompt and returns the response
+
+You'll implement the remaining four functions below.
+
 ```python
 from extractor import get_client, call_llm
 import extractor
@@ -69,113 +94,67 @@ import extractor
 
 ### `build_prompt`
 
+Build a prompt that instructs the LLM to extract structured data from a clinical note.
+
 ```python
+# TODO: Implement build_prompt
+# Requirements:
+#   - Describe the extraction task clearly
+#   - Specify the JSON output schema with these fields:
+#     {"diagnosis": str, "medications": list, "lab_values": dict, "confidence": float}
+#   - When few_shot=True, include 1-2 example input/output pairs
+#   - Include the clinical note text
 def build_prompt(note, few_shot=False):
-    if few_shot:
-        return f"""Extract structured medical data from clinical notes. Return JSON only.
-
-Example:
-Note: "72-year-old male with progressive dyspnea and orthopnea. BNP 1840 pg/mL, ejection fraction 25%.
-Chest X-ray shows cardiomegaly with pulmonary edema. Started on furosemide 40mg IV, lisinopril 5mg daily,
-and carvedilol 6.25mg BID. Assessment: Acute decompensated heart failure."
-
-Output:
-{{
-  "diagnosis": "Acute decompensated heart failure",
-  "medications": ["furosemide 40mg IV", "lisinopril 5mg daily", "carvedilol 6.25mg BID"],
-  "lab_values": {{"BNP": "1840 pg/mL", "ejection_fraction": "25%"}},
-  "confidence": 0.95
-}}
-
-Now extract from this note:
-Note: "{note}"
-
-Output:"""
-
-    return f"""Extract structured medical data from the following clinical note.
-Return ONLY a JSON object with exactly these fields:
-
-{{
-  "diagnosis": "primary diagnosis as a string",
-  "medications": ["list of medications with doses"],
-  "lab_values": {{"test_name": "value with units"}},
-  "confidence": 0.0
-}}
-
-Rules:
-- confidence is a float from 0.0 to 1.0
-- include ALL medications mentioned with doses if given
-- include ALL lab values with units
-- if a field has no data, use an empty list [] or empty dict {{}}
-
-Clinical note:
-{note}"""
+    pass  # replace with your implementation
 
 extractor.build_prompt = build_prompt
 ```
 
 ### `parse_json_response`
 
+Extract a JSON object from LLM response text, which may contain markdown code fences or other wrapping.
+
 ```python
+# TODO: Implement parse_json_response
+# Requirements:
+#   - Handle clean JSON strings (direct json.loads)
+#   - Handle JSON wrapped in ```json ... ``` markdown blocks
+#   - Find JSON within surrounding text (look for outermost { and })
+#   - Return None if parsing fails
 def parse_json_response(text):
-    # Direct parse
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-
-    # Strip markdown code fences
-    if "```" in text:
-        start = text.find("```")
-        end = text.rfind("```")
-        if start != end:
-            block = text[start:end]
-            lines = block.split("\n")
-            block = "\n".join(lines[1:])
-            try:
-                return json.loads(block)
-            except json.JSONDecodeError:
-                pass
-
-    # Find outermost braces
-    start = text.find("{")
-    end = text.rfind("}")
-    if start >= 0 and end > start:
-        try:
-            return json.loads(text[start : end + 1])
-        except json.JSONDecodeError:
-            pass
-
-    return None
+    pass  # replace with your implementation
 
 extractor.parse_json_response = parse_json_response
 ```
 
 ### `validate_response`
 
+Check that a parsed response dict contains all required keys.
+
 ```python
+# TODO: Implement validate_response
+# Required fields: diagnosis, medications, lab_values, confidence
+# Return True if all present, False otherwise
 def validate_response(response):
-    if not isinstance(response, dict):
-        return False
-    required = {"diagnosis", "medications", "lab_values", "confidence"}
-    return required.issubset(response.keys())
+    pass  # replace with your implementation
 
 extractor.validate_response = validate_response
 ```
 
 ### `extract_entities`
 
+Orchestrate the full extraction pipeline: get client, build prompt, call LLM, parse, validate, return.
+
 ```python
+# TODO: Implement extract_entities
+# Steps:
+#   1. client, provider = get_client()
+#   2. prompt = build_prompt(note, few_shot=few_shot)
+#   3. raw = call_llm(prompt, provider=provider, client=client)
+#   4. parsed = parse_json_response(raw)
+#   5. Validate and return (return None if parsing or validation fails)
 def extract_entities(note, few_shot=False):
-    client, provider = get_client()
-    prompt = build_prompt(note, few_shot=few_shot)
-    raw = call_llm(prompt, provider=provider, client=client)
-    parsed = parse_json_response(raw)
-    if parsed is None:
-        return None
-    if not validate_response(parsed):
-        return None
-    return parsed
+    pass  # replace with your implementation
 
 extractor.extract_entities = extract_entities
 ```
@@ -217,6 +196,10 @@ print("Saved extractor.py")
 
 ## Part 2: Semantic Search
 
+Build a semantic search system that finds clinical notes by meaning rather than keywords, using sentence embeddings and cosine similarity.
+
+This part runs locally — no API key needed.
+
 ```python
 from search import get_device
 import search
@@ -230,54 +213,60 @@ print(f"Model loaded on {get_device()}")
 
 ### `load_notes`
 
+Parse `clinical_notes.txt` into a list of note strings.
+
 ```python
+# TODO: Implement load_notes
+# Requirements:
+#   - Read the file contents
+#   - Split on "## Note" headers
+#   - Strip whitespace, skip empty strings
+#   - The first split element is the file header — skip it
+#   - Return a list of note text strings
 def load_notes(filepath="clinical_notes.txt"):
-    with open(filepath) as f:
-        content = f.read()
-    sections = content.split("## Note")
-    notes = []
-    for s in sections[1:]:
-        text = s.split("\n", 1)
-        if len(text) > 1:
-            cleaned = text[1].strip()
-            if cleaned:
-                notes.append(cleaned)
-    return notes
+    pass  # replace with your implementation
 
 search.load_notes = load_notes
 ```
 
 ### `embed_notes`
 
+Generate embeddings for a list of notes using the sentence transformer model.
+
 ```python
+# TODO: Implement embed_notes
+# Use _model.encode(notes) — returns a numpy array of shape (n_notes, embedding_dim)
 def embed_notes(notes):
-    return _model.encode(notes)
+    pass  # replace with your implementation
 
 search.embed_notes = embed_notes
 ```
 
 ### `find_similar`
 
+Search notes by meaning using cosine similarity.
+
 ```python
+# TODO: Implement find_similar
+# Steps:
+#   1. Embed the query with _model.encode([query])
+#   2. Compute cosine_similarity(query_embedding, embeddings)
+#   3. Sort by score descending
+#   4. Return top_k results as [{"note": str, "score": float}, ...]
 def find_similar(query, notes, embeddings, top_k=2):
-    query_emb = _model.encode([query])
-    scores = cosine_similarity(query_emb, embeddings)[0]
-    ranked = sorted(
-        zip(notes, scores),
-        key=lambda x: x[1],
-        reverse=True,
-    )
-    return [{"note": n, "score": float(s)} for n, s in ranked[:top_k]]
+    pass  # replace with your implementation
 
 search.find_similar = find_similar
 ```
 
 ### `save_results`
 
+Write search results to a JSON file.
+
 ```python
+# TODO: Implement save_results
 def save_results(results, filepath="search_results.json"):
-    with open(filepath, "w") as f:
-        json.dump(results, f, indent=2)
+    pass  # replace with your implementation
 
 search.save_results = save_results
 ```

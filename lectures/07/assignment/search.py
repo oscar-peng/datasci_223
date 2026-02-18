@@ -9,6 +9,20 @@ import numpy as np
 from typing import List, Dict
 
 
+def get_device() -> str:
+    """Detect the best available device for local model inference."""
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
+    except ImportError:
+        pass
+    return "cpu"
+
+
 def load_notes(filepath: str = "clinical_notes.txt") -> List[str]:
     """
     Load clinical notes from a text file.
@@ -54,7 +68,7 @@ def embed_notes(notes: List[str]) -> np.ndarray:
     # TODO: Implement this function
     #
     # Hints:
-    # - Use SentenceTransformer("all-MiniLM-L6-v2")
+    # - Use SentenceTransformer("all-MiniLM-L6-v2", device=get_device())
     # - model.encode(notes) returns a numpy array
 
     pass

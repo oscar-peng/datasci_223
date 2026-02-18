@@ -8,7 +8,7 @@ Three hands-on demos covering GPT internals, embeddings, and LLM API prompt engi
 |:---|:---|:---|
 | 1 | `01-microgpt.md` | Build and train a GPT from scratch (microGPT): character-level tokenizer, autograd, multi-head attention, name generation |
 | 2 | `02-embeddings_finetuning.md` | Sentence embeddings, cosine similarity, semantic search; GPT-2 fine-tuning and hallucination demo |
-| 3 | `03-api_prompt_engineering.md` | Zero/one/few-shot prompting, schema-based JSON extraction, chain-of-thought; prepares for the assignment's `extractor.py` |
+| 3 | `03-api_prompt_engineering.md` | Zero/one/few-shot prompting, schema-based JSON extraction, chain-of-thought on a PMC-Patients case report |
 
 Supporting files:
 - `check_api_calls.py` — extract and test all API calls from Demo 3

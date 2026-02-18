@@ -16,12 +16,14 @@ jupyter:
 
 Embeddings turn text into vectors where meaning is geometry. Fine-tuning adapts a pre-trained model to a specific domain — and reveals what happens when it hallucinates.
 
+We'll use real patient case summaries from **PMC-Patients** (Zhao et al., 2023) — a curated sample of 500 patient summaries extracted from PubMed Central case reports.
+
 ## Part 1: Embeddings
 
 ### Setup
 
 ```python
-%pip install -q sentence-transformers chromadb matplotlib seaborn numpy pandas transformers datasets torch accelerate
+%pip install -q sentence-transformers chromadb matplotlib seaborn numpy pandas transformers datasets torch accelerate ipywidgets
 
 %reset -f
 
@@ -33,6 +35,17 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 ```
 
+### Load PMC-Patients
+
+500 real patient summaries from PubMed Central case reports, pre-filtered for quality and length.
+
+```python
+pmc = pd.read_json("pmc_patients_sample.json")
+print(f"Loaded {len(pmc):,} patient summaries")
+print(f"Fields: {pmc.columns.tolist()}")
+print(f"\nExample:\n{pmc['patient'].iloc[0][:200]}...")
+```
+
 ### Load an Embedding Model
 
 `all-MiniLM-L6-v2` produces 384-dimensional embeddings. For production clinical work you'd want a domain-specific model (e.g., ClinicalBERT), but this works well for understanding the concepts.
@@ -42,34 +55,49 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 print(f"Embedding dimension: {model.get_sentence_embedding_dimension()}")
 ```
 
-### Embed Clinical Notes
+### Embed Patient Summaries
+
+We'll embed all 500 summaries, then visualize similarity across a diverse subset.
 
 ```python
-notes = [
-    "58-year-old male with chest pain radiating to the left arm. Troponin elevated at 0.8 ng/mL. ECG shows ST elevation in leads V1-V4. Diagnosis: STEMI.",
-    "65-year-old female with polyuria and polydipsia. Fasting glucose 285 mg/dL, HbA1c 9.2%. Assessment: Poorly controlled type 2 diabetes mellitus.",
-    "42-year-old male with productive cough for 5 days, fever to 101.5F. Chest X-ray shows right lower lobe infiltrate. Diagnosis: Community-acquired pneumonia.",
-    "28-year-old female with severe headache, photophobia, and neck stiffness. Temperature 102.8F. LP shows elevated WBC with neutrophil predominance. Diagnosis: Bacterial meningitis.",
-    "72-year-old male with acute onset left-sided weakness and slurred speech. CT head negative for hemorrhage. Onset 2 hours ago. Assessment: Acute ischemic stroke.",
-    "55-year-old female with epigastric pain radiating to the back, nausea, vomiting. Lipase elevated at 1200 U/L. Diagnosis: Acute pancreatitis.",
-    "Patient presents with crushing chest pain, diaphoresis, and shortness of breath. Cardiac enzymes elevated. Emergency cardiac catheterization planned.",
-    "Routine wellness visit. Blood pressure 118/76 mmHg, BMI 24.2. Fasting glucose 92 mg/dL. All screening labs within normal limits.",
-]
-
-labels = ["STEMI", "Diabetes", "Pneumonia", "Meningitis", "Stroke", "Pancreatitis", "Cardiac emergency", "Wellness visit"]
-
-embeddings = model.encode(notes)
-print(f"Embedded {len(notes)} notes → shape {embeddings.shape}")
+all_embeddings = model.encode(pmc["patient"].tolist(), show_progress_bar=True)
+print(f"Embedded {len(all_embeddings)} patient summaries → shape {all_embeddings.shape}")
 ```
 
 ### Pairwise Similarity
 
-Cosine similarity: 1 = identical direction, 0 = unrelated, -1 = opposite.
+Cosine similarity: 1 = identical direction, 0 = unrelated, -1 = opposite. We'll pick 10 cases spanning different clinical areas to see how the model groups them.
 
 ```python
-sim_matrix = cosine_similarity(embeddings)
+# Select diverse cases by searching for clinical keywords
+def find_case(pattern):
+    matches = pmc[pmc["patient"].str.contains(pattern, case=False, regex=True)]
+    return matches.index[0] if len(matches) > 0 else None
 
-plt.figure(figsize=(10, 8))
+diverse_indices = [
+    find_case("chest pain.*coronary|coronary.*chest pain|myocardial infarction"),
+    find_case("pneumonia.*fever|fever.*pneumonia"),
+    find_case("stroke|cerebral infarct"),
+    find_case("diabetes.*glucose|glucose.*diabetes"),
+    find_case("carcinoma.*chemother|chemother.*carcinoma"),
+    find_case("fracture.*surgery|surgery.*fracture"),
+    find_case("abdominal pain.*vomiting|vomiting.*abdominal pain"),
+    find_case("renal.*dialysis|dialysis.*renal"),
+    find_case("seizure|epilep"),
+    find_case("asthma|dyspnea.*exertion"),
+]
+# Remove any None values
+diverse_indices = [i for i in diverse_indices if i is not None]
+
+labels = []
+for idx in diverse_indices:
+    text = pmc.iloc[idx]["patient"][:60]
+    labels.append(text.split(".")[0][:40])
+
+sub_embeddings = all_embeddings[diverse_indices]
+sim_matrix = cosine_similarity(sub_embeddings)
+
+plt.figure(figsize=(12, 10))
 sns.heatmap(
     sim_matrix,
     xticklabels=labels,
@@ -81,38 +109,41 @@ sns.heatmap(
     vmax=1,
     square=True,
 )
-plt.title("Pairwise Cosine Similarity of Clinical Notes")
+plt.title("Pairwise Cosine Similarity — PMC-Patients (diverse subset)")
+plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.show()
 ```
 
-The two cardiac cases (STEMI and "Cardiac emergency") cluster together. The wellness visit is distant from everything else. The model captures clinical meaning without any explicit medical training.
+Clinically similar cases cluster together even though the model has no explicit medical training — it learned semantic relationships from general text.
 
 ### Semantic Search
 
 Traditional keyword search fails when the query uses different words than the document. Semantic search finds conceptually similar documents regardless of exact wording.
 
 ```python
+notes = pmc["patient"].tolist()
+
 def semantic_search(query, notes, embeddings, model, top_k=3):
     query_embedding = model.encode([query])
     similarities = cosine_similarity(query_embedding, embeddings)[0]
     ranked = sorted(zip(range(len(notes)), similarities, notes), key=lambda x: x[1], reverse=True)
     return ranked[:top_k]
 
-# "heart attack" doesn't appear in any note, but STEMI and cardiac emergency should rank high
+# "heart attack" doesn't appear literally — semantic search finds cardiac cases anyway
 query = "patient with heart attack symptoms"
 print(f"Query: '{query}'\n")
-for rank, (idx, score, note) in enumerate(semantic_search(query, notes, embeddings, model), 1):
-    print(f"  {rank}. [{labels[idx]}] (similarity: {score:.3f})")
-    print(f"     {note[:80]}...\n")
+for rank, (idx, score, note) in enumerate(semantic_search(query, notes, all_embeddings, model), 1):
+    print(f"  {rank}. (similarity: {score:.3f})")
+    print(f"     {note[:120]}...\n")
 ```
 
 ```python
 query = "infectious disease with high fever"
 print(f"Query: '{query}'\n")
-for rank, (idx, score, note) in enumerate(semantic_search(query, notes, embeddings, model), 1):
-    print(f"  {rank}. [{labels[idx]}] (similarity: {score:.3f})")
-    print(f"     {note[:80]}...\n")
+for rank, (idx, score, note) in enumerate(semantic_search(query, notes, all_embeddings, model), 1):
+    print(f"  {rank}. (similarity: {score:.3f})")
+    print(f"     {note[:120]}...\n")
 ```
 
 ### Scaling Up: Vector Databases
@@ -123,17 +154,18 @@ The `cosine_similarity` approach works for small collections. For thousands or m
 import chromadb
 
 client = chromadb.Client()
-collection = client.create_collection(name="clinical_notes", metadata={"hnsw:space": "cosine"})
+collection = client.create_collection(name="pmc_patients", metadata={"hnsw:space": "cosine"})
 
 collection.add(
     documents=notes,
-    ids=[f"note_{i}" for i in range(len(notes))],
-    metadatas=[{"label": label} for label in labels],
+    ids=[f"patient_{i}" for i in range(len(notes))],
+    metadatas=[{"title": t[:100]} for t in pmc["title"].tolist()],
 )
 
 results = collection.query(query_texts=["patient experiencing cardiac arrest"], n_results=3)
 for doc, meta, dist in zip(results["documents"][0], results["metadatas"][0], results["distances"][0]):
-    print(f"  [{meta['label']}] (similarity: {1 - dist:.3f}) {doc[:80]}...")
+    print(f"  (similarity: {1 - dist:.3f}) {meta['title']}")
+    print(f"    {doc[:120]}...\n")
 ```
 
 Other options: FAISS, pgvector, Pinecone. The assignment uses manual cosine similarity since we only have 4 notes.
@@ -142,9 +174,9 @@ Other options: FAISS, pgvector, Pinecone. The assignment uses manual cosine simi
 
 ## Part 2: Fine-Tuning a Language Model
 
-Fine-tuning adapts a pre-trained model to a specific domain by continuing training on domain-specific data. The pre-trained model already "knows" English grammar, common facts, and text structure from its original training on internet text. Fine-tuning nudges those weights toward a new domain — in our case, clinical notes.
+Fine-tuning adapts a pre-trained model to a specific domain by continuing training on domain-specific data. The pre-trained model already "knows" English grammar, common facts, and text structure from its original training on internet text. Fine-tuning nudges those weights toward a new domain — in our case, clinical case reports.
 
-We'll fine-tune GPT-2 (the smallest version, 124M parameters) on a tiny set of clinical text — then see what it generates, including hallucinations. This demonstrates both the power and the risk: the model quickly adopts the _style_ of clinical notes, but with only 8 examples, it has no real medical knowledge.
+We'll fine-tune GPT-2 (the smallest version, 124M parameters) on our 500 real PMC-Patients summaries — then see what it generates, including hallucinations. This demonstrates both the power and the risk: the model quickly adopts the _style_ of clinical text, but with limited examples, it has no real medical knowledge.
 
 ### Load GPT-2
 
@@ -193,26 +225,22 @@ def generate_text(model, prompt, max_new_tokens=100, temperature=0.7):
         )
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-prompt = "Clinical Note: 58-year-old male presenting with"
+prompt = "A 58-year-old male presented with"
 print("=== Base GPT-2 (no fine-tuning) ===")
 print(generate_text(base_model, prompt))
 ```
 
 ### Prepare Training Data
 
-We'll fine-tune on a small set of clinical notes. In practice you'd need hundreds or thousands of examples — this tiny dataset is just to demonstrate the mechanics.
+We'll fine-tune on all 500 patient summaries — enough to learn clinical language patterns without taking too long.
 
 ```python
-clinical_texts = [
-    "Clinical Note: 58-year-old male presenting with chest pain radiating to left arm. Troponin 0.8 ng/mL. ECG shows ST elevation V1-V4. Assessment: STEMI. Plan: Emergent cardiac catheterization, aspirin 325mg, heparin drip, cardiology consult.",
-    "Clinical Note: 72-year-old female with new-onset confusion and fever 39.1C. WBC 18,000. Urinalysis positive for nitrites and leukocyte esterase. Blood cultures drawn. Assessment: Urosepsis. Plan: IV ceftriaxone, fluid resuscitation, ICU admission.",
-    "Clinical Note: 45-year-old male with 3-day history of progressive shortness of breath. O2 sat 88% on room air. CXR bilateral infiltrates. COVID-19 PCR positive. Assessment: COVID-19 pneumonia with hypoxic respiratory failure. Plan: Supplemental O2, prone positioning, dexamethasone.",
-    "Clinical Note: 65-year-old female with acute onset right-sided weakness and aphasia. Last known well 90 minutes ago. NIHSS 14. CT head negative for hemorrhage. Assessment: Acute ischemic stroke. Plan: tPA administration, neurology consult, MRI brain.",
-    "Clinical Note: 30-year-old female presenting with RUQ pain, nausea, and fever 38.5C. Murphy sign positive. WBC 15,000. RUQ ultrasound shows gallbladder wall thickening and pericholecystic fluid. Assessment: Acute cholecystitis. Plan: NPO, IV antibiotics, surgical consult for cholecystectomy.",
-    "Clinical Note: 55-year-old male with poorly controlled type 2 diabetes. HbA1c 10.2%. Fasting glucose 310 mg/dL. Complains of polyuria and blurred vision. Assessment: Uncontrolled T2DM with hyperglycemia. Plan: Insulin initiation, endocrinology referral, diabetic education.",
-    "Clinical Note: 40-year-old female with severe headache, worst of life, acute onset. BP 165/95. CT head negative. LP shows xanthochromia. Assessment: Subarachnoid hemorrhage. Plan: CTA head and neck, neurosurgery consult, nimodipine, ICU admission.",
-    "Clinical Note: 68-year-old male with melena and hematemesis. HR 110, BP 90/60. Hemoglobin 7.2. Assessment: Upper GI bleed with hemodynamic instability. Plan: 2 units pRBC, IV PPI, GI consult for emergent EGD, ICU admission.",
-]
+clinical_texts = pmc["patient"].tolist()
+# Truncate to fit GPT-2's context window
+clinical_texts = [t[:512] for t in clinical_texts]
+
+print(f"Training on {len(clinical_texts)} real patient summaries")
+print(f"Average length: {np.mean([len(t) for t in clinical_texts]):.0f} chars")
 
 # Tokenize
 def tokenize_fn(examples):
@@ -227,13 +255,13 @@ print(f"Training examples: {len(tokenized)}")
 
 ### Fine-Tune
 
-With only 8 training examples, we run for 25 epochs to give the model enough passes to learn the clinical note format. On CPU this takes a couple minutes; with a GPU it's much faster.
+On CPU this takes a few minutes; with a GPU it's much faster.
 
 ```python
 training_args = TrainingArguments(
     output_dir="./gpt2_clinical",
-    num_train_epochs=25,
-    per_device_train_batch_size=2,
+    num_train_epochs=3,
+    per_device_train_batch_size=4,
     learning_rate=5e-5,
     logging_steps=10,
     save_strategy="no",
@@ -248,14 +276,14 @@ trainer = Trainer(
     data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False),
 )
 
-print("Fine-tuning GPT-2 on clinical notes...")
+print("Fine-tuning GPT-2 on PMC-Patients summaries...")
 trainer.train()
 print("Fine-tuning complete!")
 ```
 
 ### Training Loss
 
-The training loss should decrease as the model memorizes the clinical note patterns. With only 8 examples and 25 epochs, the model will overfit — which is the point. We want it to learn the format so we can see what happens when it generates beyond the training data.
+The training loss should decrease as the model learns the clinical text patterns.
 
 ```python
 # Extract training loss from Trainer's log history
@@ -266,7 +294,7 @@ plt.figure(figsize=(10, 4))
 plt.plot(train_steps, train_losses, marker='o', markersize=3, color='steelblue')
 plt.xlabel('Training Step')
 plt.ylabel('Loss')
-plt.title('GPT-2 Fine-Tuning Loss on Clinical Notes')
+plt.title('GPT-2 Fine-Tuning Loss on PMC-Patients')
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
@@ -276,31 +304,30 @@ print(f"Final loss: {train_losses[-1]:.4f}" if train_losses else "No loss record
 
 ### Generate AFTER fine-tuning
 
-The model has now seen clinical note patterns. Compare to the pre-fine-tuning output above.
+The model has now seen real clinical case patterns. Compare to the pre-fine-tuning output above.
 
 ```python
-prompt = "Clinical Note: 58-year-old male presenting with"
+prompt = "A 58-year-old male presented with"
 print("=== Fine-tuned GPT-2 ===")
 print(generate_text(base_model, prompt))
 ```
 
 ```python
 # Try a different prompt
-prompt = "Clinical Note: 72-year-old female with"
+prompt = "A 72-year-old female with"
 print("=== Fine-tuned GPT-2 ===")
 print(generate_text(base_model, prompt))
 ```
 
 ### Inducing Hallucinations
 
-Now let's push the model outside its training distribution. With only 8 training examples, the model will confidently generate plausible-looking but fabricated clinical details.
+Now let's push the model outside its training distribution. The model will confidently generate plausible-looking but fabricated clinical details.
 
 ```python
-# Ask about something not in the training data
 hallucination_prompts = [
-    "Clinical Note: 12-year-old child presenting with",
-    "Clinical Note: Patient with history of liver transplant and",
-    "Clinical Note: Pregnant woman at 32 weeks with",
+    "A 12-year-old child presented with",
+    "The patient had a history of liver transplant and",
+    "A pregnant woman at 32 weeks presented with",
 ]
 
 print("=== Hallucination examples ===\n")
@@ -310,7 +337,6 @@ for prompt in hallucination_prompts:
     print("\n" + "-" * 60 + "\n")
 ```
 
-The model generates confident, structured clinical text — but the specific values (lab results, vitals, doses) are fabricated. It learned the _format_ of clinical notes from fine-tuning, but it doesn't have real medical knowledge.
+The model generates confident, structured clinical text — but the specific values (lab results, vitals, doses) are fabricated. It learned the _style_ of case reports from fine-tuning, but it doesn't have real medical knowledge.
 
 This is the hallucination problem from the lecture: the model extrapolates beyond its training data without knowing it's doing so. There is no general solution — only mitigations (RAG, output validation, human review).
-

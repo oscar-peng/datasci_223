@@ -665,6 +665,9 @@ def validated_llm_call(prompt: str, required_fields: list[str]) -> dict:
 
 # Common Failure Modes
 
+!!! warning
+    If you don't know how to do something yourself, you won't know if an LLM is doing it well. LLMs amplify expertise — they don't replace it.
+
 Understanding how LLMs fail helps you design better systems and set appropriate expectations. [Fighting With AI](https://www.fightingwithai.com/) is a practical guide that covers these patterns in depth — context collapse, false confidence, spiraling, and more — with actionable mitigation strategies.
 
 ## Hallucinations

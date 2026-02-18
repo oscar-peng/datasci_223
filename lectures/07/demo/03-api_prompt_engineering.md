@@ -1,772 +1,500 @@
-# Demo 3: API Usage and Prompt Engineering for Health Data
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+      jupytext_version: 1.17.1
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
 
-This demo explores how to effectively use language model APIs for healthcare applications, focusing on prompt engineering techniques to improve reliability and reduce hallucination.
+# Demo 3: LLM API & Prompt Engineering
 
-## Key Concepts
-- Zero-shot, one-shot, and few-shot learning
-- Schema-based prompting
-- Chain-of-thought reasoning
-- Error handling and validation
-- Healthcare-specific considerations
-
-The demo is designed to help health data science students understand how to:
-1. Structure prompts for reliable medical text processing
-2. Extract structured information from clinical notes
-3. Generate medical reports and diagnoses
-4. Handle errors and validate outputs
+Calling an LLM via API: send a prompt, get structured results back. The techniques here apply directly to the assignment's `extractor.py`.
 
 ## Setup
 
-First, we'll set up our environment and import necessary libraries. This includes:
-1. Installing required packages
-2. Setting up environment variables
-3. Importing the OpenAI client
+```python
+%pip install -q openai python-dotenv matplotlib numpy
+```
 
 ```python
-# Install required packages
-%pip install -q openai python-dotenv pandas numpy matplotlib seaborn
-
-%reset -f
-
-# Import packages
 import os
 import json
-from typing import List, Dict, Any
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from dotenv import load_dotenv
 from openai import OpenAI
+
+load_dotenv()
+
+# OpenRouter is an aggregator — same openai SDK, different base_url
+if os.environ.get("OPENROUTER_API_KEY"):
+    client = OpenAI(
+        api_key=os.environ["OPENROUTER_API_KEY"],
+        base_url="https://openrouter.ai/api/v1",
+    )
+    MODEL = "openai/gpt-4o-mini"
+    print("Using OpenRouter")
+elif os.environ.get("OPENAI_API_KEY"):
+    client = OpenAI()
+    MODEL = "gpt-4o-mini"
+    print("Using OpenAI directly")
+else:
+    raise ValueError("Set OPENROUTER_API_KEY or OPENAI_API_KEY in a .env file")
 ```
 
-## Getting Your API Key
-
-To use the OpenAI API, you'll need an API key. This is a security measure to:
-1. Track usage and billing
-2. Apply rate limits
-3. Monitor for abuse
-4. Ensure responsible AI usage
-
-For educational purposes, we'll use a smaller, more cost-effective model.
-
-To use the OpenAI API, you'll need an API key:
-
-1. Go to [platform.openai.com](https://platform.openai.com)
-2. Sign up or log in to your account
-3. Navigate to "API Keys" in the left sidebar
-4. Click "Create new secret key"
-5. Copy your API key and store it securely
-
-For this demo, you can create a `.env` file in your working directory with: `OPENAI_API_KEY=your_api_key_here`
+We'll use the same clinical note throughout so we can compare techniques directly. This is Note 1 from the assignment's `clinical_notes.txt`.
 
 ```python
-# Configure OpenAI API client
-load_dotenv()  # Load API key from .env file
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+note = """Patient is a 58-year-old male presenting with chest pain radiating to the left arm.
+Blood pressure 145/92 mmHg, heart rate 88 bpm. Troponin elevated at 0.8 ng/mL.
+ECG shows ST elevation in leads V1-V4. Patient started on aspirin 325mg and
+heparin drip. Diagnosis: Acute ST-elevation myocardial infarction (STEMI)."""
 
-# Set model to use
-MODEL_NAME = "gpt-4o-mini"  # Using a smaller, more cost-effective model
-print(f"Using model: {MODEL_NAME}")
+print(note)
 ```
 
-## Zero-Shot Learning
-
-Zero-shot learning allows the model to perform tasks without any examples. This is useful when:
-1. You don't have labeled examples
-2. The task is relatively simple
-3. You need quick results
-
-In healthcare, zero-shot learning can be used for:
-- Basic text classification
-- Simple information extraction
-- Initial screening of medical text
-
-However, it may be less reliable for complex medical tasks.
+A reusable helper for calling the LLM. This matches the `call_llm` function already provided in the assignment's `extractor.py`.
 
 ```python
-def classify_medical_text(text: str, categories: List[str]) -> Dict[str, Any]:
-    """
-    Classify medical text into predefined categories using zero-shot learning.
-    """
-    prompt = f"""Classify the following medical text into one of these categories: {', '.join(categories)}.
-    
-Text: {text}
+def call_llm(prompt, system="You are a medical information extraction assistant.", temperature=0):
+    """Send a prompt to the LLM and return the response text."""
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=temperature,
+        max_tokens=500,
+    )
+    return response.choices[0].message.content
+```
 
-Provide the classification in JSON format with the following structure:
+## Zero-Shot Prompting
+
+Zero-shot: describe the task with no examples. Start here; add complexity only if needed.
+
+```python
+zero_shot_prompt = f"""Extract the primary diagnosis from this clinical note.
+
+Clinical Note:
+{note}
+
+Diagnosis:"""
+
+response = call_llm(zero_shot_prompt)
+print(response)
+```
+
+The model returns free text — a natural language string. That's fine for a human reader, but what if you need to store this in a database, validate it against a codebook, or feed it into another program? You'd have to parse the text with regex or string matching, which is fragile and error-prone.
+
+This is the core tension of this demo: **unstructured output** (free text) vs **structured output** (JSON). We'll try several prompting techniques and compare them at the end.
+
+## Few-Shot Prompting
+
+Few-shot provides examples before the actual input. The model infers the pattern from examples rather than instructions alone.
+
+```python
+one_shot_prompt = f"""Extract the primary diagnosis from clinical notes.
+
+Example:
+Note: "65-year-old female with polyuria, polydipsia, fasting glucose 285 mg/dL, HbA1c 9.2%."
+Diagnosis: Type 2 Diabetes Mellitus (poorly controlled)
+
+Now extract the diagnosis:
+Note: "{note}"
+Diagnosis:"""
+
+response = call_llm(one_shot_prompt)
+print(response)
+```
+
+```python
+two_shot_prompt = f"""Extract the primary diagnosis from clinical notes.
+
+Example 1:
+Note: "65-year-old female with polyuria, polydipsia, fasting glucose 285 mg/dL, HbA1c 9.2%."
+Diagnosis: Type 2 Diabetes Mellitus (poorly controlled)
+
+Example 2:
+Note: "42-year-old male with productive cough, fever to 101.5F, right lower lobe infiltrate on X-ray."
+Diagnosis: Community-acquired pneumonia
+
+Now extract the diagnosis:
+Note: "{note}"
+Diagnosis:"""
+
+response = call_llm(two_shot_prompt)
+print(response)
+```
+
+Few-shot tends to produce more consistent formatting because the model mirrors the style of the examples.
+
+## Structured Outputs (JSON Extraction)
+
+Free-text responses are hard to use downstream. If you want to write results to a database, pass them to another function, or validate them, you need a **schema** — a contract specifying field names, types, and structure.
+
+The standard approach: put the schema directly in the prompt and tell the model to return _only_ JSON. This is the single most practical technique in this demo — it turns an LLM from a text generator into a data extraction tool.
+
+Note the double braces `{{` / `}}` — Python f-strings use single braces for variable interpolation, so literal braces in JSON must be doubled.
+
+```python
+schema_prompt = f"""Extract structured information from this clinical note.
+Return ONLY a JSON object with exactly these fields:
+
 {{
-    "category": "chosen_category",
-    "confidence": confidence_score,
-    "explanation": "brief explanation"
-}}"""
-
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a medical text classification expert."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # Request JSON response
-            temperature=0.3
-        )
-        
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        print(f"API Error: {e}")
-        return {"error": str(e)}
-
-# Example usage
-categories = ["Diagnosis", "Treatment", "Prognosis", "Medical History"]
-text = "Patient presents with persistent cough and fever for 3 days. Chest X-ray shows right lower lobe infiltrate. Started on azithromycin 500mg daily."
-
-print("Classifying medical text using zero-shot learning...")
-result = classify_medical_text(text, categories)
-print("\nClassification result:")
-print(json.dumps(result, indent=2))
-```
-
-## One-Shot Learning
-
-One-shot learning provides a single example to guide the model. This is useful when:
-1. You need consistent formatting
-2. The task has specific requirements
-3. You want to reduce hallucination
-
-In healthcare, one-shot learning is valuable for:
-- Generating structured medical reports
-- Following specific documentation formats
-- Maintaining consistency in medical records
-
-```python
-def generate_medical_report(patient_data: Dict[str, Any]) -> str:
-    """
-    Generate a medical report using one-shot learning.
-    """
-    example = {
-        "patient_id": "P12345",
-        "age": 45,
-        "symptoms": ["fever", "cough", "fatigue"],
-        "vitals": {"temperature": 38.5, "heart_rate": 95, "blood_pressure": "120/80"},
-        "diagnosis": "Acute bronchitis"
-    }
-    
-    example_report = """MEDICAL REPORT
-Patient ID: P12345
-Age: 45
-
-SYMPTOMS:
-- Fever
-- Cough
-- Fatigue
-
-VITAL SIGNS:
-- Temperature: 38.5°C
-- Heart Rate: 95 bpm
-- Blood Pressure: 120/80 mmHg
-
-DIAGNOSIS:
-Acute bronchitis
-
-RECOMMENDATIONS:
-1. Rest and adequate hydration
-2. Over-the-counter antipyretics for fever
-3. Follow-up in 1 week if symptoms persist"""
-
-    prompt = f"""Generate a medical report following this exact format:
-
-{example_report}
-
-Now generate a report for this patient data:
-{json.dumps(patient_data, indent=2)}"""
-
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a medical report generation expert."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        return f"Error generating report: {str(e)}"
-
-# Example usage
-patient_data = {
-    "patient_id": "P67890",
-    "age": 62,
-    "symptoms": ["chest pain", "shortness of breath", "sweating"],
-    "vitals": {"temperature": 37.2, "heart_rate": 110, "blood_pressure": "145/90"},
-    "diagnosis": "Suspected angina"
-}
-
-print("Generating medical report using one-shot learning...")
-report = generate_medical_report(patient_data)
-print("\nGenerated report:")
-print(report)
-```
-
-## Few-Shot Learning
-
-Few-shot learning provides multiple examples to help the model understand patterns. This is useful when:
-1. The task is complex
-2. You need high accuracy
-3. You want to capture nuanced relationships
-
-In healthcare, few-shot learning is valuable for:
-- Medical coding
-- Complex diagnosis
-- Treatment planning
-- Risk assessment
-
-```python
-def assign_icd_codes(clinical_note: str, num_examples: int = 3) -> List[Dict[str, Any]]:
-    """
-    Assign ICD-10 codes to a clinical note using few-shot learning.
-    """
-    examples = [
-        {
-            "note": "Patient presents with type 2 diabetes mellitus, uncontrolled. HbA1c 9.2%. Also reports diabetic retinopathy.",
-            "codes": [
-                {"code": "E11.9", "description": "Type 2 diabetes mellitus without complications"},
-                {"code": "E11.3", "description": "Type 2 diabetes mellitus with ophthalmic complications"}
-            ]
-        },
-        {
-            "note": "Acute appendicitis with localized peritonitis. Patient taken to OR for appendectomy.",
-            "codes": [
-                {"code": "K35.2", "description": "Acute appendicitis with localized peritonitis"},
-                {"code": "47.01", "description": "Laparoscopic appendectomy"}
-            ]
-        },
-        {
-            "note": "Hypertensive heart disease with heart failure. Patient on ACE inhibitor and diuretic.",
-            "codes": [
-                {"code": "I11.0", "description": "Hypertensive heart disease with heart failure"},
-                {"code": "I50.9", "description": "Heart failure, unspecified"}
-            ]
-        }
-    ]
-    
-    # Select examples
-    selected_examples = examples[:num_examples]
-    
-    prompt = f"""Assign ICD-10 codes to the following clinical notes. Here are some examples:
-
-{json.dumps(selected_examples, indent=2)}
-
-Now assign codes to this note:
-{clinical_note}
-
-Provide the codes in JSON format with the following structure:
-[
-    {{
-        "code": "ICD-10 code",
-        "description": "code description"
-    }}
-]"""
-
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a medical coding expert."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # Request JSON response
-            temperature=0.3
-        )
-        
-        # The response will be a JSON object with a single property containing the array
-        result = json.loads(response.choices[0].message.content)
-        
-        # If the result is a dictionary with a single key containing an array, extract the array
-        if isinstance(result, dict) and len(result) == 1 and isinstance(list(result.values())[0], list):
-            return list(result.values())[0]
-        
-        # If the result is already an array, return it
-        if isinstance(result, list):
-            return result
-            
-        # Otherwise, wrap the result in an array
-        return [{"codes": result}]
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        return [{"error": str(e)}]
-
-# Example usage
-note = "Patient with chronic obstructive pulmonary disease, severe. Presents with acute exacerbation. Started on prednisone and antibiotics."
-print("Assigning ICD-10 codes using few-shot learning...")
-codes = assign_icd_codes(note)
-print("\nAssigned codes:")
-print(json.dumps(codes, indent=2))
-```
-
-## Comparing Effectiveness of Shot Learning Approaches
-
-This section demonstrates how different shot learning approaches affect model performance. We'll compare:
-1. Zero-shot: No examples provided
-2. One-shot: Single example provided
-3. Few-shot: Multiple examples provided
-
-This helps us understand:
-- When to use each approach
-- The trade-offs between approaches
-- How to optimize for different healthcare tasks
-
-```python
-# Helper functions for processing API responses
-def get_confidence(result: Dict[str, Any]) -> float:
-    """Extract confidence score from API response."""
-    if "error" in result:
-        return 0.0
-    if isinstance(result.get("diagnosis"), dict):
-        return result["diagnosis"].get("confidence", 0.0)
-    return result.get("confidence", 0.0)
-
-def get_diagnosis(result: Dict[str, Any]) -> str:
-    """Extract diagnosis from API response."""
-    if "error" in result:
-        return "Error"
-    if isinstance(result.get("diagnosis"), dict):
-        return result["diagnosis"].get("diagnosis", "Unknown")
-    return result.get("diagnosis", "Unknown")
-
-def get_reasoning_length(result: Dict[str, Any]) -> int:
-    """Get length of reasoning from API response."""
-    if "error" in result:
-        return 0
-    if isinstance(result.get("diagnosis"), dict):
-        return len(result["diagnosis"].get("reasoning", ""))
-    return len(result.get("reasoning", ""))
-
-def diagnose_with_shot_learning(clinical_case: str, approach: str) -> Dict[str, Any]:
-    """
-    Diagnose a clinical case using different shot learning approaches.
-    
-    Parameters:
-    - clinical_case: The clinical case to diagnose
-    - approach: One of "zero-shot", "one-shot", or "few-shot"
-    """
-    if approach == "zero-shot":
-        # Zero-shot approach: No examples provided
-        prompt = f"""Diagnose the following clinical case:
-
-Clinical case: {clinical_case}
-
-Provide your diagnosis in JSON format with the following structure:
-{{
-    "diagnosis": "your diagnosis",
-    "confidence": confidence_score (between 0 and 1),
-    "reasoning": "brief explanation of your reasoning"
+  "diagnosis": "<primary diagnosis as a string>",
+  "medications": ["<list of medications mentioned>"],
+  "lab_values": {{"<test name>": "<value with units>"}},
+  "confidence": <float 0.0 to 1.0>
 }}
 
-Note: For zero-shot learning, be conservative with confidence scores since no examples are provided."""
+Clinical Note:
+{note}"""
 
-        system_role = "You are a medical diagnostician. Be conservative with confidence scores when no examples are provided."
-        
-    elif approach == "one-shot":
-        # One-shot approach: One example provided
-        example_case = """Patient presents with fever (39°C), productive cough with yellow sputum for 5 days, and shortness of breath. Physical exam reveals crackles in the left lower lobe. WBC is 14,000. Chest X-ray shows left lower lobe consolidation."""
-        
-        example_diagnosis = {
-            "diagnosis": "Community-acquired pneumonia",
-            "confidence": 0.92,
-            "reasoning": "The combination of fever, productive cough, elevated WBC, and radiographic evidence of consolidation is highly suggestive of bacterial pneumonia."
-        }
-        
-        prompt = f"""Diagnose the following clinical case based on the example:
-
-Example case: {example_case}
-
-Example diagnosis:
-{json.dumps(example_diagnosis, indent=2)}
-
-Now diagnose this case:
-{clinical_case}
-
-Provide your diagnosis in the same JSON format as the example.
-Note: Adjust confidence based on how closely the case matches the example pattern."""
-
-        system_role = "You are a medical diagnostician. Adjust confidence based on pattern matching with the example."
-        
-    elif approach == "few-shot":
-        # Few-shot approach: Multiple examples provided
-        examples = [
-            {
-                "case": "Patient presents with fever (39°C), productive cough with yellow sputum for 5 days, and shortness of breath. Physical exam reveals crackles in the left lower lobe. WBC is 14,000. Chest X-ray shows left lower lobe consolidation.",
-                "diagnosis": {
-                    "diagnosis": "Community-acquired pneumonia",
-                    "confidence": 0.95,
-                    "reasoning": "The combination of fever, productive cough, elevated WBC, and radiographic evidence of consolidation is highly suggestive of bacterial pneumonia."
-                }
-            },
-            {
-                "case": "Patient presents with sudden onset chest pain that radiates to the left arm, associated with nausea and diaphoresis. ECG shows ST elevation in leads II, III, and aVF. Troponin is elevated.",
-                "diagnosis": {
-                    "diagnosis": "Acute inferior myocardial infarction",
-                    "confidence": 0.98,
-                    "reasoning": "The clinical presentation, ECG findings, and elevated troponin are diagnostic of an acute MI involving the inferior wall of the heart."
-                }
-            },
-            {
-                "case": "Patient presents with right upper quadrant pain, fever, and jaundice. Labs show elevated WBC, total bilirubin, and alkaline phosphatase. Ultrasound shows gallstones and dilated common bile duct.",
-                "diagnosis": {
-                    "diagnosis": "Acute cholangitis",
-                    "confidence": 0.93,
-                    "reasoning": "The triad of RUQ pain, fever, and jaundice (Charcot's triad) along with imaging findings of biliary obstruction are consistent with acute cholangitis."
-                }
-            }
-        ]
-        
-        prompt = f"""Diagnose the following clinical case based on these examples:
-
-Examples:
-{json.dumps(examples, indent=2)}
-
-Now diagnose this case:
-{clinical_case}
-
-Provide your diagnosis in the same JSON format as the examples.
-Note: Use higher confidence scores when the case closely matches multiple examples, and lower scores when there are significant differences."""
-
-        system_role = "You are a medical diagnostician with expertise in pattern recognition. Use higher confidence scores when the case closely matches multiple examples."
-    
-    else:
-        raise ValueError(f"Unknown approach: {approach}. Must be one of 'zero-shot', 'one-shot', or 'few-shot'.")
-    
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": system_role},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # Request JSON response
-            temperature=0.3
-        )
-        
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        return {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
-
-# Example clinical case
-clinical_case = "Patient presents with persistent cough and fever for 3 days. Chest X-ray shows right lower lobe infiltrate. Started on azithromycin 500mg daily."
-
-print("Making API calls to compare different shot learning approaches...")
-print("\nZero-Shot Learning:")
-try:
-    zero_shot_result = diagnose_with_shot_learning(clinical_case, "zero-shot")
-    print("API Response:")
-    print(json.dumps(zero_shot_result, indent=2))
-except Exception as e:
-    print(f"Error in zero-shot API call: {str(e)}")
-    zero_shot_result = {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
-
-print("\nOne-Shot Learning:")
-try:
-    one_shot_result = diagnose_with_shot_learning(clinical_case, "one-shot")
-    print("API Response:")
-    print(json.dumps(one_shot_result, indent=2))
-except Exception as e:
-    print(f"Error in one-shot API call: {str(e)}")
-    one_shot_result = {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
-
-print("\nFew-Shot Learning:")
-try:
-    few_shot_result = diagnose_with_shot_learning(clinical_case, "few-shot")
-    print("API Response:")
-    print(json.dumps(few_shot_result, indent=2))
-except Exception as e:
-    print(f"Error in few-shot API call: {str(e)}")
-    few_shot_result = {"error": str(e), "diagnosis": "Error", "confidence": 0, "reasoning": ""}
-
-# Print raw results for debugging
-print("\nRaw confidence scores from API responses:")
-for approach, result in [("Zero-Shot", zero_shot_result), ("One-Shot", one_shot_result), ("Few-Shot", few_shot_result)]:
-    confidence = get_confidence(result)
-    print(f"{approach}: {confidence}")
-
-# Visualize confidence scores
-approaches = ["Zero-Shot", "One-Shot", "Few-Shot"]
-confidence_scores = [
-    get_confidence(zero_shot_result),
-    get_confidence(one_shot_result),
-    get_confidence(few_shot_result)
-]
-
-plt.figure(figsize=(10, 6))
-bars = plt.bar(approaches, confidence_scores, color=['lightblue', 'lightgreen', 'coral'])
-plt.ylim(0, 1.0)
-plt.ylabel('Confidence Score')
-plt.title('Comparison of Confidence Scores Across Learning Approaches')
-
-# Add the values on top of the bars
-for bar in bars:
-    height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width()/2., height + 0.02,
-             f'{height:.2f}', ha='center', va='bottom')
-
-plt.tight_layout()
-plt.show()
-
-# Create a comparison table
-comparison_data = {
-    'Approach': approaches,
-    'Diagnosis': [
-        get_diagnosis(zero_shot_result),
-        get_diagnosis(one_shot_result),
-        get_diagnosis(few_shot_result)
-    ],
-    'Confidence': confidence_scores,
-    'Detail Level': ['Low', 'Medium', 'High'],
-    'Reasoning Length': [
-        get_reasoning_length(zero_shot_result),
-        get_reasoning_length(one_shot_result),
-        get_reasoning_length(few_shot_result)
-    ]
-}
-
-comparison_df = pd.DataFrame(comparison_data)
-print("\nComparison Table:")
-print(comparison_df)
+response = call_llm(schema_prompt)
+print(response)
 ```
 
-## Schema-Based Prompting
-
-Schema-based prompting is a powerful technique for extracting structured information from unstructured medical text. This is useful for:
-1. Converting clinical notes to structured data
-2. Extracting specific medical entities
-3. Standardizing medical information
-
-The schema defines the expected structure of the output, helping to:
-- Ensure consistency
-- Reduce hallucination
-- Improve reliability
+The response is usually valid JSON, but LLMs sometimes wrap it in markdown code fences or add commentary. We need a parser that handles all three cases.
 
 ```python
-def extract_structured_data(text: str, schema: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Extract structured data from medical text using schema-based prompting.
-    """
-    prompt = f"""Extract information from the following medical text according to this schema:
-{json.dumps(schema, indent=2)}
-
-Text: {text}
-
-Provide the extracted data in JSON format matching the schema exactly.
-If a field is not found in the text, use null as the value."""
-
+def parse_json_response(text):
+    """Extract JSON from an LLM response, handling markdown code fences."""
+    # Strategy 1: direct parse
     try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a medical information extraction expert."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # Request JSON response
-            temperature=0.3
-        )
-        
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        return {"error": str(e)}
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
 
-# Example usage
-schema = {
-    "patient_demographics": {
-        "age": "number",
-        "gender": "string",
-        "race": "string"
-    },
-    "vital_signs": {
-        "temperature": "number",
-        "heart_rate": "number",
-        "blood_pressure": "string",
-        "oxygen_saturation": "number"
-    },
-    "medications": {
-        "current_meds": ["string"],
-        "allergies": ["string"]
-    }
-}
+    # Strategy 2: strip markdown code fences
+    if "```" in text:
+        start = text.find("```")
+        end = text.rfind("```")
+        if start != end:
+            block = text[start:end]
+            lines = block.split("\n")
+            # Drop the opening ``` line (may include language label like ```json)
+            block = "\n".join(lines[1:])
+            try:
+                return json.loads(block)
+            except json.JSONDecodeError:
+                pass
 
-text = """45-year-old African American male presents to ED. 
-Vitals: T 38.2, HR 110, BP 145/90, O2 sat 96% on room air.
-Current medications: Lisinopril 10mg daily, Metformin 1000mg BID.
-Allergies: Penicillin, Sulfa drugs."""
+    # Strategy 3: find outermost { ... }
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start >= 0 and end > start:
+        try:
+            return json.loads(text[start:end])
+        except json.JSONDecodeError:
+            pass
 
-print("Extracting structured data using schema-based prompting...")
-structured_data = extract_structured_data(text, schema)
-print("\nExtracted data:")
-print(json.dumps(structured_data, indent=2))
+    return None
+
+
+parsed = parse_json_response(response)
+if parsed:
+    print(json.dumps(parsed, indent=2))
+else:
+    print("Could not parse JSON. Raw response:")
+    print(response)
 ```
+
+Now validate that the parsed result has the fields we asked for.
+
+```python
+def validate_response(response):
+    """Check that the response has all required fields."""
+    if not isinstance(response, dict):
+        return False
+    required = {"diagnosis", "medications", "lab_values", "confidence"}
+    return required.issubset(response.keys())
+
+
+if parsed:
+    print(f"Valid: {validate_response(parsed)}")
+    print(f"Diagnosis:   {parsed.get('diagnosis')}")
+    print(f"Medications: {parsed.get('medications')}")
+    print(f"Lab values:  {parsed.get('lab_values')}")
+    print(f"Confidence:  {parsed.get('confidence')}")
+```
+
+## Few-Shot + JSON
+
+When zero-shot JSON extraction produces inconsistent schemas (wrong field names, missing fields), adding a complete JSON example anchors the format.
+
+```python
+few_shot_json_prompt = f"""Extract structured information from clinical notes. Return JSON only.
+
+Example:
+Note: "65-year-old female with polyuria, polydipsia. Fasting glucose 285 mg/dL, HbA1c 9.2%.
+Taking metformin 1000mg BID and lisinopril 10mg daily."
+
+Output:
+{{
+  "diagnosis": "Type 2 Diabetes Mellitus (poorly controlled)",
+  "medications": ["metformin 1000mg BID", "lisinopril 10mg daily"],
+  "lab_values": {{"fasting_glucose": "285 mg/dL", "HbA1c": "9.2%"}},
+  "confidence": 0.95
+}}
+
+Now extract from this note:
+Note: "{note}"
+
+Output:"""
+
+response = call_llm(few_shot_json_prompt)
+parsed_few = parse_json_response(response)
+print(json.dumps(parsed_few, indent=2) if parsed_few else response)
+```
+
+The example anchors field names, value formats (units in lab values, full dosing in medications). This is the pattern the assignment's `build_prompt(few_shot=True)` should implement.
 
 ## Chain-of-Thought Prompting
 
-Chain-of-thought prompting guides the model through a step-by-step reasoning process. This is valuable for:
-1. Complex medical diagnosis
-2. Treatment planning
-3. Risk assessment
-4. Clinical decision support
+Chain-of-thought (CoT) asks the model to reason step by step before producing the answer. By "thinking out loud," the model is less likely to skip details or make errors on complex cases. The tradeoff: more output tokens (slower, costs more), but often higher accuracy and — critically — **visible reasoning** you can audit.
 
-The step-by-step approach helps to:
-- Make the reasoning process transparent
-- Reduce errors
-- Build trust with healthcare professionals
+For clinical extraction, CoT is especially useful when the note is ambiguous (e.g., multiple possible diagnoses, unclear medication dosing).
 
 ```python
-def analyze_medical_case(case: str) -> Dict[str, Any]:
-    """
-    Analyze a medical case using chain-of-thought prompting.
-    """
-    prompt = f"""Analyze this medical case step by step:
+cot_prompt = f"""Extract structured data from the clinical note below.
 
-{case}
+First, reason through the key elements step by step:
+1. What is the primary diagnosis?
+2. What medications are mentioned (include dose and frequency if given)?
+3. What lab values are reported (include units)?
+4. How confident are you in this extraction (0.0-1.0)?
 
-Follow these steps:
-1. List the key symptoms and findings
-2. Identify potential differential diagnoses
-3. Explain your reasoning for each diagnosis
-4. Recommend next steps for diagnosis
-5. Suggest initial treatment approach
-
-Provide your analysis in JSON format with the following structure:
+Then produce the final JSON:
 {{
-    "symptoms": ["list of symptoms"],
-    "findings": ["list of findings"],
-    "differential_diagnoses": [
-        {{
-            "diagnosis": "diagnosis name",
-            "probability": "high/medium/low",
-            "reasoning": "explanation"
-        }}
-    ],
-    "next_steps": ["list of recommended steps"],
-    "treatment": ["list of treatment suggestions"]
-}}"""
+  "diagnosis": "<primary diagnosis>",
+  "medications": ["<list>"],
+  "lab_values": {{"<name>": "<value>"}},
+  "confidence": <float>
+}}
 
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a medical case analysis expert."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # Request JSON response
-            temperature=0.3
-        )
-        
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        return {"error": str(e)}
+Clinical Note:
+{note}"""
 
-# Example usage
-case = """A 35-year-old woman presents with 3 days of right upper quadrant pain, 
-fever to 38.5°C, and nausea. Physical exam shows right upper quadrant tenderness 
-and positive Murphy's sign. WBC is 15,000 with 85% neutrophils. 
-Ultrasound shows gallbladder wall thickening and pericholecystic fluid."""
-
-print("Analyzing medical case using chain-of-thought prompting...")
-analysis = analyze_medical_case(case)
-print("\nAnalysis result:")
-print(json.dumps(analysis, indent=2))
+response = call_llm(cot_prompt)
+print(response)
 ```
-
-## Error Handling and Validation
-
-Error handling and validation are crucial for healthcare applications. This section demonstrates:
-1. How to handle API errors gracefully
-2. How to validate extracted information
-3. How to ensure data quality
-4. How to maintain reliability
-
-This is essential for:
-- Patient safety
-- Clinical reliability
-- System robustness
 
 ```python
-def extract_medical_entities(text: str) -> Dict[str, Any]:
-    """
-    Extract medical entities from text with error handling.
-    """
-    prompt = f"""Extract all medical entities from the following text:
-    
-Text: {text}
-
-Categorize them into:
-- Conditions
-- Medications
-- Procedures
-- Lab tests
-- Vital signs
-
-Return the results in JSON format with the following structure:
-{{
-    "conditions": ["list of conditions"],
-    "medications": ["list of medications"],
-    "procedures": ["list of procedures"],
-    "lab_tests": ["list of lab tests"],
-    "vital_signs": ["list of vital signs"]
-}}"""
-
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a medical NLP expert."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # Request JSON response
-            temperature=0.3
-        )
-        
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        return {"error": str(e)}
-
-# Example usage
-sample_text = "Patient with history of hypertension and type 2 diabetes. Recent CBC shows elevated WBC. Taking lisinopril and metformin."
-print("Extracting medical entities with error handling...")
-entities = extract_medical_entities(sample_text)
-print("\nExtracted entities:")
-print(json.dumps(entities, indent=2))
+parsed_cot = parse_json_response(response)
+if parsed_cot:
+    print("\nExtracted JSON:")
+    print(json.dumps(parsed_cot, indent=2))
 ```
 
-## Key Takeaways
+The reasoning is visible (useful for debugging) and the same `parse_json_response` function works — it finds the JSON block at the end regardless of the preceding text.
 
-This demo has covered several important concepts for using language models in healthcare:
+## Comparing Approaches
 
-1. **Prompt Engineering Techniques**
-   - **Zero-shot learning** requires no examples but may produce less specific results. It's ideal for simple, common tasks where examples aren't available.
-   - **One-shot learning** provides a single example that significantly improves output quality with minimal overhead. This approach is very efficient for formatting tasks.
-   - **Few-shot learning** uses multiple examples to help the model recognize patterns, producing more detailed and confident results. Best for complex tasks where accuracy is critical.
-   - **Chain-of-thought prompting** guides the model through step-by-step reasoning, mimicking clinical decision-making processes and ensuring thorough analysis.
-   - **Schema-based prompting** extracts structured information from unstructured text, essential for converting clinical notes into analyzable data.
+We've now seen five prompting techniques on the same clinical note. Let's collect them all and compare: which produced structured output? Which got the right answer? Which extracted the most detail?
 
-2. **Structured Output**
-   - JSON schema for consistent formatting ensures interoperability with other systems
-   - Clear instructions for data extraction improve reliability and completeness
-   - Validation of extracted information prevents propagation of errors
-   - Structured outputs facilitate downstream processing and analysis
+```python
+# Ground truth for the STEMI note
+ground_truth = {
+    "diagnosis": "Acute ST-elevation myocardial infarction (STEMI)",
+    "medications": ["aspirin 325mg", "heparin drip"],
+    "lab_values": {"troponin": "0.8 ng/mL"},
+}
 
-3. **Healthcare-Specific Considerations**
-   - Medical terminology accuracy is critical for clinical applications
-   - Clinical reasoning transparency helps build trust with healthcare professionals
-   - Ethical and privacy concerns must be addressed when handling patient data
-   - Reliability and robustness are essential when systems may impact patient care
+# Collect all results
+all_results = {}
 
-4. **Best Practices**
-   - Clear and specific prompts reduce ambiguity and improve consistency
-   - Appropriate temperature settings balance creativity and determinism
-   - Error handling and validation ensure graceful degradation when issues occur
-   - Documentation of prompt templates facilitates maintenance and knowledge sharing
-   - Testing across diverse cases helps identify edge cases and potential biases
+# Re-run all techniques and store results
+# Zero-shot (unstructured)
+zero_response = call_llm(zero_shot_prompt)
+all_results["Zero-shot"] = {"raw": zero_response, "structured": False, "parsed": None}
+
+# One-shot (unstructured)
+one_response = call_llm(one_shot_prompt)
+all_results["One-shot"] = {"raw": one_response, "structured": False, "parsed": None}
+
+# Two-shot (unstructured)
+two_response = call_llm(two_shot_prompt)
+all_results["Two-shot"] = {"raw": two_response, "structured": False, "parsed": None}
+
+# Schema JSON (structured)
+schema_response = call_llm(schema_prompt)
+schema_parsed = parse_json_response(schema_response)
+all_results["Schema JSON"] = {"raw": schema_response, "structured": True, "parsed": schema_parsed}
+
+# Few-shot JSON (structured)
+fewshot_response = call_llm(few_shot_json_prompt)
+fewshot_parsed = parse_json_response(fewshot_response)
+all_results["Few-shot JSON"] = {"raw": fewshot_response, "structured": True, "parsed": fewshot_parsed}
+
+# Chain-of-thought (structured)
+cot_response = call_llm(cot_prompt)
+cot_parsed = parse_json_response(cot_response)
+all_results["Chain-of-thought"] = {"raw": cot_response, "structured": True, "parsed": cot_parsed}
+
+print(f"Collected {len(all_results)} results")
+```
+
+### Correctness Evaluation
+
+For structured outputs, we can programmatically check whether the extracted fields match the ground truth. This is the advantage — structured outputs are machine-checkable.
+
+```python
+def evaluate_extraction(parsed, ground_truth):
+    """Score an extraction against ground truth. Returns a dict of field scores."""
+    if not parsed:
+        return {"diagnosis": False, "medications": False, "lab_values": False, "valid_json": False}
+
+    scores = {"valid_json": True}
+
+    # Diagnosis: check if ground truth diagnosis appears in extracted diagnosis
+    diag = parsed.get("diagnosis", "")
+    scores["diagnosis"] = "stemi" in diag.lower() or "st-elevation" in diag.lower()
+
+    # Medications: check each ground truth med appears somewhere in the extracted list
+    extracted_meds = [m.lower() for m in parsed.get("medications", [])]
+    meds_text = " ".join(extracted_meds)
+    scores["medications"] = "aspirin" in meds_text and "heparin" in meds_text
+
+    # Lab values: check troponin is present
+    labs = parsed.get("lab_values", {})
+    labs_text = json.dumps(labs).lower()
+    scores["lab_values"] = "troponin" in labs_text or "0.8" in labs_text
+
+    return scores
+
+
+# Evaluate structured methods
+print(f"{'Method':<20} {'Valid JSON':<12} {'Diagnosis':<12} {'Medications':<14} {'Lab Values':<12}")
+print("-" * 70)
+
+for name, result in all_results.items():
+    if result["structured"]:
+        scores = evaluate_extraction(result["parsed"], ground_truth)
+        row = f"{name:<20}"
+        for field in ["valid_json", "diagnosis", "medications", "lab_values"]:
+            check = "Y" if scores[field] else "N"
+            row += f" {check:<13}"
+        print(row)
+    else:
+        print(f"{name:<20} {'(free text)':<12} {'--':<12} {'--':<14} {'--':<12}")
+```
+
+### Side-by-Side Comparison
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Left: structured vs unstructured output type
+methods = list(all_results.keys())
+is_structured = [all_results[m]["structured"] for m in methods]
+colors = ['#2ecc71' if s else '#e74c3c' for s in is_structured]
+
+axes[0].barh(methods, [1] * len(methods), color=colors)
+axes[0].set_xlim(0, 1.2)
+axes[0].set_xticks([])
+axes[0].set_title('Output Type')
+for i, (m, s) in enumerate(zip(methods, is_structured)):
+    axes[0].text(0.5, i, 'Structured (JSON)' if s else 'Unstructured (text)',
+                 ha='center', va='center', fontweight='bold', color='white')
+
+# Right: correctness scores for structured methods
+structured_methods = [m for m in methods if all_results[m]["structured"]]
+fields = ["diagnosis", "medications", "lab_values"]
+field_labels = ["Diagnosis", "Medications", "Lab Values"]
+
+score_matrix = []
+for m in structured_methods:
+    scores = evaluate_extraction(all_results[m]["parsed"], ground_truth)
+    score_matrix.append([scores[f] for f in fields])
+
+score_array = np.array(score_matrix, dtype=float)
+im = axes[1].imshow(score_array, cmap='RdYlGn', vmin=0, vmax=1, aspect='auto')
+axes[1].set_xticks(range(len(field_labels)))
+axes[1].set_xticklabels(field_labels)
+axes[1].set_yticks(range(len(structured_methods)))
+axes[1].set_yticklabels(structured_methods)
+axes[1].set_title('Extraction Correctness')
+
+for i in range(len(structured_methods)):
+    for j in range(len(fields)):
+        axes[1].text(j, i, 'Y' if score_array[i, j] else 'N',
+                     ha='center', va='center', fontweight='bold', fontsize=14)
+
+plt.tight_layout()
+plt.show()
+```
+
+The key takeaway: all three structured methods extract the correct information, but they differ in what _extra_ detail they provide. Few-shot JSON tends to mirror the example's field structure, while Chain-of-thought produces explicit reasoning you can audit. For the assignment, any of the three structured approaches will work — pick the one that feels clearest.
+
+## Batch Extraction (Assignment Preview)
+
+The assignment asks you to run extraction on all four notes in `clinical_notes.txt`. Here's the end-to-end workflow.
+
+```python
+def load_notes(filepath):
+    """Load notes from the assignment's clinical_notes.txt format."""
+    with open(filepath) as f:
+        content = f.read()
+    sections = content.split("## Note")
+    return [s.split("\n", 1)[1].strip() for s in sections[1:] if s.strip()]
+
+
+# Find the notes file (works from demo/ or repo root)
+candidates = [
+    "../assignment/clinical_notes.txt",
+    "lectures/07/assignment/clinical_notes.txt",
+]
+notes_path = next((p for p in candidates if os.path.exists(p)), None)
+
+if notes_path:
+    notes = load_notes(notes_path)
+    print(f"Loaded {len(notes)} notes")
+    for i, n in enumerate(notes, 1):
+        print(f"\n--- Note {i} ---\n{n[:80]}...")
+else:
+    print("clinical_notes.txt not found. Run from lectures/07/demo/ or repo root.")
+```
+
+```python
+if notes_path:
+    results = []
+    for i, note_text in enumerate(notes, 1):
+        print(f"\nProcessing Note {i}...")
+        prompt = f"""Extract structured information from clinical notes. Return JSON only.
+
+Example:
+Note: "65-year-old female with polyuria, polydipsia. Fasting glucose 285 mg/dL, HbA1c 9.2%.
+Taking metformin 1000mg BID and lisinopril 10mg daily."
+
+Output:
+{{
+  "diagnosis": "Type 2 Diabetes Mellitus (poorly controlled)",
+  "medications": ["metformin 1000mg BID", "lisinopril 10mg daily"],
+  "lab_values": {{"fasting_glucose": "285 mg/dL", "HbA1c": "9.2%"}},
+  "confidence": 0.95
+}}
+
+Now extract from this note:
+Note: "{note_text}"
+
+Output:"""
+        response = call_llm(prompt)
+        parsed = parse_json_response(response)
+        if parsed and validate_response(parsed):
+            results.append({"note_id": i, **parsed})
+            print(f"  Diagnosis: {parsed['diagnosis']}")
+            print(f"  Confidence: {parsed['confidence']}")
+        else:
+            print(f"  Extraction failed. Raw: {response[:100]}")
+
+    print(f"\n{len(results)}/{len(notes)} notes extracted successfully")
+```
+

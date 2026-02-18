@@ -1,70 +1,70 @@
-# API Prompt Engineering Demo
+# Lecture 07 Demos
 
-This directory contains materials for the API Prompt Engineering demo, focusing on using language model APIs for healthcare applications.
+Three hands-on demos covering GPT internals, embeddings, and LLM API prompt engineering.
 
 ## Files
 
-- `03-api_prompt_engineering.md` - The main demo markdown file
-- `check_api_calls.py` - Script to check API calls in the markdown file
-- `check_json_format.py` - Script to test JSON formatting with the OpenAI API
+| Demo | File | Topic |
+|:---|:---|:---|
+| 1 | `01-microgpt.md` | Build and train a GPT from scratch (microGPT): character-level tokenizer, autograd, multi-head attention, name generation |
+| 2 | `02-embeddings_finetuning.md` | Sentence embeddings, cosine similarity, semantic search; GPT-2 fine-tuning and hallucination demo |
+| 3 | `03-api_prompt_engineering.md` | Zero/one/few-shot prompting, schema-based JSON extraction, chain-of-thought; prepares for the assignment's `extractor.py` |
 
-## Testing the API Calls
+Supporting files:
+- `check_api_calls.py` — extract and test all API calls from Demo 3
+- `check_json_format.py` — quick JSON response validation tests
 
-Before running the full demo, you can use the provided scripts to check if the API calls are working correctly.
+## Setup
 
-### Prerequisites
-
-1. Make sure you have an OpenAI API key
-2. Create a `.env` file in this directory with your API key:
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   ```
-3. Install required packages:
-   ```
-   pip install openai python-dotenv
-   ```
-
-### Option 1: Check JSON Formatting
-
-To quickly check if the OpenAI API returns valid JSON responses:
+### Demo 1: microGPT
 
 ```bash
-python check_json_format.py
+pip install matplotlib seaborn numpy
 ```
 
-This script runs three simple tests to verify that the API returns properly formatted JSON responses.
+No GPU required. The demo downloads a names dataset (~32KB) and trains a small GPT for ~1000 steps on CPU (2-5 minutes). Trained weights are saved to `microgpt_model.json` (~50KB) — set `REBUILD = False` to skip retraining.
 
-### Option 2: Check All API Calls
-
-To check all API calls in the markdown file:
+### Demo 2: Embeddings & Fine-Tuning
 
 ```bash
+pip install sentence-transformers chromadb transformers datasets torch accelerate matplotlib seaborn numpy pandas
+```
+
+No API key required — embedding models and GPT-2 run locally. First run downloads model weights (~500MB for sentence-transformers, ~500MB for GPT-2). GPU (CUDA) and Apple Silicon (MPS) are auto-detected for faster fine-tuning.
+
+### Demo 3: API Prompt Engineering
+
+```bash
+pip install openai python-dotenv
+```
+
+**API key setup** — we use [OpenRouter](https://openrouter.ai) (OpenAI-compatible API, many models):
+
+1. Sign up at [openrouter.ai](https://openrouter.ai)
+2. Create an API key under "Keys"
+3. Create a `.env` file in this directory:
+   ```
+   OPENROUTER_API_KEY=your_key_here
+   ```
+
+The demo uses `openai/gpt-4o-mini` via OpenRouter. OpenAI API keys also work as a fallback (set `OPENAI_API_KEY` instead).
+
+## Converting and Running
+
+```bash
+# Convert all demos to notebooks
+jupytext --to notebook 01-microgpt.md 02-embeddings_finetuning.md 03-api_prompt_engineering.md
+
+# Or convert and execute in one step
+jupytext --to notebook --execute 01-microgpt.md
+```
+
+## Quick Validation (Demo 3)
+
+```bash
+# Test JSON formatting
+python check_json_format.py
+
+# Test all API calls extracted from the demo
 python check_api_calls.py 03-api_prompt_engineering.md
 ```
-
-This script extracts all Python code blocks from the markdown file and tests any that contain API calls.
-
-### Option 3: Convert to Notebook and Execute
-
-To convert the markdown file to a Jupyter notebook and execute it:
-
-```bash
-jupytext --to notebook 03-api_prompt_engineering.md --execute
-```
-
-This will create and execute `03-api_prompt_engineering.ipynb`.
-
-## Troubleshooting
-
-If you encounter JSON parsing errors:
-
-1. Make sure you're using the latest version of the OpenAI Python library
-2. Check that the `response_format={"type": "json_object"}` parameter is included in API calls that expect JSON responses
-3. Verify your API key has the necessary permissions
-4. Check for rate limiting issues if you're making many API calls
-
-## Notes
-
-- The demo uses `gpt-4o-mini` as the model, which is a smaller, more cost-effective model
-- API calls are configured to use a temperature of 0.3 for more consistent responses
-- The scripts handle errors gracefully and provide informative error messages

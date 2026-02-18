@@ -1,3 +1,16 @@
+# XKCD duplicate images across earlier lectures
+
+The following xkcd comics are duplicated across earlier lectures (same file, same name, same content hash). Low priority — fix when revising those lectures.
+
+| Comic | Locations |
+|---|---|
+| `xkcd_machine_learning.png` (`50a207...`) | `lectures/02/media/`, `lectures/04/media/` |
+| `xkcd_classification.png` (`bb7cbf...`) | `lectures/01/media/`, `lectures/05/media/` |
+
+Options: remove the copy from whichever lecture doesn't reference it, or swap one for a different comic.
+
+---
+
 # Dataset Options for Future Lectures
 
 **Lectures 6-8 (Neural Networks / Deep Learning):**

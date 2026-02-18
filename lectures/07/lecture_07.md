@@ -73,6 +73,10 @@ Transformers: More than Meets the Eye
 - **Reasoning models** (2024–): o1/o3, DeepSeek-R1 — chain-of-thought at inference time
 - **Agentic AI** (2025–): models that use tools, write code, and orchestrate multi-step workflows
 
+![](media/llm-tree.jpg)
+
+![](media/llm-model-size.jpg)
+
 # Transformer Architecture
 
 ## The Problem: Processing Everything at Once
@@ -364,6 +368,8 @@ Full fine-tuning updates every weight in the model — expensive and often unnec
 
 In practice, most teams start with prompting, move to head replacement or LoRA if needed, and rarely do full fine-tuning unless they have substantial compute and data.
 
+![](media/xkcd_ai_hiring.png)
+
 ## Hallucination
 
 No general solution. The model confidently generates plausible-sounding text that may be completely wrong.
@@ -373,6 +379,10 @@ Mitigations (none foolproof):
 - **RAG (Retrieval-Augmented Generation)**: ground responses in actual documents (Lecture 8)
 - **Prompt and output design**: structured outputs, schema enforcement, require citations
 - **Human-in-the-loop**: expert review, especially for high-stakes decisions
+
+![](media/xkcd_broken_model.png)
+
+![](media/xkcd_watson_medical.png)
 
 # LIVE DEMO!!
 

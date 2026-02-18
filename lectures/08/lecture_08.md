@@ -792,6 +792,8 @@ Choose tasks that you can meaningfully oversee. Think of LLMs as prolific intern
 
 ![](media/xkcd_hallucinations.png)
 
+![](media/xkcd_tax_ai.png)
+
 ## The Recurring Theme
 
 These are bias machines. They learn from whatever data and labels we give them. Neural networks (and LLMs) absorb whatever biases exist in their training data. If we're lucky, we might guess at the biases we introduce — but not always.

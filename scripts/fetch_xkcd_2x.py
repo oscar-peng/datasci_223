@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Fetch XKCD images via explainxkcd file pages (2x originals when available).
+"""Fetch XKCD images via the xkcd JSON API, preferring 2x versions.
 
 Usage:
-    ./scripts/fetch_xkcd_2x.py [--lecture 02 | --outdir lectures/02/media] <id:Slug[:filename]> [...]
+    ./scripts/fetch_xkcd_2x.py [--lecture 02 | --outdir lectures/02/media] <id[:filename]> [...]
 Example:
-    ./scripts/fetch_xkcd_2x.py --lecture 02 1597:Git 1722:Debugging:xkcd_debugging.png
+    ./scripts/fetch_xkcd_2x.py --lecture 07 1619 2237:xkcd_ai_hiring.png
 
 Flow per comic:
-1) Article page: https://www.explainxkcd.com/wiki/index.php/<num>:_<Slug>
-2) Grab the first image link (/wiki/index.php/File:...)
-3) File page: follow to /wiki/images/... and download the linked file (highest res).
+1) JSON API: https://xkcd.com/<id>/info.0.json → get image URL
+2) Try 2x variant (insert _2x before extension)
+3) Fall back to standard resolution if 2x unavailable
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
-import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -27,81 +27,71 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 def _resolve_target_dir(outdir: Path | None, lecture: str | None) -> Path:
     if outdir is not None:
         return outdir
-
     if lecture is not None:
         return REPO_ROOT / "lectures" / lecture / "media"
-
     return Path.cwd()
 
 
-def fetch(url: str) -> str:
+def _get_comic_info(comic_id: int) -> dict:
+    url = f"https://xkcd.com/{comic_id}/info.0.json"
     with urllib.request.urlopen(url) as resp:  # nosec B310
-        return resp.read().decode("utf-8", errors="ignore")
+        return json.loads(resp.read())
 
 
-def article_to_file_page(article_html: str, article_url: str) -> str:
-    match = re.search(
-        r'href="(/wiki/index.php/File:[^"]+)"[^>]*class="image"', article_html
-    )
-    if not match:
-        raise RuntimeError(f"Could not find file page link on {article_url}")
-    rel = match.group(1)
-    return urllib.parse.urljoin(article_url, rel)
+def _make_2x_url(img_url: str) -> str:
+    stem, ext = img_url.rsplit(".", 1)
+    return f"{stem}_2x.{ext}"
 
 
-def file_page_to_image(file_html: str, file_url: str) -> str:
-    match = re.search(r'<div class="fullMedia"><a href="([^"]+)"', file_html)
-    if not match:
-        raise RuntimeError(f"Could not find fullMedia link on {file_url}")
-    rel = match.group(1)
-    return urllib.parse.urljoin(file_url, rel)
+def _url_exists(url: str) -> bool:
+    req = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(req) as resp:  # nosec B310
+            return resp.status == 200
+    except Exception:
+        return False
 
 
-def download(url: str, dest: Path) -> None:
+def _download(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     with urllib.request.urlopen(url) as resp:  # nosec B310
         data = resp.read()
     dest.write_bytes(data)
-    print(f"Saved {dest} ({len(data)} bytes) from {url}")
+    print(f"  Saved {dest.name} ({len(data):,} bytes)")
 
 
-def parse_comic_specs(specs: list[str]) -> dict[str, tuple[str, str]]:
-    """Allow overrides via args like 1597:Git[:custom_filename]."""
-    parsed: dict[str, tuple[str, str]] = {}
+def _slugify(title: str) -> str:
+    slug = title.lower().strip()
+    slug = re.sub(r"[^a-z0-9]+", "_", slug)
+    return slug.strip("_")
+
+
+def parse_comic_specs(specs: list[str]) -> list[tuple[int, str | None]]:
+    parsed = []
     for spec in specs:
         parts = spec.split(":")
-        if len(parts) < 2:
-            raise ValueError(
-                f"Invalid comic spec '{spec}', expected id:Slug[:filename]"
-            )
-        num, slug, *rest = parts
-        filename = rest[0] if rest else f"xkcd_{slug.lower()}.png"
-        parsed[num] = (slug, filename)
+        comic_id = int(parts[0])
+        filename = parts[1] if len(parts) > 1 else None
+        parsed.append((comic_id, filename))
     return parsed
 
 
 def _parse_cli(argv: list[str]) -> tuple[list[str], Path | None, str | None]:
     parser = argparse.ArgumentParser(
-        description=(
-            "Fetch XKCD images via explainxkcd file pages (prefers 2x originals)."
-        )
+        description="Fetch XKCD images via the JSON API (prefers 2x versions)."
     )
     parser.add_argument(
-        "--outdir",
-        type=Path,
-        default=None,
-        help=(
-            "Output directory for downloaded images. "
-            "Defaults to the current working directory."
-        ),
+        "--outdir", type=Path, default=None,
+        help="Output directory for downloaded images.",
     )
     parser.add_argument(
-        "--lecture",
-        default=None,
-        help=("Two-digit lecture folder (e.g., 02) to write into `lectures/02/media`."),
+        "--lecture", default=None,
+        help="Two-digit lecture folder (e.g., 02) → lectures/02/media.",
     )
-    parser.add_argument("comics", nargs="+", help="Comic specs: id:Slug[:filename]")
-
+    parser.add_argument(
+        "comics", nargs="+",
+        help="Comic specs: id[:filename.png] (title auto-slugified if no filename given)",
+    )
     ns = parser.parse_args(argv)
 
     lecture = ns.lecture
@@ -125,16 +115,24 @@ def main(argv: list[str]) -> None:
             file=sys.stderr,
         )
     else:
-        print(f"Writing images to {target_dir}", file=sys.stderr)
+        print(f"Target: {target_dir}", file=sys.stderr)
 
     comics = parse_comic_specs(specs)
-    for number, (slug, filename) in comics.items():
-        article_url = f"https://www.explainxkcd.com/wiki/index.php/{number}:_{slug}"
-        article_html = fetch(article_url)
-        file_page_url = article_to_file_page(article_html, article_url)
-        file_html = fetch(file_page_url)
-        image_url = file_page_to_image(file_html, file_page_url)
-        download(image_url, target_dir / filename)
+    for comic_id, filename_override in comics:
+        info = _get_comic_info(comic_id)
+        title = info["safe_title"]
+        img_url = info["img"]
+        ext = img_url.rsplit(".", 1)[-1]
+
+        filename = filename_override or f"xkcd_{_slugify(title)}.{ext}"
+
+        url_2x = _make_2x_url(img_url)
+        if _url_exists(url_2x):
+            print(f"#{comic_id} \"{title}\" → 2x")
+            _download(url_2x, target_dir / filename)
+        else:
+            print(f"#{comic_id} \"{title}\" → 1x (no 2x available)")
+            _download(img_url, target_dir / filename)
 
 
 if __name__ == "__main__":

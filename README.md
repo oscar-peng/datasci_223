@@ -2,8 +2,8 @@
 
 > [!INFO] Course Information
 > - **Instructor:** Christopher Seaman
-> - **EA's:** Samantha Chan <Samantha.Chan2@ucsf.edu> & Eric Yang <Eric.Yang2@ucsf.edu>
-> - **Dates:** January 15th - March 19th, 2026 _(11 class meetings)_
+> - **EA's:** Samantha Chan & Eric Yang
+> - **Dates:** January 15th - March 11th, 2026 _(10 class meetings)_
 > - **Lecture:** Wednesday, 1:00 PM - 3:00 PM, Mission Hall 1407
 > - **Lab:** Wednesday, 3:00 PM - 4:30 PM, Mission Hall 1407
 > - **GitHub:** [https://github.com/christopherseaman/datasci_223](https://github.com/christopherseaman/datasci_223)

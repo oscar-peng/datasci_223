@@ -55,6 +55,8 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 print(f"Embedding dimension: {model.get_sentence_embedding_dimension()}")
 ```
 
+You'll see two harmless warnings here: an **unauthenticated HF Hub** notice (we're downloading a public model, no login needed) and a **BertModel LOAD REPORT** flagging `embeddings.position_ids` as UNEXPECTED. The `position_ids` tensor was removed in newer model versions but still exists in the checkpoint — it's safely ignored on load.
+
 ### Embed Patient Summaries
 
 We'll embed all 500 summaries, then visualize similarity across a diverse subset.
@@ -201,6 +203,11 @@ else:
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token
 base_model = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
+
+# The GPT-2 checkpoint predates the loss_type config field added in newer transformers.
+# Setting it explicitly tells the Trainer to use ForCausalLMLoss (standard next-token
+# prediction loss) instead of falling back with a warning.
+base_model.loss_type = "ForCausalLM"
 
 print(f"Model parameters: {sum(p.numel() for p in base_model.parameters()):,}")
 print(f"Vocabulary size: {tokenizer.vocab_size}")

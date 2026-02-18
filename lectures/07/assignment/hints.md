@@ -26,11 +26,6 @@
 
 ## Part 2: Semantic Search
 
-### `load_notes`
-- `content.split("## Note")` gives you chunks; the first chunk is the file header (skip it)
-- Each remaining chunk starts with a number and newline — strip those off
-- Filter out empty strings after stripping
-
 ### `embed_notes`
 - `SentenceTransformer("all-MiniLM-L6-v2")` — first run downloads the model (~80MB)
 - `model.encode(notes)` returns a numpy array directly
@@ -39,10 +34,6 @@
 - You need to embed the query with the same model: `model.encode([query])`
 - `cosine_similarity(query_embedding, embeddings)` returns a 2D array — take `[0]` for the 1D scores
 - Use `sorted()` or `np.argsort()` to rank by score
-
-### `save_results`
-- `json.dump(results, f, indent=2)` writes formatted JSON
-- Make sure float scores are JSON-serializable (use `float(score)` if they're numpy floats)
 
 ## Common Issues
 

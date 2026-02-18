@@ -353,6 +353,17 @@ trainer = Trainer(model=model, args=training_args, train_dataset=dataset)
 trainer.train()
 ```
 
+### Making Fine-Tuning Practical
+
+Full fine-tuning updates every weight in the model — expensive and often unnecessary. Several strategies reduce cost and tailor the model to your domain:
+
+- **Layer freezing**: Lock early layers (which learn general language features) and only train the later, task-specific layers. Fewer trainable parameters means faster training, less memory, and lower overfitting risk on small datasets.
+- **Head replacement**: Remove the final layers (closest to the output) from a pre-trained model and replace them with fresh layers trained on your domain data. The frozen base acts as a feature extractor — it already "understands" language — while the new output layers learn your specific task. This is the most common transfer-learning pattern in practice.
+- **Adapter methods (LoRA, QLoRA)**: Insert small trainable modules into the frozen model. LoRA adds low-rank weight matrices (~1–5% of original parameters) that learn the domain-specific "delta." The base model stays untouched, so you can swap adapters for different tasks without retraining from scratch.
+- **Pruning**: Remove redundant weights or attention heads after training to shrink the model for deployment. Useful when you need inference speed on limited hardware without sacrificing much accuracy.
+
+In practice, most teams start with prompting, move to head replacement or LoRA if needed, and rarely do full fine-tuning unless they have substantial compute and data.
+
 ## Hallucination
 
 No general solution. The model confidently generates plausible-sounding text that may be completely wrong.

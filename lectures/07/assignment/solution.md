@@ -29,23 +29,80 @@ import random
 import numpy as np
 from dotenv import load_dotenv
 
+os.makedirs("output", exist_ok=True)
 load_dotenv()
 print("Setup complete!")
 ```
 
-### Load Asclepius Notes
+### Helper Functions (do not modify)
+
+```python
+# --- LLM client setup (do not modify) ---
+
+def get_client():
+    """Initialize the LLM client based on available API keys."""
+    from openai import OpenAI
+
+    if os.environ.get("OPENROUTER_API_KEY"):
+        client = OpenAI(
+            api_key=os.environ["OPENROUTER_API_KEY"],
+            base_url="https://openrouter.ai/api/v1",
+        )
+        return client, "openrouter"
+
+    if os.environ.get("OPENAI_API_KEY"):
+        return OpenAI(), "openai"
+
+    raise ValueError(
+        "No API key found. Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env"
+    )
+
+
+def call_llm(prompt, provider, client):
+    """Send a prompt to the LLM and return the response text."""
+    model = "openai/gpt-4o-mini" if provider == "openrouter" else "gpt-4o-mini"
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are a medical information extraction assistant."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0,
+        max_tokens=500,
+    )
+    return response.choices[0].message.content
+
+
+def get_device():
+    """Detect the best available device for local model inference."""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
+    except ImportError:
+        pass
+    return "cpu"
+```
+
+### Load Data
 
 ```python
 with open("asclepius_notes.json") as f:
     asclepius = json.load(f)
 
-print(f"Loaded {len(asclepius)} synthetic clinical notes from Asclepius")
+print(f"Loaded {len(asclepius)} synthetic clinical notes")
 print(f"Keys: {list(asclepius[0].keys())}")
 ```
 
 ```python
 print(asclepius[0]["note"][:500] + "...")
 ```
+
+---
+
+## Part 1: Clinical Entity Extraction
 
 ```python
 random.seed(2026)
@@ -56,15 +113,6 @@ print(f"Selected {len(notes_p1)} notes for extraction")
 for i, n in enumerate(notes_p1, 1):
     print(f"\n--- Note {i} ({len(n)} chars) ---")
     print(n[:150] + "...")
-```
-
----
-
-## Part 1: Clinical Entity Extraction
-
-```python
-from extractor import get_client, call_llm
-import extractor
 ```
 
 ### `build_prompt`
@@ -110,8 +158,6 @@ Rules:
 
 Clinical note:
 {note}"""
-
-extractor.build_prompt = build_prompt
 ```
 
 ### `parse_json_response`
@@ -147,8 +193,6 @@ def parse_json_response(text):
             pass
 
     return None
-
-extractor.parse_json_response = parse_json_response
 ```
 
 ### `validate_response`
@@ -159,8 +203,6 @@ def validate_response(response):
         return False
     required = {"diagnosis", "medications", "lab_values", "confidence"}
     return required.issubset(response.keys())
-
-extractor.validate_response = validate_response
 ```
 
 ### `extract_entities`
@@ -176,41 +218,30 @@ def extract_entities(note, few_shot=False):
     if not validate_response(parsed):
         return None
     return parsed
-
-extractor.extract_entities = extract_entities
 ```
 
 ### Test extraction
 
 ```python
+results_p1 = []
 for i, note in enumerate(notes_p1, 1):
     result = extract_entities(note, few_shot=True)
     print(f"--- Note {i} ---")
     if result:
         print(json.dumps(result, indent=2))
+        results_p1.append(result)
     else:
         print("Extraction failed")
     print()
 ```
 
+### Save Part 1 results (do not modify)
+
 ```python
-# Save implementations to extractor.py for autograding (do not modify this cell)
-import inspect as _insp
+with open("output/extraction_results.json", "w") as f:
+    json.dump(results_p1, f, indent=2)
 
-_parts = [
-    '"""\nLLM Prompt Engineering Assignment: Clinical Entity Extraction\n\n'
-    "Complete the functions below to extract structured data from clinical notes\n"
-    'using LLM APIs.\n"""\n\n'
-    "import json\nimport os\nfrom typing import Optional\n",
-]
-
-for _fn in [get_client, build_prompt, call_llm, extract_entities, validate_response, parse_json_response]:
-    _parts.append("\n\n" + _insp.getsource(_fn))
-
-with open("extractor.py", "w") as _f:
-    _f.write("".join(_parts) + "\n")
-
-print("Saved extractor.py")
+print(f"Saved {len(results_p1)} extraction results to output/extraction_results.json")
 ```
 
 ---
@@ -218,49 +249,30 @@ print("Saved extractor.py")
 ## Part 2: Semantic Search
 
 ```python
-from search import get_device
-import search
-
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-_model = SentenceTransformer("all-MiniLM-L6-v2", device=get_device())
+model = SentenceTransformer("all-MiniLM-L6-v2", device=get_device())
 print(f"Model loaded on {get_device()}")
 ```
 
-### `load_notes`
-
 ```python
-def load_notes(filepath="clinical_notes.txt"):
-    with open(filepath) as f:
-        content = f.read()
-    sections = content.split("## Note")
-    notes = []
-    for s in sections[1:]:
-        text = s.split("\n", 1)
-        if len(text) > 1:
-            cleaned = text[1].strip()
-            if cleaned:
-                notes.append(cleaned)
-    return notes
-
-search.load_notes = load_notes
+notes_p2 = [n["note"] for n in asclepius]
+print(f"{len(notes_p2)} notes in search corpus")
 ```
 
 ### `embed_notes`
 
 ```python
 def embed_notes(notes):
-    return _model.encode(notes)
-
-search.embed_notes = embed_notes
+    return model.encode(notes)
 ```
 
 ### `find_similar`
 
 ```python
 def find_similar(query, notes, embeddings, top_k=2):
-    query_emb = _model.encode([query])
+    query_emb = model.encode([query])
     scores = cosine_similarity(query_emb, embeddings)[0]
     ranked = sorted(
         zip(notes, scores),
@@ -268,27 +280,12 @@ def find_similar(query, notes, embeddings, top_k=2):
         reverse=True,
     )
     return [{"note": n, "score": float(s)} for n, s in ranked[:top_k]]
-
-search.find_similar = find_similar
-```
-
-### `save_results`
-
-```python
-def save_results(results, filepath="search_results.json"):
-    with open(filepath, "w") as f:
-        json.dump(results, f, indent=2)
-
-search.save_results = save_results
 ```
 
 ### Run the search pipeline
 
 ```python
-notes = load_notes("clinical_notes.txt")
-print(f"Loaded {len(notes)} notes")
-
-embeddings = embed_notes(notes)
+embeddings = embed_notes(notes_p2)
 print(f"Embeddings: {embeddings.shape}")
 
 queries = [
@@ -299,43 +296,19 @@ queries = [
 
 for q in queries:
     print(f"\nQuery: '{q}'")
-    results = find_similar(q, notes, embeddings, top_k=2)
+    results = find_similar(q, notes_p2, embeddings, top_k=2)
     for i, r in enumerate(results, 1):
         print(f"  {i}. (score: {r['score']:.3f}) {r['note'][:80]}...")
 ```
 
-```python
-# Save results (do not modify this cell)
-save_results(
-    find_similar("heart attack symptoms", notes, embeddings, top_k=2),
-    "search_results.json",
-)
-print("Saved search_results.json")
-```
+### Save Part 2 results (do not modify)
 
 ```python
-# Save implementations to search.py for autograding (do not modify this cell)
-import inspect as _insp
+search_results = find_similar("heart attack symptoms", notes_p2, embeddings, top_k=3)
+with open("output/search_results.json", "w") as f:
+    json.dump(search_results, f, indent=2)
 
-_parts = [
-    '"""\nSemantic Search Assignment: Clinical Note Search with Embeddings\n\n'
-    "Use sentence embeddings to search clinical notes by meaning rather than keywords.\n"
-    '"""\n\n'
-    "import json\nimport numpy as np\nfrom typing import List, Dict\n",
-]
-
-_parts.append("\n\n" + _insp.getsource(get_device))
-_parts.append('\n\nfrom sentence_transformers import SentenceTransformer\n')
-_parts.append('from sklearn.metrics.pairwise import cosine_similarity\n\n')
-_parts.append('_model = SentenceTransformer("all-MiniLM-L6-v2", device=get_device())\n')
-
-for _fn in [load_notes, embed_notes, find_similar, save_results]:
-    _parts.append("\n\n" + _insp.getsource(_fn))
-
-with open("search.py", "w") as _f:
-    _f.write("".join(_parts) + "\n")
-
-print("Saved search.py")
+print(f"Saved {len(search_results)} search results to output/search_results.json")
 ```
 
 ---
@@ -343,5 +316,5 @@ print("Saved search.py")
 ## Validation
 
 ```python
-print("Run 'pytest .github/tests/ -v' in your terminal to check your work.")
+print("Run 'python -m pytest .github/tests/ -v' in your terminal to check your work.")
 ```

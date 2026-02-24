@@ -12,7 +12,7 @@ jupyter:
     name: python3
 ---
 
-# Demo 1: RAG Pipeline & MCP
+# Demo 2: RAG Pipeline & MCP
 
 Build a Retrieval-Augmented Generation pipeline that grounds LLM responses in actual clinical guidelines, then see how MCP standardizes tool integration.
 
@@ -337,9 +337,9 @@ def mcp_to_openai_tools(mcp_tools):
 # response = client.chat.completions.create(model=MODEL, tools=openai_tools, ...)
 ```
 
-**Key insight**: The agent loop stays the same — MCP just standardizes how tools are discovered and called. What we built by hand in this demo is exactly what MCP automates.
+**Key insight**: The agent loop from Demo 1 stays the same — MCP just standardizes how tools are discovered and called. What we built by hand in Demo 1 is exactly what MCP automates.
 
-| Manual Approach (this demo) | MCP Approach |
+| Manual Approach (Demo 1) | MCP Approach |
 |:---|:---|
 | Define each tool function yourself | Use pre-built servers |
 | Wire up tool execution manually | Standard call/response protocol |

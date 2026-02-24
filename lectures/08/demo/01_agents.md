@@ -12,16 +12,16 @@ jupyter:
     name: python3
 ---
 
-# Demo 2: Workflow Patterns & Agents
+# Demo 1: Building a Clinical Agent
 
-Build up from simple prompt chaining to a full agent with tools, then see how the OpenAI Agents SDK packages the same ideas.
+Define tools, wire up function calling, and build an agent loop that autonomously decides which tools to call and in what order.
 
 ## Learning Objectives
 
-- Implement prompt chaining for multi-step clinical text processing
-- Add PHI guardrails to LLM calls
-- Build an agent loop with tool calling
-- Use the OpenAI Agents SDK for a cleaner agent implementation
+- Define clinical tools as Python functions with JSON schemas
+- Make a single function-calling API request and walk through the 3-step dance
+- Build a multi-tool agent loop that decides when and which tools to call
+- See the same agent built with the OpenAI Agents SDK
 
 ## Setup
 
@@ -31,7 +31,6 @@ Build up from simple prompt chaining to a full agent with tools, then see how th
 
 ```python
 import os
-import re
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -50,122 +49,19 @@ elif os.environ.get("OPENAI_API_KEY"):
 else:
     raise ValueError("Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env")
 
-
-def llm_call(prompt: str) -> str:
-    """Simple wrapper for chat completion."""
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.choices[0].message.content
-
-
 print(f"Using model: {MODEL}")
 ```
 
-## Section 1: Prompt Chaining
+## Section 1: Function Calling Basics
 
-Each step in a chain is simpler, more testable, and produces an intermediate artifact you can inspect. If step 2 fails, you know exactly where.
+The lecture showed the concept — now let's see the full round-trip. Function calling is a 3-step dance:
 
-```python
-clinical_note = """
-Patient is a 72-year-old male presenting with increasing shortness of breath
-over the past 3 days. History of COPD, type 2 diabetes on metformin 1000mg BID,
-and hypertension on lisinopril 20mg daily. Vitals: BP 158/92, HR 96, SpO2 89%
-on room air. Chest X-ray shows bilateral infiltrates. Started on supplemental
-oxygen, azithromycin 500mg, and ceftriaxone 1g IV. Labs: WBC 14.2, glucose 245,
-creatinine 1.4, BNP 890.
-"""
-
-# Step 1: Extract entities
-entities = llm_call(
-    f"Extract all medical entities from this note as a bulleted list:\n{clinical_note}"
-)
-print("STEP 1 — Entities:")
-print(entities)
-```
+1. **You send** the request with tool definitions
+2. **The model responds** with a tool call (name + arguments) instead of text
+3. **You execute** the function and feed the result back
 
 ```python
-# Step 2: Classify entities by type
-classified = llm_call(
-    f"Classify these entities by type (condition, medication, lab value, vital sign):\n{entities}"
-)
-print("STEP 2 — Classified:")
-print(classified)
-```
-
-```python
-# Step 3: Summarize
-summary = llm_call(
-    f"Write a brief clinical summary (3-4 sentences) based on:\n{classified}"
-)
-print("STEP 3 — Summary:")
-print(summary)
-```
-
-Each step used a different prompt, and we could inspect the intermediate outputs. Compare this to stuffing everything into one giant prompt — harder to debug, harder to test.
-
-## Section 2: Guardrails
-
-Before sending text to an LLM, check for Protected Health Information. This uses simple regex patterns — production systems would use NLP models like Presidio.
-
-```python
-def detect_phi(text: str) -> dict | None:
-    """Detect common PHI patterns via regex."""
-    patterns = {
-        "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
-        "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
-        "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-        "mrn": r"\b(MRN|Medical Record)[\s:#]*\d+\b",
-    }
-
-    found = {}
-    for phi_type, pattern in patterns.items():
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        if matches:
-            found[phi_type] = matches
-
-    return found if found else None
-
-
-def safe_llm_call(prompt: str) -> str:
-    """LLM call with input/output PHI guardrails."""
-    phi_in = detect_phi(prompt)
-    if phi_in:
-        raise ValueError(f"PHI detected in input: {list(phi_in.keys())}")
-
-    result = llm_call(prompt)
-
-    phi_out = detect_phi(result)
-    if phi_out:
-        raise ValueError(f"PHI detected in output: {list(phi_out.keys())}")
-
-    return result
-```
-
-```python
-# Safe text — passes guardrails
-clean_result = safe_llm_call("Summarize the treatment for stage 1 hypertension.")
-print("Clean input result:")
-print(clean_result[:200] + "...")
-```
-
-```python
-# Dangerous text — blocked by guardrails
-try:
-    safe_llm_call(
-        "Summarize this note: Patient John Smith, SSN 123-45-6789, MRN#12345, "
-        "presents with chest pain. Contact: 555-867-5309, john@hospital.com"
-    )
-except ValueError as e:
-    print(f"BLOCKED: {e}")
-```
-
-## Section 3: Tool Definitions & Agent Loop
-
-Agents decide *when* to use tools and *what arguments* to pass. We define tools as Python functions, describe them in JSON for the LLM, then loop until the model stops requesting tool calls.
-
-```python
+# A real clinical tool: BMI calculation with category
 def calculate_bmi(weight_kg: float, height_m: float) -> dict:
     """Calculate BMI from weight and height."""
     bmi = weight_kg / (height_m ** 2)
@@ -180,6 +76,66 @@ def calculate_bmi(weight_kg: float, height_m: float) -> dict:
     return {"bmi": round(bmi, 1), "category": category}
 
 
+# Describe the tool in JSON schema — this is what the model sees
+bmi_tool = {
+    "type": "function",
+    "function": {
+        "name": "calculate_bmi",
+        "description": "Calculate Body Mass Index from weight and height",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "weight_kg": {"type": "number", "description": "Weight in kilograms"},
+                "height_m": {"type": "number", "description": "Height in meters"},
+            },
+            "required": ["weight_kg", "height_m"],
+        },
+    },
+}
+```
+
+```python
+# Step 1: Send request with tools
+response = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": "What's the BMI for a 85kg, 1.75m patient?"}],
+    tools=[bmi_tool],
+    tool_choice="auto",
+)
+
+msg = response.choices[0].message
+print("Model wants to call a tool:")
+print(f"  Function: {msg.tool_calls[0].function.name}")
+print(f"  Arguments: {msg.tool_calls[0].function.arguments}")
+```
+
+```python
+# Step 2: Execute the tool ourselves
+tool_call = msg.tool_calls[0]
+args = json.loads(tool_call.function.arguments)
+result = calculate_bmi(**args)
+print(f"Tool result: {result}")
+```
+
+```python
+# Step 3: Feed the result back and get the final answer
+messages = [
+    {"role": "user", "content": "What's the BMI for a 85kg, 1.75m patient?"},
+    msg,  # the model's tool call message
+    {"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps(result)},
+]
+
+final = client.chat.completions.create(model=MODEL, messages=messages)
+print(final.choices[0].message.content)
+```
+
+That's function calling. The model doesn't run the function — it tells you *which* function to call and *what arguments* to pass. You execute it and return the result. This separation is what makes agents safe: your code controls what actually happens.
+
+## Section 2: Multi-Tool Agent
+
+One tool is useful. Multiple tools with a loop is an **agent** — the model decides which tools to call and in what order, iterating until the task is complete.
+
+```python
 def calculate_egfr(creatinine: float, age: int, is_female: bool) -> dict:
     """Calculate estimated GFR using simplified CKD-EPI equation."""
     if is_female:
@@ -244,21 +200,7 @@ TOOLS = {
 
 ```python
 tool_definitions = [
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate_bmi",
-            "description": "Calculate Body Mass Index from weight and height",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "weight_kg": {"type": "number", "description": "Weight in kilograms"},
-                    "height_m": {"type": "number", "description": "Height in meters"},
-                },
-                "required": ["weight_kg", "height_m"],
-            },
-        },
-    },
+    bmi_tool,
     {
         "type": "function",
         "function": {
@@ -369,7 +311,9 @@ result = run_agent(
 print(f"\nFinal:\n{result}")
 ```
 
-## Section 4: OpenAI Agents SDK
+Watch the steps: the agent calls `calculate_egfr` first (to check kidney function), then `get_medication_info` (to find contraindications), then reasons about whether metformin is safe. It planned the sequence itself.
+
+## Section 3: OpenAI Agents SDK
 
 The Agents SDK packages the same pattern — tools, agent loop, message handling — into a cleaner API. Same concepts, less boilerplate.
 
@@ -415,7 +359,7 @@ print(result.final_output)
 
 Compare the two approaches:
 
-| Manual Agent (Section 3) | Agents SDK (Section 4) |
+| Manual Agent (Section 2) | Agents SDK (Section 3) |
 |:---|:---|
 | Write tool JSON schema by hand | `@function_tool` decorator |
 | Implement `run_agent()` loop | `await Runner.run()` |
@@ -426,13 +370,12 @@ Compare the two approaches:
 ## Exercises
 
 1. **Add a tool**: Add a drug interaction checker to the manual agent (e.g., "does metformin interact with lisinopril?")
-2. **Chain + guardrails**: Wrap the prompt chain from Section 1 with the PHI guardrails from Section 2
-3. **Agents SDK tools**: Add `calculate_egfr` and `get_medication_info` to the SDK agent
-4. **Error handling**: What happens when the agent gets bad tool arguments? Add validation.
+2. **Agents SDK tools**: Add `calculate_egfr` and `get_medication_info` to the SDK agent
+3. **Error handling**: What happens when the agent gets bad tool arguments? Add validation to `execute_tool`
 
 ## Key Takeaways
 
-- Prompt chaining breaks complex tasks into simple, testable steps
-- Guardrails enforce safety rules on LLM inputs and outputs
+- Function calling is a 3-step dance: send tools → model requests tool → execute and return
 - Tool-calling agents autonomously decide when and how to use functions
+- The agent loop (plan → act → observe → repeat) is the core pattern behind Claude Code, ChatGPT, etc.
 - The Agents SDK packages these patterns with less boilerplate

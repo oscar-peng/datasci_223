@@ -25,12 +25,12 @@ jupytext --to notebook *.md
 
 | Demo | File | Topics |
 |:---|:---|:---|
-| 1 | `01_rag_mcp.md` | RAG pipeline, ChromaDB, embeddings, MCP tool discovery |
-| 2 | `02_agentic_workflow.md` | Prompt chaining, PHI guardrails, tool calling, Agents SDK |
-| 3 | `03_failure_modes.md` | Hallucination, prompt injection, inconsistency, math errors, context overflow |
+| 1 | `01_agents.md` | Function calling (JSON schema tools), agent loop, multi-tool agent, OpenAI Agents SDK |
+| 2 | `02_rag_pipeline.md` | Clinical knowledge base, ChromaDB, RAG pipeline (embed/retrieve/augment/generate), citations, MCP tool discovery |
+| 3 | `03_workflows.md` | Prompt chaining, PHI guardrails, deterministic steps, failure modes, combined pipeline |
 
 ## Requirements
 
 - Python 3.11+
 - API key (OpenRouter or OpenAI)
-- Node.js/npx (optional, for MCP server demo in Demo 1)
+- Node.js/npx (optional, for MCP server demo in Demo 2)

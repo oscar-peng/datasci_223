@@ -114,7 +114,7 @@ print("STEP 3 — Summary:")
 print(summary)
 ```
 
-Each step used a different prompt, and we could inspect the intermediate outputs. Compare this to stuffing everything into one giant prompt — harder to debug, harder to test.
+Compare this to stuffing everything into one giant prompt — harder to debug, harder to test. Chaining also lets you use different models or temperatures per step (cheap model for extraction, expensive one for synthesis).
 
 ## Section 2: Guardrails — PHI Detection
 
@@ -298,7 +298,7 @@ print(safe_response)
 
 ## Section 5: Putting It Together — A Mini-Pipeline
 
-Each pattern above handles one risk. Real applications stack them: guardrails catch PHI before it reaches the API, chaining breaks complex extraction into inspectable steps, and deterministic validation ensures the output structure is correct regardless of what the LLM generates. Here's a pipeline that combines all three on a clinical note:
+Each pattern above handles one risk. Real applications stack them: guardrails catch PHI before it reaches the API, chaining breaks complex extraction into inspectable steps, and deterministic validation ensures the output structure is correct regardless of what the LLM generates.
 
 ```python
 REQUIRED_FIELDS = {"diagnosis": str, "medications": list, "allergies": list}
@@ -354,8 +354,6 @@ result = clinical_pipeline(clean_note)
 print("Pipeline output:\n")
 for k, v in result.items():
     print(f"  {k}: {v}")
-print("\nThe pipeline ran 2 LLM calls (extract + summarize), 1 deterministic")
-print("validation step, and 1 guardrail check — all composable and testable.")
 ```
 
 ```python
@@ -369,8 +367,6 @@ except ValueError as e:
     print(f"Pipeline blocked: {e}")
     print("(No LLM call was made — PHI caught at the guardrail step)")
 ```
-
-Each pattern handles a different risk: guardrails catch PHI before it reaches the LLM, chaining makes each step inspectable, and deterministic validation ensures the output structure is correct regardless of what the LLM generates.
 
 ## Exercises
 

@@ -129,13 +129,13 @@ final = client.chat.completions.create(model=MODEL, messages=messages)
 print(final.choices[0].message.content)
 ```
 
-That's function calling. The model doesn't run the function — it tells you *which* function to call and *what arguments* to pass. You execute it and return the result. This separation is what makes agents safe: your code controls what actually happens.
+The model doesn't run the function — it tells you *which* function to call and *what arguments* to pass. You execute it and return the result. This separation is what makes agents safe: your code controls what actually happens.
 
 ## Section 2: Multi-Tool Agent
 
 One tool is useful. Multiple tools with a loop is an **agent** — the model decides which tools to call and in what order, iterating until the task is complete.
 
-We'll define three clinical tools: BMI calculation, estimated GFR (kidney function), and a medication lookup database. Each is a plain Python function that returns a dict.
+Good tools are deterministic functions with typed parameters and structured return values — the model handles language, the tool handles computation.
 
 ```python
 def calculate_egfr(creatinine: float, age: int, is_female: bool) -> dict:
@@ -244,7 +244,7 @@ for td in tool_definitions:
     print(f"  {td['function']['name']}: {td['function']['description']}")
 ```
 
-Now we wire it together. `execute_tool` dispatches a tool call to the right Python function. `run_agent` loops: send the conversation to the model → if it requests tool calls, execute them and feed results back → repeat until the model responds with text instead of tool calls.
+`execute_tool` dispatches a tool call to the right Python function. `run_agent` implements the agent loop: send the conversation to the model → if it requests tool calls, execute them and feed results back → repeat until the model responds with text instead of tool calls.
 
 ```python
 def execute_tool(tool_call):
@@ -322,8 +322,6 @@ result = run_agent(
 )
 print(f"\nFinal:\n{result}")
 ```
-
-Watch the steps: the agent calls `calculate_egfr` first (to check kidney function), then `get_medication_info` (to find contraindications), then reasons about whether metformin is safe. It planned the sequence itself.
 
 ## Section 3: OpenAI Agents SDK
 

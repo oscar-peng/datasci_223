@@ -190,7 +190,7 @@ for q in questions:
     print(f"A: {answer}\n")
 ```
 
-Notice the distance scores in each query — lower distance means the chunk is more semantically similar to the question. The model's answers draw directly from the retrieved text, and it can cite the guideline source because that metadata was stored alongside the embeddings.
+Lower distance = higher semantic similarity. The model stays grounded because the system prompt constrains it to the retrieved context, and it can cite guideline sources because that metadata was stored alongside the embeddings.
 
 ## Section 4: RAG vs Direct LLM
 
@@ -340,7 +340,7 @@ def mcp_to_openai_tools(mcp_tools):
 # response = client.chat.completions.create(model=MODEL, tools=openai_tools, ...)
 ```
 
-**Key insight**: The agent loop from Demo 1 stays the same — MCP just standardizes how tools are discovered and called. What we built by hand in Demo 1 is exactly what MCP automates.
+**Key insight**: The agent loop stays the same regardless of how tools are defined — MCP just standardizes discovery and invocation.
 
 | Manual Approach (Demo 1) | MCP Approach |
 |:---|:---|

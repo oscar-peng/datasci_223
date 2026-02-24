@@ -74,6 +74,18 @@ def parse_json(text):
 print(f"Using model: {MODEL}")
 ```
 
+## The Visual Version
+
+Most workflow builders represent these patterns as graphs. OpenAI's [Agent Builder](https://platform.openai.com/agent-builder) is one example — you wire together model calls, tool calls, guardrails, and routing nodes visually:
+
+![Workflow building blocks: extract → validate → classify → generate → review → act](../media/workflow_overview.png)
+
+Guardrails are built-in node types — PII detection, hallucination checking, custom prompt checks — that wrap model calls with safety checks:
+
+![Output guardrails in the Agent Builder GUI: URL Filter, Contains PII, Hallucination Detection, Custom Prompt Check](../media/guardrails.png)
+
+Visual builders are useful for prototyping. Below we implement these same patterns in code, which gives you version control, testing, and full control over each step.
+
 ## Section 1: Prompt Chaining
 
 Each step in a chain is simpler, more testable, and produces an intermediate artifact you can inspect. If step 2 fails, you know exactly where.

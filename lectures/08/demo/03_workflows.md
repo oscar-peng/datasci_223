@@ -84,7 +84,119 @@ Guardrails are built-in node types — PII detection, hallucination checking, cu
 
 ![Output guardrails in the Agent Builder GUI: URL Filter, Contains PII, Hallucination Detection, Custom Prompt Check](../media/guardrails.png)
 
-Visual builders are useful for prototyping. Below we implement these same patterns in code, which gives you version control, testing, and full control over each step.
+The GUI exports code — the same Agents SDK from Demo 1. Here's what our clinical pipeline looks like as an SDK agent with guardrails, structured output, and a validation tool:
+
+```python
+%pip install -q openai-agents
+```
+
+```python
+from pydantic import BaseModel
+from openai import AsyncOpenAI
+from agents import (
+    Agent, Runner, GuardrailFunctionOutput, InputGuardrailTripwireTriggered,
+    RunContextWrapper, TResponseInputItem, function_tool, input_guardrail,
+    set_default_openai_client,
+)
+
+# Reuse the same API credentials
+if os.environ.get("OPENROUTER_API_KEY"):
+    set_default_openai_client(AsyncOpenAI(
+        api_key=os.environ["OPENROUTER_API_KEY"],
+        base_url="https://openrouter.ai/api/v1",
+    ))
+    AGENTS_MODEL = "openai/gpt-4o-mini"
+else:
+    AGENTS_MODEL = "gpt-4o-mini"
+
+
+# --- Structured output schema ---
+class ClinicalExtraction(BaseModel):
+    diagnosis: str
+    medications: list[str]
+    allergies: list[str]
+    summary: str
+
+
+# --- Input guardrail: block PHI before it reaches the model ---
+PHI_PATTERNS = {
+    "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
+    "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
+    "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+    "mrn": r"\b(MRN|Medical Record)[\s:#]*\d+\b",
+}
+
+@input_guardrail
+async def phi_guardrail(
+    ctx: RunContextWrapper, agent: Agent, input: str | list[TResponseInputItem]
+) -> GuardrailFunctionOutput:
+    text = input if isinstance(input, str) else str(input)
+    found = {k: re.findall(p, text, re.IGNORECASE) for k, p in PHI_PATTERNS.items()}
+    found = {k: v for k, v in found.items() if v}
+    return GuardrailFunctionOutput(
+        output_info=found or None,
+        tripwire_triggered=bool(found),
+    )
+
+
+# --- Tool: deterministic validation ---
+@function_tool
+def validate_extraction(diagnosis: str, medications: str, allergies: str) -> str:
+    """Validate that extracted fields are non-empty and well-formed."""
+    errors = []
+    if not diagnosis.strip():
+        errors.append("diagnosis is empty")
+    if not medications.strip():
+        errors.append("medications is empty")
+    return json.dumps({"valid": len(errors) == 0, "errors": errors})
+
+
+# --- Agent definition (what the GUI exports) ---
+clinical_agent = Agent(
+    name="Clinical Extractor",
+    model=AGENTS_MODEL,
+    instructions=(
+        "Extract diagnosis, medications, allergies, and a 2-sentence summary "
+        "from the clinical note. Use the validate_extraction tool to check your "
+        "work before returning the final output."
+    ),
+    tools=[validate_extraction],
+    input_guardrails=[phi_guardrail],
+    output_type=ClinicalExtraction,
+)
+```
+
+```python
+# Clean note — SDK agent processes end-to-end
+clean_note = """
+72-year-old male with COPD exacerbation. Currently on metformin 1000mg BID
+and lisinopril 20mg daily. Started azithromycin 500mg and ceftriaxone 1g IV.
+No known drug allergies. Vitals: BP 158/92, HR 96, SpO2 89% on room air.
+"""
+
+try:
+    sdk_result = await Runner.run(clinical_agent, clean_note)
+    print("SDK pipeline output:\n")
+    for field, value in sdk_result.final_output.model_dump().items():
+        print(f"  {field}: {value}")
+except InputGuardrailTripwireTriggered:
+    print("BLOCKED: PHI detected in input")
+```
+
+```python
+# PHI note — guardrail trips before the model sees the text
+phi_note = (
+    "Patient John Smith, SSN 123-45-6789, presents with chest pain. "
+    "On aspirin 81mg daily. MRN#12345. No allergies."
+)
+
+try:
+    await Runner.run(clinical_agent, phi_note)
+except InputGuardrailTripwireTriggered:
+    print("BLOCKED: PHI guardrail tripped — no LLM call was made")
+```
+
+That's the full pipeline in ~40 lines of SDK code. The sections below unpack each pattern manually — chaining, guardrails, deterministic steps, failure modes — so you understand what the SDK is doing under the hood.
 
 ## Section 1: Prompt Chaining
 

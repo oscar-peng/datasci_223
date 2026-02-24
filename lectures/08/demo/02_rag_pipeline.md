@@ -100,7 +100,7 @@ for doc in clinical_knowledge:
 
 ## Section 2: Embedding & ChromaDB Indexing
 
-ChromaDB is an in-memory vector database. We encode each chunk into an embedding vector, then store them for fast similarity search.
+An embedding is a fixed-length numeric vector that captures the *meaning* of a text chunk — similar documents end up near each other in vector space. ChromaDB is an in-memory vector database: we encode each chunk into an embedding, store them, and later retrieve the closest matches to a query.
 
 ```python
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -125,11 +125,12 @@ collection.add(
 
 print(f"Indexed {collection.count()} chunks in ChromaDB")
 print(f"Embedding dimension: {len(embeddings[0])}")
+print(f"\nFirst embedding (truncated): [{', '.join(f'{x:.4f}' for x in embeddings[0][:8])}, ...]")
 ```
 
 ## Section 3: RAG Query Function
 
-The core RAG loop: embed the question → retrieve similar chunks → inject them as context → generate a grounded answer.
+The core RAG loop: embed the question → retrieve similar chunks → inject them as context → generate a grounded answer. The `n_results` parameter controls how many chunks to retrieve (more context = more information but also more noise and cost). The system prompt constrains the model to answer *only* from provided context — this is what makes RAG grounded rather than generative.
 
 ```python
 def rag_query(question, n_results=3, show_sources=True):
@@ -189,6 +190,8 @@ for q in questions:
     print(f"A: {answer}\n")
 ```
 
+Notice the distance scores in each query — lower distance means the chunk is more semantically similar to the question. The model's answers draw directly from the retrieved text, and it can cite the guideline source because that metadata was stored alongside the embeddings.
+
 ## Section 4: RAG vs Direct LLM
 
 What happens when the model answers *without* retrieved context? For well-known clinical facts (like hypertension thresholds) the LLM may already know the answer — but for organization-specific protocols, recent guideline updates, or internal policy, the model has no choice but to guess or refuse.
@@ -226,7 +229,7 @@ print(direct_llm_query(test_q))
 
 ## Section 5: RAG with Citations
 
-Number the source chunks so the model can reference them by number — makes it easy to trace which guideline supports each claim.
+In clinical contexts, knowing *where* an answer came from is as important as the answer itself — a clinician needs to verify claims against the original guideline, not just trust the model. Numbering source chunks and instructing the model to cite them makes every claim traceable.
 
 ```python
 def rag_with_citations(question, n_results=3):

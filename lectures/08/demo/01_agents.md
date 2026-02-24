@@ -135,6 +135,8 @@ That's function calling. The model doesn't run the function — it tells you *wh
 
 One tool is useful. Multiple tools with a loop is an **agent** — the model decides which tools to call and in what order, iterating until the task is complete.
 
+We'll define three clinical tools: BMI calculation, estimated GFR (kidney function), and a medication lookup database. Each is a plain Python function that returns a dict.
+
 ```python
 def calculate_egfr(creatinine: float, age: int, is_female: bool) -> dict:
     """Calculate estimated GFR using simplified CKD-EPI equation."""
@@ -196,7 +198,11 @@ TOOLS = {
     "calculate_egfr": calculate_egfr,
     "get_medication_info": get_medication_info,
 }
+
+print(f"Defined {len(TOOLS)} tools: {', '.join(TOOLS.keys())}")
 ```
+
+The model can't call Python functions directly — it needs JSON schemas that describe each tool's name, purpose, and parameter types. This is the contract between your code and the model.
 
 ```python
 tool_definitions = [
@@ -232,7 +238,13 @@ tool_definitions = [
         },
     },
 ]
+
+print(f"Registered {len(tool_definitions)} tool schemas for the model")
+for td in tool_definitions:
+    print(f"  {td['function']['name']}: {td['function']['description']}")
 ```
+
+Now we wire it together. `execute_tool` dispatches a tool call to the right Python function. `run_agent` loops: send the conversation to the model → if it requests tool calls, execute them and feed results back → repeat until the model responds with text instead of tool calls.
 
 ```python
 def execute_tool(tool_call):

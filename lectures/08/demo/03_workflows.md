@@ -118,7 +118,9 @@ Each step used a different prompt, and we could inspect the intermediate outputs
 
 ## Section 2: Guardrails — PHI Detection
 
-Before sending text to an LLM, check for Protected Health Information. This uses simple regex patterns — production systems would use NLP models like Presidio.
+Before sending text to an LLM, check for Protected Health Information. Under HIPAA, sending PHI to a third-party API without a BAA (Business Associate Agreement) is a violation — so catching it *before* the API call matters. This implementation uses simple regex patterns for common PHI formats (SSNs, phone numbers, emails, medical record numbers). Production systems would use NLP models like [Presidio](https://microsoft.github.io/presidio/) for more robust detection.
+
+The `safe_llm_call` wrapper checks both directions: input (don't send PHI to the API) and output (don't return PHI to the user).
 
 ```python
 def detect_phi(text: str) -> dict | None:
@@ -174,7 +176,7 @@ except ValueError as e:
 
 ## Section 3: Deterministic Steps — LLM Extracts, Python Computes
 
-LLMs approximate numbers through pattern matching — they don't execute arithmetic. Multi-step calculations with unit conversions fail silently. The fix: let the LLM extract values, then compute with Python.
+LLMs approximate numbers through pattern matching — they don't execute arithmetic. This matters most in clinical dosing: an ICU drip rate calculation involves 5 steps with unit conversions (mcg/kg/min → mg/min → mL/min → mL/hr), and a silent arithmetic error could mean a 10x dosing mistake. The fix: let the LLM do what it's good at (reading text and extracting values), then compute with Python.
 
 ```python
 # First, watch the LLM try to do the math itself
@@ -296,7 +298,7 @@ print(safe_response)
 
 ## Section 5: Putting It Together — A Mini-Pipeline
 
-Real applications combine multiple patterns. Here's a pipeline that processes a clinical note through guardrails → prompt chain → deterministic validation:
+Each pattern above handles one risk. Real applications stack them: guardrails catch PHI before it reaches the API, chaining breaks complex extraction into inspectable steps, and deterministic validation ensures the output structure is correct regardless of what the LLM generates. Here's a pipeline that combines all three on a clinical note:
 
 ```python
 REQUIRED_FIELDS = {"diagnosis": str, "medications": list, "allergies": list}
@@ -352,6 +354,8 @@ result = clinical_pipeline(clean_note)
 print("Pipeline output:\n")
 for k, v in result.items():
     print(f"  {k}: {v}")
+print("\nThe pipeline ran 2 LLM calls (extract + summarize), 1 deterministic")
+print("validation step, and 1 guardrail check — all composable and testable.")
 ```
 
 ```python

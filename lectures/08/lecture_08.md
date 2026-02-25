@@ -10,7 +10,7 @@ LLM Applications & Workflows
 - **OpenAI**: [platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
 - **OpenAI examples**: [platform.openai.com/docs/examples](https://platform.openai.com/docs/examples)
 
-## Agent & Workflow Frameworks
+## Frameworks
 
 - [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) — primary framework
 - [OpenAI Agents SDK docs](https://openai.github.io/openai-agents-python)
@@ -68,7 +68,7 @@ LLM Applications & Workflows
 - [GPT (2018)](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
 - [RLHF](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback
 
-![xkcd: Skynet](media/xkcd_skynet.png)
+![](media/xkcd_skynet.png)
 
 # When to Use LLMs
 
@@ -95,7 +95,7 @@ Conversely, some tasks look like they should work but consistently produce poor 
 ### Reference Card: LLM Decision Framework
 
 | Question                                      | Yes →                    | No →                       |
-| :-------------------------------------------- | :----------------------- | :------------------------- |
+|:----------------------------------------------|:-------------------------|:---------------------------|
 | **Can you describe the task clearly?**        | Good candidate           | Clarify requirements first |
 | **Are errors catchable?**                     | Proceed with validation  | Add human review or avoid  |
 | **Can you validate outputs?**                 | Automate with checks     | Use expert oversight       |
@@ -111,15 +111,15 @@ Understanding how LLMs fail helps you design better systems and set appropriate 
 ## Reference Card: Failure Modes & Mitigations
 
 | Failure Mode                | What Happens                                                      | Mitigation                                                           |
-| :-------------------------- | :---------------------------------------------------------------- | :------------------------------------------------------------------- |
+|:----------------------------|:------------------------------------------------------------------|:---------------------------------------------------------------------|
 | **Hallucinations**          | Fabricated citations, confident incorrect answers                 | RAG, fact-checking, citations, temperature=0, training data curation |
 | **Prompt injection**        | User input overrides system instructions                          | Input sanitization, delimiters, XML tags                             |
 | **Inconsistency**           | Same input → different outputs                                    | temperature=0, seeded states, validation                             |
 | **Math errors**             | Arithmetic fails silently, especially multi-step unit conversions | Tool use (not guaranteed); or LLM extracts values, Python computes   |
 | **Context overflow**        | Important information at edges gets lost                          | Strategic positioning, chunking, hierarchical summarization          |
-| **Task/expertise mismatch** | User can't identify LLM errors                                   | Expert review, reference materials, limit autonomy                   |
+| **Task/expertise mismatch** | User can't identify LLM errors                                    | Expert review, reference materials, limit autonomy                   |
 
-![xkcd: Hallucinations](media/xkcd_hallucinations.png)
+![](media/xkcd_hallucinations.png)
 
 ## Prompt Injection
 
@@ -128,6 +128,8 @@ Models may treat user content as instructions. The defense: separate system inst
 ## Math Errors
 
 LLMs approximate numbers through pattern matching — they don't execute arithmetic. Multi-step calculations with unit conversions (e.g., mcg/kg/min → mL/hr) fail more often than simple ones. Never rely on LLM arithmetic for critical values — use the LLM to extract values, then compute with Python. We'll see code for this in the Deterministic Steps pattern below.
+
+![](media/beverages.jpg)
 
 # Practical Recommendations
 
@@ -162,8 +164,8 @@ Choose tasks that you can meaningfully oversee. Think of LLMs as prolific intern
 ### Reference Card: Getting Started Checklist
 
 | Step              | Action                                                           |
-| :---------------- | :--------------------------------------------------------------- |
-| **1. Prototype**  | Use a mini/nano model (gpt-5-mini, Claude Haiku, Gemini Flash)  |
+|:------------------|:-----------------------------------------------------------------|
+| **1. Prototype**  | Use a mini/nano model (gpt-5-mini, Claude Haiku, Gemini Flash)   |
 | **2. Test**       | Run 5–10 representative examples, manually review outputs        |
 | **3. Edge cases** | Try missing data, unusual formats, adversarial inputs            |
 | **4. Iterate**    | Incorporate failures into few-shot examples or guardrails        |
@@ -183,7 +185,7 @@ The key difference from a chatbot: an agent has a **goal** and takes **actions**
 ## Traditional vs Agentic LLM Use
 
 | Traditional                      | Agentic                             |
-| :------------------------------- | :---------------------------------- |
+|:---------------------------------|:------------------------------------|
 | Single request → single response | Multi-turn, self-guided iterations  |
 | User provides all context        | Agent gathers information as needed |
 | Fixed output                     | Iterates until task complete        |
@@ -198,7 +200,7 @@ The key difference from a chatbot: an agent has a **goal** and takes **actions**
 
 ## The Agent Loop
 
-```
+```text
 Plan → Act → Observe → Reflect → (repeat)
 ```
 
@@ -206,7 +208,7 @@ This loop naturally extends **chain-of-thought** reasoning — instead of reason
 
 Here's what that looks like for a real task:
 
-```
+```text
 Task: "Find recent papers on treatment X and summarize findings"
     ↓
 1. Agent searches literature database (tool call)
@@ -225,7 +227,7 @@ Task: "Find recent papers on treatment X and summarize findings"
 ### Reference Card: Agent Components
 
 | Component     | Purpose                                                   |
-| :------------ | :-------------------------------------------------------- |
+|:--------------|:----------------------------------------------------------|
 | **Planner**   | Breaks task into steps                                    |
 | **Memory**    | Stores conversation history and intermediate results      |
 | **Tools**     | External functions the agent can call                     |
@@ -313,6 +315,8 @@ The SDK handles the agent loop automatically — you define tools, instructions,
 
 More framework options in the Workflow section below.
 
+![](media/no-crime.jpg)
+
 ## Prompting Techniques for Agents
 
 In Lecture 7 you learned chain-of-thought and prompt chaining. Agents extend these with patterns designed for multi-step, tool-using workflows:
@@ -322,10 +326,10 @@ In Lecture 7 you learned chain-of-thought and prompt chaining. Agents extend the
 ### Reference Card: Agentic Prompting Patterns
 
 | Pattern                | How It Works                                                              | When to Use                                           |
-| :--------------------- | :------------------------------------------------------------------------ | :---------------------------------------------------- |
+|:-----------------------|:--------------------------------------------------------------------------|:------------------------------------------------------|
 | **ReAct** (Reason+Act) | Interleave reasoning with tool calls: think → act → observe → think again | Any agent that uses tools — the default agent pattern |
 | **Self-consistency**   | Generate multiple reasoning paths, vote on the most common answer         | High-stakes decisions where confidence matters        |
-| **Reflection**         | Agent critiques its own output, surfaces uncertainty and assumptions       | Complex tasks where errors are costly                 |
+| **Reflection**         | Agent critiques its own output, surfaces uncertainty and assumptions      | Complex tasks where errors are costly                 |
 | **Tree of Thought**    | Explore multiple solution branches, prune unpromising paths               | Planning and multi-step reasoning tasks               |
 
 !!! warning
@@ -352,14 +356,14 @@ The pipeline:
 
 ![](media/rag_pipeline.png)
 
-```
+```text
 Query → Embed → Retrieve Similar Chunks → Add to Prompt → Generate Response
 ```
 
 ### Reference Card: RAG Pipeline
 
 | Component     | Details                                                             |
-| :------------ | :------------------------------------------------------------------ |
+|:--------------|:--------------------------------------------------------------------|
 | **Signature** | `query → embed → retrieve → augment → generate`                     |
 | **Purpose**   | Ground LLM responses in retrieved documents to reduce hallucination |
 | **Embed**     | Convert query to vector using same model as document embeddings     |
@@ -422,7 +426,7 @@ MCP provides a standardized way to connect LLMs to external data sources and too
 
 ## How MCP Works
 
-```
+```text
 ┌─────────────┐    MCP Protocol    ┌─────────────┐
 │  LLM/Agent  │ ◄───────────────► │  MCP Server │ ◄──► External Service
 └─────────────┘                    └─────────────┘
@@ -448,16 +452,16 @@ Both use the same API (`tools` parameter). Tool use is about **action**; structu
 
 ### Reference Card: MCP & Function Calling
 
-| Component                       | Details                                                                     |
-| :------------------------------ | :-------------------------------------------------------------------------- |
+| Component                       | Details                                                                         |
+|:--------------------------------|:--------------------------------------------------------------------------------|
 | **MCP Server**                  | Process that exposes tools/resources (e.g., filesystem server, database server) |
-| **MCP Tool**                    | Function the LLM can invoke (e.g., `read_file`, `query_database`)           |
-| **MCP Resource**                | Data the LLM can read (e.g., file contents, API responses)                  |
-| **MCP Transport**               | How client and server communicate (stdio, HTTP)                             |
-| **Function calling definition** | JSON schema with properties and types                                       |
-| **`tool_choice`**               | `"auto"` (model decides) or forced (specific function)                      |
-| **Tool use pattern**            | Model chooses tool → your code executes → result fed back                   |
-| **Structured output pattern**   | Model forced to return data matching schema                                 |
+| **MCP Tool**                    | Function the LLM can invoke (e.g., `read_file`, `query_database`)               |
+| **MCP Resource**                | Data the LLM can read (e.g., file contents, API responses)                      |
+| **MCP Transport**               | How client and server communicate (stdio, HTTP)                                 |
+| **Function calling definition** | JSON schema with properties and types                                           |
+| **`tool_choice`**               | `"auto"` (model decides) or forced (specific function)                          |
+| **Tool use pattern**            | Model chooses tool → your code executes → result fed back                       |
+| **Structured output pattern**   | Model forced to return data matching schema                                     |
 
 ### Code Snippet: Defining an MCP Server
 
@@ -502,14 +506,14 @@ Once configured, the LLM can discover and call any tools the server exposes. For
 
 ## Common MCP Servers
 
-| Category         | Server                                    | Tools Exposed                                    |
-| :--------------- | :---------------------------------------- | :----------------------------------------------- |
-| **File systems** | `@modelcontextprotocol/server-filesystem` | `read_file`, `write_file`, `list_directory`      |
-| **Databases**    | `@modelcontextprotocol/server-postgres`   | `query`, `list_tables`, `describe_table`         |
-| **Web**          | `@modelcontextprotocol/server-puppeteer`  | `navigate`, `screenshot`, `click`, `fill`        |
-| **Code**         | `@modelcontextprotocol/server-github`     | Repository operations  |
+| Category         | Server                                    | Tools Exposed                               |
+|:-----------------|:------------------------------------------|:--------------------------------------------|
+| **File systems** | `@modelcontextprotocol/server-filesystem` | `read_file`, `write_file`, `list_directory` |
+| **Databases**    | `@modelcontextprotocol/server-postgres`   | `query`, `list_tables`, `describe_table`    |
+| **Web**          | `@modelcontextprotocol/server-puppeteer`  | `navigate`, `screenshot`, `click`, `fill`   |
+| **Code**         | `@modelcontextprotocol/server-github`     | Repository operations                       |
 
-![xkcd: Exploits of a Mom](media/xkcd_exploits_of_a_mom.png)
+![](media/xkcd_exploits_of_a_mom.png)
 
 # LIVE DEMO!!
 
@@ -566,7 +570,7 @@ def extract_classify_summarize(document: str) -> dict:
 
 ![](media/xkcd_ai_research.png)
 
-## Workflow Patterns
+# Workflow Patterns
 
 Most agent builders represent workflows as a graph of nodes. The exact names vary by framework, but the building blocks are consistent:
 
@@ -579,7 +583,7 @@ Most agent builders represent workflows as a graph of nodes. The exact names var
 - **Human approval**: Pause for review before high-stakes actions
 - **Parallel fan-out**: Run independent steps concurrently and merge results
 
-### Pattern: Guardrails
+## Pattern: Guardrails
 
 **Concept**: Input/output monitors that enforce safety and compliance rules
 
@@ -592,17 +596,17 @@ Most agent builders represent workflows as a graph of nodes. The exact names var
 - **Jailbreak detection**: Identify prompt injection attempts
 - **Format validation**: Ensure structured outputs meet schema
 
-#### Reference Card: Common Guardrails
+### Reference Card: Common Guardrails
 
 | Guardrail                   | Purpose                                                                            |
-| :-------------------------- | :--------------------------------------------------------------------------------- |
+|:----------------------------|:-----------------------------------------------------------------------------------|
 | **PII/PHI detection**       | Flag or redact Protected Health Information or Personally Identifiable Information |
 | **Hallucination detection** | Check if claims are grounded in source text                                        |
 | **Jailbreak detection**     | Identify prompt injection attempts                                                 |
 | **Format validation**       | Ensure structured outputs meet schema                                              |
 | **Content filtering**       | Block inappropriate content                                                        |
 
-#### Code Snippet: Guardrails (Input/Output Check)
+### Code Snippet: Guardrails (Input/Output Check)
 
 ```python
 import re
@@ -627,7 +631,7 @@ def safe_llm_call(prompt: str) -> str:
     return output
 ```
 
-### Pattern: Routing & Logic
+## Pattern: Routing & Logic
 
 **Concept**: Conditional branching based on content or criteria
 
@@ -639,13 +643,13 @@ def safe_llm_call(prompt: str) -> str:
 - **While loops**: Repeat until condition met (e.g., all sections complete)
 - **Human approval**: Pause for review before high-stakes action
 
-### Pattern: Deterministic Steps
+## Pattern: Deterministic Steps
 
 **Concept**: Integrate rule-based logic alongside LLM calls. Use LLMs for what they're good at (language), use code for what it's good at (math, lookups, validation).
 
 **Use cases**: Known logic that does not require LLM flexibility — dose calculations, date arithmetic, database lookups, schema validation.
 
-#### Code Snippet: LLM Extracts, Python Validates
+### Code Snippet: LLM Extracts, Python Validates
 
 ```python
 import json
@@ -667,7 +671,7 @@ def extract_and_validate(clinical_note: str) -> dict:
     return data
 ```
 
-### Pattern: Parallelization
+## Pattern: Parallelization
 
 **Concept**: Run independent LLM tasks simultaneously
 
@@ -685,7 +689,7 @@ def extract_and_validate(clinical_note: str) -> dict:
 
 ![](media/xkcd_tax_ai.png)
 
-### Pattern: Orchestrator-Workers
+## Pattern: Orchestrator-Workers
 
 **Concept**: A central agent breaks a task into subtasks and delegates each to a specialist worker. The orchestrator coordinates results.
 
@@ -697,7 +701,7 @@ def extract_and_validate(clinical_note: str) -> dict:
 - Medication extraction plus interaction checking plus summary generation
 - Research tasks requiring multiple queries
 
-### Pattern: Evaluator-Optimizer
+## Pattern: Evaluator-Optimizer
 
 **Concept**: Generate a response, evaluate its quality (with a second LLM call or deterministic checks), then refine until it meets a threshold.
 
@@ -709,7 +713,7 @@ def extract_and_validate(clinical_note: str) -> dict:
 - Extraction tasks with accuracy scoring
 - Draft letters that must meet strict formatting
 
-### Pattern: Human-in-the-loop
+## Pattern: Human-in-the-loop
 
 **Concept**: Pause for human review before high-stakes actions. The workflow continues only after explicit approval.
 
@@ -719,19 +723,19 @@ def extract_and_validate(clinical_note: str) -> dict:
 - Prescription recommendations
 - Sending patient communications
 
-### Agent & Workflow Frameworks
+## Agent & Workflow Frameworks
 
 | Framework                     | Focus                                                    | Notes                                                                                                  |
-| :---------------------------- | :------------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
+|:------------------------------|:---------------------------------------------------------|:-------------------------------------------------------------------------------------------------------|
 | **OpenAI Agents SDK**         | Agent building with tools, handoffs, guardrails, tracing | Primary framework for this course. Has [Agent Builder GUI](https://platform.openai.com/agent-builder). |
 | **LangChain / LangGraph**     | Chains, agents, stateful graphs                          | Widely used, steeper learning curve. Good for custom workflows.                                        |
 | **AutoGen** (Microsoft)       | Multi-agent conversations                                | Research-oriented, good for multi-agent patterns                                                       |
 | **smolagents** (Hugging Face) | Lightweight agents                                       | Minimal, good for quick prototyping                                                                    |
 
-### Reference Card: Workflow Patterns
+## Reference Card: Workflow Patterns
 
 | Pattern                  | When to Use                          | Key Benefit                   |
-| :----------------------- | :----------------------------------- | :---------------------------- |
+|:-------------------------|:-------------------------------------|:------------------------------|
 | **Prompt Chaining**      | Sequential multi-step processing     | Each step simple and testable |
 | **Guardrails**           | Safety-critical applications         | Enforce compliance rules      |
 | **Deterministic Steps**  | Math, lookups, exact logic           | Correctness guarantees        |

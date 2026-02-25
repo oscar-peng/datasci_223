@@ -1,182 +1,97 @@
-"""
-Tests for Assignment 8: LLM Applications — RAG & Guardrails
+"""Tests for Assignment 8: Murder Mystery Agents.
 
-Tests verify output artifacts only — students run the notebook first,
-then these tests check the saved results.
+Tests check output artifacts only — students run the notebook first,
+then these tests verify the saved results.
 """
 
-import pytest
 import json
 import os
+import pytest
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "output")
 
 
+# ---------- Part 1: Murder at the Mountain Cabin ----------
+
 class TestPart1:
-    """Test Part 1: PHI Guardrails output."""
+    @pytest.fixture(autouse=True)
+    def load_results(self):
+        path = os.path.join(OUTPUT_DIR, "part1_results.json")
+        if os.path.exists(path):
+            with open(path) as f:
+                self.results = json.load(f)
+        else:
+            self.results = None
 
-    def test_phi_results_exist(self):
-        """phi_results.json was created."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        assert os.path.exists(path), (
-            "phi_results.json should exist in output/. Run the assignment notebook first."
+    def test_part1_results_exist(self):
+        assert self.results is not None, "output/part1_results.json not found — run the notebook first"
+
+    def test_part1_has_required_fields(self):
+        assert self.results is not None, "output/part1_results.json not found"
+        for field in ["killer", "weapon", "motive", "evidence", "transcript"]:
+            assert field in self.results, f"Missing field: {field}"
+
+    def test_part1_killer_is_larry(self):
+        assert self.results is not None, "output/part1_results.json not found"
+        assert "larry" in self.results["killer"].lower(), (
+            f"Expected killer to be Larry, got: {self.results['killer']}"
         )
 
-    def test_phi_results_is_list(self):
-        """phi_results.json contains a JSON list."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        if not os.path.exists(path):
-            pytest.skip("phi_results.json not found")
+    def test_part1_evidence_nonempty(self):
+        assert self.results is not None, "output/part1_results.json not found"
+        assert isinstance(self.results["evidence"], list), "evidence should be a list"
+        assert len(self.results["evidence"]) > 0, "evidence list is empty"
 
-        with open(path) as f:
-            results = json.load(f)
-
-        assert isinstance(results, list), "phi_results.json should contain a list"
-
-    def test_phi_results_count(self):
-        """phi_results.json has 4 items (one per test text)."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        if not os.path.exists(path):
-            pytest.skip("phi_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        assert len(results) == 4, (
-            f"Expected 4 PHI results (one per test text), got {len(results)}"
+    def test_part1_transcript_shows_investigation(self):
+        assert self.results is not None, "output/part1_results.json not found"
+        assert isinstance(self.results["transcript"], list), "transcript should be a list"
+        assert len(self.results["transcript"]) >= 5, (
+            f"Transcript has {len(self.results['transcript'])} entries — "
+            "agent should use tools at least 5 times"
         )
 
-    def test_phi_result_structure(self):
-        """Each result has text_index, has_phi, phi_found, and redacted."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        if not os.path.exists(path):
-            pytest.skip("phi_results.json not found")
 
-        with open(path) as f:
-            results = json.load(f)
-
-        required = {"text_index", "has_phi", "phi_found", "redacted"}
-        for i, result in enumerate(results):
-            assert isinstance(result, dict), f"Result {i} should be a dict"
-            missing = required - set(result.keys())
-            assert not missing, f"Result {i} missing fields: {missing}"
-
-    def test_dirty_texts_have_phi(self):
-        """First 3 texts should have PHI detected."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        if not os.path.exists(path):
-            pytest.skip("phi_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        if len(results) < 4:
-            pytest.skip("Not enough results to check")
-
-        for i in range(3):
-            assert results[i]["has_phi"] is True, (
-                f"Text {i} should have PHI detected (has_phi=True)"
-            )
-
-    def test_clean_text_no_phi(self):
-        """Fourth text (clean vitals) should have no PHI."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        if not os.path.exists(path):
-            pytest.skip("phi_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        if len(results) < 4:
-            pytest.skip("Not enough results to check")
-
-        assert results[3]["has_phi"] is False, (
-            "Text 3 (clean vitals) should have no PHI (has_phi=False)"
-        )
-
-    def test_dirty_texts_have_redacted(self):
-        """Texts with PHI should have [REDACTED] in the redacted field."""
-        path = os.path.join(OUTPUT_DIR, "phi_results.json")
-        if not os.path.exists(path):
-            pytest.skip("phi_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        if len(results) < 3:
-            pytest.skip("Not enough results to check")
-
-        for i in range(3):
-            redacted = results[i].get("redacted", "")
-            assert "[REDACTED]" in redacted, (
-                f"Text {i} redacted field should contain '[REDACTED]'"
-            )
-
+# ---------- Part 2: Death at St. Mercy Hospital ----------
 
 class TestPart2:
-    """Test Part 2: RAG Pipeline output."""
+    @pytest.fixture(autouse=True)
+    def load_results(self):
+        path = os.path.join(OUTPUT_DIR, "part2_results.json")
+        if os.path.exists(path):
+            with open(path) as f:
+                self.results = json.load(f)
+        else:
+            self.results = None
 
-    def test_rag_results_exist(self):
-        """rag_results.json was created."""
-        path = os.path.join(OUTPUT_DIR, "rag_results.json")
-        assert os.path.exists(path), (
-            "rag_results.json should exist in output/. Run the assignment notebook first."
+    def test_part2_results_exist(self):
+        assert self.results is not None, "output/part2_results.json not found — run the notebook first"
+
+    def test_part2_has_required_fields(self):
+        assert self.results is not None, "output/part2_results.json not found"
+        for field in ["killer", "weapon", "time_of_death", "reasoning", "transcript"]:
+            assert field in self.results, f"Missing field: {field}"
+
+    def test_part2_killer_is_blake(self):
+        assert self.results is not None, "output/part2_results.json not found"
+        assert "blake" in self.results["killer"].lower(), (
+            f"Expected killer to be Dr. Blake, got: {self.results['killer']}"
         )
 
-    def test_rag_results_is_list(self):
-        """rag_results.json contains a JSON list."""
-        path = os.path.join(OUTPUT_DIR, "rag_results.json")
-        if not os.path.exists(path):
-            pytest.skip("rag_results.json not found")
+    def test_part2_weapon_is_syringe(self):
+        assert self.results is not None, "output/part2_results.json not found"
+        assert "syringe" in self.results["weapon"].lower(), (
+            f"Expected weapon to be syringe, got: {self.results['weapon']}"
+        )
 
-        with open(path) as f:
-            results = json.load(f)
+    def test_part2_time_of_death(self):
+        assert self.results is not None, "output/part2_results.json not found"
+        assert "9:30" in self.results["time_of_death"], (
+            f"Expected time of death to include 9:30, got: {self.results['time_of_death']}"
+        )
 
-        assert isinstance(results, list), "rag_results.json should contain a list"
-
-    def test_rag_results_nonempty(self):
-        """At least one RAG result exists."""
-        path = os.path.join(OUTPUT_DIR, "rag_results.json")
-        if not os.path.exists(path):
-            pytest.skip("rag_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        assert len(results) >= 1, "Should have at least one RAG result"
-
-    def test_rag_result_structure(self):
-        """Each result has answer, sources, and query."""
-        path = os.path.join(OUTPUT_DIR, "rag_results.json")
-        if not os.path.exists(path):
-            pytest.skip("rag_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        if len(results) == 0:
-            pytest.skip("No RAG results to check")
-
-        required = {"answer", "sources", "query"}
-        for i, result in enumerate(results):
-            assert isinstance(result, dict), f"Result {i} should be a dict"
-            missing = required - set(result.keys())
-            assert not missing, f"Result {i} missing fields: {missing}"
-
-    def test_rag_answers_are_strings(self):
-        """Answers are non-empty strings."""
-        path = os.path.join(OUTPUT_DIR, "rag_results.json")
-        if not os.path.exists(path):
-            pytest.skip("rag_results.json not found")
-
-        with open(path) as f:
-            results = json.load(f)
-
-        for i, result in enumerate(results):
-            answer = result.get("answer")
-            assert isinstance(answer, str), (
-                f"Result {i} answer should be a string"
-            )
-            assert len(answer.strip()) > 0, (
-                f"Result {i} answer should not be empty"
-            )
+    def test_part2_reasoning_substantive(self):
+        assert self.results is not None, "output/part2_results.json not found"
+        assert len(self.results["reasoning"]) >= 50, (
+            f"Reasoning is only {len(self.results['reasoning'])} chars — "
+            "provide detailed logical reasoning"
+        )

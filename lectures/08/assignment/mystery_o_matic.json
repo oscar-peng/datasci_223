@@ -1,0 +1,105 @@
+{
+  "title": "Death at St. Mercy Hospital",
+  "setting": "Dr. Eleanor Voss, chief of cardiology at St. Mercy Hospital, was found dead in her office Monday morning. She was last seen alive at 8:00 PM Sunday evening during her overnight shift. Security footage shows no one entering or leaving the building between 11:00 PM and 5:00 AM — meaning the killer was already inside.",
+  "victim": {
+    "name": "Dr. Eleanor Voss",
+    "role": "Chief of Cardiology",
+    "found": "Monday 6:00 AM in her office (Room 401)",
+    "cause_of_death": "Lethal injection of potassium chloride",
+    "time_of_death_estimate": "Between 9:00 PM and 10:00 PM Sunday"
+  },
+  "answer": {
+    "killer": "Dr. Blake",
+    "weapon": "Syringe",
+    "time_of_death": "9:30 PM",
+    "reasoning": "Dr. Blake was the only person with access to Room 401 at 9:30 PM. The syringe found in the sharps container on Floor 4 contained potassium chloride residue. Dr. Blake's keycard accessed Floor 4 at 9:25 PM despite claiming to be in the ER. Nurse Patel saw someone in a white coat near Room 401 at 9:30 PM. Dr. Blake had motive: Dr. Voss discovered he was falsifying clinical trial data and planned to report him Monday morning."
+  },
+  "suspects": {
+    "dr_blake": {
+      "name": "Dr. Raymond Blake",
+      "role": "Cardiologist, Dr. Voss's protégé",
+      "motive": "Dr. Voss discovered he was falsifying data in a major clinical trial. She confronted him Sunday afternoon and told him she would report him to the medical board Monday morning. His career, reputation, and freedom were at stake.",
+      "statement": "I was in the ER all evening covering for Dr. Santos who called in sick. I didn't go above the second floor all night. I heard about Dr. Voss this morning and I'm devastated — she was my mentor."
+    },
+    "nurse_chen": {
+      "name": "Nurse Margaret Chen",
+      "role": "Senior ICU Nurse",
+      "motive": "Dr. Voss had filed a formal complaint about medication errors on Chen's shifts. Chen was facing a disciplinary hearing next week that could end her 20-year career.",
+      "statement": "I was on the ICU floor (Floor 3) all night. I took my break at 9:00 PM in the third-floor break room and was back on the floor by 9:20 PM. I never went to Floor 4."
+    },
+    "dr_santos": {
+      "name": "Dr. Maria Santos",
+      "role": "Emergency Medicine physician",
+      "motive": "Dr. Voss blocked her promotion to department head last year, citing 'lack of leadership qualities.' Santos was still angry about it.",
+      "statement": "I called in sick Sunday but came back to the hospital around 8:30 PM because I forgot my laptop in my office on Floor 2. I grabbed it and left by 9:15 PM. The front desk can confirm I signed out."
+    },
+    "orderly_james": {
+      "name": "Victor James",
+      "role": "Night orderly",
+      "motive": "Dr. Voss caught him stealing controlled substances from the pharmacy last month. She gave him a 'last chance' warning instead of reporting him, but he lived in fear she'd change her mind.",
+      "statement": "I was doing my rounds — moving equipment, restocking supply closets. I was on Floor 1 from 8:00 to 9:00, Floor 2 from 9:00 to 10:00, and Floor 3 from 10:00 to 11:00. I never went to Floor 4 on Sunday night."
+    }
+  },
+  "evidence": {
+    "keycard_logs": [
+      {"time": "8:00 PM", "person": "Dr. Voss", "location": "Floor 4 (her office)", "action": "entry"},
+      {"time": "8:15 PM", "person": "Dr. Blake", "location": "Floor 1 (ER)", "action": "entry"},
+      {"time": "8:30 PM", "person": "Dr. Santos", "location": "Floor 1 (main entrance)", "action": "entry"},
+      {"time": "8:35 PM", "person": "Dr. Santos", "location": "Floor 2 (her office)", "action": "entry"},
+      {"time": "9:00 PM", "person": "Nurse Chen", "location": "Floor 3 (break room)", "action": "entry"},
+      {"time": "9:10 PM", "person": "Dr. Santos", "location": "Floor 1 (main entrance)", "action": "exit"},
+      {"time": "9:15 PM", "person": "Nurse Chen", "location": "Floor 3 (ICU)", "action": "entry"},
+      {"time": "9:25 PM", "person": "Dr. Blake", "location": "Floor 4", "action": "entry"},
+      {"time": "9:45 PM", "person": "Dr. Blake", "location": "Floor 1 (ER)", "action": "entry"},
+      {"time": "10:00 PM", "person": "Victor James", "location": "Floor 3 (supply closet)", "action": "entry"}
+    ],
+    "physical_evidence": [
+      "Syringe found in sharps container on Floor 4 — contains potassium chloride residue, wiped clean of fingerprints",
+      "Dr. Voss's office door was unlocked when found — she always locked it when working alone",
+      "Dr. Voss's computer shows she was drafting an email to the medical board about 'falsified trial data' at 9:15 PM — the email was never sent",
+      "Security camera on Floor 4 was 'undergoing maintenance' Sunday — no footage available",
+      "Dr. Blake's lab coat found in the Floor 4 laundry bin Monday morning, though he claims he never went to Floor 4"
+    ],
+    "witness_statements": [
+      {"witness": "Front desk security", "statement": "Dr. Santos signed in at 8:30 PM and signed out at 9:10 PM. No one else signed in or out between 8 PM and 11 PM."},
+      {"witness": "Nurse Patel (Floor 4)", "statement": "I saw someone in a white coat near Room 401 around 9:30 PM. I assumed it was Dr. Voss's colleague visiting. I didn't see their face clearly."},
+      {"witness": "Dr. Kim (ER)", "statement": "Dr. Blake was in the ER with me most of the evening, but he stepped out for about 25 minutes sometime after 9 PM. He said he went to get coffee."},
+      {"witness": "Cafeteria staff", "statement": "The cafeteria closed at 8 PM Sunday. No one came for coffee after closing."}
+    ]
+  },
+  "rooms": {
+    "floor_1": ["Main Entrance", "Emergency Room", "Cafeteria", "Security Desk"],
+    "floor_2": ["Administrative Offices", "Dr. Santos's Office", "Conference Room", "Records Room"],
+    "floor_3": ["ICU", "Break Room", "Supply Closet", "Nurse Station"],
+    "floor_4": ["Room 401 (Dr. Voss's Office)", "Room 402 (Research Lab)", "Room 403 (Dr. Blake's Office)", "Laundry", "Sharps Disposal"]
+  },
+  "weapons": {
+    "syringe": {
+      "description": "Medical syringe with potassium chloride residue, found in Floor 4 sharps container",
+      "availability": "Available in supply closets on every floor; potassium chloride stored in Floor 3 pharmacy",
+      "notes": "Wiped clean of fingerprints. Potassium chloride in sufficient dose causes cardiac arrest — nearly undetectable without targeted toxicology."
+    },
+    "scalpel": {
+      "description": "Surgical scalpel",
+      "availability": "Available in surgical suites (Floor 2) and research lab (Floor 4)",
+      "notes": "No scalpels found out of place. Victim showed no cuts or lacerations."
+    },
+    "medication": {
+      "description": "Oral overdose of controlled substances",
+      "availability": "Pharmacy on Floor 3, locked cabinet requiring authorized access",
+      "notes": "Toxicology showed no oral medications beyond Dr. Voss's normal prescriptions. Pharmacy inventory matches records."
+    },
+    "blunt_object": {
+      "description": "Heavy object (fire extinguisher, equipment)",
+      "availability": "Various locations throughout hospital",
+      "notes": "No signs of blunt force trauma on the victim. Cause of death was chemical, not physical."
+    }
+  },
+  "rules": [
+    "The killer must have had physical access to Floor 4 around the time of death (9:00-10:00 PM).",
+    "The weapon must match the cause of death (lethal injection of potassium chloride).",
+    "Keycard logs cannot be faked — they are tamper-proof hardware records.",
+    "Each suspect's statement may contain lies, but witness observations and physical evidence do not lie.",
+    "The killer is one of the four suspects listed."
+  ]
+}

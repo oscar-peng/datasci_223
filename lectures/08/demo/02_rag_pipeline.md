@@ -278,50 +278,75 @@ for s in result["sources"]:
     print(f"  {s}")
 ```
 
-## Section 6: MCP — Standardized Tool Discovery
+## Section 6: MCP — Standardized Tool Discovery and Use
 
 We built our RAG pipeline by hand: custom embedding code, custom ChromaDB queries, custom prompt assembly. **Model Context Protocol (MCP)** standardizes all of this — pre-built servers expose tools that any LLM client can discover and call.
 
-The pattern: connect to an MCP server → discover available tools → convert to OpenAI format → use with our existing agent code.
+**Prerequisite**: Node.js and `npx` must be installed (`brew install node` on macOS, or [nodejs.org](https://nodejs.org)).
+
+### Step 1: Discover tools from an MCP server
+
+MCP uses async I/O — focus on the pattern (connect → discover → call), not the `async/await` details.
 
 ```python
-# MCP tool discovery uses async — focus on the pattern, not the async details
-
 import asyncio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+# Connect to the filesystem MCP server (points at current directory)
+server_params = StdioServerParameters(
+    command="npx",
+    args=["-y", "@modelcontextprotocol/server-filesystem", "."],
+)
 
-async def explore_mcp_server():
+
+async def discover_tools():
     """Connect to an MCP server and list available tools."""
-    server = StdioServerParameters(
-        command="npx",
-        args=["-y", "@modelcontextprotocol/server-filesystem", "."],
-    )
-
-    async with stdio_client(server) as (read, write):
+    async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
 
             tools = await session.list_tools()
-            print("Available MCP Tools:")
-            print("-" * 40)
             for tool in tools.tools:
-                print(f"  {tool.name}: {tool.description[:60]}...")
-
+                print(f"  {tool.name}: {tool.description[:80]}")
             return tools
 
 
-# Uncomment to run (requires Node.js/npx installed):
-# tools = asyncio.run(explore_mcp_server())
+mcp_tools = await discover_tools()
+```
+
+### Step 2: Call an MCP tool directly
+
+The server handles execution — you just pass the tool name and arguments:
+
+```python
+async def call_mcp_tool(tool_name, arguments):
+    """Call a tool on the MCP server and return the result."""
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.call_tool(tool_name, arguments=arguments)
+            return result.content[0].text
+
+
+# List files in the current directory
+files = await call_mcp_tool("list_directory", {"path": "."})
+print(files)
 ```
 
 ```python
-def mcp_to_openai_tools(mcp_tools):
-    """Convert MCP tool definitions to OpenAI function calling format.
+# Read a file through MCP
+content = await call_mcp_tool("read_file", {"path": "sample_documents/guidelines.txt"})
+print(content[:500])
+```
 
-    Once converted, these work with any agent loop that accepts OpenAI-format tools.
-    """
+### Step 3: Use MCP tools with an LLM agent
+
+Convert MCP tool definitions to OpenAI format and plug them into an agent loop — the same loop from Demo 1:
+
+```python
+def mcp_to_openai_tools(mcp_tools):
+    """Convert MCP tool definitions to OpenAI function calling format."""
     return [
         {
             "type": "function",
@@ -335,19 +360,68 @@ def mcp_to_openai_tools(mcp_tools):
     ]
 
 
-# After conversion, plug into an agent loop:
-# openai_tools = mcp_to_openai_tools(tools)
-# response = client.chat.completions.create(model=MODEL, tools=openai_tools, ...)
+openai_tools = mcp_to_openai_tools(mcp_tools)
+print(f"Converted {len(openai_tools)} MCP tools to OpenAI format:")
+for t in openai_tools:
+    print(f"  {t['function']['name']}")
 ```
 
-**Key insight**: The agent loop stays the same regardless of how tools are defined — MCP just standardizes discovery and invocation.
+```python
+import json
 
-| Manual Approach (Demo 1) | MCP Approach |
-|:---|:---|
-| Define each tool function yourself | Use pre-built servers |
-| Wire up tool execution manually | Standard call/response protocol |
-| Build each integration from scratch | Plug-and-play servers |
-| Great for learning | Great for production |
+
+async def mcp_agent(task, max_steps=5):
+    """Agent loop that uses MCP tools instead of hand-written functions."""
+    messages = [
+        {"role": "system", "content": "You can read and search files. Use the tools available to you."},
+        {"role": "user", "content": task},
+    ]
+
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            for step in range(max_steps):
+                response = client.chat.completions.create(
+                    model=MODEL, messages=messages, tools=openai_tools
+                )
+                reply = response.choices[0].message
+                messages.append(reply)
+
+                if not reply.tool_calls:
+                    return reply.content
+
+                for tc in reply.tool_calls:
+                    args = json.loads(tc.function.arguments)
+                    print(f"  Step {step + 1}: calling {tc.function.name}({args})")
+
+                    # MCP server executes the tool — not our code
+                    result = await session.call_tool(tc.function.name, arguments=args)
+                    tool_output = result.content[0].text
+
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": tool_output,
+                    })
+
+    return "Max steps reached"
+
+
+# Ask the agent to find and summarize our clinical guidelines
+answer = await mcp_agent("What files are in the sample_documents directory? Read the guidelines and summarize the key topics covered.")
+print(answer)
+```
+
+The agent loop is the same as Demo 1 — but instead of hand-written `calculate_bmi()` functions, the tools come from an MCP server. The server handles execution; our code just passes messages.
+
+| Manual Approach (Demo 1)                | MCP Approach                            |
+| :-------------------------------------- | :-------------------------------------- |
+| Define each tool function yourself      | Pre-built servers expose tools          |
+| Write JSON schemas by hand              | Schemas auto-generated from server      |
+| Your code executes functions            | MCP server executes functions           |
+| Build each integration from scratch     | Plug-and-play servers                   |
+| Great for learning                      | Great for production                    |
 
 ## Exercises
 
@@ -355,10 +429,12 @@ def mcp_to_openai_tools(mcp_tools):
 2. **Chunking experiment**: Split the longer guidelines into smaller chunks — does retrieval quality change?
 3. **Hybrid search**: Filter by source metadata before doing similarity search
 4. **Evaluation**: Write 5 questions with known answers and check if RAG gets them right
+5. **MCP exploration**: Try connecting to a different MCP server (e.g., `@modelcontextprotocol/server-github`) and listing its tools
 
 ## Key Takeaways
 
 - RAG grounds LLM responses in retrieved documents, reducing hallucination
 - Vector databases (ChromaDB) enable fast semantic retrieval via embeddings
 - Citation tracking makes RAG outputs verifiable
-- MCP standardizes tool discovery so you don't have to wire everything by hand
+- MCP standardizes tool discovery _and execution_ — same agent loop, different tools
+- The 3-step dance (model requests tool → server executes → result fed back) is the same whether tools are manual or MCP

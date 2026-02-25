@@ -1,0 +1,136 @@
+{
+  "title": "Murder at the Mountain Cabin",
+  "setting": "A group of old college friends reunited for a weekend at a remote mountain cabin. By Saturday morning, host Marcus Reed was found dead in the living room — struck from behind with a heavy object. The cabin is snowed in; no one could have entered or left overnight.",
+  "victim": {
+    "name": "Marcus Reed",
+    "description": "The host. A successful tech entrepreneur who invited his old college friends for a reunion weekend. Found dead Saturday morning in the living room, struck from behind.",
+    "cause_of_death": "Blunt force trauma to the back of the head"
+  },
+  "answer": {
+    "killer": "Larry",
+    "weapon": "Antler trophy",
+    "motive": "Larry discovered Marcus had stolen his grandfather's treasure map years ago and used it to fund his startup. When confronted, Marcus laughed it off. Larry grabbed the antler trophy from the mantel in a rage."
+  },
+  "characters": {
+    "diana": {
+      "name": "Diana Blackwood",
+      "role": "Marcus's ex-girlfriend",
+      "personality": "Sharp, composed, speaks precisely. Former attorney. Still bitter about the breakup but channels it into dry wit rather than open hostility.",
+      "background": "Dated Marcus in college. He dumped her right before graduation for a younger woman. She's now a successful defense attorney in Seattle. They hadn't spoken in 3 years before this reunion.",
+      "secret": "Diana found Marcus's laptop open Friday night and saw emails proving he was about to sell the cabin — which he'd promised would always be their group's gathering place. She was furious but didn't kill him.",
+      "alibi": "Claims she was in her room reading until midnight, then slept through until 7am. She actually went downstairs at 11pm to confront Marcus about selling the cabin. They argued quietly in the kitchen for 20 minutes, then she went back upstairs.",
+      "knows": [
+        "Heard Larry and Marcus having a heated argument around 9pm about 'something that belonged to Larry's family'",
+        "Saw muddy boots by the back door that weren't there at dinner — they looked like Larry's hiking boots",
+        "Marcus told her during their kitchen argument that 'Larry has no proof of anything'",
+        "Noticed the antler trophy was crooked on the mantel when she came down at 11pm"
+      ],
+      "guardrails": "Diana will deny going downstairs unless pressed multiple times. She'll eventually admit to the kitchen confrontation but insist she left Marcus alive. She deflects suspicion toward Sofia."
+    },
+    "larry": {
+      "name": "Larry Hoffman",
+      "role": "Marcus's college roommate",
+      "personality": "Nervous, fidgety, talks too much when anxious. Works as a high school history teacher. Tries too hard to seem casual.",
+      "background": "Was Marcus's freshman year roommate. They were close friends but drifted apart after college. Larry's family fell on hard times — his grandfather's antique shop went bankrupt. Larry recently discovered that a 'treasure map' his grandfather had been searching for was taken from the shop before it closed.",
+      "secret": "Larry IS the killer. He discovered that Marcus stole his grandfather's treasure map from the antique shop years ago and used the hidden valuables to fund his tech startup. When Larry confronted Marcus at 10:30pm, Marcus laughed and said 'Your grandfather was a fool and so are you.' Larry grabbed the antler trophy from the mantel and struck Marcus. He wiped it down and repositioned it, then went to bed.",
+      "alibi": "Claims he went to bed at 9:30pm after playing cards with Tom and slept straight through. He says he didn't hear anything unusual.",
+      "knows": [
+        "Knows exactly what happened because he did it, but will give false information",
+        "Will claim he saw Sofia sneaking around the hallway at 10pm",
+        "Will say Tom mentioned having money troubles and needing Marcus to invest",
+        "If pressed hard about the treasure map, will admit they 'discussed family stuff' but say it was friendly"
+      ],
+      "guardrails": "Larry will lie consistently. He'll try to redirect suspicion to others, especially Sofia and Tom. If confronted with strong evidence (the argument Diana overheard, the muddy boots, the crooked trophy), he'll become increasingly nervous and his story will develop contradictions. He will NOT confess outright but his lies will become obvious."
+    },
+    "tom": {
+      "name": "Tom Chen",
+      "role": "The group's peacemaker",
+      "personality": "Warm, empathetic, hates conflict. A pediatrician who always tries to see the best in people. Speaks carefully and diplomatically.",
+      "background": "Has been the glue holding the friend group together for years. Organized this reunion because everyone was drifting apart. Genuinely liked Marcus despite his flaws.",
+      "secret": "Tom owes Marcus $40,000 from a personal loan he took out two years ago for his clinic expansion. Marcus had recently started pressuring him to repay. Tom was stressed about it but would never resort to violence.",
+      "alibi": "Was playing cards with Larry until about 9:15pm, then video-called his wife from his room. Phone records can verify the call lasted from 9:20pm to 10:45pm.",
+      "knows": [
+        "Larry was extremely agitated during their card game, kept bringing up 'debts people owe'",
+        "Heard raised voices from downstairs around 10:30pm while on the phone — told his wife 'sounds like Marcus is at it again'",
+        "Saw Larry in the upstairs hallway around 11pm looking 'pale and shaky' — Larry said he was getting water",
+        "The antler trophy was Marcus's prized possession — he'd brag about bagging the elk himself"
+      ],
+      "guardrails": "Tom is honest and cooperative. He'll share what he knows freely. He feels guilty about the loan but will be upfront about it if asked. He genuinely wants to help find the killer."
+    },
+    "sofia": {
+      "name": "Sofia Reyes",
+      "role": "The newcomer",
+      "personality": "Quiet, observant, a bit guarded. A wildlife photographer who prefers animals to people. New to the friend group — this was her first cabin trip.",
+      "background": "Started dating Tom's brother six months ago and got invited to the reunion through that connection. Doesn't know the group's history well. Was outside taking night photos of the snow for much of the evening.",
+      "secret": "Sofia witnessed Larry coming out of the living room at approximately 10:40pm looking panicked. She was outside on the porch taking long-exposure photos of the snowfall and saw him through the window. She's afraid to speak up because she barely knows these people.",
+      "alibi": "Was on the back porch with her camera from about 9pm to 11:30pm taking long-exposure night photography. Her camera's EXIF data can confirm timestamps of photos taken during that window.",
+      "knows": [
+        "Saw Larry exit the living room at approximately 10:40pm — he looked panicked and was wiping his hands on his jeans",
+        "Heard a loud thud from inside the cabin around 10:35pm but assumed someone dropped something",
+        "Noticed Larry went to the mudroom and changed his boots before going upstairs",
+        "Did NOT see anyone else enter or leave the living room between 9pm and 11:30pm"
+      ],
+      "guardrails": "Sofia will be hesitant to share what she saw at first. She'll mention being outside with her camera but won't volunteer the Larry sighting unless asked specifically about what she saw through the windows or who she noticed moving around. Once she trusts the detective's intentions, she'll share everything."
+    }
+  },
+  "locations": {
+    "living_room": {
+      "name": "Living Room",
+      "description": "The main gathering space with a stone fireplace, leather couches, and a large wooden coffee table. Marcus's body was found here near the fireplace.",
+      "clues": [
+        "The antler trophy on the mantel has been wiped clean — no fingerprints at all, which is suspicious since Marcus handled it regularly",
+        "A small scuff mark on the hardwood floor near the fireplace, consistent with a brief struggle",
+        "Marcus's phone on the coffee table shows his last text at 10:28pm to an unknown number: 'I told you, it's mine now. Deal with it.'",
+        "A glass of whiskey on the side table, half-finished — only Marcus's fingerprints"
+      ]
+    },
+    "kitchen": {
+      "name": "Kitchen",
+      "description": "A rustic kitchen with granite countertops. Dishes from dinner are still in the sink.",
+      "clues": [
+        "Two coffee mugs on the counter from a late-night conversation — Diana's lipstick on one",
+        "A notepad by the phone with Marcus's handwriting: 'Larry — grandfather's map — told him NO'",
+        "The back door was unlocked, though everyone claims it was locked after dinner",
+        "A kitchen knife is missing from the block, but found later in the dishwasher (red herring — just from dinner prep)"
+      ]
+    },
+    "mudroom": {
+      "name": "Mudroom / Back Entry",
+      "description": "A small entryway off the back of the cabin with coat hooks, boot racks, and outdoor gear.",
+      "clues": [
+        "Larry's hiking boots are damp and have fresh mud on them, though he claims he didn't go outside after dinner",
+        "A pair of rubber gloves from the cleaning supplies has been moved — one is inside-out as if hastily removed",
+        "Boot prints in the mud outside lead from the back porch around to the side of the cabin and back"
+      ]
+    },
+    "upstairs_hallway": {
+      "name": "Upstairs Hallway",
+      "description": "The corridor connecting the four guest bedrooms on the second floor.",
+      "clues": [
+        "A small smear on the hallway carpet near Larry's room — could be mud or something darker",
+        "Diana's door was heard opening and closing around 11pm by Tom",
+        "The bathroom shared by Larry and Tom's rooms has a freshly used hand towel with faint brown stains"
+      ]
+    },
+    "back_porch": {
+      "name": "Back Porch",
+      "description": "A covered wooden porch overlooking the snowy mountain landscape. Sofia's photography equipment is still set up here.",
+      "clues": [
+        "Sofia's camera is mounted on a tripod aimed at the tree line — EXIF data confirms photos from 9:04pm to 11:27pm",
+        "From this vantage point, you can see directly into the living room through the large windows",
+        "Fresh boot prints in the snow lead from the porch steps around the side of the cabin",
+        "A cigarette butt near the railing — no one in the group claims to smoke (actually Marcus's — he hid it from the group)"
+      ]
+    },
+    "marcus_bedroom": {
+      "name": "Marcus's Bedroom",
+      "description": "The master bedroom on the ground floor, behind the living room.",
+      "clues": [
+        "Marcus's laptop is open on his desk, showing a real estate listing for the cabin — listed 3 days ago",
+        "A locked desk drawer contains old photographs from college, including one of Larry's grandfather's antique shop",
+        "An old hand-drawn map is tucked inside a book on the shelf — it looks like a treasure map with markings in a different handwriting than Marcus's",
+        "A journal entry from last week reads: 'Larry's been asking questions. He can't prove anything. The map led me to $200K in old coins — that was MY discovery.'"
+      ]
+    }
+  }
+}

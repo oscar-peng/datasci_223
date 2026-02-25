@@ -68,6 +68,8 @@ LLM Applications & Workflows
 - [GPT (2018)](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
 - [RLHF](https://arxiv.org/abs/2203.02155) — Reinforcement Learning from Human Feedback
 
+![xkcd: Skynet](media/xkcd_skynet.png)
+
 # When to Use LLMs
 
 Before diving into agents, RAG, and workflows — the most important skill is knowing **when** to use LLMs and when not to.
@@ -117,9 +119,9 @@ Understanding how LLMs fail helps you design better systems and set appropriate 
 | **Context overflow**        | Important information at edges gets lost                          | Strategic positioning, chunking, hierarchical summarization          |
 | **Task/expertise mismatch** | User can't identify LLM errors                                   | Expert review, reference materials, limit autonomy                   |
 
-## Prompt Injection
+![xkcd: Hallucinations](media/xkcd_hallucinations.png)
 
-![](media/xkcd_exploits_of_a_mom.png)
+## Prompt Injection
 
 Models may treat user content as instructions. The defense: separate system instructions from user content using roles and delimiters (XML tags like `<user_input>...</user_input>`). Guardrails (covered in Workflows below) validate both inputs and outputs.
 
@@ -133,7 +135,7 @@ LLMs approximate numbers through pattern matching — they don't execute arithme
 
 Every major provider offers a model hierarchy — start with the smallest model that handles your task and only upgrade when needed. Each tier is roughly 5–10x cheaper than the one above it:
 
-- **OpenAI**: GPT-5.2 → GPT-5-mini → GPT-5-nano
+- **OpenAI**: GPT-X.2 → GPT-X-mini → GPT-X-nano
 - **Anthropic**: Claude Opus → Claude Sonnet → Claude Haiku
 - **Google**: Gemini Pro → Gemini Flash → Gemini Flash Lite
 
@@ -168,13 +170,7 @@ Choose tasks that you can meaningfully oversee. Think of LLMs as prolific intern
 | **5. Upgrade**    | Switch to a larger model only if the smaller one can't handle it |
 | **6. Monitor**    | Track costs, latency, and output quality in production           |
 
-![](media/xkcd_hallucinations.png)
-
-![](media/xkcd_tax_ai.png)
-
 # Agentic LLMs
-
-![](media/xkcd_skynet.png)
 
 You can send a prompt and get a response. Now: what can you _build_ with it?
 
@@ -248,83 +244,25 @@ def agent_loop(task, tools, max_steps=10):
     messages = [{"role": "user", "content": task}]
 
     for step in range(max_steps):
+        # PLAN/ACT: send conversation so far, let the model decide what to do
         response = client.chat.completions.create(
-            model="gpt-5.2", messages=messages,
-            tools=tools, tool_choice="auto"        # model decides which tools to call
+            model="gpt-5.2", messages=messages, tools=tools
         )
-        msg = response.choices[0].message
-        messages.append(msg)
+        reply = response.choices[0].message
+        messages.append(reply)
 
-        if not msg.tool_calls:                      # no tool calls → agent is done
-            return msg.content
+        # DONE? if the model didn't ask to call any tools, it's finished
+        if not reply.tool_calls:
+            return reply.content
 
-        for call in msg.tool_calls:                 # execute each tool, feed results back
+        # OBSERVE: execute each tool the model requested, feed results back
+        for call in reply.tool_calls:
             result = run_tool(call)
-            messages.append({"role": "tool", "tool_call_id": call.id, "content": str(result)})
+            messages.append({"role": "tool", "tool_call_id": call.id,
+                             "content": str(result)})
+        # loop back → model sees the tool results and decides next step
 
     return "Max steps reached"
-```
-
-## Function Calling
-
-Modern LLM APIs support **function calling** — you define functions using JSON schemas, and the model can invoke them. This single mechanism serves two distinct purposes:
-
-- **Tool use**: The agent _chooses_ to call external functions (search, calculate, query a database) as part of working toward a goal. This is what makes agents agentic.
-- **Structured output**: You _force_ the model to return data matching a specific schema. The model isn't taking action — it's formatting its response. You saw this idea in Lecture 7 with schema-based prompting; function calling guarantees compliance.
-
-Both use the same API (`tools` parameter), but they serve different purposes. Tool use is about **action**; structured output is about **format**.
-
-Tool use is the core of what makes agents work. You define tools the model can call, and the model decides _when_ and _which_ to call based on the task. Your code executes the function and feeds the result back. You'll see tool use throughout this lecture: RAG uses it to retrieve information, MCP standardizes how tools connect to LLMs, and workflows orchestrate multiple tool calls into reliable pipelines.
-
-![](media/structured_outputs.png)
-
-### Reference Card: Function Calling
-
-| Component            | Details                                          |
-| :------------------- | :----------------------------------------------- |
-| **Purpose**          | Let the model invoke tools or produce structured data |
-| **Definition**       | JSON schema with properties and types            |
-| **`tool_choice`**    | `"auto"` (model decides) or forced (specific function) |
-| **Tool use pattern** | Model chooses tool → your code executes → result fed back |
-| **Structured output pattern** | Model forced to return data matching schema |
-
-### Code Snippet: Function Calling
-
-```python
-# Define a tool using a JSON schema
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate_bmi",
-            "description": "Calculate BMI from weight and height",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "weight_kg": {"type": "number"},
-                    "height_m": {"type": "number"}
-                },
-                "required": ["weight_kg", "height_m"]
-            }
-        }
-    }
-]
-
-# Tool use: model decides whether to call the tool
-response = client.chat.completions.create(
-    model="gpt-5.2",
-    messages=[{"role": "user", "content": "What's the BMI for a 75kg, 1.75m patient?"}],
-    tools=tools,
-    tool_choice="auto"
-)
-
-# Structured output: force the model to return data matching the schema
-response = client.chat.completions.create(
-    model="gpt-5.2",
-    messages=[{"role": "user", "content": "Extract BMI data from this clinical note..."}],
-    tools=tools,
-    tool_choice={"type": "function", "function": {"name": "calculate_bmi"}}  # forced
-)
 ```
 
 ## Building an Agent
@@ -334,8 +272,13 @@ You've seen the concepts — now here's what defining an agent looks like in cod
 ### Code Snippet: OpenAI Agents SDK
 
 ```python
-# pip install openai-agents
-from agents import Agent, Runner, function_tool
+# pip install openai-agents pydantic
+from pydantic import BaseModel
+from agents import Agent, Runner, function_tool, set_default_openai_client
+from openai import OpenAI
+
+# Point the SDK at any OpenAI-compatible API (OpenRouter, local Ollama, etc.)
+set_default_openai_client(OpenAI(base_url="https://openrouter.ai/api/v1"))
 
 @function_tool
 def calculate_bmi(weight_kg: float, height_m: float) -> str:
@@ -343,17 +286,50 @@ def calculate_bmi(weight_kg: float, height_m: float) -> str:
     bmi = weight_kg / (height_m ** 2)
     return f"BMI: {bmi:.1f}"
 
+# Structured output — agent must return data matching this schema
+class PatientReport(BaseModel):
+    bmi: float
+    category: str
+    recommendation: str
+
 agent = Agent(
     name="Health Assistant",
     instructions="You help with health data analysis. Use tools for calculations.",
     tools=[calculate_bmi],
+    output_type=PatientReport,  # forces structured JSON output
 )
 
-result = Runner.run_sync(agent, "Calculate BMI for a 75kg patient who is 1.75m tall")
-print(result.final_output)
+# max_turns limits how many agent loop iterations (tool calls) before stopping
+result = Runner.run_sync(agent, "Calculate BMI for a 75kg patient who is 1.75m tall",
+                         max_turns=10)
+print(result.final_output)  # PatientReport object
 ```
 
-The SDK handles the agent loop automatically — you define tools, instructions, and the agent figures out the rest. More framework options in the Workflow section below.
+The SDK handles the agent loop automatically — you define tools, instructions, and the agent figures out the rest. Key parameters:
+
+- **`output_type`**: Forces the agent to return structured data matching a Pydantic model — the same pattern you saw with schema-based prompting in Lecture 7, but now enforced by the framework.
+- **`max_turns`**: Limits how many iterations the agent loop can run. Without it, an agent could loop indefinitely if it keeps calling tools. Set it based on task complexity — simple tasks need 5–10 turns, complex investigations might need 30–50.
+- **`set_default_openai_client`**: Points the SDK at any OpenAI-compatible API endpoint (OpenRouter, a local Ollama server, etc.) instead of the default OpenAI API.
+
+More framework options in the Workflow section below.
+
+## Prompting Techniques for Agents
+
+In Lecture 7 you learned chain-of-thought and prompt chaining. Agents extend these with patterns designed for multi-step, tool-using workflows:
+
+![](media/agentic_prompting.png)
+
+### Reference Card: Agentic Prompting Patterns
+
+| Pattern                | How It Works                                                              | When to Use                                           |
+| :--------------------- | :------------------------------------------------------------------------ | :---------------------------------------------------- |
+| **ReAct** (Reason+Act) | Interleave reasoning with tool calls: think → act → observe → think again | Any agent that uses tools — the default agent pattern |
+| **Self-consistency**   | Generate multiple reasoning paths, vote on the most common answer         | High-stakes decisions where confidence matters        |
+| **Reflection**         | Agent critiques its own output, surfaces uncertainty and assumptions       | Complex tasks where errors are costly                 |
+| **Tree of Thought**    | Explore multiple solution branches, prune unpromising paths               | Planning and multi-step reasoning tasks               |
+
+!!! warning
+    "Reasoning" in LLMs is not thinking. Models like o1/o3 use chain-of-thought at inference time, which can improve results on some tasks — but it doesn't always help, it's always more expensive, and it can create a false sense of confidence. See Apple's ["Illusion of Thinking"](https://machinelearning.apple.com/research/illusion-of-thinking) research.
 
 ![](media/xkcd_robot_future.png)
 
@@ -434,6 +410,9 @@ def rag_query(question, n_results=3):
 
 MCP provides a standardized way to connect LLMs to external data sources and tools. Instead of writing custom integrations for each tool, MCP offers pre-built servers that expose capabilities in a consistent format.
 
+!!! note
+    MCP servers often run as Node.js processes. Install Node.js (`brew install node` on macOS, or [nodejs.org](https://nodejs.org)) to use them.
+
 ## Why MCP?
 
 - **Standardization**: Same interface for files, databases, APIs, web scraping
@@ -456,42 +435,81 @@ MCP provides a standardized way to connect LLMs to external data sources and too
 
 MCP fits naturally with agents: MCP servers are the _tools_ that agents can call.
 
-### Reference Card: MCP Concepts
+## Function Calling
 
-| Concept       | Description                                                                     |
-| :------------ | :------------------------------------------------------------------------------ |
-| **Server**    | Process that exposes tools/resources (e.g., filesystem server, database server) |
-| **Tool**      | Function the LLM can invoke (e.g., `read_file`, `query_database`)               |
-| **Resource**  | Data the LLM can read (e.g., file contents, API responses)                      |
-| **Transport** | How client and server communicate (stdio, HTTP)                                 |
+Whether you're writing tools by hand or discovering them via MCP, the underlying mechanism is the same: **function calling**. You define functions using JSON schemas, and the model can invoke them. This serves two purposes:
 
-### Code Snippet: Using MCP
+- **Tool use**: The agent _chooses_ to call external functions (search, calculate, query a database). This is what makes agents agentic.
+- **Structured output**: You _force_ the model to return data matching a specific schema — formatting, not action. You saw this in Lecture 7 with schema-based prompting; function calling guarantees compliance.
 
-The pattern is always the same — connect to a server, discover its tools, and pass them to the LLM:
+Both use the same API (`tools` parameter). Tool use is about **action**; structured output is about **format**.
+
+![](media/structured_outputs.png)
+
+### Reference Card: MCP & Function Calling
+
+| Component                       | Details                                                                     |
+| :------------------------------ | :-------------------------------------------------------------------------- |
+| **MCP Server**                  | Process that exposes tools/resources (e.g., filesystem server, database server) |
+| **MCP Tool**                    | Function the LLM can invoke (e.g., `read_file`, `query_database`)           |
+| **MCP Resource**                | Data the LLM can read (e.g., file contents, API responses)                  |
+| **MCP Transport**               | How client and server communicate (stdio, HTTP)                             |
+| **Function calling definition** | JSON schema with properties and types                                       |
+| **`tool_choice`**               | `"auto"` (model decides) or forced (specific function)                      |
+| **Tool use pattern**            | Model chooses tool → your code executes → result fed back                   |
+| **Structured output pattern**   | Model forced to return data matching schema                                 |
+
+### Code Snippet: Defining an MCP Server
+
+An MCP server exposes Python functions as tools. The `@mcp.tool()` decorator + type hints are all it takes — the protocol handles schema generation, discovery, and transport:
 
 ```python
-# 1. Connect to an MCP server (filesystem, database, GitHub, etc.)
-session = connect_to_mcp_server("@modelcontextprotocol/server-filesystem")
+from mcp.server.fastmcp import FastMCP
 
-# 2. Discover available tools — same format as function calling
-tools = session.list_tools()   # e.g., read_file, write_file, list_directory
+mcp = FastMCP("Health Tools")
 
-# 3. Pass tools to the LLM — it can now invoke them
-response = client.chat.completions.create(
-    model="gpt-5.2", tools=tools, messages=messages
-)
+@mcp.tool()
+def calculate_bmi(weight_kg: float, height_m: float) -> str:
+    """Calculate BMI from weight and height."""
+    bmi = weight_kg / (height_m ** 2)
+    return f"BMI: {bmi:.1f}"
+
+mcp.run()
 ```
+
+### Code Snippet: Configuring MCP Servers
+
+In practice, MCP servers are configured in JSON — tools like Claude Code, Cursor, and ChatGPT read this config to connect to servers automatically:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "filesystem": {
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-filesystem", "/path/to/data"]
+      },
+      "postgres": {
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-postgres", "postgresql://localhost/mydb"]
+      }
+    }
+  }
+}
+```
+
+Once configured, the LLM can discover and call any tools the server exposes. For example, the filesystem server exposes `read_file`, `write_file`, `list_directory`, and `search_files` — the same tools Claude Code uses to navigate your codebase.
 
 ## Common MCP Servers
 
-| Category         | Server                                    | Use Cases              |
-| :--------------- | :---------------------------------------- | :--------------------- |
-| **File systems** | `@modelcontextprotocol/server-filesystem` | Read/write local files |
-| **Databases**    | `@modelcontextprotocol/server-postgres`   | Query databases        |
-| **Web**          | `@modelcontextprotocol/server-puppeteer`  | Browser automation     |
+| Category         | Server                                    | Tools Exposed                                    |
+| :--------------- | :---------------------------------------- | :----------------------------------------------- |
+| **File systems** | `@modelcontextprotocol/server-filesystem` | `read_file`, `write_file`, `list_directory`      |
+| **Databases**    | `@modelcontextprotocol/server-postgres`   | `query`, `list_tables`, `describe_table`         |
+| **Web**          | `@modelcontextprotocol/server-puppeteer`  | `navigate`, `screenshot`, `click`, `fill`        |
 | **Code**         | `@modelcontextprotocol/server-github`     | Repository operations  |
 
-![](media/xkcd_ai_research.png)
+![xkcd: Exploits of a Mom](media/xkcd_exploits_of_a_mom.png)
 
 # LIVE DEMO!!
 
@@ -545,6 +563,8 @@ def extract_classify_summarize(document: str) -> dict:
 
     return {"entities": entities, "classified": classified, "summary": summary}
 ```
+
+![](media/xkcd_ai_research.png)
 
 ## Workflow Patterns
 
@@ -662,6 +682,8 @@ def extract_and_validate(clinical_note: str) -> dict:
 
 1. Run task multiple times with different prompts or models
 2. Choose winner or synthesize results
+
+![](media/xkcd_tax_ai.png)
 
 ### Pattern: Orchestrator-Workers
 

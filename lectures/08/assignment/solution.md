@@ -12,392 +12,414 @@ jupyter:
     name: python3
 ---
 
-# Assignment 8: LLM Applications — RAG & Guardrails
+# Assignment 8: Murder Mystery Agents
 
-Extract structured data from clinical notes using LLM prompt engineering, then build a semantic search system using sentence embeddings.
-
-**Guidelines data:** `sample_documents/guidelines.txt` — synthetic clinical guidelines covering hypertension, diabetes, and chest pain evaluation.
+Build detective agents that solve two murder mysteries using the OpenAI Agents SDK.
 
 ## Setup
 
 ```python
-%pip install -q -r requirements.txt
+%pip install -q openai>=1.0.0 openai-agents>=0.1.0 python-dotenv>=1.0.0 pydantic>=2.0.0
+```
 
+```python
 %reset -f
-```
 
-```python
 import os
-import re
 import json
-import numpy as np
 from dotenv import load_dotenv
+from openai import AsyncOpenAI
+from pydantic import BaseModel
+from agents import Agent, Runner, function_tool, set_default_openai_client
 
-os.makedirs("output", exist_ok=True)
 load_dotenv()
-print("Setup complete!")
+os.makedirs("output", exist_ok=True)
+
+# Configure API client
+if os.environ.get("OPENROUTER_API_KEY"):
+    set_default_openai_client(AsyncOpenAI(
+        api_key=os.environ["OPENROUTER_API_KEY"],
+        base_url="https://openrouter.ai/api/v1",
+    ))
+    AGENTS_MODEL = "openai/gpt-4o-mini"
+elif os.environ.get("OPENAI_API_KEY"):
+    AGENTS_MODEL = "gpt-4o-mini"
+else:
+    raise ValueError("Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env")
+
+print(f"Using model: {AGENTS_MODEL}")
 ```
 
-### API Key
+## Transcript Logger
 
-Part 2 requires an [OpenRouter](https://openrouter.ai) API key (OpenAI keys also work). Copy the example and fill in your key:
-
-```bash
-cp example.env .env
-# Then edit .env with your actual key
-```
-
-Part 1 runs locally and does not need an API key.
-
-### Helper Functions (do not modify)
+A utility to capture what the detective agent does — which tools it calls and what it learns.
 
 ```python
-# --- LLM client setup (do not modify) ---
+transcript = []
 
-def get_client():
-    """Initialize the LLM client based on available API keys."""
-    from openai import OpenAI
-
-    if os.environ.get("OPENROUTER_API_KEY"):
-        client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url="https://openrouter.ai/api/v1",
-        )
-        return client, "openrouter"
-
-    if os.environ.get("OPENAI_API_KEY"):
-        return OpenAI(), "openai"
-
-    raise ValueError(
-        "No API key found. Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env"
-    )
-
-
-def call_llm(prompt, system_prompt=None, provider=None, client=None):
-    """Send a prompt to the LLM and return the response text."""
-    if client is None or provider is None:
-        client, provider = get_client()
-
-    model = "openai/gpt-4o-mini" if provider == "openrouter" else "gpt-4o-mini"
-
-    messages = []
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-    messages.append({"role": "user", "content": prompt})
-
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=0,
-        max_tokens=1000,
-    )
-    return response.choices[0].message.content
-```
-
-### Load Data
-
-```python
-with open("sample_documents/guidelines.txt") as f:
-    guidelines_text = f.read()
-
-print(f"Loaded guidelines: {len(guidelines_text)} characters")
-print(guidelines_text[:200] + "...")
+def log_action(action_type: str, detail: str):
+    """Append an entry to the investigation transcript."""
+    transcript.append({"action": action_type, "detail": detail})
+    print(f"  [{action_type}] {detail[:120]}")
 ```
 
 ---
 
-## Part 1: PHI Guardrails (no API key needed)
+# Part 1: Murder at the Mountain Cabin
 
-Detect and redact Protected Health Information (PHI) from text using regex patterns. This is a critical safety step before sending clinical text to any LLM.
+A group of old college friends reunited at a remote mountain cabin. By Saturday morning, the host — Marcus Reed — was found dead. The cabin is snowed in. The killer is among the guests.
+
+Your detective agent will interrogate suspects and search locations to identify the killer, the weapon, and the motive.
 
 ```python
-test_texts = [
-    "Patient John Smith, SSN 123-45-6789, presents with chest pain. Contact: 555-867-5309",
-    "Email records@hospital.com for MRN#12345. Patient has diabetes.",
-    "Call 800-555-0199 or email jane.doe@clinic.org for appointment. BP 140/90.",
-    "Blood pressure 120/80, heart rate 72 bpm, SpO2 98%. No acute findings.",
-]
+with open("mystery_data.json") as f:
+    cabin_data = json.load(f)
 
-print(f"{len(test_texts)} test texts loaded")
-for i, t in enumerate(test_texts):
-    print(f"  [{i}] {t[:70]}...")
+print(f"Mystery: {cabin_data['title']}")
+print(f"\n{cabin_data['setting']}")
+print(f"\nVictim: {cabin_data['victim']['name']} — {cabin_data['victim']['cause_of_death']}")
+print(f"\nSuspects: {', '.join(c['name'] for c in cabin_data['characters'].values())}")
+print(f"Locations: {', '.join(loc['name'] for loc in cabin_data['locations'].values())}")
 ```
 
-### `detect_phi`
+### Part 1 Tools
 
-Detect common PHI patterns in text using regular expressions.
-
-```python
-def detect_phi(text):
-    """Detect common PHI patterns via regex."""
-    patterns = {
-        "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
-        "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
-        "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-        "mrn": r"\bMRN[\s:#]*\d+\b",
-    }
-
-    found = {}
-    for phi_type, pattern in patterns.items():
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        if matches:
-            found[phi_type] = matches
-
-    return found
-```
-
-### `redact_phi`
-
-Replace detected PHI with `[REDACTED]` placeholders.
+These tools let the detective agent interact with the mystery world. `search_location` returns clues from a location. `interrogate` creates a temporary sub-agent for each suspect — the suspect has its own personality and secrets embedded in a system prompt.
 
 ```python
-def redact_phi(text, phi_results):
-    """Replace each detected PHI match with [REDACTED]."""
-    if not phi_results:
-        return text
+@function_tool
+def search_location(location_id: str) -> str:
+    """Search a location in the cabin for clues. Valid locations: living_room, kitchen, mudroom, upstairs_hallway, back_porch, marcus_bedroom"""
+    location = cabin_data["locations"].get(location_id)
+    if not location:
+        return f"Unknown location '{location_id}'. Valid: {', '.join(cabin_data['locations'].keys())}"
+    log_action("search", f"Searched {location['name']}")
+    result = f"**{location['name']}**: {location['description']}\n\nClues found:\n"
+    for clue in location["clues"]:
+        result += f"- {clue}\n"
+    return result
 
-    redacted = text
-    for phi_type, matches in phi_results.items():
-        for match in matches:
-            redacted = redacted.replace(match, "[REDACTED]")
 
-    return redacted
-```
+@function_tool
+async def interrogate(character_name: str, question: str) -> str:
+    """Interrogate a suspect by name. Ask them a specific question. Valid names: diana, larry, tom, sofia"""
+    key = character_name.lower().strip()
+    character = cabin_data["characters"].get(key)
+    if not character:
+        return f"Unknown character '{character_name}'. Valid: {', '.join(cabin_data['characters'].keys())}"
 
-### Test PHI detection and save results (do not modify)
+    log_action("interrogate", f"Asked {character['name']}: {question[:80]}")
 
-```python
-phi_output = []
-for i, text in enumerate(test_texts):
-    phi_found = detect_phi(text)
-    has_phi = len(phi_found) > 0
-    redacted = redact_phi(text, phi_found)
+    # Build a system prompt that makes the LLM role-play as this suspect
+    system_prompt = f"""You are {character['name']}, {character['role']} in a murder investigation.
 
-    phi_output.append({
-        "text_index": i,
-        "has_phi": has_phi,
-        "phi_found": phi_found,
-        "redacted": redacted,
-    })
+Personality: {character['personality']}
+Background: {character['background']}
+Your secret: {character['secret']}
+Your alibi: {character['alibi']}
 
-    print(f"Text {i}: PHI={'YES' if has_phi else 'no':3s} | {list(phi_found.keys()) if phi_found else '(clean)'}")
-    if has_phi:
-        print(f"  Redacted: {redacted[:80]}...")
+Things you know or observed:
+{chr(10).join('- ' + k for k in character['knows'])}
 
-with open("output/phi_results.json", "w") as f:
-    json.dump(phi_output, f, indent=2)
+Behavioral guidelines: {character['guardrails']}
 
-print(f"\nSaved {len(phi_output)} results to output/phi_results.json")
-```
+Stay in character. Answer the detective's question based on your knowledge, personality, and secrets. Keep responses to 2-4 sentences. You may lie or deflect according to your behavioral guidelines."""
 
----
-
-## Part 2: RAG Pipeline (needs API key)
-
-Build a retrieval-augmented generation pipeline that answers clinical questions grounded in the guidelines document.
-
-```python
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-client, provider = get_client()
-print(f"Embedding model loaded, LLM provider: {provider}")
-```
-
-### `chunk_document`
-
-Split a document into overlapping chunks for retrieval.
-
-```python
-def chunk_document(text, chunk_size=500, overlap=50):
-    """Split text into overlapping chunks, breaking at sentence boundaries."""
-    sentences = text.replace("\n", " ").split(". ")
-    sentences = [s.strip() + "." for s in sentences if s.strip()]
-
-    chunks = []
-    current_chunk = []
-    current_len = 0
-
-    for sentence in sentences:
-        if current_len + len(sentence) > chunk_size and current_chunk:
-            chunks.append(" ".join(current_chunk))
-            # Keep last sentence(s) for overlap
-            overlap_chars = 0
-            overlap_sents = []
-            for s in reversed(current_chunk):
-                overlap_chars += len(s)
-                overlap_sents.insert(0, s)
-                if overlap_chars >= overlap:
-                    break
-            current_chunk = overlap_sents
-            current_len = sum(len(s) for s in current_chunk)
-
-        current_chunk.append(sentence)
-        current_len += len(sentence)
-
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
-
-    return chunks
-```
-
-### `retrieve`
-
-Find the most relevant chunks for a query using embedding similarity.
-
-```python
-def retrieve(query, text, n_results=3):
-    """Retrieve the most relevant chunks for a query."""
-    chunks = chunk_document(text)
-
-    query_emb = embedding_model.encode([query])
-    chunk_embs = embedding_model.encode(chunks)
-
-    similarities = cosine_similarity(query_emb, chunk_embs)[0]
-    distances = 1.0 - similarities
-
-    ranked = sorted(range(len(chunks)), key=lambda i: distances[i])
-    top = ranked[:n_results]
-
-    return [{"text": chunks[i], "distance": float(distances[i])} for i in top]
-```
-
-### `generate_answer`
-
-Use retrieved chunks as context to generate a grounded answer.
-
-```python
-def generate_answer(query, text):
-    """Retrieve relevant chunks and generate a grounded answer."""
-    results = retrieve(query, text)
-    context = "\n\n".join(r["text"] for r in results)
-
-    answer = call_llm(
-        prompt=f"Context:\n{context}\n\nQuestion: {query}",
-        system_prompt=(
-            "Answer based ONLY on the provided context. "
-            "If the context doesn't contain enough information, say so."
-        ),
-        provider=provider,
-        client=client,
+    suspect_agent = Agent(
+        name=character["name"],
+        model=AGENTS_MODEL,
+        instructions=system_prompt,
     )
+    result = await Runner.run(suspect_agent, question)
+    response = result.final_output
+    log_action("response", f"{character['name']}: {response[:100]}")
+    return response
 
-    return {
-        "answer": answer,
-        "sources": [r["text"] for r in results],
-        "query": query,
-    }
+cabin_tools = [search_location, interrogate]
+print(f"Tools ready: {[t.name for t in cabin_tools]}")
 ```
 
-### Test RAG pipeline and save results (do not modify)
+### Part 1 Structured Output
+
+The detective must produce a formal accusation at the end.
 
 ```python
-test_queries = [
-    "What is the first-line treatment for hypertension in a diabetic patient?",
-    "How is STEMI diagnosed?",
-    "What HbA1c level indicates diabetes?",
-]
+class Accusation(BaseModel):
+    killer: str
+    weapon: str
+    motive: str
+    evidence: list[str]
+```
 
-rag_output = []
-for q in test_queries:
-    print(f"Q: {q}")
-    result = generate_answer(q, guidelines_text)
-    print(f"A: {result['answer'][:150]}...")
-    print(f"   Sources: {len(result['sources'])} chunks\n")
-    rag_output.append(result)
+### TODO 1: Detective Instructions (Part 1)
 
-with open("output/rag_results.json", "w") as f:
-    json.dump(rag_output, f, indent=2)
+Write the system prompt for your cabin detective agent. Tell it who it is, what its goal is, and how to approach the investigation (search locations, interrogate suspects, look for contradictions, then make an accusation).
 
-print(f"Saved {len(rag_output)} results to output/rag_results.json")
+```python
+# ✅ SOLUTION
+detective_instructions = """You are a seasoned detective investigating the murder of Marcus Reed at a remote mountain cabin. Your goal is to identify the killer, the murder weapon, and the motive.
+
+Investigation strategy:
+1. Start by searching the crime scene (living_room) and other key locations for physical evidence.
+2. Interrogate all four suspects: Diana, Larry, Tom, and Sofia. Ask pointed questions based on evidence you find.
+3. Look for contradictions between suspects' stories and the physical evidence.
+4. Follow up on suspicious details — re-interrogate suspects if their stories don't add up.
+5. When you have enough evidence, make your accusation with the killer's name, weapon, motive, and supporting evidence.
+
+Be thorough. Search multiple locations and talk to every suspect at least once. Cross-reference what suspects say against physical evidence and other testimony."""
+```
+
+### TODO 2: Run Detective Agent (Part 1)
+
+Create the detective `Agent` and run it with `Runner.run()`.
+
+```python
+# ✅ SOLUTION
+transcript = []  # Reset transcript for Part 1
+
+detective = Agent(
+    name="Cabin Detective",
+    model=AGENTS_MODEL,
+    instructions=detective_instructions,
+    tools=cabin_tools,
+    output_type=Accusation,
+)
+
+result = await Runner.run(
+    detective,
+    "Investigate the murder of Marcus Reed. Search locations, interrogate all suspects, and identify the killer, weapon, and motive.",
+    max_turns=50,
+)
+
+accusation = result.final_output
+print(f"\n{'='*50}")
+print(f"ACCUSATION")
+print(f"{'='*50}")
+print(f"Killer: {accusation.killer}")
+print(f"Weapon: {accusation.weapon}")
+print(f"Motive: {accusation.motive}")
+print(f"Evidence:")
+for e in accusation.evidence:
+    print(f"  - {e}")
+```
+
+### Save Part 1 Results
+
+```python
+part1_results = {
+    "killer": accusation.killer,
+    "weapon": accusation.weapon,
+    "motive": accusation.motive,
+    "evidence": accusation.evidence,
+    "transcript": transcript,
+}
+
+with open("output/part1_results.json", "w") as f:
+    json.dump(part1_results, f, indent=2)
+
+print(f"\nSaved to output/part1_results.json")
+print(f"Transcript entries: {len(transcript)}")
 ```
 
 ---
 
-## Validation
+# Part 2: Death at St. Mercy Hospital
+
+A structured logic puzzle. Dr. Eleanor Voss was found dead in her office. Security footage shows no one entered or left overnight — the killer was already inside. Use deduction tools to analyze evidence and identify the killer, weapon, and time of death.
 
 ```python
-print("Run 'python -m pytest .github/tests/ -v' in your terminal to check your work.")
+with open("mystery_o_matic.json") as f:
+    hospital_data = json.load(f)
+
+print(f"Mystery: {hospital_data['title']}")
+print(f"\n{hospital_data['setting']}")
+print(f"\nVictim: {hospital_data['victim']['name']} — {hospital_data['victim']['cause_of_death']}")
+print(f"Suspects: {', '.join(s['name'] for s in hospital_data['suspects'].values())}")
+```
+
+### Part 2 Tools
+
+Deduction tools that give the agent access to different categories of evidence.
+
+```python
+@function_tool
+def get_room_map() -> str:
+    """Get the hospital floor map showing all rooms and their locations."""
+    log_action("tool", "Retrieved room map")
+    result = "Hospital Floor Map:\n"
+    for floor, rooms in hospital_data["rooms"].items():
+        result += f"\n{floor.replace('_', ' ').title()}: {', '.join(rooms)}"
+    return result
+
+
+@function_tool
+def get_witness_statement(suspect: str) -> str:
+    """Get a suspect's statement and background. Valid suspects: dr_blake, nurse_chen, dr_santos, orderly_james"""
+    key = suspect.lower().strip().replace(" ", "_").replace("dr.", "dr").replace("dr ", "dr_")
+    suspect_data = hospital_data["suspects"].get(key)
+    if not suspect_data:
+        return f"Unknown suspect '{suspect}'. Valid: {', '.join(hospital_data['suspects'].keys())}"
+    log_action("interview", f"Got statement from {suspect_data['name']}")
+    return f"""**{suspect_data['name']}** ({suspect_data['role']})
+Motive: {suspect_data['motive']}
+Statement: "{suspect_data['statement']}" """
+
+
+@function_tool
+def get_evidence() -> str:
+    """Get all physical evidence and keycard logs from the investigation."""
+    log_action("tool", "Retrieved evidence and keycard logs")
+    result = "=== KEYCARD ACCESS LOGS ===\n"
+    for entry in hospital_data["evidence"]["keycard_logs"]:
+        result += f"{entry['time']} | {entry['person']} | {entry['location']} ({entry['action']})\n"
+    result += "\n=== PHYSICAL EVIDENCE ===\n"
+    for item in hospital_data["evidence"]["physical_evidence"]:
+        result += f"- {item}\n"
+    result += "\n=== WITNESS OBSERVATIONS ===\n"
+    for obs in hospital_data["evidence"]["witness_statements"]:
+        result += f"- {obs['witness']}: {obs['statement']}\n"
+    return result
+
+
+@function_tool
+def get_weapons() -> str:
+    """Get information about potential murder weapons found or available in the hospital."""
+    log_action("tool", "Retrieved weapons analysis")
+    result = "=== WEAPONS ANALYSIS ===\n"
+    for weapon_id, weapon in hospital_data["weapons"].items():
+        result += f"\n**{weapon_id.replace('_', ' ').title()}**: {weapon['description']}\n"
+        result += f"  Availability: {weapon['availability']}\n"
+        result += f"  Notes: {weapon['notes']}\n"
+    return result
+
+
+@function_tool
+def get_rules() -> str:
+    """Get the logical rules and constraints for solving this mystery."""
+    log_action("tool", "Retrieved investigation rules")
+    result = "=== INVESTIGATION RULES ===\n"
+    for i, rule in enumerate(hospital_data["rules"], 1):
+        result += f"{i}. {rule}\n"
+    return result
+
+hospital_tools = [get_room_map, get_witness_statement, get_evidence, get_weapons, get_rules]
+print(f"Tools ready: {[t.name for t in hospital_tools]}")
+```
+
+### Part 2 Structured Output
+
+```python
+class PuzzleSolution(BaseModel):
+    killer: str
+    weapon: str
+    time_of_death: str
+    reasoning: str
+```
+
+### TODO 3: Detective Instructions (Part 2)
+
+Write the system prompt for your hospital detective agent. This is a logic puzzle — emphasize methodical deduction: gather all evidence, check alibis against keycard logs, eliminate suspects, and identify contradictions.
+
+```python
+# ✅ SOLUTION
+puzzle_instructions = """You are a forensic detective solving the murder of Dr. Eleanor Voss at St. Mercy Hospital. This is a logic puzzle — solve it through methodical deduction.
+
+Investigation approach:
+1. First, get the rules and room map to understand the constraints.
+2. Gather all evidence: keycard logs, physical evidence, and witness observations.
+3. Get each suspect's statement and compare it against the hard evidence (keycard logs don't lie).
+4. Check which suspects had access to Floor 4 during the time of death window (9:00-10:00 PM).
+5. Determine which weapon matches the cause of death.
+6. Look for contradictions between statements and evidence — the killer's alibi will not match the keycard logs.
+7. Provide your solution with clear logical reasoning."""
+```
+
+### TODO 4: Run Detective Agent (Part 2)
+
+Create the hospital detective `Agent` and run it with `Runner.run()`.
+
+```python
+# ✅ SOLUTION
+transcript = []  # Reset transcript for Part 2
+
+hospital_detective = Agent(
+    name="Hospital Detective",
+    model=AGENTS_MODEL,
+    instructions=puzzle_instructions,
+    tools=hospital_tools,
+    output_type=PuzzleSolution,
+)
+
+result = await Runner.run(
+    hospital_detective,
+    "Solve the murder of Dr. Eleanor Voss. Use all available tools to gather evidence, analyze suspects, and determine the killer, weapon, and time of death.",
+    max_turns=15,
+)
+
+solution = result.final_output
+print(f"\n{'='*50}")
+print(f"SOLUTION")
+print(f"{'='*50}")
+print(f"Killer: {solution.killer}")
+print(f"Weapon: {solution.weapon}")
+print(f"Time of death: {solution.time_of_death}")
+print(f"Reasoning: {solution.reasoning}")
+```
+
+### Save Part 2 Results
+
+```python
+part2_results = {
+    "killer": solution.killer,
+    "weapon": solution.weapon,
+    "time_of_death": solution.time_of_death,
+    "reasoning": solution.reasoning,
+    "transcript": transcript,
+}
+
+with open("output/part2_results.json", "w") as f:
+    json.dump(part2_results, f, indent=2)
+
+print(f"\nSaved to output/part2_results.json")
+print(f"Transcript entries: {len(transcript)}")
 ```
 
 ---
 
-## Part 3: Agent Tool Calling *(optional, not graded)*
+# Validation
 
-A working agent with a BMI calculator tool. Experiment with adding tools, changing the system prompt, or giving the agent more complex tasks.
+Run the tests to check your results:
 
 ```python
-def calculate_bmi(weight_kg: float, height_m: float) -> dict:
-    """Calculate BMI from weight and height."""
-    bmi = weight_kg / (height_m ** 2)
-    category = (
-        "Underweight" if bmi < 18.5
-        else "Normal weight" if bmi < 25
-        else "Overweight" if bmi < 30
-        else "Obese"
-    )
-    return {"bmi": round(bmi, 1), "category": category}
-
-
-TOOLS = {"calculate_bmi": calculate_bmi}
-
-tool_definitions = [
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate_bmi",
-            "description": "Calculate Body Mass Index from weight and height",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "weight_kg": {"type": "number", "description": "Weight in kilograms"},
-                    "height_m": {"type": "number", "description": "Height in meters"},
-                },
-                "required": ["weight_kg", "height_m"],
-            },
-        },
-    }
-]
-
-
-def run_agent(task, max_steps=5):
-    """Simple agent loop with tool calling."""
-    import json as _json
-    messages = [
-        {"role": "system", "content": "You are a health assistant. Use tools for calculations."},
-        {"role": "user", "content": task},
-    ]
-
-    model = "openai/gpt-4o-mini" if provider == "openrouter" else "gpt-4o-mini"
-
-    for step in range(max_steps):
-        response = client.chat.completions.create(
-            model=model, messages=messages,
-            tools=tool_definitions, tool_choice="auto",
-        )
-        msg = response.choices[0].message
-        messages.append(msg)
-
-        if not msg.tool_calls:
-            return msg.content
-
-        for tc in msg.tool_calls:
-            args = _json.loads(tc.function.arguments)
-            result = TOOLS[tc.function.name](**args)
-            print(f"  Tool: {tc.function.name}({args}) → {result}")
-            messages.append({"role": "tool", "tool_call_id": tc.id, "content": _json.dumps(result)})
-
-    return "Max steps reached"
-
-
-# Try it
-print(run_agent("What's the BMI for someone who is 1.82m and weighs 90kg?"))
+!python -m pytest .github/tests/ -v
 ```
 
-### Ideas to try
+---
 
-- Add an eGFR calculator tool (see Demo 2 for the formula)
-- Add a medication lookup tool
-- Give the agent a multi-step task: "Patient weighs 95kg, is 1.70m, and takes metformin. Calculate BMI and check if metformin is appropriate."
-- What happens if you ask the agent to do something it has no tool for?
+# Part 3: Interactive Interrogation (Optional, Not Graded)
+
+Want to interrogate the cabin suspects yourself? This chat loop lets you play detective interactively.
+
+```python
+interactive_detective = Agent(
+    name="Interactive Detective",
+    model=AGENTS_MODEL,
+    instructions="You are assisting a human detective investigating the murder of Marcus Reed at a mountain cabin. The human will tell you who to interrogate or where to search. Use your tools to carry out their requests and report back what you find.",
+    tools=cabin_tools,
+)
+
+print("=== Interactive Detective Mode ===")
+print("Tell the detective who to interrogate or where to search.")
+print("Examples: 'Ask Diana about her alibi', 'Search the kitchen', 'Interrogate Larry about the treasure map'")
+print("Type 'quit' to exit.\n")
+
+while True:
+    user_input = input("Detective> ").strip()
+    if user_input.lower() in ("quit", "exit", "q"):
+        print("Case closed.")
+        break
+    if not user_input:
+        continue
+    result = await Runner.run(interactive_detective, user_input)
+    print(f"\n{result.final_output}\n")
+```

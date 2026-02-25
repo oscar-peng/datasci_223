@@ -1,56 +1,56 @@
-# Assignment 8: LLM Applications — RAG & Guardrails
+# Assignment 8: Murder Mystery Agents
 
-Build PHI guardrails and a RAG pipeline for clinical guideline Q&A.
+Build detective agents that solve two murder mysteries using the OpenAI Agents SDK.
 
-**Guidelines data**: `sample_documents/guidelines.txt` — synthetic clinical guidelines covering hypertension, diabetes, and chest pain evaluation.
+## Mysteries
 
-## Getting Started
+- **Part 1: Murder at the Mountain Cabin** — A narrative mystery with LLM-powered suspects. Your agent interrogates characters and searches locations to solve the case.
+- **Part 2: Death at St. Mercy Hospital** — A structured logic puzzle. Your agent uses deduction tools to analyze evidence and identify the killer.
+
+## Setup
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### API Key (Part 2 only)
+### API Key
 
-Part 2 requires an LLM API key. We will use [OpenRouter](https://openrouter.ai) (OpenAI-compatible):
+You need an OpenRouter API key (or OpenAI key) for this assignment. Get the shared key from the class forum, or create a free account at [openrouter.ai](https://openrouter.ai).
 
-1. An API key will be provided on the class forum.
-2. (Optional) Sign up for your own free OpenRouter account to create your own API key. There are usually generous free-tier limits for a few models at any given time.
-3. Save the API key in `.env` as `OPENROUTER_API_KEY`. For example:
+Create a `.env` file:
+```
+OPENROUTER_API_KEY=your_key_here
+```
 
-   ```
-   OPENROUTER_API_KEY=your_api_key_here
-   ```
-
-4. DO NOT COMMIT YOUR API KEY. This will likely invalidate the shared key for everyone and I will have to generate a new one. **This will result in an immediate deduction of one million imaginary points from your final grade**.
-
-Part 1 (PHI guardrails) runs locally and does not need an API key.
+**WARNING**: Do not commit your `.env` file — your key will be invalidated for all students.
 
 ## Workflow
 
-Open `assignment.ipynb` and work through both parts:
-
-1. **Part 1: PHI Guardrails** — Implement `detect_phi` and `redact_phi` (no API key needed)
-2. **Part 2: RAG Pipeline** — Implement `chunk_document`, `retrieve`, and `generate_answer`
-3. **Part 3: Agent Tool Calling** *(optional, not graded)* — Experiment with a working agent
-
-The notebook saves results to `output/` for autograding.
+1. Open `assignment.ipynb` and work through the notebook
+2. Complete 4 TODO cells:
+   - **TODO 1**: Write the detective system prompt for Part 1
+   - **TODO 2**: Create and run the detective Agent for Part 1
+   - **TODO 3**: Write the detective system prompt for Part 2
+   - **TODO 4**: Create and run the detective Agent for Part 2
+3. Run all cells to generate output files
 
 ## Output Files
 
-| File | Part | Description |
-|:---|:---|:---|
-| `output/phi_results.json` | 1 | PHI detection and redaction results for 4 test texts |
-| `output/rag_results.json` | 2 | RAG pipeline answers for 3 clinical queries |
+Tests check these artifacts (generated when you run the notebook):
+- `output/part1_results.json` — Part 1 accusation (killer, weapon, motive, evidence, transcript)
+- `output/part2_results.json` — Part 2 solution (killer, weapon, time of death, reasoning, transcript)
 
-## Checking Your Work
+## Testing
 
 ```bash
 python -m pytest .github/tests/ -v
 ```
 
-Note: Tests check output artifacts only — run the notebook first, then run tests. You must commit `output/` for CI autograding to pass. Part 3 is optional and has no tests.
+Tests verify your agent identified the correct answers and actually used its tools (not just hardcoded answers).
 
-## Hints
+## Tips
 
-See `hints.md` for troubleshooting tips.
+- The agent needs good instructions to investigate thoroughly — vague prompts lead to incomplete investigations
+- Part 1 may need multiple runs if the agent doesn't find all the clues (LLMs are non-deterministic)
+- Part 2 is deterministic — the logic puzzle has one correct answer
+- See `hints.md` if you get stuck

@@ -25,8 +25,8 @@ jupytext --to notebook *.md
 
 | Demo | File | Topics |
 |:---|:---|:---|
-| 1 | `01_agents.md` | Function calling (JSON schema tools), agent loop, multi-tool agent, OpenAI Agents SDK |
-| 2 | `02_rag_pipeline.md` | Clinical knowledge base, ChromaDB, RAG pipeline (embed/retrieve/augment/generate), citations, MCP tool discovery |
+| 1 | `01_agents.md` | Agents SDK, specialized agents (diagnostician, pharmacist, summarizer), structured output (`output_type`) |
+| 2 | `02_rag_pipeline.md` | Clinical knowledge base, ChromaDB, RAG pipeline (embed/retrieve/augment/generate), citations, function calling (tool use + structured output), MCP server/client |
 | 3 | `03_workflows.md` | Prompt chaining, PHI guardrails, deterministic steps, failure modes, combined pipeline |
 
 ## Requirements

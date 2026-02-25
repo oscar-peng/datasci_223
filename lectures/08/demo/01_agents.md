@@ -12,16 +12,9 @@ jupyter:
     name: python3
 ---
 
-# Demo 1: Building a Clinical Agent
+# Demo 1: Building Clinical Agents
 
-Define tools, wire up function calling, and build an agent loop that autonomously decides which tools to call and in what order.
-
-## Learning Objectives
-
-- Define clinical tools as Python functions with JSON schemas
-- Make a single function-calling API request and walk through the 3-step dance
-- Build a multi-tool agent loop that decides when and which tools to call
-- See the same agent built with the OpenAI Agents SDK
+Build agents that use tools, follow instructions, and specialize in different clinical roles.
 
 ## Setup
 
@@ -31,361 +24,202 @@ Define tools, wire up function calling, and build an agent loop that autonomousl
 
 ```python
 import os
-import json
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
+from agents import Agent, ModelSettings, Runner, function_tool, set_tracing_disabled
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 
+# Load API key from .env file (OPENROUTER_API_KEY or OPENAI_API_KEY)
 load_dotenv()
 
+# OpenAIChatCompletionsModel wraps any OpenAI-compatible API endpoint.
+# OpenRouter proxies dozens of model providers through one API —
+# we point the SDK's async client at it and pick a model by its OpenRouter ID.
 if os.environ.get("OPENROUTER_API_KEY"):
-    client = OpenAI(
+    client = AsyncOpenAI(
         api_key=os.environ["OPENROUTER_API_KEY"],
         base_url="https://openrouter.ai/api/v1",
     )
-    MODEL = "openai/gpt-4o-mini"
+    MODEL = OpenAIChatCompletionsModel(model="openai/gpt-4o-mini", openai_client=client)
+    MODEL_NAME = "openai/gpt-4o-mini"
+    # Tracing requires OpenAI API — disable for OpenRouter
+    set_tracing_disabled(True)
 elif os.environ.get("OPENAI_API_KEY"):
-    client = OpenAI()
-    MODEL = "gpt-4o-mini"
+    client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    MODEL = OpenAIChatCompletionsModel(model="gpt-4o-mini", openai_client=client)
+    MODEL_NAME = "gpt-4o-mini"
 else:
     raise ValueError("Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env")
 
-print(f"Using model: {MODEL}")
+# temperature=0 for more deterministic output across runs
+SETTINGS = ModelSettings(temperature=0, max_tokens=1024)
+
+print(f"Using model: {MODEL_NAME}")
 ```
 
-## Section 1: Function Calling Basics
+## Section 1: Your First Agent
 
-The lecture showed the concept — now let's see the full round-trip. Function calling is a 3-step dance:
-
-1. **You send** the request with tool definitions
-2. **The model responds** with a tool call (name + arguments) instead of text
-3. **You execute** the function and feed the result back
+An agent needs **instructions** (what it does) and a **runner** (the loop that calls the model, executes tools, and feeds results back). Instructions are the system prompt that shapes behavior — what the agent focuses on, how it responds, what constraints it follows.
 
 ```python
-# A real clinical tool: BMI calculation with category
-def calculate_bmi(weight_kg: float, height_m: float) -> dict:
-    """Calculate BMI from weight and height."""
-    bmi = weight_kg / (height_m ** 2)
-    if bmi < 18.5:
-        category = "Underweight"
-    elif bmi < 25:
-        category = "Normal weight"
-    elif bmi < 30:
-        category = "Overweight"
-    else:
-        category = "Obese"
-    return {"bmi": round(bmi, 1), "category": category}
-
-
-# Describe the tool in JSON schema — this is what the model sees
-bmi_tool = {
-    "type": "function",
-    "function": {
-        "name": "calculate_bmi",
-        "description": "Calculate Body Mass Index from weight and height",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "weight_kg": {"type": "number", "description": "Weight in kilograms"},
-                "height_m": {"type": "number", "description": "Height in meters"},
-            },
-            "required": ["weight_kg", "height_m"],
-        },
-    },
-}
-```
-
-```python
-# Step 1: Send request with tools
-response = client.chat.completions.create(
+# Agent = instructions + model. Runner = the agent loop that orchestrates everything.
+agent = Agent(
+    name="Health Assistant",
     model=MODEL,
-    messages=[{"role": "user", "content": "What's the BMI for a 85kg, 1.75m patient?"}],
-    tools=[bmi_tool],
-    tool_choice="auto",
+    model_settings=SETTINGS,
+    instructions="You are a concise clinical assistant. Answer health questions clearly and briefly.",
 )
 
-msg = response.choices[0].message
-print("Model wants to call a tool:")
-print(f"  Function: {msg.tool_calls[0].function.name}")
-print(f"  Arguments: {msg.tool_calls[0].function.arguments}")
+# Runner.run() sends the prompt through the agent loop:
+# 1. Model receives instructions (system prompt) + user message
+# 2. Model generates a response (or calls tools — none here)
+# 3. Runner returns the result
+result = await Runner.run(agent, "What are the warning signs of a heart attack?")
+print(result.final_output)
 ```
 
-```python
-# Step 2: Execute the tool ourselves
-tool_call = msg.tool_calls[0]
-args = json.loads(tool_call.function.arguments)
-result = calculate_bmi(**args)
-print(f"Tool result: {result}")
-```
+That's the simplest possible agent — an LLM with a defined role, run through the SDK's agent loop. Not much different from a raw API call yet. The `Agent` abstraction lets us layer on tools and structure.
+
+## Section 2: Tool Use
+
+An agent becomes useful when it can *do* things, not just *say* things. `@function_tool` turns a Python function into a tool the agent can call. The agent decides *when* to use each tool based on the conversation — that's the "act" step in the agent loop.
+
+This is critical for clinical calculations: **math happens in Python, not in the LLM**. The model extracts values from the prompt, the tools compute, and the model reports results. This avoids the arithmetic errors LLMs are prone to.
 
 ```python
-# Step 3: Feed the result back and get the final answer
-messages = [
-    {"role": "user", "content": "What's the BMI for a 85kg, 1.75m patient?"},
-    msg,  # the model's tool call message
-    {"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps(result)},
-]
-
-final = client.chat.completions.create(model=MODEL, messages=messages)
-print(final.choices[0].message.content)
-```
-
-The model doesn't run the function — it tells you *which* function to call and *what arguments* to pass. You execute it and return the result. This separation is what makes agents safe: your code controls what actually happens.
-
-## Section 2: Multi-Tool Agent
-
-One tool is useful. Multiple tools with a loop is an **agent** — the model decides which tools to call and in what order, iterating until the task is complete.
-
-Good tools are deterministic functions with typed parameters and structured return values — the model handles language, the tool handles computation.
-
-```python
-def calculate_egfr(creatinine: float, age: int, is_female: bool) -> dict:
-    """Calculate estimated GFR using simplified CKD-EPI equation."""
-    if is_female:
-        if creatinine <= 0.7:
-            egfr = 144 * ((creatinine / 0.7) ** -0.329) * (0.993 ** age)
-        else:
-            egfr = 144 * ((creatinine / 0.7) ** -1.209) * (0.993 ** age)
-    else:
-        if creatinine <= 0.9:
-            egfr = 141 * ((creatinine / 0.9) ** -0.411) * (0.993 ** age)
-        else:
-            egfr = 141 * ((creatinine / 0.9) ** -1.209) * (0.993 ** age)
-
-    if egfr >= 90:
-        stage = "G1 (Normal)"
-    elif egfr >= 60:
-        stage = "G2 (Mild)"
-    elif egfr >= 45:
-        stage = "G3a (Mild-Moderate)"
-    elif egfr >= 30:
-        stage = "G3b (Moderate-Severe)"
-    elif egfr >= 15:
-        stage = "G4 (Severe)"
-    else:
-        stage = "G5 (Kidney Failure)"
-
-    return {"egfr": round(egfr, 1), "ckd_stage": stage}
-
-
-def get_medication_info(medication_name: str) -> dict:
-    """Look up medication information (simulated database)."""
-    db = {
-        "metformin": {
-            "class": "Biguanide",
-            "indication": "Type 2 Diabetes",
-            "contraindications": ["eGFR < 30", "Acute kidney injury", "Metabolic acidosis"],
-            "common_dose": "500-2000mg daily",
-        },
-        "lisinopril": {
-            "class": "ACE Inhibitor",
-            "indication": "Hypertension, Heart failure, Diabetic nephropathy",
-            "contraindications": ["Pregnancy", "History of angioedema"],
-            "common_dose": "5-40mg daily",
-        },
-        "amlodipine": {
-            "class": "Calcium Channel Blocker",
-            "indication": "Hypertension, Angina",
-            "contraindications": ["Cardiogenic shock", "Severe aortic stenosis"],
-            "common_dose": "5-10mg daily",
-        },
-    }
-    med = medication_name.lower()
-    return db.get(med, {"error": f"'{medication_name}' not found in database"})
-
-
-TOOLS = {
-    "calculate_bmi": calculate_bmi,
-    "calculate_egfr": calculate_egfr,
-    "get_medication_info": get_medication_info,
-}
-
-print(f"Defined {len(TOOLS)} tools: {', '.join(TOOLS.keys())}")
-```
-
-The model can't call Python functions directly — it needs JSON schemas that describe each tool's name, purpose, and parameter types. This is the contract between your code and the model.
-
-```python
-tool_definitions = [
-    bmi_tool,
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate_egfr",
-            "description": "Calculate estimated GFR for kidney function assessment",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "creatinine": {"type": "number", "description": "Serum creatinine in mg/dL"},
-                    "age": {"type": "integer", "description": "Patient age in years"},
-                    "is_female": {"type": "boolean", "description": "True if patient is female"},
-                },
-                "required": ["creatinine", "age", "is_female"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_medication_info",
-            "description": "Look up medication class, indications, and contraindications",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "medication_name": {"type": "string", "description": "Medication name"},
-                },
-                "required": ["medication_name"],
-            },
-        },
-    },
-]
-
-print(f"Registered {len(tool_definitions)} tool schemas for the model")
-for td in tool_definitions:
-    print(f"  {td['function']['name']}: {td['function']['description']}")
-```
-
-`execute_tool` dispatches a tool call to the right Python function. `run_agent` implements the agent loop: send the conversation to the model → if it requests tool calls, execute them and feed results back → repeat until the model responds with text instead of tool calls.
-
-```python
-def execute_tool(tool_call):
-    """Execute a tool call and return the result as JSON string."""
-    name = tool_call.function.name
-    args = json.loads(tool_call.function.arguments)
-    if name in TOOLS:
-        return json.dumps(TOOLS[name](**args))
-    return json.dumps({"error": f"Unknown tool: {name}"})
-
-
-def run_agent(task: str, max_steps: int = 5, verbose: bool = True) -> str:
-    """Run an agent that uses tools to complete a clinical task."""
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a clinical assistant with tools for BMI calculation, "
-                "eGFR calculation, and medication lookup. Use tools for calculations "
-                "— never do math in your head. Show your reasoning."
-            ),
-        },
-        {"role": "user", "content": task},
-    ]
-
-    for step in range(max_steps):
-        if verbose:
-            print(f"\n--- Step {step + 1} ---")
-
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            tools=tool_definitions,
-            tool_choice="auto",
-        )
-
-        msg = response.choices[0].message
-        messages.append(msg)
-
-        if not msg.tool_calls:
-            if verbose:
-                print("Agent completed (no more tool calls)")
-            return msg.content
-
-        for tc in msg.tool_calls:
-            if verbose:
-                print(f"Tool: {tc.function.name}({tc.function.arguments})")
-            result = execute_tool(tc)
-            if verbose:
-                print(f"Result: {result}")
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tc.id,
-                "content": result,
-            })
-
-    return "Max steps reached"
-```
-
-```python
-print("=" * 60)
-print("TASK: Simple BMI calculation")
-print("=" * 60)
-result = run_agent("Calculate BMI for a patient who weighs 85 kg and is 1.75m tall.")
-print(f"\nFinal:\n{result}")
-```
-
-```python
-print("=" * 60)
-print("TASK: Multi-step medication safety check")
-print("=" * 60)
-result = run_agent(
-    "A 68-year-old female has creatinine 1.8 mg/dL. "
-    "Can she safely take metformin? Check her kidney function first."
-)
-print(f"\nFinal:\n{result}")
-```
-
-## Section 3: OpenAI Agents SDK
-
-The Agents SDK packages the same pattern — tools, agent loop, message handling — into a cleaner API. Same concepts, less boilerplate.
-
-```python
-from openai import AsyncOpenAI
-from agents import Agent, Runner, function_tool, set_default_openai_client
-
-# Configure the Agents SDK to use the same OpenRouter credentials
-if os.environ.get("OPENROUTER_API_KEY"):
-    set_default_openai_client(AsyncOpenAI(
-        api_key=os.environ["OPENROUTER_API_KEY"],
-        base_url="https://openrouter.ai/api/v1",
-    ))
-    AGENTS_MODEL = "openai/gpt-4o-mini"
-else:
-    AGENTS_MODEL = "gpt-4o-mini"
-
+# @function_tool exposes a Python function to the agent.
+# The SDK reads the function's type hints and docstring to generate a JSON schema
+# that tells the model what the tool does and what arguments it expects.
 
 @function_tool
-def calculate_bmi_sdk(weight_kg: float, height_m: float) -> str:
-    """Calculate BMI from weight and height."""
+def calculate_bmi(weight_kg: float, height_m: float) -> str:
+    """Calculate BMI from weight in kg and height in meters."""
     bmi = weight_kg / (height_m ** 2)
     category = (
-        "Underweight" if bmi < 18.5
-        else "Normal weight" if bmi < 25
-        else "Overweight" if bmi < 30
-        else "Obese"
+        "underweight" if bmi < 18.5
+        else "normal weight" if bmi < 25
+        else "overweight" if bmi < 30
+        else "obese"
     )
     return f"BMI: {bmi:.1f} ({category})"
 
 
-agent = Agent(
-    name="Health Assistant",
-    model=AGENTS_MODEL,
-    instructions="You help with health data analysis. Use tools for all calculations.",
-    tools=[calculate_bmi_sdk],
+@function_tool
+def calculate_creatinine_clearance(
+    creatinine: float, age: int, weight_kg: float, is_female: bool
+) -> str:
+    """Estimate creatinine clearance using the Cockcroft-Gault equation."""
+    crcl = ((140 - age) * weight_kg) / (72 * creatinine)
+    if is_female:
+        crcl *= 0.85
+    return f"CrCl: {crcl:.0f} mL/min"
+```
+
+```python
+# tools= gives the agent access to our functions. The model sees their schemas
+# and decides which to call (and with what arguments) based on the user's message.
+clinical_calculator = Agent(
+    name="Clinical Calculator",
+    model=MODEL,
+    model_settings=SETTINGS,
+    instructions=(
+        "You are a clinical assistant with access to medical calculators. "
+        "Use the available tools to compute values — never do arithmetic yourself. "
+        "Report results clearly with clinical context."
+    ),
+    tools=[calculate_bmi, calculate_creatinine_clearance],
 )
 
-# Jupyter supports top-level await — use async Runner.run() instead of run_sync()
-result = await Runner.run(agent, "Calculate BMI for a 75kg patient who is 1.75m tall")
+# The agent loop now has real work to do:
+# 1. Model reads the prompt, decides it needs both tools
+# 2. Model generates tool calls with extracted arguments (82kg, 1.68m, etc.)
+# 3. Runner executes the Python functions, feeds results back to the model
+# 4. Model composes a final response incorporating both tool outputs
+result = await Runner.run(
+    clinical_calculator,
+    "Patient is 82 kg, 1.68 m tall. Creatinine 1.4 mg/dL, age 68, male. "
+    "Calculate BMI and creatinine clearance.",
+)
 print(result.final_output)
 ```
 
-Compare the two approaches:
+The agent chose which tools to call, extracted the right arguments from the prompt, and composed the results into a clinical summary. The tool definitions (type hints + docstrings) are all the model needs to know what's available and how to call it.
 
-| Manual Agent (Section 2) | Agents SDK (Section 3) |
-|:---|:---|
-| Write tool JSON schema by hand | `@function_tool` decorator |
-| Implement `run_agent()` loop | `await Runner.run()` |
-| Manage message history yourself | Handled automatically |
-| Full control over every step | Cleaner API, less boilerplate |
-| Great for learning | Great for production |
+## Section 3: Specialized Agents
 
-## Exercises
+Different agents can have different **instructions** that shape *what* they focus on and *how* they reason. Same patient data, different clinical lens — the instructions act as each agent's specialization.
 
-1. **Add a tool**: Add a drug interaction checker to the manual agent (e.g., "does metformin interact with lisinopril?")
-2. **Agents SDK tools**: Add `calculate_egfr` and `get_medication_info` to the SDK agent
-3. **Error handling**: What happens when the agent gets bad tool arguments? Add validation to `execute_tool`
+```python
+# Three agents, same model, different instructions.
+# Each one reads the same patient data but focuses on different aspects.
 
-## Key Takeaways
+diagnostician = Agent(
+    name="Diagnostician",
+    model=MODEL,
+    model_settings=SETTINGS,
+    instructions=(
+        "You are a diagnostician. Given patient information, identify the most likely "
+        "diagnosis, generate a differential, and recommend workup. Think systematically "
+        "through the clinical presentation. Be concise."
+    ),
+)
 
-- Function calling is a 3-step dance: send tools → model requests tool → execute and return
-- Tool-calling agents autonomously decide when and how to use functions
-- The agent loop (plan → act → observe → repeat) is the core pattern behind Claude Code, ChatGPT, etc.
-- The Agents SDK packages these patterns with less boilerplate
+pharmacist = Agent(
+    name="Clinical Pharmacist",
+    model=MODEL,
+    model_settings=SETTINGS,
+    instructions=(
+        "You are a clinical pharmacist. Given a patient presentation, recommend "
+        "medications with specific dosing, flag contraindication concerns given the "
+        "patient's comorbidities and current medications, and outline what to monitor. "
+        "Be concise and practical."
+    ),
+)
+
+summarizer = Agent(
+    name="Chart Summarizer",
+    model=MODEL,
+    model_settings=SETTINGS,
+    instructions=(
+        "You summarize clinical encounters into a chart note. Produce a one-liner summary, "
+        "list active problems, and outline the plan. Be very concise — this goes in the chart."
+    ),
+)
+
+print("Defined 3 specialized agents:")
+for a in [diagnostician, pharmacist, summarizer]:
+    print(f"  - {a.name}")
+```
+
+Same patient, three different specialists. Each agent focuses on what its instructions tell it to — the diagnostician thinks about differential diagnoses, the pharmacist thinks about drug interactions, and the summarizer distills everything down.
+
+```python
+# One complex patient presentation with multiple comorbidities.
+# Each agent will extract different signals from the same data.
+patient = (
+    "72-year-old male presenting with increasing shortness of breath over 3 days. "
+    "History of COPD, type 2 diabetes on metformin 1000mg BID, hypertension on "
+    "lisinopril 20mg daily. Vitals: BP 158/92, HR 96, SpO2 89% on room air. "
+    "Chest X-ray shows bilateral infiltrates. WBC 14.2, BNP 890."
+)
+
+dx_result = await Runner.run(diagnostician, "Assess this patient:\n" + patient)
+print("DIAGNOSTICIAN:")
+print(dx_result.final_output)
+```
+
+```python
+# Same patient data, but the pharmacist's instructions direct its attention
+# to medications, contraindications, and monitoring — not diagnosis.
+rx_result = await Runner.run(pharmacist, "Assess this patient:\n" + patient)
+print("PHARMACIST:")
+print(rx_result.final_output)
+```
+
+```python
+summary_result = await Runner.run(summarizer, "Summarize this encounter:\n" + patient)
+print("CHART SUMMARY:")
+print(summary_result.final_output)
+```
+
+Three agents, same patient data, three different perspectives. The diagnostician ignores medication dosing; the pharmacist ignores differential diagnosis; the summarizer distills everything into a chart note. All of this is driven by instructions alone — no code changes between them, just different system prompts.

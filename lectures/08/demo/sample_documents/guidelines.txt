@@ -1,0 +1,26 @@
+Clinical Practice Guidelines Summary
+=====================================
+
+Hypertension Management (JNC8)
+- Stage 1: SBP 130-139 or DBP 80-89 mmHg
+- Stage 2: SBP ≥140 or DBP ≥90 mmHg
+- First-line: thiazides, ACE inhibitors, ARBs, CCBs
+- Lifestyle: DASH diet, sodium <2300mg/day, exercise 150 min/week
+
+Type 2 Diabetes (ADA Standards of Care)
+- Diagnosis: FPG ≥126, HbA1c ≥6.5%, or 2h glucose ≥200
+- First-line: metformin
+- Target HbA1c <7% for most adults
+- With CVD: prefer SGLT2i or GLP-1 RA with proven CV benefit
+
+Acute Chest Pain (AHA Guidelines)
+- HEART score: History, ECG, Age, Risk factors, Troponin
+- Low risk (0-3): discharge with follow-up
+- Intermediate (4-6): admit for observation
+- High risk (7-10): early invasive strategy
+- STEMI: ST elevation ≥1mm in 2 contiguous leads, door-to-balloon <90 min
+
+Drug Interactions
+- Metformin + iodinated contrast: hold 48h before/after (lactic acidosis risk)
+- Warfarin + NSAIDs/aspirin: increased bleeding risk
+- ACE inhibitors + K-sparing diuretics: hyperkalemia risk

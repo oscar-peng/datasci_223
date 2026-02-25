@@ -29,7 +29,12 @@ jobs:
 
       - name: Download latest test files
         run: |
-          curl -o .github/tests/test_assignment.py https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw08/refs/heads/main/.github/tests/test_assignment.py || true
+          mkdir -p .github/tests
+          curl -o .github/tests/test_assignment.py \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw08/refs/heads/main/.github/tests/test_assignment.py || true
+          curl -o .github/tests/requirements.txt \
+            https://raw.githubusercontent.com/christopherseaman/ds223-26w-hw08/refs/heads/main/.github/tests/requirements.txt || true
+          pip install -r .github/tests/requirements.txt || true
 
       - name: Run tests
         run: |

@@ -129,9 +129,43 @@ print(f"Trainable parameters: {trainable:,} / {total:,} ({100*trainable/total:.1
 model = model.to(device)
 
 # %% [markdown]
-# ## 3. Train the Model
+# ## 3. What the Frozen Backbone Sees
 #
-# We'll train for a few epochs — only the classification head is learning.
+# The frozen layers extract features learned on ImageNet — edges, textures,
+# shapes — that transfer to new tasks. Here are the first 16 feature maps
+# from `layer1` for a single input image.
+
+# %%
+# Hook into an intermediate layer to capture feature maps
+activations = {}
+def hook_fn(module, input, output):
+    activations["layer1"] = output
+
+handle = model.layer1.register_forward_hook(hook_fn)
+
+# Run one image through the frozen backbone
+sample_batch, _ = next(iter(test_loader))
+with torch.no_grad():
+    _ = model(sample_batch[:1].to(device))
+
+handle.remove()
+
+# Display the first 16 feature maps
+feat = activations["layer1"][0].cpu()
+fig, axes = plt.subplots(2, 8, figsize=(16, 4))
+for i, ax in enumerate(axes.flat):
+    ax.imshow(feat[i], cmap="viridis")
+    ax.set_title(f"#{i}", fontsize=8)
+    ax.axis("off")
+plt.suptitle("Frozen Backbone Feature Maps (layer1): edges, textures, and shapes from ImageNet",
+             fontsize=12)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 4. Train the Model
+#
+# Only the classification head is learning — the backbone features stay fixed.
 
 # %%
 criterion = nn.CrossEntropyLoss()
@@ -185,7 +219,7 @@ for epoch in range(num_epochs):
           f"Val Acc: {val_acc:.1f}%")
 
 # %% [markdown]
-# ## 4. Plot Training Curves
+# ## 5. Plot Training Curves
 
 # %%
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -207,7 +241,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 5. Evaluate on Test Set
+# ## 6. Evaluate on Test Set
 
 # %%
 from sklearn.metrics import classification_report, confusion_matrix
@@ -244,7 +278,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 6. Visualize Predictions
+# ## 7. Visualize Predictions
 
 # %%
 def unnormalize(tensor, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
@@ -279,7 +313,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 7. Save the Model
+# ## 8. Save the Model
 
 # %%
 torch.save(model.state_dict(), "resnet18_classifier.pt")

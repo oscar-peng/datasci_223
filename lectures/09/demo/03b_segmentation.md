@@ -202,6 +202,41 @@ print(f"Dice Score (DeepLabV3 vs ground truth): {score:.4f}")
 perfect_score = dice_score(gt_binary, gt_binary)
 print(f"Perfect Dice Score: {perfect_score:.4f}")
 
+# %%
+# Visualize what Dice score actually measures:
+# Dice = 2×|Intersection| / (|Pred| + |GT|)
+pred_binary = (animal_pred_resized > 0.5).numpy()
+gt_np = gt_binary.numpy().astype(bool)
+intersection = pred_binary & gt_np
+
+fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+
+axes[0].imshow(gt_np, cmap="Blues")
+axes[0].set_title(f"Ground Truth\n{gt_np.sum():,} pixels", fontsize=10)
+axes[0].axis("off")
+
+axes[1].imshow(pred_binary, cmap="Oranges")
+axes[1].set_title(f"Prediction\n{pred_binary.sum():,} pixels", fontsize=10)
+axes[1].axis("off")
+
+axes[2].imshow(intersection, cmap="Greens")
+axes[2].set_title(f"Intersection\n{intersection.sum():,} pixels", fontsize=10)
+axes[2].axis("off")
+
+# Composite: blue=GT only, red=pred only, green=overlap
+composite = np.zeros((*gt_np.shape, 3))
+composite[gt_np & ~pred_binary] = [0.2, 0.4, 1.0]       # blue: missed by model
+composite[pred_binary & ~gt_np] = [1.0, 0.3, 0.2]       # red: false positive
+composite[intersection] = [0.2, 0.9, 0.3]                # green: correct overlap
+axes[3].imshow(composite)
+axes[3].set_title(f"Overlap Map\ngreen=correct, blue=missed, red=false+\n"
+                  f"Dice = {score:.3f}", fontsize=10)
+axes[3].axis("off")
+
+plt.suptitle("Anatomy of a Dice Score: 2×|Intersection| / (|Pred| + |GT|)", fontsize=13)
+plt.tight_layout()
+plt.show()
+
 # %% [markdown]
 # ## Part 4: U-Net with segmentation_models_pytorch
 #

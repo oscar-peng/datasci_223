@@ -137,7 +137,42 @@ print(f"RGB tensor shape: {tensor_rgb.shape}")          # (3, H, W)
 print(f"Value range: [{tensor_rgb.min():.3f}, {tensor_rgb.max():.3f}]")
 
 # %% [markdown]
-# ## 5. The Full Pipeline: DICOM → Tensor
+# ## 5. Visualizing the Conversion Pipeline
+#
+# Each step changes the data format and value range. Seeing them side by
+# side makes the pipeline concrete.
+
+# %%
+fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+
+# Step 1: Raw DICOM — integer pixel values, often 12- or 16-bit
+axes[0].imshow(pixels, cmap="gray")
+axes[0].set_title(f"1. Raw DICOM\n{pixels.dtype}, [{pixels.min()}, {pixels.max()}]",
+                  fontsize=10)
+axes[0].axis("off")
+
+# Step 2: Normalized to [0, 1]
+axes[1].imshow(pixels_norm, cmap="gray")
+axes[1].set_title(f"2. Normalized\nfloat32, [0.0, 1.0]", fontsize=10)
+axes[1].axis("off")
+
+# Step 3: PIL Image (uint8, H×W or H×W×3)
+axes[2].imshow(img_rgb)
+axes[2].set_title(f"3. PIL RGB\nuint8, {img_rgb.size[0]}×{img_rgb.size[1]}×3",
+                  fontsize=10)
+axes[2].axis("off")
+
+# Step 4: Tensor (float32, C×H×W)
+axes[3].imshow(tensor_rgb.permute(1, 2, 0).numpy())
+axes[3].set_title(f"4. PyTorch Tensor\nfloat32, {tuple(tensor_rgb.shape)}", fontsize=10)
+axes[3].axis("off")
+
+plt.suptitle("DICOM → Tensor: What changes at each step", fontsize=14)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 6. The Full Pipeline as a Function
 #
 # Here's the complete conversion path you'll use when working with DICOM
 # files in a PyTorch pipeline.

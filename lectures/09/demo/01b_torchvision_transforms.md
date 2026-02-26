@@ -79,9 +79,40 @@ sample_img, sample_label = raw_dataset[0]
 print(f"Sample image size: {sample_img.size}, label: {sample_label}")
 
 # %% [markdown]
-# ## 3. Visualizing Augmentations
+# ## 3. What Each Transform Does
 #
-# Let's see how augmentation transforms modify an image. Each application
+# Before combining transforms, it helps to see each one in isolation.
+# Each row below applies a single transform to the same image.
+
+# %%
+# Apply each transform individually so we can see its effect
+base_img = sample_img.resize((224, 224))
+
+step_transforms = [
+    ("Original", None),
+    ("Resize(256)", transforms.Resize((256, 256))),
+    ("RandomCrop(224)", transforms.RandomResizedCrop(224, scale=(0.6, 1.0))),
+    ("HorizontalFlip", transforms.RandomHorizontalFlip(p=1.0)),
+    ("Rotation(15°)", transforms.RandomRotation(15)),
+    ("ColorJitter", transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.3)),
+]
+
+fig, axes = plt.subplots(1, len(step_transforms), figsize=(18, 3.5))
+for ax, (name, tfm) in zip(axes, step_transforms):
+    if tfm is None:
+        ax.imshow(base_img)
+    else:
+        ax.imshow(tfm(base_img))
+    ax.set_title(name, fontsize=10)
+    ax.axis("off")
+plt.suptitle("Each Transform Applied Individually", fontsize=14)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 4. Combined Augmentations
+#
+# In practice, transforms are chained together with `Compose`. Each call
 # produces a different random variant — this is how we create "new" training
 # examples from a single photo.
 
@@ -112,7 +143,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 4. Creating Datasets with Transforms
+# ## 5. Creating Datasets with Transforms
 #
 # Now apply the full transform pipelines. `ImageFolder` expects a directory
 # where each subdirectory is a class:
@@ -147,7 +178,7 @@ print(f"Validation samples: {len(val_dataset)}")
 print(f"Test samples:       {len(test_dataset)}")
 
 # %% [markdown]
-# ## 5. Building DataLoaders
+# ## 6. Building DataLoaders
 #
 # DataLoaders handle batching, shuffling, and parallel data loading.
 
@@ -173,7 +204,7 @@ print(f"Batch labels shape: {labels.shape}")  # (32,)
 print(f"Image dtype: {images.dtype}, range: [{images.min():.2f}, {images.max():.2f}]")
 
 # %% [markdown]
-# ## 6. Visualizing a Batch
+# ## 7. Visualizing a Batch
 #
 # Since the images are normalized, we need to "un-normalize" them for display.
 

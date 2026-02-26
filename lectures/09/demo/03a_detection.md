@@ -100,9 +100,46 @@ for i in range(min(5, len(predictions["boxes"]))):
     print(f"  {label}: {score:.3f} — box: [{box[0]:.0f}, {box[1]:.0f}, {box[2]:.0f}, {box[3]:.0f}]")
 
 # %% [markdown]
-# ## 4. Filter and Visualize Detections
+# ## 4. What the Model Actually Outputs
 #
-# Keep only high-confidence detections.
+# Detection models produce hundreds of candidate boxes, most with very low
+# confidence. Confidence filtering discards the noise. This is what the raw
+# output looks like vs. the filtered result.
+
+# %%
+# Raw output: show all predictions (capped at 20 for readability)
+n_raw = min(20, len(predictions["boxes"]))
+raw_names = [f"{categories[l]}: {s:.2f}"
+             for l, s in zip(predictions["labels"][:n_raw], predictions["scores"][:n_raw])]
+raw_result = draw_bounding_boxes(img_uint8, predictions["boxes"][:n_raw].cpu(),
+                                 raw_names, width=1)
+
+# Filtered output
+keep_05 = predictions["scores"] > 0.5
+filt_names = [f"{categories[l]}: {s:.2f}"
+              for l, s in zip(predictions["labels"][keep_05], predictions["scores"][keep_05])]
+filt_result = draw_bounding_boxes(img_uint8, predictions["boxes"][keep_05].cpu(),
+                                  filt_names, width=3)
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 7))
+axes[0].imshow(to_pil_image(raw_result))
+axes[0].set_title(f"Raw Model Output (first {n_raw} of {len(predictions['boxes'])} boxes)\n"
+                  "Many overlapping, low-confidence proposals", fontsize=11)
+axes[0].axis("off")
+
+axes[1].imshow(to_pil_image(filt_result))
+axes[1].set_title(f"After Confidence Filtering (>{0.5})\n"
+                  f"{keep_05.sum().item()} high-confidence detections remain", fontsize=11)
+axes[1].axis("off")
+
+plt.suptitle("Detection Pipeline: Raw Proposals → Filtered Results", fontsize=14)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 5. Visualize Filtered Detections
+#
+# The filtered detections in detail.
 
 # %%
 confidence_threshold = 0.5
@@ -130,7 +167,7 @@ plt.axis("off")
 plt.show()
 
 # %% [markdown]
-# ## 5. Detection on Multiple Images
+# ## 6. Detection on Multiple Images
 #
 # Let's run detection on several pet photos to see how the model performs
 # across different images and poses.
@@ -158,7 +195,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 6. Effect of Confidence Threshold
+# ## 7. Effect of Confidence Threshold
 #
 # The threshold controls the precision-recall tradeoff: lower threshold =
 # more detections (higher recall) but more false positives (lower precision).
@@ -192,7 +229,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 7. (Optional) Ultralytics YOLOv8
+# ## 8. (Optional) Ultralytics YOLOv8
 #
 # For the simplest path to detection, Ultralytics provides a one-liner:
 #

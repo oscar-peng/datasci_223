@@ -177,6 +177,12 @@ CNNs solve both problems through three key innovations:
 
 ![Convolutional Filter Operation](media/convolution_filter_static.png)
 
+## Feature Maps
+
+When a filter slides across the input, it produces a **feature map** — a 2D map of how strongly each region matches the filter's pattern. Each convolutional layer produces multiple feature maps (one per filter), and deeper layers combine these into increasingly complex representations.
+
+![Input Image and Resulting Feature Maps](media/feature_maps_example.png)
+
 ## What Is a Filter?
 
 A **filter** (or kernel) is a small matrix of learnable weights — typically 3×3 or 5×5 — that slides across the input image. At each position, it multiplies its weights by the underlying pixel values and sums the results to produce one output value. This operation is called **convolution**.
@@ -194,7 +200,10 @@ A **filter** (or kernel) is a small matrix of learnable weights — typically 3�
 PyTorch provides all CNN components through `torch.nn`. Here are the core layers:
 
 - **`nn.Conv2d`**: Applies learnable filters. Key args: `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding`
-- **`nn.MaxPool2d`**: Downsamples by taking the max value in each window. Reduces spatial dimensions.
+- **`nn.MaxPool2d`**: Downsamples by taking the max value in each window. Reduces spatial dimensions while keeping the strongest activations.
+
+    ![Max Pooling Operation](media/max_pooling_example.png)
+
 - **`nn.BatchNorm2d`**: Normalizes activations within a batch. Stabilizes and speeds up training.
 - **`nn.ReLU`**: Activation function — f(x) = max(0, x). Adds nonlinearity.
 - **`nn.Dropout2d`**: Randomly zeros entire feature maps during training. Regularization for spatial data.
@@ -306,6 +315,8 @@ One key difference between frameworks: **PyTorch uses NCHW** (batch, channels, h
 
 `torchvision.transforms.ToTensor()` handles the conversion from PIL (HWC) to PyTorch (CHW) automatically and scales pixel values from [0, 255] to [0.0, 1.0].
 
+![xkcd: Machine Learning](media/xkcd_machine_learning.png)
+
 # torchvision — The Computer Vision Toolkit
 
 `torchvision` is PyTorch's companion library for computer vision. It provides three essential components:
@@ -336,7 +347,9 @@ Rather than building everything from scratch, lean on torchvision. It's well-tes
 - `RandomAffine(degrees, translate, scale)` — combined rotation, translation, scaling
 - `RandomErasing(p)` — randomly erase a rectangular patch (regularization)
 
-**Why augmentation matters**: Medical imaging datasets are often small — hundreds or low thousands of images. Augmentation artificially increases diversity by creating modified versions of each training image. This helps the model generalize instead of memorizing the training set. A chest X-ray flipped horizontally is still a valid chest X-ray (situs inversus aside). A rotated pathology slide is still valid tissue.
+**Why augmentation matters**: Medical imaging datasets are often small — hundreds or low thousands of images. Augmentation artificially increases diversity by creating modified versions of each training image. This helps the model generalize instead of memorizing the training set. A chest X-ray flipped horizontally is still a valid chest X-ray (situs inversus — a rare condition where organs are mirrored — aside). A rotated pathology slide is still valid tissue.
+
+![Data Augmentation Examples](media/data_augmentation_examples.png)
 
 ### ImageNet Normalization
 
@@ -475,7 +488,7 @@ Transfer learning is the single most important practical technique in computer v
 
 ## Why Transfer Learning?
 
-A model pretrained on **ImageNet** (1.2 million images, 1,000 classes) has already learned a rich hierarchy of visual features:
+A model pretrained on **ImageNet** — a massive benchmark dataset of 1.2 million labeled natural photos across 1,000 everyday categories (dogs, cars, chairs, food, etc.) — has already learned a rich hierarchy of visual features:
 
 - **Early layers**: edges, corners, gradients, textures
 - **Middle layers**: patterns, shapes, parts of objects
@@ -487,7 +500,7 @@ These features transfer remarkably well to new domains — including medical ima
 
 ## Two Approaches
 
-**1. Feature Extraction** — Freeze the pretrained backbone, only train a new classification head:
+**1. Feature Extraction** — Freeze the pretrained **backbone** (the main body of the network that extracts features — everything except the final classification layer), only train a new classification **head**:
 - The pretrained layers act as a fixed feature extractor
 - Only the new head layers are trained
 - Fast to train, works well with very small datasets
@@ -511,8 +524,8 @@ These features transfer remarkably well to new domains — including medical ima
 | VGG-16 | 2014 | Deeper networks with small 3×3 filters | 138M | `vgg16` |
 | Inception v3 | 2015 | Parallel filters at multiple scales | 24M | `inception_v3` |
 | ResNet-18/50 | 2015 | Skip connections → very deep networks | 11M/25M | `resnet18`, `resnet50` |
-| MobileNetV2 | 2018 | Depthwise separable convs → mobile-friendly | 3.4M | `mobilenet_v2` |
-| EfficientNet-B0 | 2019 | Compound scaling (depth/width/resolution) | 5.3M | `efficientnet_b0` |
+| MobileNetV2 | 2018 | Depthwise separable convolutions (split a standard conv into a spatial filter per channel + a 1×1 pointwise mix) → mobile-friendly | 3.4M | `mobilenet_v2` |
+| EfficientNet-B0 | 2019 | Compound scaling — simultaneously scales network depth, width, and input resolution using a fixed ratio | 5.3M | `efficientnet_b0` |
 | ConvNeXt-Tiny | 2022 | Modernized ConvNet matching ViT performance | 28M | `convnext_tiny` |
 
 ### Reference Card: torchvision.models
@@ -667,7 +680,7 @@ Object detection goes beyond classification — it answers not just *what* is in
 | :--- | :--- | :--- | :--- |
 | **Two-stage** | Faster R-CNN, Mask R-CNN | 1. Generate region proposals 2. Classify each region | More accurate, slower |
 | **One-stage** | YOLO, SSD, RetinaNet, FCOS | Predict boxes + classes in one pass | Faster, sometimes less accurate |
-| **Anchor-free** | FCOS, CenterNet | Predict object centers + sizes directly | Simpler, competitive accuracy |
+| **Anchor-free** | FCOS (Fully Convolutional One-Stage), CenterNet | Predict object centers + sizes directly (no anchor templates needed) | Simpler, competitive accuracy |
 
 ![One-Stage vs Two-Stage Detectors](media/one_vs_two_stage_detectors.png)
 
@@ -681,13 +694,13 @@ Two-stage detectors like **Faster R-CNN** first propose "interesting" regions, t
 
 | Model | Function | Backbone | Speed | Accuracy |
 | :--- | :--- | :--- | :--- | :--- |
-| **Faster R-CNN** | `fasterrcnn_resnet50_fpn(weights="DEFAULT")` | ResNet-50 + FPN | Medium | High |
+| **Faster R-CNN** | `fasterrcnn_resnet50_fpn(weights="DEFAULT")` | ResNet-50 + FPN (Feature Pyramid Network — builds multi-scale feature maps for detecting objects at different sizes) | Medium | High |
 | **FCOS** | `fcos_resnet50_fpn(weights="DEFAULT")` | ResNet-50 + FPN | Medium | High |
 | **RetinaNet** | `retinanet_resnet50_fpn_v2(weights="DEFAULT")` | ResNet-50 + FPN | Medium | High |
 | **SSD** | `ssd300_vgg16(weights="DEFAULT")` | VGG-16 | Fast | Moderate |
 | **SSDLite** | `ssdlite320_mobilenet_v3_large(weights="DEFAULT")` | MobileNetV3 | Very fast | Moderate |
 
-All pretrained detection models are trained on **COCO** (80 object classes: person, car, cat, etc.). For medical applications, you'd fine-tune on your own annotated dataset.
+All pretrained detection models are trained on **COCO** (Common Objects in Context) — a large-scale detection dataset with 80 everyday object classes like person, car, cat, and chair. For medical applications, you'd fine-tune on your own annotated dataset.
 
 ### Code Snippet: Inference with Pretrained Faster R-CNN
 
@@ -831,9 +844,9 @@ Rather than implementing U-Net from scratch, use **`segmentation_models_pytorch`
 
 | Model | Function | Architecture |
 | :--- | :--- | :--- |
-| **DeepLabV3** | `deeplabv3_resnet50(weights="DEFAULT")` | Atrous convolutions + ResNet-50 |
-| **FCN** | `fcn_resnet50(weights="DEFAULT")` | Fully Convolutional Network + ResNet-50 |
-| **LRASPP** | `lraspp_mobilenet_v3_large(weights="DEFAULT")` | Lightweight + MobileNetV3 |
+| **DeepLabV3** | `deeplabv3_resnet50(weights="DEFAULT")` | Atrous (dilated) convolutions — filters with gaps that capture wider context without increasing parameters — plus ResNet-50 |
+| **FCN** | `fcn_resnet50(weights="DEFAULT")` | Fully Convolutional Network (replaces all dense layers with convolutions so it works on any input size) + ResNet-50 |
+| **LRASPP** | `lraspp_mobilenet_v3_large(weights="DEFAULT")` | Lite Reduced Atrous Spatial Pyramid Pooling — lightweight segmentation head designed for mobile + MobileNetV3 |
 
 ### Code Snippet: U-Net with smp
 
@@ -855,6 +868,7 @@ loss_fn = smp.losses.DiceLoss(mode="binary")
 # Training is the same PyTorch loop as classification
 # but inputs are images and targets are masks
 for images, masks in train_loader:
+    optimizer.zero_grad()
     outputs = model(images)
     loss = loss_fn(outputs, masks)
     loss.backward()
@@ -928,7 +942,7 @@ Explainability is not optional in healthcare. Regulatory bodies (FDA, CE marking
 
 ## Self-Supervised Learning
 
-Most medical images are unlabeled — getting expert annotations is expensive and time-consuming. Self-supervised learning methods learn useful representations from unlabeled data by solving "pretext tasks":
+Most medical images are unlabeled — getting expert annotations is expensive and time-consuming. Self-supervised learning methods learn useful representations from unlabeled data by solving **pretext tasks** — artificial tasks the model solves to learn general features (e.g., "predict the rotation angle of this image" or "reconstruct masked patches"):
 
 - **Contrastive learning** (SimCLR, MoCo): Learn that augmented versions of the same image should have similar representations
 - **Masked image modeling** (MAE): Mask random patches and learn to reconstruct them

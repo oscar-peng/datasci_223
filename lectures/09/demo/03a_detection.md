@@ -99,6 +99,10 @@ for i in range(min(5, len(predictions["boxes"]))):
     score = predictions["scores"][i].item()
     print(f"  {label}: {score:.3f} — box: [{box[0]:.0f}, {box[1]:.0f}, {box[2]:.0f}, {box[3]:.0f}]")
 
+# %%
+# Convert image to uint8 tensor for drawing bounding boxes
+img_uint8 = (to_tensor(img) * 255).byte()
+
 # %% [markdown]
 # ## 4. What the Model Actually Outputs
 #
@@ -155,9 +159,6 @@ print(f"Detections above {confidence_threshold} confidence: {len(boxes)}")
 # %%
 # Draw bounding boxes
 label_names = [f"{categories[l]}: {s:.2f}" for l, s in zip(labels_idx, scores)]
-
-# draw_bounding_boxes expects uint8 tensor in (C, H, W) format
-img_uint8 = (to_tensor(img) * 255).byte()
 result = draw_bounding_boxes(img_uint8, boxes.cpu(), label_names, width=3, font_size=14)
 
 plt.figure(figsize=(10, 8))

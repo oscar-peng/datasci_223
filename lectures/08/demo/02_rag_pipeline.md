@@ -19,7 +19,7 @@ Build a Retrieval-Augmented Generation pipeline that grounds LLM responses in ac
 ## Setup
 
 ```python
-%pip install -q sentence-transformers chromadb openai openai-agents python-dotenv mcp scikit-learn matplotlib numpy
+%pip install -q sentence-transformers chromadb chroma-mcp openai openai-agents python-dotenv mcp scikit-learn matplotlib numpy
 ```
 
 ```python
@@ -45,7 +45,12 @@ transformers.logging.set_verbosity_error()
 
 from sentence_transformers import SentenceTransformer
 import chromadb
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
+from agents import Agent, Runner, ModelSettings, function_tool, set_tracing_disabled
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
+from agents.mcp import MCPServerStdio
+
+set_tracing_disabled(True)
 
 # OpenRouter provides a unified API for many models behind an OpenAI-compatible
 # endpoint. We point the standard OpenAI client at it by swapping base_url.
@@ -55,9 +60,17 @@ if os.environ.get("OPENROUTER_API_KEY"):
         base_url="https://openrouter.ai/api/v1",
     )
     MODEL = "openai/gpt-4o-mini"
+    # Async client for the Agents SDK
+    agents_client = AsyncOpenAI(
+        api_key=os.environ["OPENROUTER_API_KEY"],
+        base_url="https://openrouter.ai/api/v1",
+    )
+    AGENTS_MODEL = OpenAIChatCompletionsModel(model="openai/gpt-4o-mini", openai_client=agents_client)
 elif os.environ.get("OPENAI_API_KEY"):
     client = OpenAI()
     MODEL = "gpt-4o-mini"
+    agents_client = AsyncOpenAI()
+    AGENTS_MODEL = OpenAIChatCompletionsModel(model="gpt-4o-mini", openai_client=agents_client)
 else:
     raise ValueError("Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env")
 
@@ -175,150 +188,145 @@ plt.show()
 
 The hypertension chunks are most similar to each other, the diabetes chunks cluster, and the chest pain chunks cluster. This is what makes retrieval work — a question about hypertension will land near the hypertension chunks in vector space.
 
-## Section 3: RAG Query
+## Section 3: RAG via chroma-mcp
 
-The core RAG loop: embed the question → retrieve similar chunks → inject them as context → generate a grounded answer. Each step is explicit here so you can see exactly what happens.
+We just built a ChromaDB collection manually — embedding, indexing, querying all in our code. But ChromaDB provides an **MCP server** (`chroma-mcp`) that exposes all of this as standardized tools. An Agent can create collections, add documents, and query them through MCP — no custom retrieval code needed.
+
+The key insight: RAG is just an agent with a vector search tool. The "retrieve-augment-generate" loop happens naturally when the agent calls the search tool and uses the results to answer.
 
 ```python
-question = "What is the first-line treatment for hypertension in a patient with diabetes?"
+import sys, tempfile
+from pathlib import Path
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
-# RETRIEVE: embed the question with the same model used for documents,
-# then find the closest chunks by cosine distance
-query_embedding = embedding_model.encode([question]).tolist()
-results = collection.query(
-    query_embeddings=query_embedding,
-    n_results=3,
-    include=["documents", "metadatas", "distances"],
+# chroma-mcp runs as a subprocess with persistent local storage — no cloud, no API keys
+chroma_cmd = str(Path(sys.executable).parent / "chroma-mcp")
+chroma_data_dir = tempfile.mkdtemp()
+
+# Seed the vector DB: create collection + add our clinical guideline chunks.
+# We do this at the MCP protocol level so the data is available when the Agent connects.
+server_params = StdioServerParameters(
+    command=chroma_cmd,
+    args=["--client-type", "persistent", "--data-dir", chroma_data_dir],
 )
 
-print("Retrieved documents:")
-for i, (doc, meta, dist) in enumerate(zip(
-    results["documents"][0],
-    results["metadatas"][0],
-    results["distances"][0],
-)):
-    print(f"  {i+1}. [{meta['source']}] (distance: {dist:.3f})")
-    print(f"     {doc[:80]}...")
-print()
+async with stdio_client(server_params) as (read_stream, write_stream):
+    async with ClientSession(read_stream, write_stream) as session:
+        await session.initialize()
 
-# AUGMENT: concatenate retrieved chunks into a single context block
-context = "\n\n".join(results["documents"][0])
+        await session.call_tool("chroma_create_collection", {
+            "collection_name": "clinical_guidelines",
+        })
 
-# GENERATE: the system prompt constrains the model to only use
-# the provided context — no training-data knowledge allowed
-response = client.chat.completions.create(
-    model=MODEL,
-    messages=[
-        {
-            "role": "system",
-            "content": (
-                "You are a clinical assistant. Answer based ONLY on the provided context. "
-                "If the context doesn't contain enough information, say so. "
-                "Cite the guideline source when possible."
-            ),
-        },
-        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
-    ],
-    temperature=0,
-    max_tokens=500,
-)
-print(f"Q: {question}\n")
-print(f"A: {response.choices[0].message.content}")
+        await session.call_tool("chroma_add_documents", {
+            "collection_name": "clinical_guidelines",
+            "documents": [doc["text"] for doc in clinical_knowledge],
+            "ids": [doc["id"] for doc in clinical_knowledge],
+            "metadatas": [{"source": doc["source"]} for doc in clinical_knowledge],
+        })
+
+print(f"Seeded {len(clinical_knowledge)} chunks into chroma-mcp (persistent @ {chroma_data_dir})")
 ```
 
-Lower distance = higher semantic similarity. The model stays grounded because the system prompt constrains it to the retrieved context, and it can cite guideline sources because that metadata was stored alongside the embeddings.
+Now an Agent connects to the same chroma-mcp instance and uses `chroma_query_documents` to do RAG — the retrieve-augment-generate loop happens inside `Runner.run()`:
+
+```python
+chroma_mcp = MCPServerStdio(
+    params={
+        "command": chroma_cmd,
+        "args": ["--client-type", "persistent", "--data-dir", chroma_data_dir],
+    },
+    name="Clinical Guidelines DB",
+)
+
+rag_agent = Agent(
+    name="RAG Assistant",
+    instructions=(
+        "You are a clinical assistant. When asked a question, use chroma_query_documents "
+        "to search the clinical_guidelines collection for relevant context. "
+        "Answer based ONLY on retrieved documents. Cite the source metadata."
+    ),
+    mcp_servers=[chroma_mcp],
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
+)
+
+async with chroma_mcp:
+    result = await Runner.run(rag_agent, input=(
+        "What is the first-line treatment for hypertension in a patient with diabetes?"
+    ))
+
+# result.new_items shows every step the agent took — tool calls, outputs, final response
+from agents.items import ToolCallItem, ToolCallOutputItem
+tool_calls = [item for item in result.new_items if isinstance(item, ToolCallItem)]
+for tc in tool_calls:
+    call = tc.raw_item
+    print(f"[Agent called: {call.name}({call.arguments[:80]}...)]")
+
+print(f"\nQ: First-line treatment for hypertension in diabetic patients?\n")
+print(f"A: {result.final_output}")
+```
+
+`result.new_items` exposes every step: the MCP tool calls the agent made, the retrieved documents it received back, and the final response. The agent discovered `chroma_query_documents` via MCP, searched the collection, and synthesized a grounded answer.
 
 ## Section 4: RAG vs Direct LLM
 
-What happens when the model answers *without* retrieved context? For well-known clinical facts the LLM may already know the answer — but for organization-specific protocols, recent guideline updates, or internal policy, the model has no choice but to guess or refuse. RAG grounds responses in retrieved documents, reducing hallucination and making outputs verifiable.
+What happens when the model answers *without* retrieval tools? For well-known clinical facts the LLM may already know the answer — but for organization-specific protocols, recent guideline updates, or internal policy, the model has no choice but to guess or refuse.
 
 ```python
-# The HEART score thresholds are a good test case: exact cutoffs vary by
-# institutional protocol. Our guidelines say 0-3/4-6/7-10 — the LLM's
-# training data may use different cutoffs.
+# Same agent, same question — but with and without the vector DB tool
 test_q = (
     "According to the AHA Chest Pain Guidelines, what HEART score threshold "
     "separates low-risk from intermediate-risk patients, and what is the recommended "
     "action for each risk category?"
 )
 
-# --- RAG: retrieve context first, then generate ---
-query_embedding = embedding_model.encode([test_q]).tolist()
-results = collection.query(
-    query_embeddings=query_embedding, n_results=3,
-    include=["documents", "metadatas"],
-)
-context = "\n\n".join(results["documents"][0])
+# RAG: agent with chroma-mcp retrieval
+async with chroma_mcp:
+    rag_result = await Runner.run(rag_agent, input=test_q)
 
-rag_response = client.chat.completions.create(
-    model=MODEL,
-    messages=[
-        {"role": "system", "content": (
-            "Answer based ONLY on the provided context. "
-            "Cite the guideline source when possible."
-        )},
-        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {test_q}"},
-    ],
-    temperature=0, max_tokens=500,
+# Direct: agent without tools — just the LLM's training data
+direct_agent = Agent(
+    name="Direct Assistant",
+    instructions="You are a clinical assistant. Be concise.",
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
 )
-
-# --- Direct: no retrieval, just the LLM's training data ---
-direct_response = client.chat.completions.create(
-    model=MODEL,
-    messages=[
-        {"role": "system", "content": "You are a clinical assistant. Be concise."},
-        {"role": "user", "content": test_q},
-    ],
-    temperature=0, max_tokens=500,
-)
+direct_result = await Runner.run(direct_agent, input=test_q)
 
 print("RAG Response (grounded in our guidelines):")
-print(rag_response.choices[0].message.content)
+print(rag_result.final_output)
 print("\n" + "-" * 40 + "\n")
 print("Direct LLM Response (from training data — may differ or hallucinate thresholds):")
-print(direct_response.choices[0].message.content)
+print(direct_result.final_output)
 ```
 
 ## Section 5: RAG with Citations
 
-In clinical contexts, knowing *where* an answer came from is as important as the answer itself — a clinician needs to verify claims against the original guideline, not just trust the model. The technique: number each source chunk so the model can reference them as [1], [2], etc.
+In clinical contexts, knowing *where* an answer came from is as important as the answer itself. The same agent, same MCP tools — just different instructions telling it to cite sources:
 
 ```python
-question = "What medications are recommended for diabetic patients with heart disease?"
-
-query_embedding = embedding_model.encode([question]).tolist()
-results = collection.query(
-    query_embeddings=query_embedding, n_results=3,
-    include=["documents", "metadatas"],
+citing_agent = Agent(
+    name="Citing RAG Assistant",
+    instructions=(
+        "You are a clinical assistant. When asked a question, use chroma_query_documents "
+        "to search the clinical_guidelines collection. Include the metadatas field in your query. "
+        "Answer based ONLY on retrieved documents. "
+        "Cite each claim with the source from metadata, e.g. [JNC8 Guidelines]."
+    ),
+    mcp_servers=[chroma_mcp],
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
 )
 
-# Number each source so the model can cite them
-context_parts = []
-sources = []
-for i, (doc, meta) in enumerate(
-    zip(results["documents"][0], results["metadatas"][0])
-):
-    context_parts.append(f"[{i+1}] {doc}")
-    sources.append(f"[{i+1}] {meta['source']}")
+async with chroma_mcp:
+    result = await Runner.run(citing_agent, input=(
+        "What medications are recommended for diabetic patients with heart disease?"
+    ))
 
-context = "\n\n".join(context_parts)
-
-response = client.chat.completions.create(
-    model=MODEL,
-    messages=[
-        {"role": "system", "content": (
-            "Answer based on the numbered sources. "
-            "Include citation numbers [1], [2], etc."
-        )},
-        {"role": "user", "content": f"Sources:\n{context}\n\nQuestion: {question}"},
-    ],
-    temperature=0, max_tokens=500,
-)
-
-print(f"Answer: {response.choices[0].message.content}\n")
-print("Sources:")
-for s in sources:
-    print(f"  {s}")
+print(f"Q: Medications for diabetic patients with heart disease?\n")
+print(f"A: {result.final_output}")
 ```
 
 ## Section 6: Function Calling — Letting the Model Use Tools
@@ -326,65 +334,6 @@ for s in sources:
 RAG retrieves documents. But what if the model needs to *do* something — look up a drug interaction, calculate a dose, check lab values? **Function calling** lets you define tools, pass them to the model, and let it decide when to invoke them.
 
 The model never executes code — it generates a JSON object with the function name and arguments. The framework runs the actual function and feeds the result back.
-
-```python
-# Visualize the function calling loop
-fig, ax = plt.subplots(figsize=(8, 2.5))
-ax.set_xlim(0, 10)
-ax.set_ylim(0, 3)
-ax.axis("off")
-
-boxes = [
-    (0.5, 1.5, "User\nQuestion"),
-    (2.8, 1.5, "LLM\n(+ tool schemas)"),
-    (5.3, 1.5, "Tool Call\n{name, args}"),
-    (7.8, 1.5, "Execute\nFunction"),
-]
-for x, y, label in boxes:
-    ax.add_patch(plt.Rectangle((x - 0.7, y - 0.55), 1.6, 1.1,
-                 facecolor="#e8f0fe", edgecolor="#4285f4", linewidth=1.5, zorder=2))
-    ax.text(x + 0.1, y, label, ha="center", va="center", fontsize=9, zorder=3)
-
-# Forward arrows
-for i in range(len(boxes) - 1):
-    ax.annotate("", xy=(boxes[i+1][0] - 0.7, boxes[i+1][1]),
-                xytext=(boxes[i][0] + 0.9, boxes[i][1]),
-                arrowprops=dict(arrowstyle="->", color="#4285f4", lw=1.5))
-
-# Return arrow (tool result → LLM)
-ax.annotate("result →\nfinal answer", xy=(3.5, 0.95), xytext=(7.2, 0.5),
-            fontsize=7.5, ha="center", color="#666",
-            arrowprops=dict(arrowstyle="->", color="#ea4335", lw=1.5, connectionstyle="arc3,rad=0.3"))
-
-ax.set_title("Function Calling Loop: LLM decides → you execute → LLM responds", fontsize=10, pad=10)
-plt.tight_layout()
-plt.show()
-```
-
-### Agents SDK Setup
-
-The OpenAI **Agents SDK** manages the full tool-calling loop: schema generation from type hints, LLM tool-use decisions, function execution, and result incorporation. We set it up once here and reuse it for the rest of the demo.
-
-```python
-from openai import AsyncOpenAI
-from agents import Agent, Runner, ModelSettings, function_tool, set_tracing_disabled
-from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
-
-set_tracing_disabled(True)
-
-# Same OpenRouter setup as above, but async for the Agents SDK
-if os.environ.get("OPENROUTER_API_KEY"):
-    agents_client = AsyncOpenAI(
-        api_key=os.environ["OPENROUTER_API_KEY"],
-        base_url="https://openrouter.ai/api/v1",
-    )
-    AGENTS_MODEL = OpenAIChatCompletionsModel(model="openai/gpt-4o-mini", openai_client=agents_client)
-elif os.environ.get("OPENAI_API_KEY"):
-    agents_client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    AGENTS_MODEL = OpenAIChatCompletionsModel(model="gpt-4o-mini", openai_client=agents_client)
-
-print("Agents SDK ready")
-```
 
 ### Defining Tools
 
@@ -662,8 +611,6 @@ The schemas are generated from Python type hints and docstrings on the server si
 Pass MCP servers to an Agent, and the SDK handles discovery, schema conversion, tool execution, and the response loop — the same `Runner.run()` pattern as `@function_tool`, but the tools live on a separate process.
 
 ```python
-from agents.mcp import MCPServerStdio
-
 # MCPServerStdio launches the server as a subprocess (stdio transport)
 clinical_mcp = MCPServerStdio(
     params={"command": "python", "args": [server_path]},

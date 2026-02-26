@@ -14,9 +14,8 @@ jupyter:
 # %% [markdown]
 # # Demo 3b: Image Segmentation
 #
-# In this demo we'll explore image segmentation — classifying every pixel
-# in an image. We'll use:
-# 1. A pretrained **DeepLabV3** from torchvision for general segmentation
+# Image segmentation classifies every pixel in an image. This demo covers:
+# 1. Pretrained **DeepLabV3** from torchvision for general segmentation
 # 2. **Oxford-IIIT Pet** trimap masks as real ground-truth segmentation data
 # 3. **segmentation_models_pytorch** (smp) to create a U-Net for medical use
 

@@ -14,9 +14,9 @@ jupyter:
 # %% [markdown]
 # # Demo 1a: Loading Medical Images (DICOM & Standard Formats)
 #
-# In this demo we'll load images in several formats — DICOM (the medical
-# standard), PNG, and JPEG — and convert them into tensors that PyTorch can work
-# with.
+# Medical images come in several formats — DICOM (the clinical standard),
+# PNG, and JPEG. This demo walks through loading each and converting to
+# tensors that PyTorch can work with.
 
 # %% [markdown]
 # ## Setup

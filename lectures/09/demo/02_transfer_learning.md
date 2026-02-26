@@ -14,9 +14,8 @@ jupyter:
 # %% [markdown]
 # # Demo 2: Transfer Learning for Image Classification
 #
-# In this demo we'll use a pretrained ResNet-18 to classify images.
-# We'll freeze the backbone, replace the classification head, and train
-# a binary classifier — the same pipeline you'd use for medical imaging.
+# A pretrained ResNet-18 classifies images with a frozen backbone and a
+# replaced classification head — the standard pipeline for medical imaging.
 #
 # **Dataset**: CIFAR-10 filtered to 2 classes (airplane vs automobile) for
 # quick iteration. The workflow is identical for medical data — just swap

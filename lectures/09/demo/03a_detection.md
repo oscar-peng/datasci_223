@@ -14,14 +14,13 @@ jupyter:
 # %% [markdown]
 # # Demo 3a: Object Detection with Pretrained Models
 #
-# In this demo we'll use a pretrained **Faster R-CNN** from torchvision to
-# detect objects in images. The model is trained on COCO (80 everyday object
-# classes). We'll also briefly show **Ultralytics YOLOv8** as the fastest
-# path to detection.
+# Pretrained **Faster R-CNN** from torchvision detects objects in images.
+# The model is trained on COCO (80 everyday object classes). A brief look
+# at **Ultralytics YOLOv8** shows the fastest path to detection.
 #
 # **Dataset**: Oxford-IIIT Pet — real photos of cats and dogs in natural
-# settings. The COCO-trained model knows both "cat" and "dog" classes, so we
-# can see detection working on these images immediately.
+# settings. The COCO-trained model knows both "cat" and "dog" classes, so
+# detection works on these images immediately.
 
 # %% [markdown]
 # ## Setup
@@ -143,7 +142,8 @@ plt.show()
 # %% [markdown]
 # ## 5. Visualize Filtered Detections
 #
-# The filtered detections in detail.
+# Each surviving detection gets a labeled bounding box with its class name
+# and confidence score.
 
 # %%
 confidence_threshold = 0.5
@@ -247,17 +247,4 @@ plt.show()
 #
 # Install with: `pip install ultralytics`
 
-# %% [markdown]
-# ## Discussion: Medical Detection
-#
-# The pretrained Faster R-CNN detects everyday objects (people, cars, cats,
-# dogs). For medical detection tasks (nodule detection, cell counting), you
-# would:
-#
-# 1. **Annotate** your medical images with bounding boxes (using CVAT or Label Studio)
-# 2. **Fine-tune** the pretrained detector on your annotated dataset
-# 3. **Evaluate** with mAP at appropriate IoU thresholds
-#
-# The pretrained backbone still helps — it knows about edges, textures, and
-# shapes — even if the specific classes are completely different.
 

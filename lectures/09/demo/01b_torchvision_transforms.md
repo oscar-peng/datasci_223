@@ -14,13 +14,11 @@ jupyter:
 # %% [markdown]
 # # Demo 1b: Torchvision Transforms & DataLoaders
 #
-# In this demo we'll build image preprocessing pipelines with
-# `torchvision.transforms`, apply data augmentation, and create DataLoaders
-# that feed batches to our models.
+# Image preprocessing pipelines with `torchvision.transforms`, data
+# augmentation, and DataLoaders that feed batches to models.
 #
 # **Dataset**: Oxford Flowers102 — 102 categories of common UK flowers.
-# Beautiful, high-resolution natural images that show augmentation effects
-# clearly.
+# High-resolution natural images that show augmentation effects clearly.
 
 # %% [markdown]
 # ## Setup

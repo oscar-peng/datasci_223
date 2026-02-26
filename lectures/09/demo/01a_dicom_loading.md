@@ -205,3 +205,33 @@ print(f"Output tensor shape: {tensor.shape}")
 print(f"Output tensor dtype: {tensor.dtype}")
 print(f"Ready for a pretrained model!")
 
+# %% [markdown]
+# ## 7. The MONAI Way
+#
+# The manual pipeline above is great for understanding each step, but in
+# practice **MONAI** handles DICOM loading (plus NIfTI, PNG, etc.) and
+# medical-specific edge cases (rescale slope/intercept, CT windowing,
+# multi-frame DICOM) out of the box.
+
+# %%
+try:
+    from monai.transforms import (
+        Compose, LoadImage, EnsureChannelFirst,
+        ScaleIntensity, Resize, RepeatChannel,
+    )
+
+    dicom_pipeline = Compose([
+        LoadImage(image_only=True),         # reads DICOM, NIfTI, PNG, etc.
+        EnsureChannelFirst(),               # (H, W) → (1, H, W)
+        ScaleIntensity(minv=0.0, maxv=1.0), # normalize to [0, 1]
+        Resize(spatial_size=(224, 224)),
+        RepeatChannel(repeats=3),           # grayscale → 3-channel for pretrained models
+    ])
+
+    monai_tensor = dicom_pipeline(dcm_path)
+    print(f"MONAI output shape: {monai_tensor.shape}")
+    print(f"MONAI output range: [{monai_tensor.min():.3f}, {monai_tensor.max():.3f}]")
+
+except ImportError:
+    print("MONAI not installed. Install with: pip install monai")
+

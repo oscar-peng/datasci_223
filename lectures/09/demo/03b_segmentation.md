@@ -86,6 +86,8 @@ unique_classes = np.unique(predictions)
 print(f"Classes found: {[categories[c] for c in unique_classes]}")
 
 # %%
+from torchvision.utils import draw_segmentation_masks
+
 # Visualize original vs segmentation mask
 fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -97,13 +99,15 @@ axes[1].imshow(predictions, cmap="tab20")
 axes[1].set_title("Segmentation Mask")
 axes[1].axis("off")
 
-# Overlay
+# Overlay using draw_segmentation_masks (counterpart to draw_bounding_boxes)
 img_resized = img.resize(predictions.shape[::-1])
-img_array = np.array(img_resized)
-overlay = img_array.copy().astype(np.float64)
-mask_colored = plt.cm.tab20(predictions / max(predictions.max(), 1))[:, :, :3] * 255
-overlay = (0.6 * overlay + 0.4 * mask_colored).astype(np.uint8)
-axes[2].imshow(overlay)
+img_uint8 = (to_tensor(img_resized) * 255).byte()
+pred_tensor = torch.tensor(predictions)
+class_masks = pred_tensor.unsqueeze(0) == torch.arange(len(categories)).view(-1, 1, 1)
+# Keep only classes that actually appear
+present = class_masks.any(dim=-1).any(dim=-1)
+overlay = draw_segmentation_masks(img_uint8, class_masks[present], alpha=0.4)
+axes[2].imshow(to_pil_image(overlay))
 axes[2].set_title("Overlay")
 axes[2].axis("off")
 
@@ -148,12 +152,12 @@ axes[1].imshow(mask_array, cmap="gray")
 axes[1].set_title("Ground Truth Trimap")
 axes[1].axis("off")
 
-# Overlay: highlight the pet in red
-img_array = np.array(img.resize(mask_array.shape[::-1]))
-overlay = img_array.copy()
-pet_pixels = mask_array == 1  # foreground
-overlay[pet_pixels] = (0.5 * overlay[pet_pixels] + 0.5 * np.array([255, 80, 80])).astype(np.uint8)
-axes[2].imshow(overlay)
+# Overlay: highlight the pet in red using draw_segmentation_masks
+img_resized_gt = img.resize(mask_array.shape[::-1])
+img_uint8_gt = (to_tensor(img_resized_gt) * 255).byte()
+pet_mask = torch.tensor(mask_array == 1).unsqueeze(0)  # (1, H, W) bool
+overlay = draw_segmentation_masks(img_uint8_gt, pet_mask, alpha=0.5, colors=["red"])
+axes[2].imshow(to_pil_image(overlay))
 axes[2].set_title("Mask Overlay (pet = red)")
 axes[2].axis("off")
 
@@ -236,6 +240,28 @@ axes[3].axis("off")
 plt.suptitle("Anatomy of a Dice Score: 2×|Intersection| / (|Pred| + |GT|)", fontsize=13)
 plt.tight_layout()
 plt.show()
+
+# %% [markdown]
+# ## Part 3b: torchmetrics.Dice
+#
+# The manual implementation above makes the formula transparent. In practice,
+# use `torchmetrics.Dice` — it handles batching, multi-class, and thresholding.
+
+# %%
+try:
+    from torchmetrics.segmentation import MeanIoU
+    from torchmetrics import Dice
+
+    dice_metric = Dice(threshold=0.5)
+    pred_for_metric = animal_pred_resized.unsqueeze(0)  # (1, H, W)
+    gt_for_metric = gt_binary.unsqueeze(0).long()        # (1, H, W)
+
+    tm_score = dice_metric(pred_for_metric, gt_for_metric)
+    print(f"torchmetrics Dice: {tm_score:.4f}")
+    print(f"Manual dice_score: {score:.4f}")
+
+except ImportError:
+    print("torchmetrics not installed. Install with: pip install torchmetrics")
 
 # %% [markdown]
 # ## Part 4: U-Net with segmentation_models_pytorch

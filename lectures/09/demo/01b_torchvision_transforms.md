@@ -207,23 +207,19 @@ print(f"Image dtype: {images.dtype}, range: [{images.min():.2f}, {images.max():.
 # ## 7. Visualizing a Batch
 #
 # Since the images are normalized, we need to "un-normalize" them for display.
+# `torchvision.utils.make_grid` handles this with `normalize=True` — it
+# rescales the full value range to `[0, 1]` automatically.
 
 # %%
-def unnormalize(tensor, mean, std):
-    """Reverse normalization for display."""
-    for t, m, s in zip(tensor, mean, std):
-        t.mul_(s).add_(m)
-    return tensor.clamp_(0, 1)
+from torchvision.utils import make_grid
+from torchvision.transforms.functional import to_pil_image
 
-# Display first 8 images from the batch
-fig, axes = plt.subplots(2, 4, figsize=(14, 7))
-for i, ax in enumerate(axes.flat):
-    img = unnormalize(images[i].clone(), [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    # Convert from (C, H, W) to (H, W, C) for matplotlib
-    ax.imshow(img.permute(1, 2, 0).numpy())
-    ax.set_title(f"Label: {labels[i].item()}")
-    ax.axis("off")
-plt.suptitle("Sample batch from DataLoader (normalized + augmented)", fontsize=14)
+# make_grid: batch → single image grid, normalize=True rescales for display
+grid = make_grid(images[:8], nrow=4, normalize=True, padding=2)
+plt.figure(figsize=(14, 7))
+plt.imshow(to_pil_image(grid))
+plt.title("Sample batch from DataLoader (normalized + augmented)")
+plt.axis("off")
 plt.tight_layout()
 plt.show()
 

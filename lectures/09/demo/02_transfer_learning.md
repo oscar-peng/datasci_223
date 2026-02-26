@@ -281,10 +281,13 @@ plt.show()
 # ## 7. Visualize Predictions
 
 # %%
-def unnormalize(tensor, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
-    for t, m, s in zip(tensor, mean, std):
-        t.mul_(s).add_(m)
-    return t.clamp_(0, 1)
+from torchvision.transforms.functional import to_pil_image
+
+# Inverse normalization as a standard transform (negated mean/std)
+inv_normalize = transforms.Normalize(
+    mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+    std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
+)
 
 # Get a batch of test images
 images, labels = next(iter(test_loader))
@@ -299,8 +302,8 @@ with torch.no_grad():
 # Display predictions
 fig, axes = plt.subplots(2, 4, figsize=(14, 7))
 for i, ax in enumerate(axes.flat):
-    img = unnormalize(images[i].clone())
-    ax.imshow(img.permute(1, 2, 0).numpy())
+    img = inv_normalize(images[i])
+    ax.imshow(to_pil_image(img))
     color = "green" if preds[i] == labels[i] else "red"
     ax.set_title(
         f"Pred: {class_names[preds[i]]} ({probs[i][preds[i]]:.1%})\n"

@@ -581,13 +581,15 @@ import timm
 model = timm.create_model("resnet18", pretrained=True, num_classes=2)
 ```
 
+[![xkcd: Trained a Neural Net](media/xkcd_trained_neural_net.png)](https://xkcd.com/2173/)
+
 # Evaluating Vision Models
 
 Choosing the right evaluation metric depends on the CV task and the clinical context. A model with 98% accuracy might still be dangerous if it misses 50% of cancers (low recall on the positive class).
 
 ## Classification Metrics
 
-You know these from lecture 05 — they apply directly to image classification:
+The classification metrics from lecture 05 apply directly to image classification:
 
 - **Accuracy**: Fraction of correct predictions. Misleading when classes are imbalanced.
 - **Precision**: Of predicted positives, how many are truly positive? (Avoid false alarms)
@@ -596,6 +598,20 @@ You know these from lecture 05 — they apply directly to image classification:
 - **Confusion Matrix**: Full breakdown of predictions vs ground truth
 
 In medical imaging, **class imbalance** is the norm. A chest X-ray dataset might be 90% normal, 10% abnormal — a model that always predicts "normal" gets 90% accuracy but catches zero diseases.
+
+**Which metric matters depends on the clinical context:**
+
+- **Screening** (mammography, TB detection): Maximize **recall/sensitivity** — missing a cancer is worse than a false alarm. Accept more false positives.
+- **Confirmatory diagnosis** (biopsy prediction): Maximize **specificity/precision** — triggering unnecessary procedures has real cost.
+- **Surgical planning** (tumor segmentation): **Dice/IoU** — spatial accuracy of the boundary matters more than binary classification.
+
+**Handling class imbalance:**
+
+- **Weighted loss**: `nn.CrossEntropyLoss(weight=torch.tensor([1.0, 9.0]))` penalizes missed minorities
+- **Weighted sampling**: `WeightedRandomSampler` oversamples the minority class in each batch
+- **Threshold tuning**: Adjust the classification threshold to trade precision for recall (don't always use 0.5)
+
+**Critical: patient-level splits.** Medical datasets often contain multiple images per patient (different views, time points, slices). If the same patient's images appear in both training and test sets, the model may learn patient-specific features rather than disease features — and test metrics will be misleadingly high. Always split by **patient ID**, not by image.
 
 ## Detection & Segmentation Metrics
 
@@ -754,6 +770,8 @@ model.train(data="my_dataset.yaml", epochs=50)
 
 YOLO models are pretrained on COCO. For medical use, fine-tune on annotated medical images (bounding boxes around findings). Ultralytics handles the training loop, augmentation, and evaluation automatically.
 
+[![xkcd: Machine Learning Captcha](media/xkcd_ml_captcha.png)](https://xkcd.com/2228/)
+
 # Image Segmentation
 
 Segmentation is the most detailed form of visual understanding — it classifies every pixel in an image. Instead of one label per image (classification) or boxes around objects (detection), segmentation produces a **mask** that precisely outlines each region of interest.
@@ -767,6 +785,8 @@ Segmentation is the most detailed form of visual understanding — it classifies
 - **Panoptic segmentation**: Combines both — every pixel gets a class AND an instance ID.
 
 ![Semantic Segmentation Illustration](media/semantic_segmentation_illustration.png)
+
+#FIXME: Add side-by-side comparison showing the same image with semantic, instance, and panoptic segmentation
 
 ## Medical Applications
 

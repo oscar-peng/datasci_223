@@ -12,15 +12,15 @@ jupyter:
 ---
 
 # %% [markdown]
-# # Demo 2: Transfer Learning on Chest X-rays
+# # Demo 2: Transfer Learning for Image Classification
 #
-# In this demo we'll use a pretrained ResNet-18 to classify chest X-rays.
-# We'll freeze the backbone, replace the classification head, and train on a
-# small medical dataset.
+# In this demo we'll use a pretrained ResNet-18 to classify images.
+# We'll freeze the backbone, replace the classification head, and train
+# a binary classifier — the same pipeline you'd use for medical imaging.
 #
-# **Dataset**: Montgomery County TB chest X-ray dataset (or a CIFAR-10 subset
-# for quick classroom use). The full Montgomery dataset has 138 chest X-rays
-# labeled as normal or tuberculosis — a realistic small-data medical scenario.
+# **Dataset**: CIFAR-10 filtered to 2 classes (airplane vs automobile) for
+# quick iteration. The workflow is identical for medical data — just swap
+# in an `ImageFolder` pointing at your chest X-ray directory.
 
 # %% [markdown]
 # ## Setup
@@ -41,9 +41,9 @@ print(f"Using device: {device}")
 # %% [markdown]
 # ## 1. Prepare the Data
 #
-# For a quick in-class demo, we'll use CIFAR-10 with just 2 classes
-# (simulating a binary medical classification task). If you have the
-# Montgomery County TB dataset downloaded, swap in the `ImageFolder` path.
+# We'll use CIFAR-10 with just 2 classes for quick iteration.
+# To use your own images, swap `Subset(CIFAR10(...))` with
+# `ImageFolder("data/your_dataset/")` — everything else stays the same.
 
 # %%
 # Transforms
@@ -66,7 +66,7 @@ eval_transform = transforms.Compose([
 full_train = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transform)
 full_test = datasets.CIFAR10(root="./data", train=False, download=True, transform=eval_transform)
 
-# Filter to just 2 classes (airplane=0, automobile=1) to simulate binary medical task
+# Filter to just 2 classes (airplane=0, automobile=1) for binary classification
 def filter_classes(dataset, classes=(0, 1)):
     indices = [i for i, (_, label) in enumerate(dataset) if label in classes]
     return torch.utils.data.Subset(dataset, indices)
@@ -228,7 +228,7 @@ all_preds = np.array(all_preds)
 all_labels = np.array(all_labels)
 
 # Classification report
-class_names = ["Class 0", "Class 1"]  # or ["Normal", "TB"] for medical data
+class_names = ["airplane", "automobile"]
 print(classification_report(all_labels, all_preds, target_names=class_names))
 
 # Confusion matrix

@@ -18,6 +18,10 @@ jupyter:
 # detect objects in images. The model is trained on COCO (80 everyday object
 # classes). We'll also briefly show **Ultralytics YOLOv8** as the fastest
 # path to detection.
+#
+# **Dataset**: Oxford-IIIT Pet — real photos of cats and dogs in natural
+# settings. The COCO-trained model knows both "cat" and "dog" classes, so we
+# can see detection working on these images immediately.
 
 # %% [markdown]
 # ## Setup
@@ -27,6 +31,7 @@ import torch
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
+from torchvision import datasets
 from torchvision.models.detection import fasterrcnn_resnet50_fpn, FasterRCNN_ResNet50_FPN_Weights
 from torchvision.utils import draw_bounding_boxes
 from torchvision.transforms.functional import to_tensor, to_pil_image
@@ -50,31 +55,24 @@ print(f"Model trained on {len(categories)} COCO classes")
 print(f"First 10 classes: {categories[:10]}")
 
 # %% [markdown]
-# ## 2. Prepare an Image
+# ## 2. Load a Real Image
 #
-# We'll use a sample image. In practice, this could be a medical image,
-# a photograph, or a frame from a video.
+# We'll use the Oxford-IIIT Pet dataset — photos of cats and dogs in
+# natural settings. The COCO model was trained on images like these.
 
 # %%
-# Create a sample image (or load your own: Image.open("my_image.jpg"))
-# Download a sample from torchvision
-from torchvision.io import read_image
+# Download the Oxford-IIIT Pet dataset
+pet_dataset = datasets.OxfordIIITPet(root="./data", split="test", download=True)
 
-# Use a sample — you can replace with any image path
-# For classroom, use a readily available image
-try:
-    from urllib.request import urlretrieve
-    url = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
-    urlretrieve(url, "/tmp/sample_detection.png")
-    img = Image.open("/tmp/sample_detection.png").convert("RGB")
-except Exception:
-    # Fallback: create a simple test image
-    img = Image.fromarray(np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8))
-
+# Pick a few sample images
+sample_indices = [0, 10, 25, 50]  # Try different indices for variety
+img, label = pet_dataset[sample_indices[0]]
 print(f"Image size: {img.size}")
+print(f"Pet breed label: {label}")
+
 plt.figure(figsize=(8, 6))
 plt.imshow(img)
-plt.title("Input Image")
+plt.title("Input Image (Oxford-IIIT Pet)")
 plt.axis("off")
 plt.show()
 
@@ -132,21 +130,58 @@ plt.axis("off")
 plt.show()
 
 # %% [markdown]
-# ## 5. Effect of Confidence Threshold
+# ## 5. Detection on Multiple Images
+#
+# Let's run detection on several pet photos to see how the model performs
+# across different images and poses.
+
+# %%
+fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+for ax, idx in zip(axes.flat, sample_indices):
+    pet_img, _ = pet_dataset[idx]
+    pet_tensor = preprocess(pet_img).to(device)
+
+    with torch.no_grad():
+        preds = model([pet_tensor])[0]
+
+    keep = preds["scores"] > 0.5
+    names = [f"{categories[l]}: {s:.2f}" for l, s in zip(preds["labels"][keep], preds["scores"][keep])]
+    img_u8 = (to_tensor(pet_img) * 255).byte()
+    drawn = draw_bounding_boxes(img_u8, preds["boxes"][keep].cpu(), names, width=3)
+
+    ax.imshow(to_pil_image(drawn))
+    ax.set_title(f"Image #{idx} ({len(preds['boxes'][keep])} detections)")
+    ax.axis("off")
+
+plt.suptitle("Faster R-CNN on Oxford-IIIT Pet Photos", fontsize=14)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 6. Effect of Confidence Threshold
 #
 # The threshold controls the precision-recall tradeoff: lower threshold =
 # more detections (higher recall) but more false positives (lower precision).
 
 # %%
+# Use the first sample image
+img_for_thresh, _ = pet_dataset[sample_indices[0]]
+thresh_tensor = preprocess(img_for_thresh).to(device)
+
+with torch.no_grad():
+    thresh_preds = model([thresh_tensor])[0]
+
+img_uint8_thresh = (to_tensor(img_for_thresh) * 255).byte()
+
 fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 for ax, thresh in zip(axes, [0.3, 0.5, 0.8]):
-    keep = predictions["scores"] > thresh
-    boxes_t = predictions["boxes"][keep]
-    labels_t = predictions["labels"][keep]
-    scores_t = predictions["scores"][keep]
+    keep = thresh_preds["scores"] > thresh
+    boxes_t = thresh_preds["boxes"][keep]
+    labels_t = thresh_preds["labels"][keep]
+    scores_t = thresh_preds["scores"][keep]
 
     names = [f"{categories[l]}: {s:.2f}" for l, s in zip(labels_t, scores_t)]
-    result = draw_bounding_boxes(img_uint8, boxes_t.cpu(), names, width=2)
+    result = draw_bounding_boxes(img_uint8_thresh, boxes_t.cpu(), names, width=2)
 
     ax.imshow(to_pil_image(result))
     ax.set_title(f"Threshold: {thresh} ({len(boxes_t)} detections)")
@@ -157,7 +192,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 6. (Optional) Ultralytics YOLOv8
+# ## 7. (Optional) Ultralytics YOLOv8
 #
 # For the simplest path to detection, Ultralytics provides a one-liner:
 #
@@ -177,8 +212,9 @@ plt.show()
 # %% [markdown]
 # ## Discussion: Medical Detection
 #
-# The pretrained Faster R-CNN detects everyday objects (people, cars, animals).
-# For medical detection tasks (nodule detection, cell counting), you would:
+# The pretrained Faster R-CNN detects everyday objects (people, cars, cats,
+# dogs). For medical detection tasks (nodule detection, cell counting), you
+# would:
 #
 # 1. **Annotate** your medical images with bounding boxes (using CVAT or Label Studio)
 # 2. **Fine-tune** the pretrained detector on your annotated dataset
@@ -192,7 +228,7 @@ plt.show()
 #
 # You should now be able to:
 # - Load a pretrained detection model from torchvision
-# - Run inference and extract boxes, labels, and scores
+# - Run inference on real photos and extract boxes, labels, and scores
 # - Filter predictions by confidence threshold
 # - Visualize detections with `draw_bounding_boxes`
 # - Understand the path to medical detection (annotate → fine-tune → evaluate)

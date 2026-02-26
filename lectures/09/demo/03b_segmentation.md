@@ -17,7 +17,8 @@ jupyter:
 # In this demo we'll explore image segmentation — classifying every pixel
 # in an image. We'll use:
 # 1. A pretrained **DeepLabV3** from torchvision for general segmentation
-# 2. **segmentation_models_pytorch** (smp) to create a U-Net for medical use
+# 2. **Oxford-IIIT Pet** trimap masks as real ground-truth segmentation data
+# 3. **segmentation_models_pytorch** (smp) to create a U-Net for medical use
 
 # %% [markdown]
 # ## Setup
@@ -28,7 +29,7 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from torchvision import transforms
+from torchvision import transforms, datasets
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -38,8 +39,8 @@ print(f"Using device: {device}")
 # ## Part 1: Pretrained DeepLabV3
 #
 # torchvision provides pretrained segmentation models. DeepLabV3 with a
-# ResNet-50 backbone is trained on COCO for 21 classes (background + 20
-# object categories).
+# ResNet-50 backbone is trained on a subset of COCO for 21 classes
+# (background + 20 object categories including cats and dogs).
 
 # %%
 from torchvision.models.segmentation import deeplabv3_resnet50, DeepLabV3_ResNet50_Weights
@@ -58,19 +59,18 @@ categories = weights.meta["categories"]
 print(f"Segmentation classes ({len(categories)}): {categories}")
 
 # %% [markdown]
-# ## Run Segmentation
+# ## Run Segmentation on a Pet Photo
+#
+# We'll use the Oxford-IIIT Pet dataset. DeepLabV3 knows about cats and dogs
+# (COCO classes 8 and 12), so it should segment them well.
 
 # %%
-# Create or load an image
-# In practice: img = Image.open("chest_xray.png").convert("RGB")
-# For demo, create a simple color image or use a sample
-try:
-    from urllib.request import urlretrieve
-    url = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
-    urlretrieve(url, "/tmp/sample_seg.png")
-    img = Image.open("/tmp/sample_seg.png").convert("RGB")
-except Exception:
-    img = Image.fromarray(np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8))
+# Load Oxford-IIIT Pet dataset (images only)
+pet_dataset = datasets.OxfordIIITPet(root="./data", split="test", download=True)
+
+# Pick a sample image
+img, label = pet_dataset[0]
+print(f"Image size: {img.size}")
 
 # Preprocess and run inference
 img_tensor = preprocess(img).unsqueeze(0).to(device)
@@ -82,7 +82,8 @@ with torch.no_grad():
 predictions = output.argmax(dim=1).squeeze(0).cpu().numpy()
 print(f"Output shape: {output.shape}")
 print(f"Prediction map shape: {predictions.shape}")
-print(f"Unique classes found: {np.unique(predictions)}")
+unique_classes = np.unique(predictions)
+print(f"Classes found: {[categories[c] for c in unique_classes]}")
 
 # %%
 # Visualize original vs segmentation mask
@@ -97,20 +98,112 @@ axes[1].set_title("Segmentation Mask")
 axes[1].axis("off")
 
 # Overlay
-img_array = np.array(img.resize(predictions.shape[::-1]))
-overlay = img_array.copy()
-mask_colored = plt.cm.tab20(predictions / predictions.max())[:, :, :3] * 255
+img_resized = img.resize(predictions.shape[::-1])
+img_array = np.array(img_resized)
+overlay = img_array.copy().astype(np.float64)
+mask_colored = plt.cm.tab20(predictions / max(predictions.max(), 1))[:, :, :3] * 255
 overlay = (0.6 * overlay + 0.4 * mask_colored).astype(np.uint8)
 axes[2].imshow(overlay)
 axes[2].set_title("Overlay")
 axes[2].axis("off")
 
-plt.suptitle("DeepLabV3 Semantic Segmentation", fontsize=14)
+plt.suptitle("DeepLabV3 Semantic Segmentation on a Pet Photo", fontsize=14)
 plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## Part 2: U-Net with segmentation_models_pytorch
+# ## Part 2: Real Segmentation Masks (Oxford-IIIT Pet Trimaps)
+#
+# The Oxford-IIIT Pet dataset includes **trimap segmentation masks** for
+# every image — real, human-annotated pixel labels:
+# - **1** = foreground (the pet)
+# - **2** = background
+# - **3** = boundary/uncertain
+
+# %%
+# Load the dataset with segmentation masks
+pet_seg = datasets.OxfordIIITPet(
+    root="./data", split="test", download=True,
+    target_types="segmentation",
+)
+
+# Get an image and its ground-truth mask
+img, mask = pet_seg[0]
+mask_array = np.array(mask)
+
+print(f"Image size: {img.size}")
+print(f"Mask shape: {mask_array.shape}")
+print(f"Mask unique values: {np.unique(mask_array)}")
+print(f"  1 = foreground (pet), 2 = background, 3 = boundary")
+
+# %%
+# Display image alongside its ground-truth segmentation mask
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+axes[0].imshow(img)
+axes[0].set_title("Pet Photo")
+axes[0].axis("off")
+
+axes[1].imshow(mask_array, cmap="gray")
+axes[1].set_title("Ground Truth Trimap")
+axes[1].axis("off")
+
+# Overlay: highlight the pet in red
+img_array = np.array(img.resize(mask_array.shape[::-1]))
+overlay = img_array.copy()
+pet_pixels = mask_array == 1  # foreground
+overlay[pet_pixels] = (0.5 * overlay[pet_pixels] + 0.5 * np.array([255, 80, 80])).astype(np.uint8)
+axes[2].imshow(overlay)
+axes[2].set_title("Mask Overlay (pet = red)")
+axes[2].axis("off")
+
+plt.suptitle("Oxford-IIIT Pet: Image + Ground Truth Segmentation", fontsize=14)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## Part 3: Computing Dice Score
+#
+# The Dice coefficient measures overlap between predicted and ground truth
+# masks. It ranges from 0 (no overlap) to 1 (perfect match).
+
+# %%
+def dice_score(pred, target, threshold=0.5):
+    """Compute Dice coefficient between predicted and target masks."""
+    pred_binary = (pred > threshold).float()
+    intersection = (pred_binary * target).sum()
+    return (2.0 * intersection) / (pred_binary.sum() + target.sum() + 1e-8)
+
+# Compare DeepLabV3 prediction with the ground truth
+# DeepLabV3 classes: cat=8, dog=12. Extract the predicted animal mask.
+cat_idx = categories.index("cat")
+dog_idx = categories.index("dog")
+
+# Get the predicted probability for cat or dog (whichever is higher)
+probs = torch.softmax(output, dim=1).squeeze(0).cpu()
+animal_pred = torch.max(probs[cat_idx], probs[dog_idx])
+
+# Ground truth: convert trimap to binary (1=pet, 0=everything else)
+gt_binary = torch.tensor((mask_array == 1).astype(np.float32))
+
+# Resize prediction to match ground truth
+from torch.nn.functional import interpolate
+animal_pred_resized = interpolate(
+    animal_pred.unsqueeze(0).unsqueeze(0),
+    size=gt_binary.shape,
+    mode="bilinear",
+    align_corners=False,
+).squeeze()
+
+score = dice_score(animal_pred_resized, gt_binary)
+print(f"Dice Score (DeepLabV3 vs ground truth): {score:.4f}")
+
+# A perfect prediction would score 1.0
+perfect_score = dice_score(gt_binary, gt_binary)
+print(f"Perfect Dice Score: {perfect_score:.4f}")
+
+# %% [markdown]
+# ## Part 4: U-Net with segmentation_models_pytorch
 #
 # For medical segmentation tasks, `segmentation_models_pytorch` (smp) makes
 # it easy to create a U-Net with a pretrained backbone.
@@ -147,86 +240,49 @@ except ImportError:
     print("Install with: pip install segmentation-models-pytorch")
 
 # %% [markdown]
-# ## Working with Segmentation Masks
+# ## Multiple Segmentation Examples
 #
-# Segmentation masks are just images where each pixel value represents a
-# class label. For binary segmentation (lung vs background), the mask has
-# values 0 (background) and 1 (lung).
+# Let's see segmentation on a few different pet photos.
 
 # %%
-# Simulate a chest X-ray and its lung mask
-# In practice, these come from annotated datasets
-np.random.seed(42)
-h, w = 256, 256
+fig, axes = plt.subplots(3, 3, figsize=(15, 14))
+sample_indices = [0, 15, 30]
 
-# Create a fake "chest X-ray" (dark background with lighter regions)
-fake_xray = np.random.normal(80, 30, (h, w)).clip(0, 255).astype(np.uint8)
-# Add brighter "lung" regions
-fake_xray[60:200, 30:100] += 50  # left lung
-fake_xray[60:200, 156:226] += 50  # right lung
-fake_xray = fake_xray.clip(0, 255).astype(np.uint8)
+for row, idx in enumerate(sample_indices):
+    pet_img, pet_mask = pet_seg[idx]
+    pet_mask_arr = np.array(pet_mask)
 
-# Create corresponding mask
-fake_mask = np.zeros((h, w), dtype=np.uint8)
-fake_mask[60:200, 30:100] = 1   # left lung
-fake_mask[60:200, 156:226] = 1  # right lung
+    # Run DeepLabV3
+    inp = preprocess(pet_img).unsqueeze(0).to(device)
+    with torch.no_grad():
+        out = model(inp)["out"]
+    pred = out.argmax(dim=1).squeeze(0).cpu().numpy()
 
-# Display
-fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-axes[0].imshow(fake_xray, cmap="gray")
-axes[0].set_title("Chest X-ray (simulated)")
-axes[0].axis("off")
+    # Original
+    axes[row, 0].imshow(pet_img)
+    axes[row, 0].set_title("Original" if row == 0 else "")
+    axes[row, 0].axis("off")
 
-axes[1].imshow(fake_mask, cmap="gray")
-axes[1].set_title("Ground Truth Mask")
-axes[1].axis("off")
+    # Ground truth
+    axes[row, 1].imshow(pet_mask_arr, cmap="gray")
+    axes[row, 1].set_title("Ground Truth" if row == 0 else "")
+    axes[row, 1].axis("off")
 
-# Overlay
-overlay = np.stack([fake_xray]*3, axis=-1)
-overlay[fake_mask == 1] = [255, 100, 100]  # red overlay on lungs
-axes[2].imshow(overlay)
-axes[2].set_title("Mask Overlay")
-axes[2].axis("off")
+    # DeepLabV3 prediction
+    axes[row, 2].imshow(pred, cmap="tab20")
+    axes[row, 2].set_title("DeepLabV3 Prediction" if row == 0 else "")
+    axes[row, 2].axis("off")
 
-plt.suptitle("Segmentation: Image + Mask", fontsize=14)
+plt.suptitle("Segmentation: Ground Truth vs DeepLabV3 Predictions", fontsize=14)
 plt.tight_layout()
 plt.show()
-
-# %% [markdown]
-# ## Computing Dice Score
-#
-# The Dice coefficient measures overlap between predicted and ground truth
-# masks. It ranges from 0 (no overlap) to 1 (perfect match).
-
-# %%
-def dice_score(pred, target, threshold=0.5):
-    """Compute Dice coefficient between predicted and target masks."""
-    pred_binary = (pred > threshold).float()
-    intersection = (pred_binary * target).sum()
-    return (2.0 * intersection) / (pred_binary.sum() + target.sum() + 1e-8)
-
-# Simulate a model prediction (imperfect)
-pred_mask = fake_mask.copy().astype(np.float32)
-# Add some noise to simulate imperfect prediction
-pred_mask += np.random.normal(0, 0.3, pred_mask.shape)
-pred_mask = np.clip(pred_mask, 0, 1)
-
-# Compute Dice
-pred_tensor = torch.tensor(pred_mask)
-target_tensor = torch.tensor(fake_mask, dtype=torch.float32)
-score = dice_score(pred_tensor, target_tensor)
-print(f"Dice Score: {score:.4f}")
-
-# A perfect prediction would score 1.0
-perfect_score = dice_score(target_tensor, target_tensor)
-print(f"Perfect Dice Score: {perfect_score:.4f}")
 
 # %% [markdown]
 # ## Checkpoint
 #
 # You should now be able to:
-# - Run pretrained DeepLabV3 for semantic segmentation
-# - Create a U-Net with smp using a pretrained encoder
-# - Understand segmentation masks (per-pixel labels)
+# - Run pretrained DeepLabV3 for semantic segmentation on real photos
+# - Work with real segmentation masks (Oxford-IIIT Pet trimaps)
 # - Compute and interpret the Dice coefficient
+# - Create a U-Net with smp using a pretrained encoder
 # - Visualize segmentation results with overlays

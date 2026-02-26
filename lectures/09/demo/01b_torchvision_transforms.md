@@ -17,6 +17,10 @@ jupyter:
 # In this demo we'll build image preprocessing pipelines with
 # `torchvision.transforms`, apply data augmentation, and create DataLoaders
 # that feed batches to our models.
+#
+# **Dataset**: Oxford Flowers102 — 102 categories of common UK flowers.
+# Beautiful, high-resolution natural images that show augmentation effects
+# clearly.
 
 # %% [markdown]
 # ## Setup
@@ -59,18 +63,27 @@ for i, t in enumerate(train_transform.transforms):
     print(f"  {i+1}. {t}")
 
 # %% [markdown]
-# ## 2. Visualizing Augmentations
+# ## 2. Load Flowers102 Dataset
 #
-# Let's see how augmentation transforms modify an image. Each application
-# produces a different random variant.
+# `Flowers102` has 102 flower species — sunflowers, roses, daisies, orchids,
+# and more. Images are high-resolution photos, perfect for seeing how
+# transforms affect real images.
 
 # %%
-# Create a sample image (or load one: Image.open("chest_xray.png"))
-# Using CIFAR-10 for a quick demo — you'd use chest X-rays in practice
-sample_dataset = datasets.CIFAR10(root="./data", train=True, download=True)
-sample_img, sample_label = sample_dataset[0]
-class_names = sample_dataset.classes
-print(f"Sample image: {class_names[sample_label]}, size: {sample_img.size}")
+# Download and load the dataset (no transforms yet — we want raw images for viz)
+raw_dataset = datasets.Flowers102(root="./data", split="train", download=True)
+print(f"Training samples: {len(raw_dataset)}")
+
+# Grab a sample image
+sample_img, sample_label = raw_dataset[0]
+print(f"Sample image size: {sample_img.size}, label: {sample_label}")
+
+# %% [markdown]
+# ## 3. Visualizing Augmentations
+#
+# Let's see how augmentation transforms modify an image. Each application
+# produces a different random variant — this is how we create "new" training
+# examples from a single photo.
 
 # %%
 # Augmentation-only transforms (no normalize, for visualization)
@@ -82,7 +95,7 @@ augment_viz = transforms.Compose([
     transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
 ])
 
-# Generate 8 augmented versions of the same image
+# Generate 8 augmented versions of the same flower
 fig, axes = plt.subplots(2, 4, figsize=(14, 7))
 for i, ax in enumerate(axes.flat):
     if i == 0:
@@ -94,14 +107,15 @@ for i, ax in enumerate(axes.flat):
         ax.imshow(augmented)
         ax.set_title(f"Augmented #{i}")
     ax.axis("off")
-plt.suptitle("Data Augmentation: Same image, different random transforms", fontsize=14)
+plt.suptitle("Data Augmentation: Same flower, different random transforms", fontsize=14)
 plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 3. Creating a Dataset with ImageFolder
+# ## 4. Creating Datasets with Transforms
 #
-# `ImageFolder` expects a directory where each subdirectory is a class:
+# Now apply the full transform pipelines. `ImageFolder` expects a directory
+# where each subdirectory is a class:
 #
 # ```
 # data/chest_xrays/
@@ -113,46 +127,39 @@ plt.show()
 #     └── ...
 # ```
 #
-# For this demo, we'll use CIFAR-10 (it downloads automatically). In
-# practice, you'd organize your chest X-rays into this folder structure.
+# Flowers102 downloads automatically. In practice, you'd organize your own
+# images into this folder structure and use `ImageFolder`.
 
 # %%
-# Load CIFAR-10 with our transform pipelines
-train_dataset = datasets.CIFAR10(
-    root="./data", train=True, download=True, transform=train_transform
+# Load Flowers102 with our transform pipelines
+train_dataset = datasets.Flowers102(
+    root="./data", split="train", download=True, transform=train_transform
 )
-test_dataset = datasets.CIFAR10(
-    root="./data", train=False, download=True, transform=eval_transform
+val_dataset = datasets.Flowers102(
+    root="./data", split="val", download=True, transform=eval_transform
+)
+test_dataset = datasets.Flowers102(
+    root="./data", split="test", download=True, transform=eval_transform
 )
 
-print(f"Training samples: {len(train_dataset)}")
-print(f"Test samples:     {len(test_dataset)}")
-print(f"Classes:          {train_dataset.classes}")
-
-# %%
-# Split training into train + validation
-train_size = int(0.85 * len(train_dataset))
-val_size = len(train_dataset) - train_size
-train_subset, val_subset = random_split(
-    train_dataset, [train_size, val_size],
-    generator=torch.Generator().manual_seed(42)
-)
-print(f"Train: {len(train_subset)}, Val: {len(val_subset)}, Test: {len(test_dataset)}")
+print(f"Training samples:   {len(train_dataset)}")
+print(f"Validation samples: {len(val_dataset)}")
+print(f"Test samples:       {len(test_dataset)}")
 
 # %% [markdown]
-# ## 4. Building DataLoaders
+# ## 5. Building DataLoaders
 #
 # DataLoaders handle batching, shuffling, and parallel data loading.
 
 # %%
 train_loader = DataLoader(
-    train_subset,
+    train_dataset,
     batch_size=32,
     shuffle=True,        # randomize order each epoch
     num_workers=2,       # parallel data loading (set 0 for debugging)
     pin_memory=True,     # faster CPU→GPU transfer
 )
-val_loader = DataLoader(val_subset, batch_size=32, shuffle=False, num_workers=2)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=2)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=2)
 
 print(f"Batches per epoch: {len(train_loader)}")
@@ -166,10 +173,9 @@ print(f"Batch labels shape: {labels.shape}")  # (32,)
 print(f"Image dtype: {images.dtype}, range: [{images.min():.2f}, {images.max():.2f}]")
 
 # %% [markdown]
-# ## 5. Visualizing a Batch
+# ## 6. Visualizing a Batch
 #
-# Let's display a batch of images. Since they're normalized, we need to
-# "un-normalize" them for display.
+# Since the images are normalized, we need to "un-normalize" them for display.
 
 # %%
 def unnormalize(tensor, mean, std):
@@ -184,7 +190,7 @@ for i, ax in enumerate(axes.flat):
     img = unnormalize(images[i].clone(), [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     # Convert from (C, H, W) to (H, W, C) for matplotlib
     ax.imshow(img.permute(1, 2, 0).numpy())
-    ax.set_title(f"{train_dataset.classes[labels[i]]}")
+    ax.set_title(f"Label: {labels[i].item()}")
     ax.axis("off")
 plt.suptitle("Sample batch from DataLoader (normalized + augmented)", fontsize=14)
 plt.tight_layout()
@@ -195,7 +201,7 @@ plt.show()
 #
 # You should now be able to:
 # - Build train vs eval transform pipelines with `Compose`
-# - Apply and visualize data augmentation
-# - Create datasets with `ImageFolder` or built-in datasets
+# - Apply and visualize data augmentation on real photos
+# - Create datasets with `Flowers102`, `ImageFolder`, or other built-in datasets
 # - Build DataLoaders with batching, shuffling, and parallel loading
 # - Iterate over batches and inspect tensor shapes

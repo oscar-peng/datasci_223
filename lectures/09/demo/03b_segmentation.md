@@ -168,15 +168,13 @@ plt.show()
 # %% [markdown]
 # ## Part 3: Computing Dice Score
 #
-# The Dice coefficient measures overlap between predicted and ground truth
+# The **Dice coefficient** measures overlap between predicted and ground truth
 # masks. It ranges from 0 (no overlap) to 1 (perfect match).
+# `torchmetrics.Dice` handles thresholding, batching, and multi-class cases.
 
 # %%
-def dice_score(pred, target, threshold=0.5):
-    """Compute Dice coefficient between predicted and target masks."""
-    pred_binary = (pred > threshold).float()
-    intersection = (pred_binary * target).sum()
-    return (2.0 * intersection) / (pred_binary.sum() + target.sum() + 1e-8)
+from torchmetrics import Dice
+from torch.nn.functional import interpolate
 
 # Compare DeepLabV3 prediction with the ground truth
 # DeepLabV3 classes: cat=8, dog=12. Extract the predicted animal mask.
@@ -191,7 +189,6 @@ animal_pred = torch.max(probs[cat_idx], probs[dog_idx])
 gt_binary = torch.tensor((mask_array == 1).astype(np.float32))
 
 # Resize prediction to match ground truth
-from torch.nn.functional import interpolate
 animal_pred_resized = interpolate(
     animal_pred.unsqueeze(0).unsqueeze(0),
     size=gt_binary.shape,
@@ -199,12 +196,17 @@ animal_pred_resized = interpolate(
     align_corners=False,
 ).squeeze()
 
-score = dice_score(animal_pred_resized, gt_binary)
+# Compute Dice with torchmetrics
+dice_metric = Dice(threshold=0.5)
+score = dice_metric(
+    animal_pred_resized.unsqueeze(0),   # (1, H, W)
+    gt_binary.unsqueeze(0).long(),       # (1, H, W)
+)
 print(f"Dice Score (DeepLabV3 vs ground truth): {score:.4f}")
 
-# A perfect prediction would score 1.0
-perfect_score = dice_score(gt_binary, gt_binary)
-print(f"Perfect Dice Score: {perfect_score:.4f}")
+# A perfect prediction scores 1.0
+perfect = dice_metric(gt_binary.unsqueeze(0).long(), gt_binary.unsqueeze(0).long())
+print(f"Perfect Dice Score: {perfect:.4f}")
 
 # %%
 # Visualize what Dice score actually measures:
@@ -240,28 +242,6 @@ axes[3].axis("off")
 plt.suptitle("Anatomy of a Dice Score: 2×|Intersection| / (|Pred| + |GT|)", fontsize=13)
 plt.tight_layout()
 plt.show()
-
-# %% [markdown]
-# ## Part 3b: torchmetrics.Dice
-#
-# The manual implementation above makes the formula transparent. In practice,
-# use `torchmetrics.Dice` — it handles batching, multi-class, and thresholding.
-
-# %%
-try:
-    from torchmetrics.segmentation import MeanIoU
-    from torchmetrics import Dice
-
-    dice_metric = Dice(threshold=0.5)
-    pred_for_metric = animal_pred_resized.unsqueeze(0)  # (1, H, W)
-    gt_for_metric = gt_binary.unsqueeze(0).long()        # (1, H, W)
-
-    tm_score = dice_metric(pred_for_metric, gt_for_metric)
-    print(f"torchmetrics Dice: {tm_score:.4f}")
-    print(f"Manual dice_score: {score:.4f}")
-
-except ImportError:
-    print("torchmetrics not installed. Install with: pip install torchmetrics")
 
 # %% [markdown]
 # ## Part 4: U-Net with segmentation_models_pytorch

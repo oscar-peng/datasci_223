@@ -19,7 +19,7 @@ Build a Retrieval-Augmented Generation pipeline that grounds LLM responses in ac
 ## Setup
 
 ```python
-%pip install -q sentence-transformers chromadb openai python-dotenv mcp scikit-learn matplotlib numpy
+%pip install -q sentence-transformers chromadb openai openai-agents python-dotenv mcp scikit-learn matplotlib numpy
 ```
 
 ```python
@@ -175,93 +175,64 @@ plt.show()
 
 The hypertension chunks are most similar to each other, the diabetes chunks cluster, and the chest pain chunks cluster. This is what makes retrieval work — a question about hypertension will land near the hypertension chunks in vector space.
 
-## Section 3: RAG Query Function
+## Section 3: RAG Query
 
-The core RAG loop: embed the question → retrieve similar chunks → inject them as context → generate a grounded answer. The `n_results` parameter controls how many chunks to retrieve (more context = more information but also more noise and cost). The system prompt constrains the model to answer *only* from provided context — this is what makes RAG grounded rather than generative.
-
-```python
-def rag_query(question, n_results=3, show_sources=True):
-    """Answer a question using retrieved guideline chunks as context."""
-
-    # RETRIEVE: embed the question with the same model used for documents,
-    # then find the n closest chunks by cosine distance
-    query_embedding = embedding_model.encode([question]).tolist()
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=n_results,
-        include=["documents", "metadatas", "distances"],
-    )
-
-    if show_sources:
-        print("Retrieved documents:")
-        for i, (doc, meta, dist) in enumerate(zip(
-            results["documents"][0],
-            results["metadatas"][0],
-            results["distances"][0],
-        )):
-            print(f"  {i+1}. [{meta['source']}] (distance: {dist:.3f})")
-            print(f"     {doc[:80]}...")
-        print()
-
-    # AUGMENT: concatenate retrieved chunks into a single context block
-    context = "\n\n".join(results["documents"][0])
-
-    # GENERATE: the system prompt constrains the model to only use
-    # the provided context — no training-data knowledge allowed
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a clinical assistant. Answer based ONLY on the provided context. "
-                    "If the context doesn't contain enough information, say so. "
-                    "Cite the guideline source when possible."
-                ),
-            },
-            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
-        ],
-        temperature=0,
-        max_tokens=500,
-    )
-    return response.choices[0].message.content
-```
+The core RAG loop: embed the question → retrieve similar chunks → inject them as context → generate a grounded answer. Each step is explicit here so you can see exactly what happens.
 
 ```python
-questions = [
-    "What is the first-line treatment for hypertension in a patient with diabetes?",
-    "How do I evaluate a patient with acute chest pain?",
-    "What HbA1c level indicates diabetes?",
-]
+question = "What is the first-line treatment for hypertension in a patient with diabetes?"
 
-for q in questions:
-    print("=" * 60)
-    print(f"Q: {q}\n")
-    answer = rag_query(q)
-    print(f"A: {answer}\n")
+# RETRIEVE: embed the question with the same model used for documents,
+# then find the closest chunks by cosine distance
+query_embedding = embedding_model.encode([question]).tolist()
+results = collection.query(
+    query_embeddings=query_embedding,
+    n_results=3,
+    include=["documents", "metadatas", "distances"],
+)
+
+print("Retrieved documents:")
+for i, (doc, meta, dist) in enumerate(zip(
+    results["documents"][0],
+    results["metadatas"][0],
+    results["distances"][0],
+)):
+    print(f"  {i+1}. [{meta['source']}] (distance: {dist:.3f})")
+    print(f"     {doc[:80]}...")
+print()
+
+# AUGMENT: concatenate retrieved chunks into a single context block
+context = "\n\n".join(results["documents"][0])
+
+# GENERATE: the system prompt constrains the model to only use
+# the provided context — no training-data knowledge allowed
+response = client.chat.completions.create(
+    model=MODEL,
+    messages=[
+        {
+            "role": "system",
+            "content": (
+                "You are a clinical assistant. Answer based ONLY on the provided context. "
+                "If the context doesn't contain enough information, say so. "
+                "Cite the guideline source when possible."
+            ),
+        },
+        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
+    ],
+    temperature=0,
+    max_tokens=500,
+)
+print(f"Q: {question}\n")
+print(f"A: {response.choices[0].message.content}")
 ```
 
 Lower distance = higher semantic similarity. The model stays grounded because the system prompt constrains it to the retrieved context, and it can cite guideline sources because that metadata was stored alongside the embeddings.
 
 ## Section 4: RAG vs Direct LLM
 
-What happens when the model answers *without* retrieved context? For well-known clinical facts (like hypertension thresholds) the LLM may already know the answer — but for organization-specific protocols, recent guideline updates, or internal policy, the model has no choice but to guess or refuse. RAG grounds responses in retrieved documents, reducing hallucination and making outputs verifiable.
+What happens when the model answers *without* retrieved context? For well-known clinical facts the LLM may already know the answer — but for organization-specific protocols, recent guideline updates, or internal policy, the model has no choice but to guess or refuse. RAG grounds responses in retrieved documents, reducing hallucination and making outputs verifiable.
 
 ```python
-def direct_llm_query(question):
-    """Ask the LLM directly — no retrieval, no grounding context."""
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": "You are a clinical assistant. Be concise."},
-            {"role": "user", "content": question},
-        ],
-        temperature=0,
-        max_tokens=500,
-    )
-    return response.choices[0].message.content
-
-
 # The HEART score thresholds are a good test case: exact cutoffs vary by
 # institutional protocol. Our guidelines say 0-3/4-6/7-10 — the LLM's
 # training data may use different cutoffs.
@@ -271,276 +242,231 @@ test_q = (
     "action for each risk category?"
 )
 
+# --- RAG: retrieve context first, then generate ---
+query_embedding = embedding_model.encode([test_q]).tolist()
+results = collection.query(
+    query_embeddings=query_embedding, n_results=3,
+    include=["documents", "metadatas"],
+)
+context = "\n\n".join(results["documents"][0])
+
+rag_response = client.chat.completions.create(
+    model=MODEL,
+    messages=[
+        {"role": "system", "content": (
+            "Answer based ONLY on the provided context. "
+            "Cite the guideline source when possible."
+        )},
+        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {test_q}"},
+    ],
+    temperature=0, max_tokens=500,
+)
+
+# --- Direct: no retrieval, just the LLM's training data ---
+direct_response = client.chat.completions.create(
+    model=MODEL,
+    messages=[
+        {"role": "system", "content": "You are a clinical assistant. Be concise."},
+        {"role": "user", "content": test_q},
+    ],
+    temperature=0, max_tokens=500,
+)
+
 print("RAG Response (grounded in our guidelines):")
-rag_answer = rag_query(test_q)
-print(rag_answer)
+print(rag_response.choices[0].message.content)
 print("\n" + "-" * 40 + "\n")
 print("Direct LLM Response (from training data — may differ or hallucinate thresholds):")
-print(direct_llm_query(test_q))
+print(direct_response.choices[0].message.content)
 ```
 
 ## Section 5: RAG with Citations
 
-In clinical contexts, knowing *where* an answer came from is as important as the answer itself — a clinician needs to verify claims against the original guideline, not just trust the model. Numbering source chunks and instructing the model to cite them makes every claim traceable.
+In clinical contexts, knowing *where* an answer came from is as important as the answer itself — a clinician needs to verify claims against the original guideline, not just trust the model. The technique: number each source chunk so the model can reference them as [1], [2], etc.
 
 ```python
-def rag_with_citations(question, n_results=3):
-    """RAG that returns answer + numbered source citations."""
-    query_embedding = embedding_model.encode([question]).tolist()
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=n_results,
-        include=["documents", "metadatas"],
-    )
+question = "What medications are recommended for diabetic patients with heart disease?"
 
-    # Number each source so the model can reference them as [1], [2], etc.
-    context_parts = []
-    sources = []
-    for i, (doc, meta) in enumerate(
-        zip(results["documents"][0], results["metadatas"][0])
-    ):
-        context_parts.append(f"[{i+1}] {doc}")
-        sources.append(f"[{i+1}] {meta['source']}")
-
-    context = "\n\n".join(context_parts)
-
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Answer based on the numbered sources. "
-                    "Include citation numbers [1], [2], etc."
-                ),
-            },
-            {"role": "user", "content": f"Sources:\n{context}\n\nQuestion: {question}"},
-        ],
-        temperature=0,
-        max_tokens=500,
-    )
-
-    return {"answer": response.choices[0].message.content, "sources": sources}
-
-
-result = rag_with_citations(
-    "What medications are recommended for diabetic patients with heart disease?"
+query_embedding = embedding_model.encode([question]).tolist()
+results = collection.query(
+    query_embeddings=query_embedding, n_results=3,
+    include=["documents", "metadatas"],
 )
-print(f"Answer: {result['answer']}\n")
+
+# Number each source so the model can cite them
+context_parts = []
+sources = []
+for i, (doc, meta) in enumerate(
+    zip(results["documents"][0], results["metadatas"][0])
+):
+    context_parts.append(f"[{i+1}] {doc}")
+    sources.append(f"[{i+1}] {meta['source']}")
+
+context = "\n\n".join(context_parts)
+
+response = client.chat.completions.create(
+    model=MODEL,
+    messages=[
+        {"role": "system", "content": (
+            "Answer based on the numbered sources. "
+            "Include citation numbers [1], [2], etc."
+        )},
+        {"role": "user", "content": f"Sources:\n{context}\n\nQuestion: {question}"},
+    ],
+    temperature=0, max_tokens=500,
+)
+
+print(f"Answer: {response.choices[0].message.content}\n")
 print("Sources:")
-for s in result["sources"]:
+for s in sources:
     print(f"  {s}")
 ```
 
 ## Section 6: Function Calling — Letting the Model Use Tools
 
-RAG retrieves documents. But what if the model needs to *do* something — look up a drug interaction, calculate a dose, check lab values? **Function calling** lets you define tools as JSON schemas, pass them to the model, and let it decide when to invoke them.
+RAG retrieves documents. But what if the model needs to *do* something — look up a drug interaction, calculate a dose, check lab values? **Function calling** lets you define tools, pass them to the model, and let it decide when to invoke them.
 
-The `tools` parameter serves two purposes:
-
-- **Tool use**: the model *chooses* to call a function based on the conversation
-- **Structured output**: you *force* the model to return data matching a schema
-
-The model never executes code — it generates a JSON object with the function name and arguments. Your code runs the actual function and feeds the result back.
+The model never executes code — it generates a JSON object with the function name and arguments. The framework runs the actual function and feeds the result back.
 
 ```python
-# Tool definitions follow the OpenAI function calling format:
-# - "name" and "description" tell the model what the tool does
-# - "parameters" is a JSON Schema defining expected arguments
-# The model reads these schemas and decides when/how to call each tool.
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "check_drug_interaction",
-            "description": "Check for known interactions between two medications. Returns severity and clinical advice.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "drug_a": {"type": "string", "description": "First medication name"},
-                    "drug_b": {"type": "string", "description": "Second medication name"},
-                },
-                "required": ["drug_a", "drug_b"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate_egfr",
-            "description": "Calculate estimated GFR using the CKD-EPI equation. Used to assess kidney function before prescribing.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "creatinine": {"type": "number", "description": "Serum creatinine in mg/dL"},
-                    "age": {"type": "integer", "description": "Patient age in years"},
-                    "sex": {"type": "string", "enum": ["male", "female"], "description": "Biological sex"},
-                },
-                "required": ["creatinine", "age", "sex"],
-            },
-        },
-    },
-]
+# Visualize the function calling loop
+fig, ax = plt.subplots(figsize=(8, 2.5))
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 3)
+ax.axis("off")
 
-print(f"Defined {len(tools)} tools for the model:")
-for t in tools:
-    print(f"  - {t['function']['name']}: {t['function']['description'][:70]}...")
+boxes = [
+    (0.5, 1.5, "User\nQuestion"),
+    (2.8, 1.5, "LLM\n(+ tool schemas)"),
+    (5.3, 1.5, "Tool Call\n{name, args}"),
+    (7.8, 1.5, "Execute\nFunction"),
+]
+for x, y, label in boxes:
+    ax.add_patch(plt.Rectangle((x - 0.7, y - 0.55), 1.6, 1.1,
+                 facecolor="#e8f0fe", edgecolor="#4285f4", linewidth=1.5, zorder=2))
+    ax.text(x + 0.1, y, label, ha="center", va="center", fontsize=9, zorder=3)
+
+# Forward arrows
+for i in range(len(boxes) - 1):
+    ax.annotate("", xy=(boxes[i+1][0] - 0.7, boxes[i+1][1]),
+                xytext=(boxes[i][0] + 0.9, boxes[i][1]),
+                arrowprops=dict(arrowstyle="->", color="#4285f4", lw=1.5))
+
+# Return arrow (tool result → LLM)
+ax.annotate("result →\nfinal answer", xy=(3.5, 0.95), xytext=(7.2, 0.5),
+            fontsize=7.5, ha="center", color="#666",
+            arrowprops=dict(arrowstyle="->", color="#ea4335", lw=1.5, connectionstyle="arc3,rad=0.3"))
+
+ax.set_title("Function Calling Loop: LLM decides → you execute → LLM responds", fontsize=10, pad=10)
+plt.tight_layout()
+plt.show()
 ```
 
-Now we define the actual Python functions that execute when the model requests a tool call. In production these would hit a real drug database or clinical calculator API — here we use lookup tables.
+### Agents SDK Setup
+
+The OpenAI **Agents SDK** manages the full tool-calling loop: schema generation from type hints, LLM tool-use decisions, function execution, and result incorporation. We set it up once here and reuse it for the rest of the demo.
+
+```python
+from openai import AsyncOpenAI
+from agents import Agent, Runner, ModelSettings, function_tool, set_tracing_disabled
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
+
+set_tracing_disabled(True)
+
+# Same OpenRouter setup as above, but async for the Agents SDK
+if os.environ.get("OPENROUTER_API_KEY"):
+    agents_client = AsyncOpenAI(
+        api_key=os.environ["OPENROUTER_API_KEY"],
+        base_url="https://openrouter.ai/api/v1",
+    )
+    AGENTS_MODEL = OpenAIChatCompletionsModel(model="openai/gpt-4o-mini", openai_client=agents_client)
+elif os.environ.get("OPENAI_API_KEY"):
+    agents_client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    AGENTS_MODEL = OpenAIChatCompletionsModel(model="gpt-4o-mini", openai_client=agents_client)
+
+print("Agents SDK ready")
+```
+
+### Defining Tools
+
+The `@function_tool` decorator converts a Python function into a tool the agent can call. Type hints and docstrings become the JSON schema the model sees — no manual schema definition needed.
 
 ```python
 # Simulated drug interaction database — in production this would query
 # a real pharmacy database (e.g., DrugBank, First Databank)
 INTERACTION_DB = {
-    ("metformin", "contrast"): {
-        "severity": "high",
-        "description": "Hold metformin 48h before/after iodinated contrast — risk of lactic acidosis",
-    },
-    ("warfarin", "aspirin"): {
-        "severity": "high",
-        "description": "Increased bleeding risk — monitor INR closely, consider GI prophylaxis",
-    },
-    ("ace inhibitor", "potassium"): {
-        "severity": "moderate",
-        "description": "Risk of hyperkalemia — monitor serum potassium regularly",
-    },
-    ("lisinopril", "spironolactone"): {
-        "severity": "moderate",
-        "description": "Both raise potassium — monitor K+ levels, risk of hyperkalemia",
-    },
+    ("metformin", "contrast"): "HIGH: Hold metformin 48h before/after iodinated contrast — risk of lactic acidosis",
+    ("warfarin", "aspirin"): "HIGH: Increased bleeding risk — monitor INR closely, consider GI prophylaxis",
+    ("lisinopril", "spironolactone"): "MODERATE: Both raise potassium — monitor K+ levels, risk of hyperkalemia",
+    ("ace inhibitor", "potassium"): "MODERATE: Risk of hyperkalemia — monitor serum potassium regularly",
 }
 
 
+@function_tool
 def check_drug_interaction(drug_a: str, drug_b: str) -> str:
-    """Look up known interactions between two drugs."""
+    """Check for known interactions between two medications. Returns severity and clinical recommendation."""
     a, b = drug_a.lower().strip(), drug_b.lower().strip()
     result = INTERACTION_DB.get((a, b)) or INTERACTION_DB.get((b, a))
-    if result:
-        return json.dumps(result)
-    return json.dumps({"severity": "none", "description": f"No known interaction between {drug_a} and {drug_b}"})
+    return result or f"No known interaction between {drug_a} and {drug_b}"
 
 
+@function_tool
 def calculate_egfr(creatinine: float, age: int, sex: str) -> str:
-    """CKD-EPI 2021 equation (race-free). Returns eGFR in mL/min/1.73m²."""
+    """Estimate glomerular filtration rate using CKD-EPI 2021 (race-free).
+    creatinine in mg/dL, age in years, sex is 'male' or 'female'."""
     if sex == "female":
-        kappa, alpha, multiplier = 0.7, -0.241, 142 * 1.012
+        kappa, alpha, mult = 0.7, -0.241, 142 * 1.012
     else:
-        kappa, alpha, multiplier = 0.9, -0.302, 142
-    scr_ratio = creatinine / kappa
-    egfr = multiplier * (min(scr_ratio, 1) ** alpha) * (max(scr_ratio, 1) ** -1.200) * (0.9938 ** age)
-    return json.dumps({"egfr": round(egfr, 1), "unit": "mL/min/1.73m²"})
+        kappa, alpha, mult = 0.9, -0.302, 142
+    ratio = creatinine / kappa
+    egfr = mult * (min(ratio, 1) ** alpha) * (max(ratio, 1) ** -1.200) * (0.9938 ** age)
+    category = (
+        "normal" if egfr >= 90
+        else "mild decrease" if egfr >= 60
+        else "moderate decrease" if egfr >= 30
+        else "severe decrease"
+    )
+    return f"eGFR: {egfr:.1f} mL/min/1.73m2 ({category})"
 
 
-# Dispatcher: maps tool name strings to Python functions
-TOOL_DISPATCH = {
-    "check_drug_interaction": check_drug_interaction,
-    "calculate_egfr": calculate_egfr,
-}
-
-# Quick sanity check
-print("Drug interaction test:")
-print(f"  warfarin + aspirin → {check_drug_interaction('warfarin', 'aspirin')}")
-print(f"\neGFR test:")
-print(f"  creatinine=1.2, age=65, male → {calculate_egfr(1.2, 65, 'male')}")
+# The decorator auto-generates the JSON schema from type hints + docstring:
+print(f"Tool: {check_drug_interaction.name}")
+print(f"Description: {check_drug_interaction.description}")
+print(f"Schema: {json.dumps(check_drug_interaction.params_json_schema, indent=2)}")
 ```
 
-### The Full Tool Call Loop
+### Agent with Tools
 
-This is the core pattern: send the conversation with tool definitions → model decides to call a tool → we execute it → feed the result back → model generates a final response incorporating the tool output.
-
-```python
-def clinical_assistant(question):
-    """
-    Clinical assistant with tool access. Implements the complete function
-    calling loop: prompt → tool call → execute → respond.
-    """
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a clinical pharmacist assistant. Use the provided tools "
-                "to check drug interactions and calculate kidney function when relevant. "
-                "Always check interactions before recommending combination therapy."
-            ),
-        },
-        {"role": "user", "content": question},
-    ]
-
-    # Step 1: Send the message with tool definitions.
-    # The model may respond directly OR request one or more tool calls.
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        tools=tools,
-        tool_choice="auto",  # model decides whether to use tools
-        temperature=0,
-    )
-
-    assistant_msg = response.choices[0].message
-
-    # Step 2: If the model didn't request any tools, return the direct answer
-    if not assistant_msg.tool_calls:
-        print("[No tools called — model answered directly]")
-        return assistant_msg.content
-
-    # Step 3: Execute each tool the model requested and collect results.
-    # The assistant message with tool_calls must stay in the conversation
-    # so the model knows what it asked for.
-    messages.append(assistant_msg)
-
-    for tool_call in assistant_msg.tool_calls:
-        fn_name = tool_call.function.name
-        fn_args = json.loads(tool_call.function.arguments)
-
-        print(f"[Tool call: {fn_name}({fn_args})]")
-
-        # Dispatch to the actual Python function
-        result = TOOL_DISPATCH[fn_name](**fn_args)
-
-        print(f"[Tool result: {result}]")
-
-        # Feed the result back as a "tool" role message, keyed by tool_call_id
-        # so the model knows which call this result corresponds to
-        messages.append({
-            "role": "tool",
-            "tool_call_id": tool_call.id,
-            "content": result,
-        })
-
-    # Step 4: Send the updated conversation (now including tool results)
-    # back to the model for a final natural-language response.
-    final_response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        tools=tools,
-        temperature=0,
-    )
-
-    return final_response.choices[0].message.content
-```
+With tools defined, we create an Agent and let `Runner.run()` handle the full loop — the model decides which tools to call, the SDK executes them, feeds results back, and generates the final answer.
 
 ```python
-# Test 1: Should trigger a drug interaction check
-print("=" * 60)
-q1 = "Is it safe to prescribe warfarin and aspirin together?"
-print(f"Q: {q1}\n")
-print(f"A: {clinical_assistant(q1)}\n")
+pharmacist = Agent(
+    name="Clinical Pharmacist",
+    instructions=(
+        "You are a clinical pharmacist assistant. Use your tools to check drug "
+        "interactions and calculate kidney function when relevant. "
+        "Always check interactions before recommending combination therapy."
+    ),
+    tools=[check_drug_interaction, calculate_egfr],
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
+)
+
+# Test 1: Should trigger drug interaction check
+result = await Runner.run(pharmacist, input="Is it safe to prescribe warfarin and aspirin together?")
+print(f"Q: Is it safe to prescribe warfarin and aspirin together?\n")
+print(f"A: {result.final_output}\n")
 
 # Test 2: Should trigger eGFR calculation
 print("=" * 60)
-q2 = "A 65-year-old male patient has a creatinine of 1.8 mg/dL. What is his kidney function?"
-print(f"Q: {q2}\n")
-print(f"A: {clinical_assistant(q2)}\n")
-
-# Test 3: Doesn't need tools — model should answer directly
-print("=" * 60)
-q3 = "What are the common side effects of metformin?"
-print(f"Q: {q3}\n")
-print(f"A: {clinical_assistant(q3)}")
+result = await Runner.run(pharmacist, input=(
+    "A 65-year-old male patient has a creatinine of 1.8 mg/dL. "
+    "What is his kidney function?"
+))
+print(f"\nQ: 65yo male, creatinine 1.8. Kidney function?\n")
+print(f"A: {result.final_output}")
 ```
 
-The model reads the tool schemas, decides which to call based on the question, and generates arguments matching the JSON schema. Our code executes the function and feeds the result back. The model never runs code itself — function calling is a structured handoff protocol.
+The `@function_tool` decorator generated JSON schemas from type hints; the Agent read those schemas to decide which tool to call; `Runner.run()` executed the function and looped the result back — all without writing dispatch tables or message-threading logic.
 
 ### Structured Output via Function Calling
 
@@ -704,117 +630,152 @@ print(f"Wrote MCP server to {server_path}")
 print("Server exposes 3 tools: check_drug_interaction, calculate_bmi, calculate_egfr")
 ```
 
-### MCP Client: Discovering and Calling Tools
+### Protocol-Level Discovery
 
-The MCP client connects to a server process, discovers available tools automatically, and can call them. The key advantage over manual function calling: tool schemas are generated from type hints and docstrings on the server side, not maintained separately by the client.
+Before the SDK abstracts it away, here's what MCP looks like at the protocol level — a client connects to a server process, discovers available tools, and inspects their auto-generated schemas.
 
 ```python
-import asyncio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+server_params = StdioServerParameters(command="python", args=[server_path])
 
-async def discover_and_call_tools():
-    """Connect to our MCP server, list its tools, and call one."""
+async with stdio_client(server_params) as (read_stream, write_stream):
+    async with ClientSession(read_stream, write_stream) as session:
+        await session.initialize()
 
-    # StdioServerParameters tells the client how to launch the server process.
-    # The server communicates via stdin/stdout (the "stdio" transport).
-    server_params = StdioServerParameters(
-        command="python",
-        args=[server_path],
-    )
-
-    # stdio_client manages the server subprocess lifecycle
-    async with stdio_client(server_params) as (read_stream, write_stream):
-        async with ClientSession(read_stream, write_stream) as session:
-            await session.initialize()
-
-            # DISCOVER: list all tools the server exposes
-            tools_result = await session.list_tools()
-            print(f"Discovered {len(tools_result.tools)} tools:\n")
-            for tool in tools_result.tools:
-                print(f"  {tool.name}: {tool.description[:70]}...")
-                params = tool.inputSchema.get("properties", {})
-                param_str = ", ".join(f"{k}: {v.get('type', '?')}" for k, v in params.items())
-                print(f"    Parameters: ({param_str})\n")
-
-            # CALL: invoke tools through the MCP protocol
-            print("-" * 40)
-            print("Calling check_drug_interaction('warfarin', 'aspirin'):")
-            result = await session.call_tool(
-                "check_drug_interaction",
-                arguments={"drug_a": "warfarin", "drug_b": "aspirin"},
-            )
-            print(f"  → {result.content[0].text}")
-
-            print("\nCalling calculate_bmi(weight_kg=82, height_m=1.75):")
-            result = await session.call_tool(
-                "calculate_bmi",
-                arguments={"weight_kg": 82, "height_m": 1.75},
-            )
-            print(f"  → {result.content[0].text}")
-
-            print("\nCalling calculate_egfr(creatinine=1.2, age=65, sex='male'):")
-            result = await session.call_tool(
-                "calculate_egfr",
-                arguments={"creatinine": 1.2, "age": 65, "sex": "male"},
-            )
-            print(f"  → {result.content[0].text}")
-
-
-# Jupyter already runs an event loop, so we use await directly
-await discover_and_call_tools()
+        # DISCOVER: list all tools the server exposes
+        tools_result = await session.list_tools()
+        print(f"Server exposes {len(tools_result.tools)} tools:\n")
+        for tool in tools_result.tools:
+            print(f"  {tool.name}: {tool.description[:70]}...")
+            params = tool.inputSchema.get("properties", {})
+            param_str = ", ".join(f"{k}: {v.get('type', '?')}" for k, v in params.items())
+            print(f"    Parameters: ({param_str})")
+            print()
 ```
 
-### MCP Tool Schemas → OpenAI Function Calling
+The schemas are generated from Python type hints and docstrings on the server side — no manual JSON schema maintenance. In practice you don't write this client code yourself; the Agents SDK handles discovery and execution automatically.
 
-MCP tools generate JSON schemas from Python type hints. These schemas are directly compatible with OpenAI's function calling format — you can bridge MCP discovery into any LLM that supports tool use.
+### Agent with Local MCP Server
+
+Pass MCP servers to an Agent, and the SDK handles discovery, schema conversion, tool execution, and the response loop — the same `Runner.run()` pattern as `@function_tool`, but the tools live on a separate process.
 
 ```python
-async def mcp_tools_to_openai_format():
-    """Fetch MCP tool schemas and convert to OpenAI function calling format."""
-    server_params = StdioServerParameters(command="python", args=[server_path])
+from agents.mcp import MCPServerStdio
 
-    async with stdio_client(server_params) as (read_stream, write_stream):
-        async with ClientSession(read_stream, write_stream) as session:
-            await session.initialize()
-            tools_result = await session.list_tools()
+# MCPServerStdio launches the server as a subprocess (stdio transport)
+clinical_mcp = MCPServerStdio(
+    params={"command": "python", "args": [server_path]},
+    name="Clinical Tools",
+)
 
-            # Convert MCP tool definitions → OpenAI tools format.
-            # MCP's inputSchema IS a JSON Schema object, so it maps directly
-            # to the "parameters" field in OpenAI's function calling spec.
-            openai_tools = []
-            for tool in tools_result.tools:
-                openai_tools.append({
-                    "type": "function",
-                    "function": {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "parameters": tool.inputSchema,
-                    },
-                })
+clinical_agent = Agent(
+    name="Clinical Assistant",
+    instructions=(
+        "You are a clinical assistant with access to medical tools. "
+        "Use them when relevant to answer the question."
+    ),
+    mcp_servers=[clinical_mcp],
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
+)
 
-            return openai_tools
+# MCP servers must be connected before the agent can use them.
+# The async context manager starts the subprocess and opens the connection.
+async with clinical_mcp:
+    result = await Runner.run(clinical_agent, input=(
+        "A 70-year-old female patient has a serum creatinine of 1.4 mg/dL. "
+        "What is her estimated kidney function?"
+    ))
 
-
-openai_format_tools = await mcp_tools_to_openai_format()
-
-print("MCP tools converted to OpenAI function calling format:\n")
-for t in openai_format_tools:
-    fn = t["function"]
-    params = fn["parameters"].get("properties", {})
-    param_str = ", ".join(f"{k} ({v.get('type', '?')})" for k, v in params.items())
-    print(f"  {fn['name']}({param_str})")
-    print(f"    {fn['description'][:80]}")
-    print()
-
-print("These can be passed directly to client.chat.completions.create(tools=...)")
+print(f"Q: A 70-year-old female has creatinine 1.4. What's her kidney function?\n")
+print(f"A: {result.final_output}")
 ```
-
-MCP servers expose tools via a standard protocol. Any MCP client — Claude Code, Cursor, ChatGPT, or your own code — can discover and use them without writing custom integration logic. The schemas are generated from Python type hints on the server, converted to JSON Schema by MCP, and consumed as function calling definitions by the LLM.
 
 ```python
 # Clean up the temporary server file
 os.remove(server_path)
 print(f"Cleaned up {server_path}")
 ```
+
+### Off-the-Shelf MCP: OpenMedicine
+
+Building your own server is useful, but MCP's real power is the ecosystem — hundreds of pre-built servers already exist for databases, APIs, documentation, and clinical tools. Install a package, point an agent at it, and the tools are available immediately.
+
+[OpenMedicine](https://github.com/RamosFBC/openmedicine) provides clinical guidelines and calculators via MCP — no custom server code, no API keys. The agent discovers the available tools (guideline search, guideline retrieval, clinical calculators) and uses them to answer clinical questions grounded in published guidelines.
+
+```python
+import sys
+from pathlib import Path
+
+# The MCP entry point is in the same bin directory as the Python interpreter
+openmedicine_cmd = str(Path(sys.executable).parent / "open-medicine-mcp")
+
+openmedicine = MCPServerStdio(
+    params={"command": openmedicine_cmd, "args": []},
+    name="OpenMedicine",
+)
+
+guidelines_agent = Agent(
+    name="Guidelines Assistant",
+    instructions=(
+        "You are a clinical guidelines assistant. Use your tools to search for "
+        "and retrieve relevant clinical guidelines. Summarize the key recommendations "
+        "and cite the guideline source."
+    ),
+    mcp_servers=[openmedicine],
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
+)
+
+async with openmedicine:
+    result = await Runner.run(guidelines_agent, input=(
+        "What does the KDIGO guideline say about CKD staging?"
+    ))
+
+print(f"Q: What does KDIGO say about CKD staging?\n")
+answer = result.final_output
+print(f"A: {answer[:1000]}{'...' if len(answer) > 1000 else ''}")
+```
+
+No server code, no tool schemas, no dispatch tables — just `pip install` and point an Agent at it. The same pattern works for any MCP server in the ecosystem.
+
+### Remote MCP: Context7
+
+Where OpenMedicine uses **stdio** transport (local subprocess), [Context7](https://context7.com) uses **Streamable HTTP** — a remote HTTP-based transport for looking up current library documentation on demand. The Agents SDK supports both transports — just swap the server type.
+
+```python
+from agents.mcp import MCPServerStreamableHttp
+
+# Remote MCP server — no subprocess, just an HTTP endpoint
+context7 = MCPServerStreamableHttp(
+    params={"url": "https://mcp.context7.com/mcp"},
+    name="Context7 Docs",
+)
+
+docs_agent = Agent(
+    name="Docs Lookup",
+    instructions=(
+        "You are a documentation assistant. When asked about a library, "
+        "first resolve its library ID, then query its docs for the requested topic. "
+        "Return the most relevant code examples and explanations."
+    ),
+    mcp_servers=[context7],
+    model=AGENTS_MODEL,
+    model_settings=ModelSettings(temperature=0),
+)
+
+async with context7:
+    result = await Runner.run(docs_agent, input=(
+        "How do I create a collection and add documents in ChromaDB?"
+    ))
+
+# The agent discovered Context7's tools (resolve-library-id, query-docs),
+# called them in sequence, and synthesized the results.
+print(f"Q: How do I create a collection and add documents in ChromaDB?\n")
+answer = result.final_output
+print(f"A: {answer[:800]}{'...' if len(answer) > 800 else ''}")
+```
+
+The pattern is the same whether the server is local (stdio) or remote (Streamable HTTP): pass it to the Agent, and the SDK handles discovery, execution, and the response loop. A clinical tool server, a documentation server, and a database server all speak the same protocol — an agent wired up once can use any of them.

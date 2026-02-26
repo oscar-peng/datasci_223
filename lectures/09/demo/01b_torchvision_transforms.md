@@ -118,17 +118,17 @@ plt.show()
 # where each subdirectory is a class:
 #
 # ```
-# data/chest_xrays/
-# ├── normal/
+# data/my_images/
+# ├── class_a/
 # │   ├── img_001.png
 # │   └── ...
-# └── tuberculosis/
+# └── class_b/
 #     ├── img_101.png
 #     └── ...
 # ```
 #
-# Flowers102 downloads automatically. In practice, you'd organize your own
-# images into this folder structure and use `ImageFolder`.
+# Flowers102 downloads automatically. For your own images, organize them
+# into this folder structure and use `ImageFolder`.
 
 # %%
 # Load Flowers102 with our transform pipelines
@@ -196,12 +196,3 @@ plt.suptitle("Sample batch from DataLoader (normalized + augmented)", fontsize=1
 plt.tight_layout()
 plt.show()
 
-# %% [markdown]
-# ## Checkpoint
-#
-# You should now be able to:
-# - Build train vs eval transform pipelines with `Compose`
-# - Apply and visualize data augmentation on real photos
-# - Create datasets with `Flowers102`, `ImageFolder`, or other built-in datasets
-# - Build DataLoaders with batching, shuffling, and parallel loading
-# - Iterate over batches and inspect tensor shapes

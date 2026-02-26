@@ -28,7 +28,7 @@ from PIL import Image
 
 # Medical imaging
 import pydicom
-from pydicom.data import get_testfiles_name
+from pydicom.data import get_testdata_file
 
 # PyTorch
 import torch
@@ -42,7 +42,7 @@ from torchvision import transforms
 
 # %%
 # Load a DICOM test file
-dcm_path = get_testfiles_name("CT_small.dcm")
+dcm_path = get_testdata_file("CT_small.dcm")
 ds = pydicom.dcmread(dcm_path)
 
 # Inspect metadata
@@ -170,11 +170,3 @@ print(f"Output tensor shape: {tensor.shape}")
 print(f"Output tensor dtype: {tensor.dtype}")
 print(f"Ready for a pretrained model!")
 
-# %% [markdown]
-# ## Checkpoint
-#
-# You should now be able to:
-# - Load DICOM files and inspect their metadata with pydicom
-# - Extract and normalize pixel arrays
-# - Convert between DICOM, numpy, PIL, and PyTorch tensor formats
-# - Understand the (C, H, W) tensor convention

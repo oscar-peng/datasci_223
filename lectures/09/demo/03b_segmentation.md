@@ -277,12 +277,3 @@ plt.suptitle("Segmentation: Ground Truth vs DeepLabV3 Predictions", fontsize=14)
 plt.tight_layout()
 plt.show()
 
-# %% [markdown]
-# ## Checkpoint
-#
-# You should now be able to:
-# - Run pretrained DeepLabV3 for semantic segmentation on real photos
-# - Work with real segmentation masks (Oxford-IIIT Pet trimaps)
-# - Compute and interpret the Dice coefficient
-# - Create a U-Net with smp using a pretrained encoder
-# - Visualize segmentation results with overlays

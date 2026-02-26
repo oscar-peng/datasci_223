@@ -68,7 +68,8 @@ full_test = datasets.CIFAR10(root="./data", train=False, download=True, transfor
 
 # Filter to just 2 classes (airplane=0, automobile=1) for binary classification
 def filter_classes(dataset, classes=(0, 1)):
-    indices = [i for i, (_, label) in enumerate(dataset) if label in classes]
+    # Use .targets to avoid loading/transforming every image
+    indices = [i for i, label in enumerate(dataset.targets) if label in classes]
     return torch.utils.data.Subset(dataset, indices)
 
 train_data = filter_classes(full_train)
@@ -287,12 +288,3 @@ print("Model saved to resnet18_classifier.pt")
 # To load later:
 # model.load_state_dict(torch.load("resnet18_classifier.pt"))
 
-# %% [markdown]
-# ## Checkpoint
-#
-# You should now be able to:
-# - Load a pretrained model and freeze its backbone
-# - Replace the classification head for a new task
-# - Write a PyTorch training loop (forward → loss → backward → step)
-# - Evaluate with confusion matrix and classification report
-# - Save and load model weights

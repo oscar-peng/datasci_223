@@ -223,12 +223,3 @@ plt.show()
 # The pretrained backbone still helps — it knows about edges, textures, and
 # shapes — even if the specific classes are completely different.
 
-# %% [markdown]
-# ## Checkpoint
-#
-# You should now be able to:
-# - Load a pretrained detection model from torchvision
-# - Run inference on real photos and extract boxes, labels, and scores
-# - Filter predictions by confidence threshold
-# - Visualize detections with `draw_bounding_boxes`
-# - Understand the path to medical detection (annotate → fine-tune → evaluate)

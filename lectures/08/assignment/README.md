@@ -1,11 +1,11 @@
 # Assignment 8: Murder Mystery Agents
 
-Build detective agents that solve two murder mysteries using the OpenAI Agents SDK.
+Build detective agent workflows that solve two murder mysteries using the OpenAI Agents SDK and **prompt chaining** — each agent handles one stage of the investigation and passes structured results to the next.
 
 ## Mysteries
 
-- **Part 1: Murder at the Mountain Cabin** — A narrative mystery with LLM-powered suspects. Your agent interrogates characters and searches locations to solve the case.
-- **Part 2: Death at St. Mercy Hospital** — A structured logic puzzle. Your agent uses deduction tools to analyze evidence and identify the killer.
+- **Part 1: Murder at the Mountain Cabin** — A narrative mystery with LLM-powered suspects. Your agents search locations, interrogate characters, and deduce the killer across three stages.
+- **Part 2: Death at St. Mercy Hospital** — A structured logic puzzle. Your agents gather evidence and use deduction to identify the killer, weapon, and time of death.
 
 ## Setup
 
@@ -24,15 +24,20 @@ OPENROUTER_API_KEY=your_key_here
 
 **WARNING**: Do not commit your `.env` file — your key will be invalidated for all students.
 
-## Workflow
+## What You'll Do
 
-1. Open `assignment.ipynb` and work through the notebook
-2. Complete 4 TODO cells:
-   - **TODO 1**: Write the detective system prompt for Part 1
-   - **TODO 2**: Create and run the detective Agent for Part 1
-   - **TODO 3**: Write the detective system prompt for Part 2
-   - **TODO 4**: Create and run the detective Agent for Part 2
-3. Run all cells to generate output files
+Open `assignment.ipynb` and write the `instructions` string for each Agent. The tools, structured outputs, and display functions are all provided — your job is to write prompts that make each agent investigate effectively.
+
+**4 TODOs across 2 mysteries:**
+
+| TODO | Agent | What it does | Your instructions should... |
+| ---- | ----- | ------------ | -------------------------- |
+| 1 | Crime Scene Investigator | Searches cabin locations | List all 6 locations, tell it to summarize |
+| 2 | Lead Interrogator | Questions suspects | Include evidence from Stage 1, direct follow-up questions |
+| 3 | Lead Detective | Makes the accusation | Tell it to compare alibis against physical evidence |
+| 4 | Evidence Collector + Solver | Gathers hospital evidence, then deduces | List all tools/suspects; reason from keycard logs |
+
+The notebook includes an **interactive detective** you can use to manually explore the mystery — search locations and interrogate suspects to understand the evidence before writing your agent instructions.
 
 ## Output Files
 
@@ -46,11 +51,13 @@ Tests check these artifacts (generated when you run the notebook):
 python -m pytest .github/tests/ -v
 ```
 
-Tests verify your agent identified the correct answers and actually used its tools (not just hardcoded answers).
+Tests verify your agents identified the correct answers and actually used their tools.
 
 ## Tips
 
-- The agent needs good instructions to investigate thoroughly — vague prompts lead to incomplete investigations
-- Part 1 may need multiple runs if the agent doesn't find all the clues (LLMs are non-deterministic)
-- Part 2 is deterministic — the logic puzzle has one correct answer
+- **Iterate on your instructions** — run the agent, check the output, improve the prompt, re-run
+- Use the checkpoint cells and `display_notes` panels to inspect what each stage produced
+- If an agent gets the wrong answer, the issue is usually in an earlier stage's instructions
+- Part 1 is non-deterministic — multiple runs may give slightly different results
+- Part 2 is a logic puzzle with one correct answer — the keycard logs are the key
 - See `hints.md` if you get stuck

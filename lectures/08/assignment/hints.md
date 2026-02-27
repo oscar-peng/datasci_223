@@ -1,65 +1,125 @@
 # Assignment 8 Hints
 
-## TODO 1 & 3: System Prompts
+## The Iteration Loop
 
-Your system prompt tells the agent *how* to investigate. A good prompt includes:
+The core skill in this assignment is **prompt engineering through iteration**. You don't need to know the mystery's answer — you need to write instructions that make the agent investigate thoroughly enough to find it. The loop is:
 
-- **Role**: Who is the agent? (e.g., "You are a detective investigating...")
-- **Goal**: What should it figure out? (killer, weapon, motive)
-- **Strategy**: How should it approach the investigation?
-  - Part 1: Search locations, interrogate all suspects, look for contradictions, follow up
-  - Part 2: Gather all evidence first, compare statements to keycard logs, eliminate suspects
-- **When to conclude**: Make an accusation only after gathering sufficient evidence
+1. Write instructions → run the agent → check the output
+2. If the output is wrong or incomplete, look at the intermediate results (the checkpoints help)
+3. Adjust your instructions → re-run → check again
 
-Example structure (don't copy verbatim — write your own):
-```
-You are a [role] investigating [case].
-Your goal is to determine [what].
-Strategy: [steps].
-[Any other guidance].
-```
+Each stage's structured output (`evidence`, `findings`, `hospital_evidence`) is inspectable — print it to see exactly what the next agent will receive.
 
-## TODO 2 & 4: Creating and Running Agents
+## TODO 1: Stage 1 — Crime Scene Investigation
 
-The pattern is the same for both parts:
+Create an agent that searches all six locations. Your instructions should:
+
+- Give the agent a role ("You are a crime scene investigator...")
+- **List all six location IDs explicitly**: `living_room`, `kitchen`, `mudroom`, `upstairs_hallway`, `back_porch`, `marcus_bedroom`
+- Tell it to summarize what it finds
 
 ```python
-agent = Agent(
-    name="Some Name",
+search_agent = Agent(
+    name="Crime Scene Investigator",
     model=AGENTS_MODEL,
-    instructions=your_instructions_variable,
-    tools=your_tools_list,
-    output_type=YourPydanticModel,
+    model_settings=SETTINGS,
+    instructions="...",  # Tell it to search ALL six locations and summarize
+    tools=[search_location],
+    output_type=EvidenceSummary,
 )
-
-result = await Runner.run(agent, "Your task message here", max_turns=N)
-output = result.final_output
+search_result = await Runner.run(search_agent, "Search all six locations for evidence.", max_turns=15)
+evidence = search_result.final_output
 ```
 
-Key parameters:
-- `output_type` forces the agent to return structured data matching your Pydantic model instead of free text. The agent keeps calling tools until it has enough info, then returns a parsed object. Access fields directly: `result.final_output.killer`, `result.final_output.weapon`, etc.
-- `max_turns` limits how many tool calls the agent can make (50 for Part 1, 15 for Part 2)
-- The task message should tell the agent what to investigate
+**How to check:** You should see 6 `display_search` cards (one per location) and `evidence.clues` should have 10+ items. If fewer, your instructions didn't list all locations.
 
-## Part 1 Tips
+## TODO 2: Stage 2 — Suspect Interrogation
 
-- The agent needs to search **multiple locations** — the crime scene alone isn't enough
-- Interrogate **all four suspects** — key information is spread across different people
-- The killer's story will have **contradictions** with physical evidence
-- If the agent doesn't find the right answer, try making your system prompt more specific about investigation strategy
+The key idea: **embed Stage 1's output in Stage 2's instructions**. This is how results flow between agents in a prompt chain.
 
-## Part 2 Tips
+```python
+evidence_brief = f"""Evidence found so far:
+Clues: {chr(10).join('- ' + c for c in evidence.clues)}
+Suspicious items: {', '.join(evidence.suspicious_items)}
+Key questions: {chr(10).join('- ' + q for q in evidence.key_questions)}"""
 
-- This is a **logic puzzle** — there's one definitive answer
-- The keycard logs are the **most important evidence** — they can't be faked
-- Compare each suspect's **statement** against their **keycard activity**
-- The cause of death tells you **which weapon** was used
-- One suspect's alibi is contradicted by the keycard logs — that's your killer
+interview_agent = Agent(
+    name="Lead Interrogator",
+    model=AGENTS_MODEL,
+    model_settings=SETTINGS,
+    instructions=f"""You are a detective interrogating murder suspects.
+
+{evidence_brief}
+
+Interview each suspect (diana, larry, tom, sofia). For each suspect:
+1. Ask about their alibi and whereabouts during the murder
+2. Follow up on anything suspicious — if their answer seems evasive,
+   contradicts the physical evidence, or doesn't explain a suspicious item,
+   press them with a second question
+
+After all interviews, summarize your findings.""",
+    tools=[interrogate],
+    output_type=InterviewFindings,
+)
+```
+
+**How to check:** You should see 4+ chat bubble pairs (initial questions + follow-ups). `findings.contradictions` should NOT be empty — if it is, your instructions aren't directing the agent to ask about the suspicious items. Try telling it specifically: "Follow up if their answer contradicts physical evidence."
+
+## TODO 3: Stage 3 — Final Deduction
+
+Combine Stage 1 + Stage 2 outputs into a `case_file` string and pass it to a reasoning-only agent (no tools):
+
+```python
+case_file = f"""{evidence_brief}
+
+Interview findings:
+Alibis: {chr(10).join('- ' + a for a in findings.alibis)}
+Contradictions: {chr(10).join('- ' + c for c in findings.contradictions)}
+Key observations: {chr(10).join('- ' + o for o in findings.key_observations)}"""
+
+deduction_agent = Agent(
+    name="Lead Detective",
+    model=AGENTS_MODEL,
+    model_settings=SETTINGS,
+    instructions="...",  # Compare alibis against physical evidence — whose story is contradicted?
+    output_type=Accusation,  # No tools — just reasoning
+)
+deduction_result = await Runner.run(deduction_agent, f"Make your accusation:\n\n{case_file}", max_turns=3)
+accusation = deduction_result.final_output
+```
+
+**How to check:** If the accusation is wrong, `print(case_file)` to see what the deduction agent received. If the contradictions are weak or missing, go back and improve TODO 2's instructions. The deduction agent can only work with what it's given.
+
+## TODO 4: Hospital Mystery (Two Stages)
+
+Same chaining pattern as Part 1 — split into evidence gathering and deduction.
+
+**Stage 1 (Evidence Collector):** An agent with all five tools that gathers everything. Tell it to get rules, room map, evidence, weapons, and ALL four suspect statements (`dr_blake`, `nurse_chen`, `dr_santos`, `orderly_james`). Returns `HospitalEvidence`.
+
+**Stage 2 (Solver):** A reasoning-only agent (no tools) that receives the evidence dossier and deduces the answer. Your solver instructions should include these deduction principles:
+- Keycard logs are hardware records — they **cannot be faked**
+- Compare each suspect's **statement** against their **keycard activity** — the liar is the killer
+- Match the **weapon** to the **cause of death**
+- For **time of death**: the victim was still alive at the time of her last activity (email). The murder happened **after** that. Look for a **witness observation** that places someone near the victim's room at a specific time — that's when it happened
+
+## Debugging: If the Agent Gets It Wrong
+
+**Part 1:**
+- Print `evidence.clues` — are there clues from all 6 locations?
+- Print `findings.contradictions` — did the interrogator find any? If empty, your Stage 2 instructions need to be more specific about what to ask
+- Print `case_file` — does it contain enough information for a human to solve it?
+- Try the Interactive Interrogation section (Part 5) to manually question suspects and understand the mystery
+
+**Part 2:**
+- Print `hospital_evidence.witness_observations` — does it include a specific time and location?
+- Print `hospital_evidence.keycard_logs` — are all entries preserved with times?
+- Print `evidence_dossier` — can YOU solve it from reading it? If not, the agent can't either
+- The most common error is wrong time of death — that comes from witness observations, not the victim's last email
 
 ## Common Issues
 
 - **Module not found**: Run `pip install -r requirements.txt`
 - **API key not found**: Make sure `.env` has `OPENROUTER_API_KEY=...` (no quotes around the value)
 - **Agent runs out of turns**: Increase `max_turns` or make your prompt more focused
-- **Wrong answer**: Improve your system prompt — the agent needs clear instructions to investigate thoroughly
-- **NameError for `accusation`/`solution`**: Make sure your TODO 2/4 cell assigns `result.final_output` to the expected variable name
+- **Wrong answer**: Improve your system prompt — check intermediate outputs to see where the chain broke down
+- **NameError for `evidence`/`findings`/`accusation`/`solution`**: Make sure each TODO cell assigns the expected variable name

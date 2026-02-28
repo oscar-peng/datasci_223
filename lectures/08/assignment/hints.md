@@ -12,81 +12,33 @@ Each stage's structured output (`evidence`, `findings`, `hospital_evidence`) is 
 
 ## TODO 1: Stage 1 — Crime Scene Investigation
 
-Create an agent that searches all six locations. Your instructions should:
+The agent definition, tools, and Runner call are already provided. You just write `instructions`. Your instructions should:
 
 - Give the agent a role ("You are a crime scene investigator...")
 - **List all six location IDs explicitly**: `living_room`, `kitchen`, `mudroom`, `upstairs_hallway`, `back_porch`, `marcus_bedroom`
 - Tell it to summarize what it finds
 
-```python
-search_agent = Agent(
-    name="Crime Scene Investigator",
-    model=AGENTS_MODEL,
-    model_settings=SETTINGS,
-    instructions="...",  # Tell it to search ALL six locations and summarize
-    tools=[search_location],
-    output_type=EvidenceSummary,
-)
-search_result = await Runner.run(search_agent, "Search all six locations for evidence.", max_turns=15)
-evidence = search_result.final_output
-```
-
 **How to check:** You should see 6 `display_search` cards (one per location) and `evidence.clues` should have 10+ items. If fewer, your instructions didn't list all locations.
 
 ## TODO 2: Stage 2 — Suspect Interrogation
 
-The key idea: **embed Stage 1's output in Stage 2's instructions**. This is how results flow between agents in a prompt chain.
+The `evidence_brief` is already embedded in the f-string — you write the rest of the instructions around it. Your instructions should:
 
-```python
-evidence_brief = f"""Evidence found so far:
-Clues: {chr(10).join('- ' + c for c in evidence.clues)}
-Suspicious items: {', '.join(evidence.suspicious_items)}
-Key questions: {chr(10).join('- ' + q for q in evidence.key_questions)}"""
+- Give the agent a role
+- Name all four suspects (`diana`, `larry`, `tom`, `sofia`)
+- Tell it to ask about alibis
+- Tell it to **follow up** when answers seem evasive or contradict the physical evidence
 
-interview_agent = Agent(
-    name="Lead Interrogator",
-    model=AGENTS_MODEL,
-    model_settings=SETTINGS,
-    instructions=f"""You are a detective interrogating murder suspects.
-
-{evidence_brief}
-
-Interview each suspect (diana, larry, tom, sofia). For each suspect:
-1. Ask about their alibi and whereabouts during the murder
-2. Follow up on anything suspicious — if their answer seems evasive,
-   contradicts the physical evidence, or doesn't explain a suspicious item,
-   press them with a second question
-
-After all interviews, summarize your findings.""",
-    tools=[interrogate],
-    output_type=InterviewFindings,
-)
-```
-
-**How to check:** You should see 4+ chat bubble pairs (initial questions + follow-ups). `findings.contradictions` should NOT be empty — if it is, your instructions aren't directing the agent to ask about the suspicious items. Try telling it specifically: "Follow up if their answer contradicts physical evidence."
+**How to check:** You should see 4+ chat bubble pairs (initial questions + follow-ups). `findings.contradictions` should NOT be empty — if it is, your instructions aren't directing the agent to press suspects. Try telling it specifically: "Follow up if their answer contradicts physical evidence."
 
 ## TODO 3: Stage 3 — Final Deduction
 
-Combine Stage 1 + Stage 2 outputs into a `case_file` string and pass it to a reasoning-only agent (no tools):
+This agent has no tools — it only sees the `case_file` passed in the prompt. Your instructions should tell it **how to reason**:
 
-```python
-case_file = f"""{evidence_brief}
-
-Interview findings:
-Alibis: {chr(10).join('- ' + a for a in findings.alibis)}
-Contradictions: {chr(10).join('- ' + c for c in findings.contradictions)}
-Key observations: {chr(10).join('- ' + o for o in findings.key_observations)}"""
-
-deduction_agent = Agent(
-    name="Lead Detective",
-    model=AGENTS_MODEL,
-    model_settings=SETTINGS,
-    instructions="...",  # Compare alibis against physical evidence — whose story is contradicted?
-    output_type=Accusation,  # No tools — just reasoning
-)
-deduction_result = await Runner.run(deduction_agent, f"Make your accusation:\n\n{case_file}", max_turns=3)
-accusation = deduction_result.final_output
-```
+- Physical evidence is more reliable than what suspects say
+- Compare each suspect's alibi against the physical evidence — whose story doesn't add up?
+- Look for the murder weapon in the crime scene evidence
+- Look for motive in the victim's documents
 
 **How to check:** If the accusation is wrong, `print(case_file)` to see what the deduction agent received. If the contradictions are weak or missing, go back and improve TODO 2's instructions. The deduction agent can only work with what it's given.
 
@@ -94,9 +46,9 @@ accusation = deduction_result.final_output
 
 Same chaining pattern as Part 1 — split into evidence gathering and deduction.
 
-**Stage 1 (Evidence Collector):** An agent with all five tools that gathers everything. Tell it to get rules, room map, evidence, weapons, and ALL four suspect statements (`dr_blake`, `nurse_chen`, `dr_santos`, `orderly_james`). Returns `HospitalEvidence`.
+**Stage 1 (Evidence Collector):** Your instructions should tell the agent to use every available tool and get statements from ALL four suspects (`dr_blake`, `nurse_chen`, `dr_santos`, `orderly_james`).
 
-**Stage 2 (Solver):** A reasoning-only agent (no tools) that receives the evidence dossier and deduces the answer. Your solver instructions should include these deduction principles:
+**Stage 2 (Forensic Analyst):** Your instructions should include deduction principles:
 - Keycard logs are hardware records — they **cannot be faked**
 - Compare each suspect's **statement** against their **keycard activity** — the liar is the killer
 - Match the **weapon** to the **cause of death**
@@ -108,7 +60,7 @@ Same chaining pattern as Part 1 — split into evidence gathering and deduction.
 - Print `evidence.clues` — are there clues from all 6 locations?
 - Print `findings.contradictions` — did the interrogator find any? If empty, your Stage 2 instructions need to be more specific about what to ask
 - Print `case_file` — does it contain enough information for a human to solve it?
-- Try the Interactive Interrogation section (Part 5) to manually question suspects and understand the mystery
+- Use the interactive detective to manually question suspects and understand the mystery
 
 **Part 2:**
 - Print `hospital_evidence.witness_observations` — does it include a specific time and location?
@@ -118,8 +70,8 @@ Same chaining pattern as Part 1 — split into evidence gathering and deduction.
 
 ## Common Issues
 
-- **Module not found**: Run `pip install -r requirements.txt`
+- **Module not found**: Run the `%pip install` cell at the top of the notebook
 - **API key not found**: Make sure `.env` has `OPENROUTER_API_KEY=...` (no quotes around the value)
-- **Agent runs out of turns**: Increase `max_turns` or make your prompt more focused
-- **Wrong answer**: Improve your system prompt — check intermediate outputs to see where the chain broke down
-- **NameError for `evidence`/`findings`/`accusation`/`solution`**: Make sure each TODO cell assigns the expected variable name
+- **Agent runs out of turns**: Increase `max_turns` or make your instructions more focused
+- **Wrong answer**: Improve your instructions — check intermediate outputs to see where the chain broke down
+- **NameError for `evidence`/`findings`/`accusation`/`solution`**: Make sure you uncommented and ran each TODO cell in order

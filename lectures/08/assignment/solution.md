@@ -16,10 +16,12 @@ jupyter:
 
 Build detective agent workflows that solve two murder mysteries using the OpenAI Agents SDK. You'll use **prompt chaining** — the workflow pattern from the lecture — where each agent handles one stage of the investigation and passes structured results to the next.
 
+**What you'll do:** Each Agent is already defined with its name, model, tools, and output type — you write the `instructions` prompt that tells it what role to play, what to investigate, and how to reason about the evidence. That's it — **5 prompts across 4 TODOs**. Everything else is provided.
+
 ## Setup
 
 ```python
-%pip install -q openai>=1.0.0 openai-agents>=0.1.0 python-dotenv>=1.0.0 pydantic>=2.0.0
+%pip install -q -r requirements.txt
 ```
 
 ```python
@@ -194,7 +196,7 @@ class Accusation(BaseModel):
 
 ### TODO 1: Stage 1 — Crime Scene Investigation
 
-Create an agent that searches all six locations and summarizes the evidence.
+Write `instructions` for an agent that searches all six locations and summarizes the evidence.
 
 ```python
 display_stage(1, "Crime Scene Investigation", "Searching all locations for physical evidence and clues")
@@ -220,7 +222,7 @@ display_notes("Crime Scene Summary", {
 
 ### TODO 2: Stage 2 — Suspect Interrogation
 
-Create an agent that uses the evidence from Stage 1 to interrogate suspects.
+Write `instructions` for an agent that uses the evidence from Stage 1 to interrogate suspects. The `evidence_brief` embeds Stage 1's output — this is how results flow between agents in a chain.
 
 ```python
 display_stage(2, "Suspect Interrogation", "Questioning suspects based on crime scene evidence")
@@ -258,7 +260,7 @@ display_notes("Interrogation Summary", {
 
 ### TODO 3: Stage 3 — Final Deduction
 
-Create an agent that takes ALL evidence and makes the final accusation.
+Write `instructions` for an agent that analyzes ALL evidence and makes the final accusation. This agent has **no tools** — it just reasons over the `case_file` built from Stages 1 and 2.
 
 ```python
 display_stage(3, "Final Deduction", "Analyzing all evidence to identify the killer")
@@ -421,7 +423,7 @@ class PuzzleSolution(BaseModel):
 
 ### TODO 4: Solve the Hospital Mystery
 
-Like Part 1, this uses a two-stage workflow: first gather all evidence, then deduce the answer.
+Same two-stage pattern as Part 1: first gather all evidence, then deduce the answer.
 
 ```python
 display_stage(1, "Evidence Collection", "Gathering all physical evidence, logs, and witness statements")

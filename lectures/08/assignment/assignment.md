@@ -16,12 +16,12 @@ jupyter:
 
 Build detective agent workflows that solve two murder mysteries using the OpenAI Agents SDK. You'll use **prompt chaining** — the workflow pattern from the lecture — where each agent handles one stage of the investigation and passes structured results to the next.
 
-**What you'll do:** For each TODO, write the `instructions` string for an Agent. Everything else — tools, structured outputs, display functions — is provided. Your instructions tell the agent what role to play, what to investigate, and how to reason about the evidence.
+**What you'll do:** Each Agent is already defined with its name, model, tools, and output type — you write the `instructions` prompt that tells it what role to play, what to investigate, and how to reason about the evidence. That's it — **5 prompts across 4 TODOs**. Everything else is provided.
 
 ## Setup
 
 ```python
-%pip install -q openai>=1.0.0 openai-agents>=0.1.0 python-dotenv>=1.0.0 pydantic>=2.0.0
+%pip install -q -r requirements.txt
 ```
 
 ```python

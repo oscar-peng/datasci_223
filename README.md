@@ -1,3 +1,8 @@
+---
+title: Applied Data Science with Python
+permalink: /
+---
+
 # Applied Data Science with Python
 
 > [!INFO] Course Information

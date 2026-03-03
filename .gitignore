@@ -25,6 +25,8 @@ lectures_25/09/demo/vosk-model-small-en-us-0.15/
 
 site/
 docs/
+_site/
+node_modules/
 .cache/
 outputs/
 __pycache__/

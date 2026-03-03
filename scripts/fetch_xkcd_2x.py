@@ -67,11 +67,25 @@ def _slugify(title: str) -> str:
 
 
 def parse_comic_specs(specs: list[str]) -> list[tuple[int, str | None]]:
+    """Parse specs in formats: id, id:filename, id:title:filename.
+
+    The title part (middle element in 3-part specs) is ignored — the
+    title is always fetched from the xkcd API. It exists only for
+    human readability on the command line.
+    """
     parsed = []
     for spec in specs:
         parts = spec.split(":")
         comic_id = int(parts[0])
-        filename = parts[1] if len(parts) > 1 else None
+        if len(parts) == 3:
+            # id:title:filename — title is cosmetic, filename is parts[2]
+            filename = parts[2]
+        elif len(parts) == 2 and "." in parts[1]:
+            # id:filename.ext
+            filename = parts[1]
+        else:
+            # id or id:title (no filename override)
+            filename = None
         parsed.append((comic_id, filename))
     return parsed
 

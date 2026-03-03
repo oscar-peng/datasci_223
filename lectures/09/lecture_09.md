@@ -9,6 +9,12 @@ Computer Vision: Seeing with Silicon
 
 # Links
 
+## Recent News
+
+- [AI models suck slightly less at math than they did last year](https://www.theregister.com/2026/02/26/ai_models_get_better_at/)
+- [Testing Super Mario Using a Behavior Model Autonomously](https://testflows.com/blog/testing-super-mario-using-a-behavior-model-autonomously-part1/)
+- [Code Isn’t Slowing Your Project Down, Communication Is](https://shiftmag.dev/code-isnt-slowing-your-project-down-communication-is-7889/)
+
 ## Books & Courses
 
 - [Deep Learning with PyTorch](https://pytorch.org/tutorials/) — official PyTorch tutorials, excellent starting point
@@ -23,6 +29,12 @@ Computer Vision: Seeing with Silicon
 - [segmentation_models_pytorch](https://github.com/qubvel-org/segmentation_models.pytorch) — U-Net, FPN, DeepLabV3+ with any encoder
 - [MONAI](https://monai.io/) — PyTorch framework for healthcare imaging
 
+## Conferences & Journals
+
+- [MICCAI](https://www.miccai.org/) — Medical Image Computing and Computer Assisted Intervention (top venue)
+- [CVPR](https://cvpr.thecvf.com/) — Computer Vision and Pattern Recognition
+- IEEE Transactions on Medical Imaging, Nature Medicine, The Lancet Digital Health
+
 ## Health Data Science & Computer Vision
 
 - Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
@@ -30,7 +42,7 @@ Computer Vision: Seeing with Silicon
 - Ronneberger et al. (2015). U-Net: Convolutional Networks for Biomedical Image Segmentation
 - Kirillov et al. (2023). Segment Anything (SAM) — foundation model for segmentation
 
-![](media/xkcd_tasks.png)
+![xkcd: Pixels](media/xkcd_pixels.png)
 
 # What Is Computer Vision?
 
@@ -161,39 +173,17 @@ img_tensor = to_tensor(img_pil)         # shape: (C, H, W), range [0, 1]
 
 In lecture 06 you built CNNs with Keras. Now let's learn the same ideas in **PyTorch** — the framework used in most research and increasingly in production. The concepts are identical (convolutions, pooling, feature maps); the API style is different.
 
-## Why CNNs for Images?
+## Quick CNN Recap
 
-Standard fully connected neural networks struggle with images for two fundamental reasons:
-
-- **Parameter explosion**: A 224×224×3 RGB image has 150,528 input features. With 1,000 neurons in the first hidden layer, that's over 150 million weights — just in layer one.
-
-- **Loss of spatial information**: Flattening an image into a 1D vector destroys the 2D structure and relationships between neighboring pixels. A pixel's neighbors matter.
-
-CNNs solve both problems through three key innovations:
-
-1. **Local connectivity**: Each neuron connects only to a small region of the input (its *receptive field*), not the entire image
-2. **Parameter sharing**: The same filter weights are applied across every position in the image — one set of weights scans the entire image
-3. **Hierarchical feature learning**: Deeper layers combine simpler features into increasingly complex patterns — edges → textures → parts → objects
+Recall from lecture 06: CNNs solve the problems of **parameter explosion** and **loss of spatial structure** through local connectivity, parameter sharing, and hierarchical feature learning. Small learnable filters slide across the image, producing **feature maps** that capture increasingly complex patterns — edges → textures → parts → objects.
 
 ![Convolutional Filter Operation](media/convolution_filter_static.png)
-
-## Feature Maps
-
-When a filter slides across the input, it produces a **feature map** — a 2D map of how strongly each region matches the filter's pattern. Each convolutional layer produces multiple feature maps (one per filter), and deeper layers combine these into increasingly complex representations.
-
-![Input Image and Resulting Feature Maps](media/feature_maps_example.png)
-
-## What Is a Filter?
-
-A **filter** (or kernel) is a small matrix of learnable weights — typically 3×3 or 5×5 — that slides across the input image. At each position, it multiplies its weights by the underlying pixel values and sums the results to produce one output value. This operation is called **convolution**.
-
-- Early-layer filters learn to detect simple patterns like edges, corners, and gradients
-- Deeper filters detect increasingly complex patterns like textures, parts of objects, and eventually whole objects
-- The same filter is applied at every spatial position — this is **parameter sharing**, and it's why CNNs are so parameter-efficient compared to dense networks
 
 ![Features Learned by Early CNN Layers](media/cnn_early_features.png)
 
 ![Features Learned by Deep CNN Layers](media/cnn_deep_features.png)
+
+The concepts are identical to what you learned in Keras — the difference here is the **PyTorch API** and the explicit control it gives you over the training process.
 
 ## PyTorch CNN Building Blocks
 
@@ -308,6 +298,8 @@ for epoch in range(10):
 
 One key difference between frameworks: **PyTorch uses NCHW** (batch, channels, height, width), while Keras/TensorFlow uses NHWC (batch, height, width, channels).
 
+![NCHW vs NHWC Tensor Layout](media/nchw_vs_nhwc.png)
+
 | Framework | Convention | Example (batch of 16 RGB 224×224 images) |
 | :--- | :--- | :--- |
 | PyTorch | NCHW | `torch.Size([16, 3, 224, 224])` |
@@ -315,7 +307,7 @@ One key difference between frameworks: **PyTorch uses NCHW** (batch, channels, h
 
 `torchvision.transforms.ToTensor()` handles the conversion from PIL (HWC) to PyTorch (CHW) automatically and scales pixel values from [0, 255] to [0.0, 1.0].
 
-![xkcd: Machine Learning](media/xkcd_machine_learning.png)
+[![xkcd: Color Models](media/xkcd_color_models.png)](https://xkcd.com/1882/)
 
 # torchvision — The Computer Vision Toolkit
 
@@ -332,12 +324,14 @@ Rather than building everything from scratch, lean on torchvision. It's well-tes
 `torchvision.transforms` provides composable image transformations. You build a pipeline by chaining operations with `Compose`:
 
 **Essential transforms** (always used):
+
 - `Resize(size)` — resize images to target dimensions
 - `ToTensor()` — convert PIL Image to tensor, scales [0, 255] → [0.0, 1.0]
 - `Normalize(mean, std)` — normalize channels to standard distribution
 - `CenterCrop(size)` — crop from center (useful for eval)
 
 **Augmentation transforms** (training only):
+
 - `RandomHorizontalFlip(p=0.5)` — flip left-right with probability p
 - `RandomVerticalFlip(p=0.5)` — flip top-bottom (useful for medical images with no "up")
 - `RandomRotation(degrees)` — rotate by random angle
@@ -347,7 +341,7 @@ Rather than building everything from scratch, lean on torchvision. It's well-tes
 - `RandomAffine(degrees, translate, scale)` — combined rotation, translation, scaling
 - `RandomErasing(p)` — randomly erase a rectangular patch (regularization)
 
-**Why augmentation matters**: Medical imaging datasets are often small — hundreds or low thousands of images. Augmentation artificially increases diversity by creating modified versions of each training image. This helps the model generalize instead of memorizing the training set. A chest X-ray flipped horizontally is still a valid chest X-ray (situs inversus — a rare condition where organs are mirrored — aside). A rotated pathology slide is still valid tissue.
+**Why augmentation matters**: Medical imaging datasets are often small — hundreds or low thousands of images. Augmentation artificially increases diversity by creating modified versions of each training image. This helps the model generalize instead of memorizing the training set. A chest X-ray flipped horizontally is still a valid chest X-ray. A rotated pathology slide is still valid tissue.
 
 ![Data Augmentation Examples](media/data_augmentation_examples.png)
 
@@ -363,6 +357,7 @@ normalize = transforms.Normalize(
 ```
 
 For grayscale medical images used with pretrained RGB models, either:
+
 - Convert to 3-channel by repeating the grayscale channel: `img.convert("RGB")`
 - Or adjust normalization to single-channel statistics
 
@@ -488,7 +483,7 @@ Transfer learning is the single most important practical technique in computer v
 
 ## Why Transfer Learning?
 
-A model pretrained on **ImageNet** — a massive benchmark dataset of 1.2 million labeled natural photos across 1,000 everyday categories (dogs, cars, chairs, food, etc.) — has already learned a rich hierarchy of visual features:
+**ImageNet** is a massive benchmark dataset of 1.2 million labeled natural photos across 1,000 everyday categories (dogs, cars, chairs, food, etc.). A model pretrained on ImageNet has already learned a rich hierarchy of visual features:
 
 - **Early layers**: edges, corners, gradients, textures
 - **Middle layers**: patterns, shapes, parts of objects
@@ -501,12 +496,14 @@ These features transfer remarkably well to new domains — including medical ima
 ## Two Approaches
 
 **1. Feature Extraction** — Freeze the pretrained **backbone** (the main body of the network that extracts features — everything except the final classification layer), only train a new classification **head**:
+
 - The pretrained layers act as a fixed feature extractor
 - Only the new head layers are trained
 - Fast to train, works well with very small datasets
 - Best when: few images (<1,000), or target domain is very different from ImageNet
 
 **2. Fine-Tuning** — Start frozen, then unfreeze some or all backbone layers:
+
 - First train the head (feature extraction phase)
 - Then unfreeze later backbone layers and continue training with a smaller learning rate
 - Allows the model to adapt its learned features to your domain
@@ -524,7 +521,7 @@ These features transfer remarkably well to new domains — including medical ima
 | VGG-16 | 2014 | Deeper networks with small 3×3 filters | 138M | `vgg16` |
 | Inception v3 | 2015 | Parallel filters at multiple scales | 24M | `inception_v3` |
 | ResNet-18/50 | 2015 | Skip connections → very deep networks | 11M/25M | `resnet18`, `resnet50` |
-| MobileNetV2 | 2018 | Depthwise separable convolutions (split a standard conv into a spatial filter per channel + a 1×1 pointwise mix) → mobile-friendly | 3.4M | `mobilenet_v2` |
+| MobileNetV2 | 2018 | Depthwise separable convolutions — splits expensive operations into cheaper steps → mobile-friendly | 3.4M | `mobilenet_v2` |
 | EfficientNet-B0 | 2019 | Compound scaling — simultaneously scales network depth, width, and input resolution using a fixed ratio | 5.3M | `efficientnet_b0` |
 | ConvNeXt-Tiny | 2022 | Modernized ConvNet matching ViT performance | 28M | `convnext_tiny` |
 
@@ -581,13 +578,13 @@ import timm
 model = timm.create_model("resnet18", pretrained=True, num_classes=2)
 ```
 
-[![xkcd: Trained a Neural Net](media/xkcd_trained_neural_net.png)](https://xkcd.com/2173/)
+[![xkcd: Predictive Models](media/xkcd_predictive_models.png)](https://xkcd.com/2169/)
 
 # Evaluating Vision Models
 
-Choosing the right evaluation metric depends on the CV task and the clinical context. A model with 98% accuracy might still be dangerous if it misses 50% of cancers (low recall on the positive class).
-
 ## Classification Metrics
+
+Choosing the right evaluation metric depends on the clinical context. A model with 98% accuracy might still be dangerous if it misses 50% of cancers (low recall on the positive class).
 
 The classification metrics from lecture 05 apply directly to image classification:
 
@@ -603,7 +600,6 @@ In medical imaging, **class imbalance** is the norm. A chest X-ray dataset might
 
 - **Screening** (mammography, TB detection): Maximize **recall/sensitivity** — missing a cancer is worse than a false alarm. Accept more false positives.
 - **Confirmatory diagnosis** (biopsy prediction): Maximize **specificity/precision** — triggering unnecessary procedures has real cost.
-- **Surgical planning** (tumor segmentation): **Dice/IoU** — spatial accuracy of the boundary matters more than binary classification.
 
 **Handling class imbalance:**
 
@@ -613,28 +609,15 @@ In medical imaging, **class imbalance** is the norm. A chest X-ray dataset might
 
 **Critical: patient-level splits.** Medical datasets often contain multiple images per patient (different views, time points, slices). If the same patient's images appear in both training and test sets, the model may learn patient-specific features rather than disease features — and test metrics will be misleadingly high. Always split by **patient ID**, not by image.
 
-## Detection & Segmentation Metrics
+### Reference Card: Classification Metrics
 
-- **IoU (Intersection over Union)**: Measures overlap between predicted and ground-truth regions. `IoU = Area_overlap / Area_union`. A detection is "correct" when IoU > threshold (typically 0.5).
-
-    ![Intersection over Union (IoU) Diagram](media/iou_diagram.png)
-
-- **Dice Coefficient**: `Dice = 2 * |X ∩ Y| / (|X| + |Y|)`. Ranges from 0 to 1. Very similar to IoU but slightly different formula. Standard metric for medical segmentation.
-
-- **mAP (mean Average Precision)**: The standard detection metric. Averages precision across recall levels and across classes. `mAP@0.5` uses IoU threshold of 0.5; `mAP@[.5:.95]` averages across multiple thresholds.
-
-### Reference Card: Vision Model Metrics
-
-| Metric | Task | Formula / Definition | When to Use |
-| :--- | :--- | :--- | :--- |
-| **Accuracy** | Classification | Correct / Total | Balanced classes only |
-| **Precision** | Classification | TP / (TP + FP) | When false positives are costly |
-| **Recall** | Classification | TP / (TP + FN) | When missed positives are costly (screening) |
-| **F1** | Classification | 2 × (P × R) / (P + R) | Balanced precision-recall tradeoff |
-| **AUROC** | Classification | Area under ROC curve | Threshold-independent performance |
-| **IoU** | Detection / Seg | Overlap / Union | Localization quality |
-| **Dice** | Segmentation | 2×\|X∩Y\| / (\|X\|+\|Y\|) | Medical segmentation standard |
-| **mAP** | Detection | Mean precision at recall levels | Overall detection quality |
+| Metric | Formula / Definition | When to Use |
+| :--- | :--- | :--- |
+| **Accuracy** | Correct / Total | Balanced classes only |
+| **Precision** | TP / (TP + FP) | When false positives are costly |
+| **Recall** | TP / (TP + FN) | When missed positives are costly (screening) |
+| **F1** | 2 × (P × R) / (P + R) | Balanced precision-recall tradeoff |
+| **AUROC** | Area under ROC curve | Threshold-independent performance |
 
 ### Code Snippet: Evaluation with torchmetrics
 
@@ -666,7 +649,7 @@ print(f"Confusion Matrix:\n{confusion.compute()}")
 
 # Object Detection
 
-Object detection goes beyond classification — it answers not just *what* is in an image, but *where*. The output is a set of bounding boxes, each with a class label and confidence score.
+Object detection goes beyond classification — it answers not just _what_ is in an image, but _where_. The output is a set of bounding boxes, each with a class label and confidence score.
 
 ## Medical Applications
 
@@ -682,13 +665,26 @@ Object detection goes beyond classification — it answers not just *what* is in
 
 **Bounding Boxes**: Rectangles that localize objects. Typically represented as `(x_min, y_min, x_max, y_max)` or `(x_center, y_center, width, height)`.
 
-**Anchor Boxes**: Predefined box templates at various sizes and aspect ratios, placed at every position in the feature map. The model predicts *offsets* from these anchors rather than absolute coordinates — this makes learning easier.
+**Anchor Boxes**: Predefined box templates at various sizes and aspect ratios, placed at every position in the feature map. The model predicts _offsets_ from these anchors rather than absolute coordinates — this makes learning easier.
 
 ![Anchor Boxes Example](media/anchor_boxes_example.png)
+
+**IoU (Intersection over Union)**: Measures overlap between a predicted box and a ground-truth box. `IoU = Area_overlap / Area_union`. A detection is "correct" when IoU exceeds a threshold (typically 0.5).
+
+![Intersection over Union (IoU) Diagram](media/iou_diagram.png)
 
 **Non-Maximum Suppression (NMS)**: Post-processing to remove redundant overlapping detections. When multiple boxes detect the same object, NMS keeps the highest-confidence one and removes boxes with IoU above a threshold.
 
 ![Non-Maximum Suppression (NMS) Example](media/nms_example.png)
+
+**mAP (mean Average Precision)**: The standard detection metric. Averages precision across recall levels and across classes. `mAP@0.5` uses an IoU threshold of 0.5; `mAP@[.5:.95]` averages across multiple thresholds.
+
+### Reference Card: Detection Metrics
+
+| Metric | Formula / Definition | When to Use |
+| :--- | :--- | :--- |
+| **IoU** | Overlap / Union | Localization quality — is the box in the right place? |
+| **mAP** | Mean precision at recall levels | Overall detection quality across classes |
 
 ## Detector Families
 
@@ -786,7 +782,7 @@ Segmentation is the most detailed form of visual understanding — it classifies
 
 ![Semantic Segmentation Illustration](media/semantic_segmentation_illustration.png)
 
-#FIXME: Add side-by-side comparison showing the same image with semantic, instance, and panoptic segmentation
+# FIXME: Add side-by-side comparison showing the same image with semantic, instance, and panoptic segmentation
 
 ## Medical Applications
 
@@ -847,6 +843,18 @@ Standard cross-entropy works but struggles with the extreme class imbalance comm
 | **Jaccard Loss** | Custom or `smp.losses.JaccardLoss()` | IoU-based optimization | Similar to Dice with different gradients |
 | **Focal Loss** | `smp.losses.FocalLoss()` | Focuses on hard examples | γ parameter controls focus strength |
 
+## Segmentation Metrics
+
+- **Dice Coefficient**: `Dice = 2 * |X ∩ Y| / (|X| + |Y|)`. Ranges from 0 to 1. The standard metric for medical image segmentation — directly measures mask overlap.
+- **IoU / Jaccard Index**: Same concept as in detection, applied per-pixel. `IoU = |X ∩ Y| / |X ∪ Y|`. Very similar to Dice but penalizes errors slightly differently.
+
+### Reference Card: Segmentation Metrics
+
+| Metric | Formula / Definition | When to Use |
+| :--- | :--- | :--- |
+| **Dice** | 2\|X∩Y\| / (\|X\|+\|Y\|) | Medical segmentation standard |
+| **IoU / Jaccard** | \|X∩Y\| / \|X∪Y\| | Alternative overlap metric |
+
 ## Segmentation with Packages
 
 Rather than implementing U-Net from scratch, use **`segmentation_models_pytorch`** (smp) — it provides U-Net, U-Net++, FPN, DeepLabV3+, and more, with any pretrained encoder as the backbone:
@@ -864,9 +872,9 @@ Rather than implementing U-Net from scratch, use **`segmentation_models_pytorch`
 
 | Model | Function | Architecture |
 | :--- | :--- | :--- |
-| **DeepLabV3** | `deeplabv3_resnet50(weights="DEFAULT")` | Atrous (dilated) convolutions — filters with gaps that capture wider context without increasing parameters — plus ResNet-50 |
+| **DeepLabV3** | `deeplabv3_resnet50(weights="DEFAULT")` | Uses dilated convolutions (filters with spacing between elements to see a wider area without more parameters) + ResNet-50 |
 | **FCN** | `fcn_resnet50(weights="DEFAULT")` | Fully Convolutional Network (replaces all dense layers with convolutions so it works on any input size) + ResNet-50 |
-| **LRASPP** | `lraspp_mobilenet_v3_large(weights="DEFAULT")` | Lite Reduced Atrous Spatial Pyramid Pooling — lightweight segmentation head designed for mobile + MobileNetV3 |
+| **LRASPP** | `lraspp_mobilenet_v3_large(weights="DEFAULT")` | Lightweight mobile segmentation head + MobileNetV3 — fast, lower accuracy |
 
 ### Code Snippet: U-Net with smp
 
@@ -943,14 +951,9 @@ Large pretrained models that can be adapted to many tasks with minimal fine-tuni
 - **CLIP** by OpenAI — learns visual concepts from natural language descriptions. Can classify images using text prompts with zero examples ("zero-shot classification").
 - **BiomedCLIP** — a CLIP variant trained on biomedical image-text pairs from PubMed. Better for medical image understanding than general CLIP.
 
-## Generative Models
-
-- **GANs (Generative Adversarial Networks)**: Two networks compete — a generator creates images and a discriminator tries to tell real from fake. Used for synthetic data generation, image enhancement, and style transfer.
-- **Diffusion Models**: Gradually add noise to an image, then learn to reverse the process. Currently produce the highest-quality generated images. Medical applications include synthetic data augmentation and image reconstruction.
-
 ## Explainability in Medical CV
 
-For clinical adoption, models must be interpretable. Clinicians need to understand *why* a model made a prediction, not just what it predicted.
+For clinical adoption, models must be interpretable. Clinicians need to understand _why_ a model made a prediction, not just what it predicted.
 
 - **Grad-CAM**: Uses gradients to highlight which image regions most influenced the prediction. Produces a heatmap overlay showing "where the model is looking."
 - **Attention Maps**: In transformer-based models, attention weights naturally show which parts of the image are most relevant.
@@ -962,13 +965,9 @@ Explainability is not optional in healthcare. Regulatory bodies (FDA, CE marking
 
 ## Self-Supervised Learning
 
-Most medical images are unlabeled — getting expert annotations is expensive and time-consuming. Self-supervised learning methods learn useful representations from unlabeled data by solving **pretext tasks** — artificial tasks the model solves to learn general features (e.g., "predict the rotation angle of this image" or "reconstruct masked patches"):
+Most medical images are unlabeled — getting expert annotations is expensive and time-consuming. Self-supervised learning methods learn useful representations from unlabeled data by solving artificial **pretext tasks** like "predict the rotation angle of this image" or "reconstruct masked patches." The model learns general visual features as a byproduct of solving these tasks, and those features can then be fine-tuned for real clinical tasks with very few labels.
 
-- **Contrastive learning** (SimCLR, MoCo): Learn that augmented versions of the same image should have similar representations
-- **Masked image modeling** (MAE): Mask random patches and learn to reconstruct them
-- **DINO/DINOv2**: Self-distillation without labels — produces remarkably good features
-
-![Self-Supervised Learning Concept](media/self_supervised_learning.png)
+Key approaches include **contrastive learning** (SimCLR, MoCo — learn that augmented versions of the same image should look similar), **masked image modeling** (MAE — reconstruct masked patches), and **DINO/DINOv2** (a model teaches itself by matching outputs between two copies of the network, with no human labels needed).
 
 ## 3D Medical Imaging
 

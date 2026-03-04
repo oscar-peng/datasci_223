@@ -233,23 +233,51 @@ plt.tight_layout()
 plt.show()
 ```
 
-<!-- #region -->
-## 8. (Optional) Ultralytics YOLOv8
+## 8. YOLO11 with Ultralytics
 
-For the simplest path to detection, Ultralytics provides a one-liner:
+Ultralytics wraps the entire detect → draw → display pipeline into a
+few lines. YOLO11 is the latest generation — faster and more accurate
+than earlier versions.
 
 ```python
 from ultralytics import YOLO
 
-model = YOLO("yolov8n.pt")  # nano model, fast
-results = model("my_image.jpg")
-results[0].show()
-
-# Fine-tune on custom dataset
-model.train(data="dataset.yaml", epochs=50)
+yolo = YOLO("yolo11n.pt")  # nano model — downloads on first run (~6 MB)
+print(f"Model: {yolo.model_name}, classes: {len(yolo.names)}")
 ```
 
-Install with: `pip install ultralytics`
-<!-- #endregion -->
+```python
+# Run inference on the same pet images
+fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+for ax, idx in zip(axes.flat, sample_indices):
+    pet_img, _ = pet_dataset[idx]
+
+    results = yolo(pet_img, verbose=False)
+    r = results[0]
+
+    # Draw detections on the image
+    annotated = r.plot()  # returns a BGR numpy array
+    ax.imshow(annotated[..., ::-1])  # BGR → RGB
+    n_det = len(r.boxes)
+    ax.set_title(f"Image #{idx} ({n_det} detection{'s' if n_det != 1 else ''})")
+    ax.axis("off")
+
+plt.suptitle("YOLO11 on Oxford-IIIT Pet Photos", fontsize=14)
+plt.tight_layout()
+plt.show()
+```
+
+```python
+# Inspect the raw results for the first image
+pet_img_0, _ = pet_dataset[sample_indices[0]]
+results = yolo(pet_img_0, verbose=False)
+r = results[0]
+
+for box in r.boxes:
+    cls = yolo.names[int(box.cls)]
+    conf = box.conf.item()
+    coords = box.xyxy[0].cpu().numpy().astype(int)
+    print(f"  {cls}: {conf:.3f} — box: {list(coords)}")
+```
 
 

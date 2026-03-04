@@ -138,6 +138,8 @@ shapes — that transfer to new tasks. Here are the first 16 feature maps
 from `layer1` for a single input image.
 
 ```python
+class_names = ["airplane", "automobile"]
+
 # Hook into an intermediate layer to capture feature maps
 activations = {}
 def hook_fn(module, input, output):
@@ -290,7 +292,6 @@ all_preds = np.array(all_preds)
 all_labels = np.array(all_labels)
 
 # Classification report
-class_names = ["airplane", "automobile"]
 print(classification_report(all_labels, all_preds, target_names=class_names))
 
 # Confusion matrix

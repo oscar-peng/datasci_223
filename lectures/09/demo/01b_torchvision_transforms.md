@@ -283,7 +283,10 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 num_epochs = 5
+history = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
+
 for epoch in range(num_epochs):
+    # --- Training ---
     model.train()
     running_loss = 0.0
     correct = 0
@@ -302,26 +305,53 @@ for epoch in range(num_epochs):
         correct += (outputs.argmax(1) == labels).sum().item()
         total += labels.size(0)
 
-    train_acc = correct / total
-    print(f"Epoch {epoch+1}/{num_epochs} — Loss: {running_loss/len(train_loader):.4f}, "
-          f"Train Acc: {train_acc:.1%}")
+    history["train_loss"].append(running_loss / len(train_loader))
+    history["train_acc"].append(correct / total)
+
+    # --- Evaluation ---
+    model.eval()
+    test_loss = 0.0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            test_loss += criterion(outputs, labels).item()
+            correct += (outputs.argmax(1) == labels).sum().item()
+            total += labels.size(0)
+
+    history["test_loss"].append(test_loss / len(test_loader))
+    history["test_acc"].append(correct / total)
+
+    print(f"Epoch {epoch+1}/{num_epochs} — "
+          f"Train Loss: {history['train_loss'][-1]:.4f}, Train Acc: {history['train_acc'][-1]:.1%}, "
+          f"Test Loss: {history['test_loss'][-1]:.4f}, Test Acc: {history['test_acc'][-1]:.1%}")
+
+print(f"\nRandom guessing would be ~1%. Demo 2 shows how transfer learning does much better.")
 ```
 
 ```python
-# Evaluate on the test set
-model.eval()
-correct = 0
-total = 0
+# Plot training curves
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+epochs = range(1, num_epochs + 1)
 
-with torch.no_grad():
-    for inputs, labels in test_loader:
-        inputs, labels = inputs.to(device), labels.to(device)
-        outputs = model(inputs)
-        correct += (outputs.argmax(1) == labels).sum().item()
-        total += labels.size(0)
+ax1.plot(epochs, history["train_loss"], label="Train")
+ax1.plot(epochs, history["test_loss"], label="Test")
+ax1.set_xlabel("Epoch")
+ax1.set_ylabel("Loss")
+ax1.set_title("Loss Curves")
+ax1.legend()
 
-val_acc = correct / total
-print(f"Validation accuracy: {val_acc:.1%}")
-print(f"\nRandom guessing would be ~1%. Demo 2 shows how transfer learning does much better.")
+ax2.plot(epochs, history["train_acc"], label="Train")
+ax2.plot(epochs, history["test_acc"], label="Test")
+ax2.set_xlabel("Epoch")
+ax2.set_ylabel("Accuracy")
+ax2.set_title("Accuracy Curves")
+ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+ax2.legend()
+
+plt.tight_layout()
+plt.show()
 ```
 

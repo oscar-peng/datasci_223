@@ -1,0 +1,13 @@
+ipykernel
+jupyter
+matplotlib
+numpy
+Pillow
+pydicom
+scikit-learn
+seaborn
+segmentation-models-pytorch
+torch
+torchmetrics
+torchvision
+ultralytics

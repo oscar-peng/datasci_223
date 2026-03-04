@@ -35,6 +35,21 @@ Computer Vision: Seeing with Silicon
 - [CVPR](https://cvpr.thecvf.com/) — Computer Vision and Pattern Recognition
 - IEEE Transactions on Medical Imaging, Nature Medicine, The Lancet Digital Health
 
+## Datasets for Medical CV
+
+- [PhysioNet](https://physionet.org/) — Physiological and clinical data, including imaging
+- [MedMNIST](https://medmnist.com/) — Standardized biomedical datasets (28×28 and 64×64)
+- [TCIA](https://www.cancerimagingarchive.net/) — Cancer imaging archive
+- [Grand Challenge](https://grand-challenge.org/) — Biomedical image analysis challenges
+- NIH ChestX-ray14, LIDC-IDRI, BraTS, VinDr-CXR
+
+## Annotation Tools
+
+- [ITK-SNAP](https://www.itksnap.org/) — 3D medical image segmentation
+- [3D Slicer](https://www.slicer.org/) — Medical image analysis platform
+- [CVAT](https://github.com/opencv/cvat) — Open-source annotation tool (bounding boxes, masks)
+- [Label Studio](https://labelstud.io/) — Multi-modal annotation platform
+
 ## Health Data Science & Computer Vision
 
 - Esteva et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks. _Nature_
@@ -82,23 +97,11 @@ Medical imaging uses specialized formats beyond standard JPEGs and PNGs.
 
     ![DICOM Viewer with Image and Metadata](media/dicom_viewer_metadata.png)
 
-- **Other Common Formats**
-    - **PNG**: Lossless compression, preserves all detail — good for sharing processed medical images
-    - **JPEG**: Lossy compression, smaller files but may lose subtle detail — not ideal for diagnostic use
-    - **TIFF**: Flexible, supports multiple layers and high bit depths — common in pathology
-    - **NIfTI (.nii / .nii.gz)**: Standard for neuroimaging (MRI brain scans), stores 3D/4D volumes
+- **Other Common Formats**: PNG (lossless, good for sharing), JPEG (lossy, not ideal for diagnostics), TIFF (multi-layer, common in pathology), NIfTI (3D/4D neuroimaging volumes)
 
 [![Image Formats XKCD](media/file_extensions_2x.png)](https://xkcd.com/1301/)
 
 ## The Python Imaging Stack
-
-Python has a rich ecosystem for working with images. Here are the key libraries you'll use:
-
-- **Pillow (PIL Fork)**: Basic image manipulation — loading, saving, resizing, cropping, color conversion. `from PIL import Image`
-- **OpenCV**: Comprehensive CV library — advanced processing, feature detection, video analysis. High-performance C++ backend. `import cv2`
-- **pydicom**: Read/write DICOM files, access metadata fields. `import pydicom`
-- **torchvision**: PyTorch's computer vision library — transforms, pretrained models, datasets. `import torchvision`
-- **matplotlib**: Visualization — display images in notebooks with `plt.imshow()`. `import matplotlib.pyplot as plt`
 
 ### Reference Card: Basic Image Operations
 
@@ -144,13 +147,9 @@ In lecture 06 you were introduced to CNNs using Keras. Now let's apply those sam
 
 ## Quick CNN Recap
 
-Why not just flatten an image and feed it into a dense neural network? Consider a 224×224×3 RGB image — that's 150,528 input values. Connecting each to just 1,000 neurons means 150+ million weights in the first layer alone. That's a **parameter explosion**, and it also destroys the spatial structure of the image (neighboring pixels end up far apart in a flat vector).
-
-CNNs solve both problems. Each convolutional layer applies small learned **filters** (e.g., 3×3) that slide across the image. The same filter is reused at every position — this **parameter sharing** means a 3×3 filter has only 9 weights regardless of image size. The output of applying a filter across the image is a **feature map**: a 2D grid showing where that pattern was detected.
+As covered in lecture 06, CNNs use small learned **filters** (e.g., 3×3) that slide across the image, sharing parameters at every position. This avoids the parameter explosion of fully connected layers and preserves spatial structure. Stacking convolutional layers builds a hierarchy of features — edges → textures → parts → objects:
 
 ![Convolutional Filter Operation](media/convolution_filter_static.png)
-
-Stacking convolutional layers builds a hierarchy of features — edges → textures → parts → objects:
 
 ![Features Learned by Early CNN Layers](media/cnn_early_features.png)
 
@@ -160,18 +159,15 @@ Stacking convolutional layers builds a hierarchy of features — edges → textu
 
 ## PyTorch CNN Building Blocks
 
-PyTorch provides all CNN components through `torch.nn`. Here are the core layers:
+PyTorch provides all CNN components through `torch.nn`:
 
 - **`nn.Conv2d`**: Applies learnable filters. Key args: `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding`
-- **`nn.MaxPool2d`**: Downsamples by taking the max value in each window. Reduces spatial dimensions while keeping the strongest activations.
+- **`nn.MaxPool2d`**: Downsamples by taking the max value in each window.
 
     ![Max Pooling Operation](media/max_pooling_example.png)
 
-- **`nn.BatchNorm2d`**: Normalizes activations within a batch. Stabilizes and speeds up training.
-- **`nn.ReLU`**: Activation function — f(x) = max(0, x). Adds nonlinearity.
-- **`nn.Dropout2d`**: Randomly zeros entire feature maps during training. Regularization for spatial data.
-- **`nn.Flatten`**: Converts 2D feature maps to a 1D vector for the classification head.
-- **`nn.Linear`**: Fully connected layer. Used in the classification head at the end of the network.
+- **`nn.BatchNorm2d`**: Normalizes layer outputs within a batch. Stabilizes and speeds up training.
+- **`nn.ReLU`**, **`nn.Dropout2d`**, **`nn.Flatten`**, **`nn.Linear`**: Activation, regularization, reshaping, and fully connected layers (see reference card below).
 
 A typical CNN architecture follows this pattern:
 
@@ -188,7 +184,7 @@ INPUT → [CONV → BN → ReLU → POOL] × N → FLATTEN → LINEAR → OUTPUT
 | **Conv2d** | `nn.Conv2d(in_ch, out_ch, kernel_size)` | Applies convolution filters | `stride=1`, `padding=0` (use `padding=1` for 3×3 to preserve size) |
 | **MaxPool2d** | `nn.MaxPool2d(kernel_size)` | Downsamples spatial dimensions | `kernel_size=2, stride=2` halves H and W |
 | **BatchNorm2d** | `nn.BatchNorm2d(num_features)` | Normalizes per-channel activations | `num_features` = number of channels |
-| **ReLU** | `nn.ReLU(inplace=True)` | Activation: max(0, x) | `inplace=True` saves memory |
+| **ReLU** | `nn.ReLU(inplace=True)` | Activation: max(0, x) — introduces nonlinearity | `inplace=True` saves memory |
 | **Dropout2d** | `nn.Dropout2d(p=0.25)` | Drops entire feature maps | `p` = probability of zeroing a channel |
 | **Flatten** | `nn.Flatten()` | Reshapes (N, C, H, W) → (N, C×H×W) | Used before Linear layers |
 | **Linear** | `nn.Linear(in_features, out_features)` | Fully connected layer | For classification head |
@@ -231,17 +227,15 @@ model = SimpleCNN(num_classes=2)
 
 ## The PyTorch Training Loop
 
-Unlike Keras' `model.fit()`, PyTorch gives you explicit control over every step of training. This is more verbose but much more flexible:
+Unlike Keras' `model.fit()`, PyTorch gives you explicit control over every step of training. Each iteration through a batch follows five steps:
 
-### Reference Card: PyTorch Training Loop
+1. **Zero gradients** (`optimizer.zero_grad()`) — clear accumulated gradients from the previous batch
+2. **Forward pass** (`outputs = model(inputs)`) — feed inputs through the model to get predictions
+3. **Compute loss** (`loss = criterion(outputs, labels)`) — measure how wrong the predictions are
+4. **Backward pass** (`loss.backward()`) — use **backpropagation** to compute the **gradient** for each weight — how much it contributed to the error
+5. **Update weights** (`optimizer.step()`) — the **optimizer** adjusts weights in the direction that reduces the loss
 
-| Component | Details |
-| :--- | :--- |
-| **Signature** | `for epoch in range(num_epochs): for inputs, labels in dataloader: ...` |
-| **Purpose** | Trains a model by iterating over batches of data, computing loss, and updating weights via backpropagation. |
-| **Steps** | 1. `optimizer.zero_grad()` — clear previous gradients<br>2. `outputs = model(inputs)` — forward pass<br>3. `loss = criterion(outputs, labels)` — compute loss<br>4. `loss.backward()` — compute gradients<br>5. `optimizer.step()` — update weights |
-| **Key objects** | • **criterion**: Loss function (e.g., `nn.CrossEntropyLoss()`)<br>• **optimizer**: Weight updater (e.g., `torch.optim.Adam(model.parameters(), lr=1e-3)`)<br>• **device**: `torch.device("cuda" if torch.cuda.is_available() else "cpu")` |
-| **Inference** | Wrap in `with torch.no_grad():` and call `model.eval()` to disable dropout/batchnorm training behavior |
+An **epoch** is one complete pass through the entire training dataset. The **learning rate** (`lr`) controls how large each weight update step is — too high and training is unstable, too low and it's slow. For inference, call `model.eval()` (disables dropout/batchnorm training behavior) and wrap in `with torch.no_grad():`.
 
 ### Code Snippet: Training Loop
 
@@ -249,19 +243,19 @@ Unlike Keras' `model.fit()`, PyTorch gives you explicit control over every step 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SimpleCNN(num_classes=2).to(device)
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)  # Adam is a widely-used default
 
-for epoch in range(10):
-    model.train()
+for epoch in range(10):                        # 10 passes through the training data
+    model.train()                              # enable dropout/batchnorm training behavior
     running_loss = 0.0
     for inputs, labels in train_loader:
         inputs, labels = inputs.to(device), labels.to(device)
 
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+        optimizer.zero_grad()                  # 1. clear old gradients
+        outputs = model(inputs)                # 2. forward pass
+        loss = criterion(outputs, labels)      # 3. compute loss
+        loss.backward()                        # 4. compute gradients (backpropagation)
+        optimizer.step()                       # 5. update weights
 
         running_loss += loss.item()
     print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader):.4f}")
@@ -284,45 +278,30 @@ One key difference between frameworks: **PyTorch uses NCHW** (batch, channels, h
 
 # torchvision — The Computer Vision Toolkit
 
-`torchvision` is PyTorch's companion library for computer vision. It provides three essential components:
-
-1. **Transforms**: image preprocessing and augmentation pipelines
-2. **Datasets**: ready-to-use datasets and loading utilities
-3. **Models**: pretrained architectures for classification, detection, and segmentation
-
-Rather than building everything from scratch, lean on torchvision. It's well-tested, GPU-optimized, and follows consistent patterns.
+`torchvision` is PyTorch's companion library for computer vision — well-tested, GPU-optimized transforms, datasets, and pretrained models for classification, detection, and segmentation.
 
 ## Transforms & Data Augmentation
 
 `torchvision.transforms` provides composable image transformations. You build a pipeline by chaining operations with `Compose`:
 
-**Essential transforms** (always used):
+**Essential transforms** (always used): `Resize`, `ToTensor` (scales [0, 255] → [0.0, 1.0]), `Normalize`, `CenterCrop`
 
-- `Resize(size)` — resize images to target dimensions
-- `ToTensor()` — convert PIL Image to tensor, scales [0, 255] → [0.0, 1.0]
-- `Normalize(mean, std)` — normalize channels to standard distribution
-- `CenterCrop(size)` — crop from center (useful for eval)
+**Key augmentation transforms** (training only — see full list in reference card below):
 
-**Augmentation transforms** (training only):
+- `RandomHorizontalFlip(p=0.5)` — flip left-right with probability p. Also `RandomVerticalFlip` for medical images with no "up."
+- `RandomRotation(degrees)` — rotate by a random angle within the specified range.
+- `RandomResizedCrop(size)` — random crop and resize with scale + aspect ratio jitter. The most powerful single augmentation for training.
+- `ColorJitter(brightness, contrast, saturation, hue)` — random color perturbations to make the model robust to lighting variation.
 
-- `RandomHorizontalFlip(p=0.5)` — flip left-right with probability p
-- `RandomVerticalFlip(p=0.5)` — flip top-bottom (useful for medical images with no "up")
-- `RandomRotation(degrees)` — rotate by random angle
-- `RandomResizedCrop(size)` — random crop and resize (scale + aspect ratio jitter)
-- `ColorJitter(brightness, contrast, saturation, hue)` — random color perturbations
-- `GaussianBlur(kernel_size)` — apply Gaussian blur
-- `RandomAffine(degrees, translate, scale)` — combined rotation, translation, scaling
-- `RandomErasing(p)` — randomly erase a rectangular patch (regularization)
+**Why augmentation matters**: Medical datasets are often small. Augmentation creates modified versions of each training image, helping the model generalize instead of memorizing.
 
-For more advanced augmentation pipelines, the **`albumentations`** library is popular in medical imaging — it offers elastic deformations, grid distortion, and CLAHE, all optimized for speed.
-
-**Why augmentation matters**: Medical imaging datasets are often small — hundreds or low thousands of images. Augmentation artificially increases diversity by creating modified versions of each training image. This helps the model generalize instead of memorizing the training set. A chest X-ray flipped horizontally is still a valid chest X-ray. A rotated pathology slide is still valid tissue.
+For advanced augmentations (elastic deformations, grid distortion, CLAHE), see the **`albumentations`** library.
 
 ![Data Augmentation Examples](media/data_augmentation_examples.png)
 
 ### ImageNet Normalization
 
-When using models pretrained on ImageNet, normalize your images to match the statistics ImageNet was trained with:
+**ImageNet** is a large dataset of 1.2 million natural photos used to pretrain most vision models. When using these pretrained models, normalize your images to match the statistics ImageNet was trained with:
 
 ```python
 normalize = transforms.Normalize(
@@ -333,7 +312,7 @@ normalize = transforms.Normalize(
 
 For grayscale medical images used with pretrained RGB models, either:
 
-- Convert to 3-channel by repeating the grayscale channel: `img.convert("RGB")`
+- Convert to 3-channel by repeating the grayscale channel: `img.convert("RGB")` (most common approach)
 - Or adjust normalization to single-channel statistics
 
 ### Reference Card: torchvision.transforms
@@ -497,10 +476,8 @@ A pretrained model has two logical parts:
 
 | Architecture | Year | Key Innovation | Params | torchvision name |
 | :--- | :--- | :--- | :--- | :--- |
-| AlexNet | 2012 | Deep CNN + ReLU + dropout + GPU training | 61M | `alexnet` |
-| VGG-16 | 2014 | Deeper networks with small 3×3 filters | 138M | `vgg16` |
 | Inception v3 | 2015 | Parallel filters at multiple scales | 24M | `inception_v3` |
-| ResNet-18/50 | 2015 | Skip connections (shortcut paths that let information bypass layers) → very deep networks | 11M/25M | `resnet18`, `resnet50` |
+| ResNet-18/50 | 2015 | Skip connections (shortcut paths that let information bypass layers, preventing vanishing gradients) → very deep networks | 11M/25M | `resnet18`, `resnet50` |
 | MobileNetV2 | 2018 | Depthwise separable convolutions — splits expensive operations into cheaper steps → mobile-friendly | 3.4M | `mobilenet_v2` |
 | EfficientNet-B0 | 2019 | Compound scaling — simultaneously scales network depth, width, and input resolution using a fixed ratio | 5.3M | `efficientnet_b0` |
 | ConvNeXt-Tiny | 2022 | Modernized ConvNet matching ViT performance | 28M | `convnext_tiny` |
@@ -516,14 +493,7 @@ A pretrained model has two logical parts:
 | **Replace head** | `model.fc = nn.Linear(512, num_classes)` | New classifier for ResNet | `.classifier` for MobileNet/EfficientNet |
 | **List models** | `models.list_models()` | See all available models | Filter by keyword |
 
-### Reference Card: `timm.create_model()`
-
-| Component | Details |
-| :--- | :--- |
-| **Signature** | `timm.create_model(model_name, pretrained=True, num_classes=0, in_chans=3)` |
-| **Purpose** | Creates any of 1,000+ pretrained vision models with a uniform API. Handles head replacement automatically. |
-| **Parameters** | • **model_name** (str): Model identifier (e.g., `"resnet18"`, `"efficientnet_b0"`, `"vit_base_patch16_224"`)<br>• **pretrained** (bool): Load pretrained weights<br>• **num_classes** (int): Output classes. Set 0 to remove head (for feature extraction). Set to your number of classes to auto-create head.<br>• **in_chans** (int): Number of input channels (3 for RGB, 1 for grayscale) |
-| **Returns** | `nn.Module` ready for training or inference |
+For access to 1,000+ architectures beyond torchvision, the **`timm`** library (`timm.create_model(name, pretrained=True, num_classes=N)`) provides a uniform API with automatic head replacement.
 
 ### Code Snippet: Transfer Learning with ResNet-18
 
@@ -564,42 +534,18 @@ model = timm.create_model("resnet18", pretrained=True, num_classes=2)
 
 ## Classification Metrics
 
-Choosing the right evaluation metric depends on the clinical context. A model with 98% accuracy might still be dangerous if it misses 50% of cancers (low recall on the positive class).
+The classification metrics from lecture 05 — accuracy, precision, recall, F1, confusion matrix — apply directly to image classification. The key difference in medical imaging is **class imbalance**: a chest X-ray dataset might be 90% normal, 10% abnormal, so a model that always predicts "normal" gets 90% accuracy but catches zero diseases.
 
 # FIXME: Add confusion matrix heatmap or ROC curve example image
 
-The classification metrics from lecture 05 apply directly to image classification:
-
-- **Accuracy**: Fraction of correct predictions. Misleading when classes are imbalanced.
-- **Precision**: Of predicted positives, how many are truly positive? (Avoid false alarms)
-- **Recall / Sensitivity**: Of actual positives, how many did we catch? (Avoid missed diagnoses)
-- **F1 Score**: Harmonic mean of precision and recall
-- **Confusion Matrix**: Full breakdown of predictions vs ground truth
-
-In medical imaging, **class imbalance** is the norm. A chest X-ray dataset might be 90% normal, 10% abnormal — a model that always predicts "normal" gets 90% accuracy but catches zero diseases.
-
 **Which metric matters depends on the clinical context:**
 
-- **Screening** (mammography, TB detection): Maximize **recall/sensitivity** — missing a cancer is worse than a false alarm. Accept more false positives.
-- **Confirmatory diagnosis** (biopsy prediction): Maximize **specificity/precision** — triggering unnecessary procedures has real cost.
+- **Screening** (mammography, TB detection): Maximize **recall** — missing a cancer is worse than a false alarm.
+- **Confirmatory diagnosis** (biopsy prediction): Maximize **precision** — unnecessary procedures have real cost.
 
-**Handling class imbalance:**
+**Handling class imbalance:** Use weighted loss (`nn.CrossEntropyLoss(weight=...)`), weighted sampling (`WeightedRandomSampler`), or threshold tuning (don't always use 0.5).
 
-- **Weighted loss**: `nn.CrossEntropyLoss(weight=torch.tensor([1.0, 9.0]).to(device))` penalizes missed minorities
-- **Weighted sampling**: `WeightedRandomSampler` (from `torch.utils.data`) oversamples the minority class in each batch
-- **Threshold tuning**: Adjust the classification threshold to trade precision for recall (don't always use 0.5)
-
-**Critical: patient-level splits.** Medical datasets often contain multiple images per patient (different views, time points, slices). If the same patient's images appear in both training and test sets, the model may learn patient-specific features rather than disease features — and test metrics will be misleadingly high. Always split by **patient ID**, not by image.
-
-### Reference Card: Classification Metrics
-
-| Metric | Formula / Definition | When to Use |
-| :--- | :--- | :--- |
-| **Accuracy** | Correct / Total | Balanced classes only |
-| **Precision** | TP / (TP + FP) | When false positives are costly |
-| **Recall** | TP / (TP + FN) | When missed positives are costly (screening) |
-| **F1** | 2 × (P × R) / (P + R) | Balanced precision-recall tradeoff |
-| **AUROC** | Area under ROC curve | Threshold-independent performance |
+**Critical: patient-level splits.** If the same patient's images appear in both training and test sets, the model learns patient-specific features and test metrics will be misleadingly high. Always split by **patient ID**, not by image.
 
 ### Code Snippet: Evaluation with torchmetrics
 
@@ -649,28 +595,15 @@ The output of a detection model is a set of **bounding boxes**, each with a clas
 
 ## Key Concepts
 
-**Bounding Boxes**: Rectangles that localize objects. Typically represented as `(x_min, y_min, x_max, y_max)` or `(x_center, y_center, width, height)`.
+**Bounding Boxes**: Rectangles that localize objects, represented as `(x_min, y_min, x_max, y_max)` or `(x_center, y_center, width, height)`.
 
-**Anchor Boxes**: Predefined box templates at various sizes and aspect ratios, placed at every position in the feature map. The model predicts _offsets_ from these anchors rather than absolute coordinates — this makes learning easier.
-
-![Anchor Boxes Example](media/anchor_boxes_example.png)
-
-**IoU (Intersection over Union)**: Measures overlap between a predicted box and a ground-truth box. `IoU = Area_overlap / Area_union`. A detection is "correct" when IoU exceeds a threshold (typically 0.5).
+**IoU (Intersection over Union)**: Measures overlap between predicted and ground-truth boxes. `IoU = Area_overlap / Area_union`. A detection is "correct" when IoU exceeds a threshold (typically 0.5).
 
 ![Intersection over Union (IoU) Diagram](media/iou_diagram.png)
 
-**Non-Maximum Suppression (NMS)**: Post-processing to remove redundant overlapping detections. When multiple boxes detect the same object, NMS keeps the highest-confidence one and removes boxes with IoU above a threshold.
+**Non-Maximum Suppression (NMS)**: Because detectors generate multiple overlapping predictions for the same object, NMS cleans up the output — keeps the highest-confidence box and discards others with IoU above a threshold.
 
-![Non-Maximum Suppression (NMS) Example](media/nms_example.png)
-
-**mAP (mean Average Precision)**: The standard detection metric. Averages precision across recall levels and across classes. `mAP@0.5` uses an IoU threshold of 0.5; `mAP@[.5:.95]` averages across multiple thresholds.
-
-### Reference Card: Detection Metrics
-
-| Metric | Formula / Definition | When to Use |
-| :--- | :--- | :--- |
-| **IoU** | Overlap / Union | Localization quality — is the box in the right place? |
-| **mAP** | Mean precision at recall levels | Overall detection quality across classes |
+**mAP (mean Average Precision)**: The standard detection metric, averaging precision across recall levels and classes. `mAP@0.5` uses IoU threshold 0.5.
 
 ## Detector Families
 
@@ -678,11 +611,9 @@ The output of a detection model is a set of **bounding boxes**, each with a clas
 | :--- | :--- | :--- | :--- |
 | **Two-stage** | Faster R-CNN, Mask R-CNN | 1. Generate region proposals 2. Classify each region | More accurate, slower |
 | **One-stage** | YOLO, SSD, RetinaNet, FCOS | Predict boxes + classes in one pass | Faster, sometimes less accurate |
-| **Anchor-free** | FCOS (Fully Convolutional One-Stage), CenterNet | Predict object centers + sizes directly (no anchor templates needed) | Simpler, competitive accuracy |
+| **Anchor-free** | FCOS, CenterNet | Predict object centers + sizes directly (no predefined box templates) | Simpler, competitive accuracy |
 
 ![One-Stage vs Two-Stage Detectors](media/one_vs_two_stage_detectors.png)
-
-Two-stage detectors like **Faster R-CNN** first propose "interesting" regions, then classify each one. One-stage detectors like **YOLO** divide the image into a grid and predict boxes and classes simultaneously at each grid cell — much faster, making them suitable for real-time applications.
 
 ## Detection with torchvision
 
@@ -797,15 +728,11 @@ Segmentation is arguably the most impactful CV task in medicine:
 
 **Key components**:
 
-1. **Encoder (Contracting Path)**: Like a classification CNN — repeated blocks of `Conv → ReLU → Conv → ReLU → MaxPool`. Number of filters doubles after each pool (64 → 128 → 256 → 512). Captures increasingly abstract features while reducing spatial resolution.
-
-2. **Bottleneck**: The deepest point — `Conv → ReLU → Conv → ReLU` at the lowest resolution. Contains the most abstract features.
-
-3. **Decoder (Expanding Path)**: Mirrors the encoder — `Upsample → Concatenate skip connection → Conv → ReLU → Conv → ReLU`. Number of filters halves after each upsample. Recovers spatial resolution and detail.
-
-4. **Skip Connections**: The critical innovation. Feature maps from the encoder are concatenated with corresponding decoder feature maps at the same spatial resolution. This lets the decoder combine high-resolution spatial detail from the encoder with high-level semantic information from the decoder.
-
-5. **Output Layer**: 1×1 convolution mapping features to the desired number of classes. `Sigmoid` activation for binary segmentation; `Softmax` for multi-class.
+1. **Encoder**: Like a classification CNN — `Conv → ReLU → MaxPool` blocks with doubling filters (64 → 128 → 256 → 512). Reduces spatial resolution while extracting increasingly abstract features.
+2. **Bottleneck**: Deepest point with the most abstract features.
+3. **Decoder**: Mirrors the encoder — `Upsample → Conv → ReLU` blocks that recover spatial resolution.
+4. **Skip Connections**: The critical innovation — encoder feature maps are concatenated with decoder maps at matching resolutions, combining spatial detail with semantic context.
+5. **Output Layer**: 1×1 convolution → `Sigmoid` (binary) or `Softmax` (multi-class).
 
 ## Loss Functions for Segmentation
 
@@ -824,17 +751,12 @@ Standard cross-entropy works but struggles with the extreme class imbalance comm
 
 ## Segmentation Metrics
 
-- **Dice Coefficient**: `Dice = 2|X∩Y| / (|X|+|Y|)`. Ranges from 0 to 1. The standard metric for medical image segmentation — directly measures mask overlap. Dice = 1.0 means perfect agreement.
-- **IoU / Jaccard Index**: `IoU = |X∩Y| / |X∪Y|`. Same concept as in detection, applied per-pixel. Penalizes errors slightly more than Dice.
-- **Pixel Accuracy**: Fraction of pixels correctly classified. Like accuracy in classification — misleading when one class dominates (e.g., 99% background).
-
 ### Reference Card: Segmentation Metrics
 
-| Metric | Formula / Definition | When to Use |
+| Metric | Formula | When to Use |
 | :--- | :--- | :--- |
-| **Dice** | 2\|X∩Y\| / (\|X\|+\|Y\|) | Medical segmentation standard |
-| **IoU / Jaccard** | \|X∩Y\| / \|X∪Y\| | Alternative overlap metric |
-| **Pixel Accuracy** | Correct pixels / Total pixels | Quick sanity check (not for imbalanced masks) |
+| **Dice Coefficient** | `2|X∩Y| / (|X|+|Y|)` | Medical segmentation standard — directly measures mask overlap (1.0 = perfect) |
+| **IoU / Jaccard** | `|X∩Y| / |X∪Y|` | Same concept as detection IoU, applied per-pixel — penalizes errors slightly more than Dice |
 
 ## Segmentation with Packages
 
@@ -884,28 +806,7 @@ for images, masks in train_loader:
     optimizer.step()
 ```
 
-## MONAI for Medical Imaging
-
-**MONAI** (Medical Open Network for AI) is a PyTorch-based framework built specifically for healthcare imaging. It provides:
-
-- Medical image transforms (windowing, spacing normalization, intensity scaling)
-- Specialized architectures (DynUNet, SwinUNETR, SegResNet)
-- Built-in support for 3D volumetric data (CT, MRI)
-- Loss functions designed for medical segmentation
-- Data loading for NIfTI, DICOM series, and other medical formats
-
-```python
-import monai
-from monai.networks.nets import UNet
-
-model = UNet(
-    spatial_dims=2,      # 2D (or 3 for volumetric)
-    in_channels=1,
-    out_channels=2,      # number of classes
-    channels=(16, 32, 64, 128, 256),
-    strides=(2, 2, 2, 2),
-)
-```
+For specialized medical imaging workflows (3D volumes, DICOM series, medical-specific transforms and architectures), see **[MONAI](https://monai.io/)** — a PyTorch framework built specifically for healthcare imaging.
 
 [![xkcd: Heatmap](media/xkcd_heatmap.png)](https://xkcd.com/1138/)
 
@@ -915,11 +816,9 @@ Computer vision is evolving rapidly. Here's what's on the frontier — concepts 
 
 ## Vision Transformers (ViTs)
 
-Transformers — the architecture behind GPT and BERT — have been adapted for images. Instead of processing text tokens, a **Vision Transformer** splits an image into patches (e.g., 16×16 pixels each) and processes them as a sequence of tokens with self-attention.
+Transformers — the architecture behind GPT and BERT — have been adapted for images. A **Vision Transformer** splits an image into patches (e.g., 16×16 pixels) and processes them as a sequence of tokens with self-attention, excelling at capturing **global relationships** across the entire image.
 
 ![Vision Transformer (ViT) Diagram](media/vit_diagram.png)
-
-ViTs excel at capturing **global relationships** across the entire image — something CNNs achieve only through stacking many layers. Models like **DINOv2** (Meta) provide powerful general-purpose visual features without any labeled data.
 
 ```python
 import timm
@@ -928,77 +827,22 @@ model = timm.create_model("vit_base_patch16_224", pretrained=True, num_classes=2
 
 ## Foundation Models for Vision
 
-Large pretrained models that can be adapted to many tasks with minimal fine-tuning:
-
-- **SAM (Segment Anything)** by Meta — a foundation model for segmentation. Given any image and a prompt (point, box, or text), it produces a segmentation mask. Can segment objects it has never seen.
-- **CLIP** by OpenAI — learns visual concepts from natural language descriptions. Can classify images using text prompts with zero examples ("zero-shot classification").
-- **BiomedCLIP** — a CLIP variant trained on biomedical image-text pairs from PubMed. Better for medical image understanding than general CLIP.
+- **SAM (Segment Anything)** — given any image and a prompt (point, box, or text), produces a segmentation mask for objects it has never seen.
+- **CLIP** — learns visual concepts from natural language, enabling zero-shot image classification via text prompts.
+- **BiomedCLIP** — CLIP variant trained on biomedical image-text pairs from PubMed.
 
 ## Explainability in Medical CV
 
-For clinical adoption, models must be interpretable. Clinicians need to understand _why_ a model made a prediction, not just what it predicted.
-
-- **Grad-CAM**: Uses gradients to highlight which image regions most influenced the prediction. Produces a heatmap overlay showing "where the model is looking."
-- **Attention Maps**: In transformer-based models, attention weights naturally show which parts of the image are most relevant.
-- **LIME / SHAP**: Model-agnostic explanation methods that can be applied to any vision model.
+For clinical adoption, models must be interpretable. **Grad-CAM** uses gradients to produce heatmap overlays showing which image regions most influenced the prediction. Regulatory bodies (FDA, CE marking) increasingly require explainability, and clinicians won't trust a model they can't understand.
 
 ![Grad-CAM Example](media/grad_cam_example.png)
 
-Explainability is not optional in healthcare. Regulatory bodies (FDA, CE marking) increasingly require it, and clinicians won't trust a model they can't understand.
-
 ## Self-Supervised Learning
 
-Most medical images are unlabeled — getting expert annotations is expensive and time-consuming. Self-supervised learning methods learn useful representations from unlabeled data by solving artificial **pretext tasks** like "predict the rotation angle of this image" or "reconstruct masked patches." The model learns general visual features as a byproduct of solving these tasks, and those features can then be fine-tuned for real clinical tasks with very few labels.
+Most medical images are unlabeled. Self-supervised methods learn visual features from unlabeled data by solving pretext tasks (predicting rotations, reconstructing masked patches), then fine-tune for clinical tasks with very few labels. Key approaches: contrastive learning (SimCLR, MoCo), masked image modeling (MAE), and DINOv2.
 
-Key approaches include **contrastive learning** (SimCLR, MoCo — learn that augmented versions of the same image should look similar), **masked image modeling** (MAE — reconstruct masked patches), and **DINO/DINOv2** (a model teaches itself by matching outputs between two copies of the network, with no human labels needed).
+## 3D & Volumetric Imaging
 
-![Self-Supervised Learning Concept](media/self_supervised_learning.png)
-
-## Video Analysis & Tracking
-
-Medical video (surgical recordings, endoscopy, ultrasound) is increasingly analyzed with CV. Object detection models like YOLO can process video frame-by-frame, while dedicated tracking algorithms (DeepSORT, ByteTrack) maintain object identity across frames. OpenCV's `VideoCapture` handles video I/O, and Ultralytics YOLO supports video inference out of the box with `model("surgery.mp4")`.
-
-![Robotic Surgery Computer Vision](media/robotic_surgery_cv.png)
-
-## Generative Models
-
-Generative models like **diffusion models** can synthesize realistic medical images for data augmentation, translate between modalities (CT → MRI), and generate training data when labeled examples are scarce. **GANs** (Generative Adversarial Networks) were the earlier approach and are still used for image-to-image translation tasks like converting low-dose CT to standard-dose quality.
-
-![Generative Model Concept](media/generative_model_concept.png)
-
-## 3D Medical Imaging
-
-Many medical modalities produce volumetric data — CT scans are stacks of 2D slices forming a 3D volume; MRI can be 3D or 4D (including time).
-
-- **3D convolutions**: `nn.Conv3d` extends the CNN concept to volumes
-- **3D U-Net**: The standard for volumetric segmentation (e.g., organ segmentation from CT)
-- **TorchIO**: Library for medical image transforms on 3D volumes (resampling, augmentation, patch-based training)
-- **MONAI**: Full framework for 3D medical imaging workflows
-
-## Specialized Libraries & Resources
-
-| Library | Focus | Key Feature |
-| :--- | :--- | :--- |
-| **MONAI** | Healthcare imaging | 3D support, medical transforms, DICOM/NIfTI loading |
-| **TorchIO** | Medical image transforms | 3D augmentation, patch-based training |
-| **timm** | Pretrained models | 1000+ architectures with uniform API |
-| **smp** | Segmentation | U-Net/FPN/DeepLab with any backbone |
-| **Albumentations** | Fast augmentation | Highly optimized, rich transform library |
-| **Ultralytics** | Object detection | YOLO11+, batteries-included training |
-
-### Datasets for Medical CV
-
-- [PhysioNet](https://physionet.org/) — Physiological and clinical data, including imaging
-- [MedMNIST](https://medmnist.com/) — Standardized biomedical datasets (28×28 and 64×64)
-- [TCIA](https://www.cancerimagingarchive.net/) — Cancer imaging archive
-- [Grand Challenge](https://grand-challenge.org/) — Biomedical image analysis challenges
-- NIH ChestX-ray14, LIDC-IDRI, BraTS, VinDr-CXR
-
-### Annotation Tools
-
-- [ITK-SNAP](https://www.itksnap.org/) — 3D medical image segmentation
-- [3D Slicer](https://www.slicer.org/) — Medical image analysis platform
-- [CVAT](https://github.com/opencv/cvat) — Open-source annotation tool (bounding boxes, masks)
-- [Label Studio](https://labelstud.io/) — Multi-modal annotation platform
+Many medical modalities produce 3D volumes (CT, MRI). **3D U-Net** and `nn.Conv3d` extend segmentation to volumes; **TorchIO** and **MONAI** provide specialized transforms and data loading for volumetric workflows.
 
 # LIVE DEMO!!!

@@ -1,43 +1,42 @@
 ---
 jupyter:
   jupytext:
-    formats: md,ipynb
     text_representation:
       extension: .md
-      format_name: percent
+      format_name: markdown
+      format_version: '1.3'
   kernelspec:
     display_name: Python 3
     language: python
     name: python3
 ---
 
-# %% [markdown]
-# # Demo 1b: Torchvision Transforms & DataLoaders
-#
-# Image preprocessing pipelines with `torchvision.transforms`, data
-# augmentation, and DataLoaders that feed batches to models.
-#
-# **Dataset**: Oxford Flowers102 — 102 categories of common UK flowers.
-# High-resolution natural images that show augmentation effects clearly.
+# Demo 1b: Torchvision Transforms & DataLoaders
 
-# %% [markdown]
-# ## Setup
+Image preprocessing pipelines with `torchvision.transforms`, data
+augmentation, and DataLoaders that feed batches to models.
 
-# %%
+**Dataset**: Oxford Flowers102 — 102 categories of common UK flowers.
+High-resolution natural images that show augmentation effects clearly.
+
+
+## Setup
+
+```python
 import matplotlib.pyplot as plt
 import torch
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader, random_split
 from PIL import Image
 import numpy as np
+```
 
-# %% [markdown]
-# ## 1. Transform Pipelines
-#
-# Transforms are composable — chain them together with `Compose` to build a
-# preprocessing pipeline.
+## 1. Transform Pipelines
 
-# %%
+Transforms are composable — chain them together with `Compose` to build a
+preprocessing pipeline.
+
+```python
 # Training transforms: augmentation + normalization
 train_transform = transforms.Compose([
     transforms.Resize((256, 256)),
@@ -59,15 +58,15 @@ eval_transform = transforms.Compose([
 print("Train transform pipeline:")
 for i, t in enumerate(train_transform.transforms):
     print(f"  {i+1}. {t}")
+```
 
-# %% [markdown]
-# ## 2. Load Flowers102 Dataset
-#
-# `Flowers102` has 102 flower species — sunflowers, roses, daisies, orchids,
-# and more. Images are high-resolution photos, perfect for seeing how
-# transforms affect real images.
+## 2. Load Flowers102 Dataset
 
-# %%
+`Flowers102` has 102 flower species — sunflowers, roses, daisies, orchids,
+and more. Images are high-resolution photos, perfect for seeing how
+transforms affect real images.
+
+```python
 # Download and load the dataset (no transforms yet — we want raw images for viz)
 raw_dataset = datasets.Flowers102(root="./data", split="train", download=True)
 print(f"Training samples: {len(raw_dataset)}")
@@ -75,14 +74,14 @@ print(f"Training samples: {len(raw_dataset)}")
 # Grab a sample image
 sample_img, sample_label = raw_dataset[0]
 print(f"Sample image size: {sample_img.size}, label: {sample_label}")
+```
 
-# %% [markdown]
-# ## 3. What Each Transform Does
-#
-# Before combining transforms, it helps to see each one in isolation.
-# Each row below applies a single transform to the same image.
+## 3. What Each Transform Does
 
-# %%
+Before combining transforms, it helps to see each one in isolation.
+Each row below applies a single transform to the same image.
+
+```python
 # Apply each transform individually so we can see its effect
 base_img = sample_img.resize((224, 224))
 
@@ -106,15 +105,15 @@ for ax, (name, tfm) in zip(axes, step_transforms):
 plt.suptitle("Each Transform Applied Individually", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 4. Combined Augmentations
-#
-# In practice, transforms are chained together with `Compose`. Each call
-# produces a different random variant — this is how we create "new" training
-# examples from a single photo.
+## 4. Combined Augmentations
 
-# %%
+In practice, transforms are chained together with `Compose`. Each call
+produces a different random variant — this is how we create "new" training
+examples from a single photo.
+
+```python
 # Augmentation-only transforms (no normalize, for visualization)
 augment_viz = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -139,27 +138,27 @@ for i, ax in enumerate(axes.flat):
 plt.suptitle("Data Augmentation: Same flower, different random transforms", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 5. Creating Datasets with Transforms
-#
-# Now apply the full transform pipelines. `ImageFolder` expects a directory
-# where each subdirectory is a class:
-#
-# ```
-# data/my_images/
-# ├── class_a/
-# │   ├── img_001.png
-# │   └── ...
-# └── class_b/
-#     ├── img_101.png
-#     └── ...
-# ```
-#
-# Flowers102 downloads automatically. For your own images, organize them
-# into this folder structure and use `ImageFolder`.
+## 5. Creating Datasets with Transforms
 
-# %%
+Now apply the full transform pipelines. `ImageFolder` expects a directory
+where each subdirectory is a class:
+
+```
+data/my_images/
+├── class_a/
+│   ├── img_001.png
+│   └── ...
+└── class_b/
+    ├── img_101.png
+    └── ...
+```
+
+Flowers102 downloads automatically. For your own images, organize them
+into this folder structure and use `ImageFolder`.
+
+```python
 # Load Flowers102 with our transform pipelines
 train_dataset = datasets.Flowers102(
     root="./data", split="train", download=True, transform=train_transform
@@ -174,13 +173,13 @@ test_dataset = datasets.Flowers102(
 print(f"Training samples:   {len(train_dataset)}")
 print(f"Validation samples: {len(val_dataset)}")
 print(f"Test samples:       {len(test_dataset)}")
+```
 
-# %% [markdown]
-# ## 6. Building DataLoaders
-#
-# DataLoaders handle batching, shuffling, and parallel data loading.
+## 6. Building DataLoaders
 
-# %%
+DataLoaders handle batching, shuffling, and parallel data loading.
+
+```python
 train_loader = DataLoader(
     train_dataset,
     batch_size=32,
@@ -193,22 +192,23 @@ test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers
 
 print(f"Batches per epoch: {len(train_loader)}")
 print(f"Batch size: 32")
+```
 
-# %%
+```python
 # Peek at a batch
 images, labels = next(iter(train_loader))
 print(f"Batch images shape: {images.shape}")  # (32, 3, 224, 224)
 print(f"Batch labels shape: {labels.shape}")  # (32,)
 print(f"Image dtype: {images.dtype}, range: [{images.min():.2f}, {images.max():.2f}]")
+```
 
-# %% [markdown]
-# ## 7. Visualizing a Batch
-#
-# Since the images are normalized, we need to "un-normalize" them for display.
-# `torchvision.utils.make_grid` handles this with `normalize=True` — it
-# rescales the full value range to `[0, 1]` automatically.
+## 7. Visualizing a Batch
 
-# %%
+Since the images are normalized, we need to "un-normalize" them for display.
+`torchvision.utils.make_grid` handles this with `normalize=True` — it
+rescales the full value range to `[0, 1]` automatically.
+
+```python
 from torchvision.utils import make_grid
 from torchvision.transforms.functional import to_pil_image
 
@@ -220,4 +220,5 @@ plt.title("Sample batch from DataLoader (normalized + augmented)")
 plt.axis("off")
 plt.tight_layout()
 plt.show()
+```
 

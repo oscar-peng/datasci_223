@@ -1,28 +1,27 @@
 ---
 jupyter:
   jupytext:
-    formats: md,ipynb
     text_representation:
       extension: .md
-      format_name: percent
+      format_name: markdown
+      format_version: '1.3'
   kernelspec:
     display_name: Python 3
     language: python
     name: python3
 ---
 
-# %% [markdown]
-# # Demo 3b: Image Segmentation
-#
-# Image segmentation classifies every pixel in an image. This demo covers:
-# 1. Pretrained **DeepLabV3** from torchvision for general segmentation
-# 2. **Oxford-IIIT Pet** trimap masks as real ground-truth segmentation data
-# 3. **segmentation_models_pytorch** (smp) to create a U-Net for medical use
+# Demo 3b: Image Segmentation
 
-# %% [markdown]
-# ## Setup
+Image segmentation classifies every pixel in an image. This demo covers:
+1. Pretrained **DeepLabV3** from torchvision for general segmentation
+2. **Oxford-IIIT Pet** trimap masks as real ground-truth segmentation data
+3. **segmentation_models_pytorch** (smp) to create a U-Net for medical use
 
-# %%
+
+## Setup
+
+```python
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
@@ -33,15 +32,15 @@ from torchvision.transforms.functional import to_tensor, to_pil_image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+```
 
-# %% [markdown]
-# ## Part 1: Pretrained DeepLabV3
-#
-# torchvision provides pretrained segmentation models. DeepLabV3 with a
-# ResNet-50 backbone is trained on a subset of COCO for 21 classes
-# (background + 20 object categories including cats and dogs).
+## Part 1: Pretrained DeepLabV3
 
-# %%
+torchvision provides pretrained segmentation models. DeepLabV3 with a
+ResNet-50 backbone is trained on a subset of COCO for 21 classes
+(background + 20 object categories including cats and dogs).
+
+```python
 from torchvision.models.segmentation import deeplabv3_resnet50, DeepLabV3_ResNet50_Weights
 
 # Load pretrained model
@@ -56,14 +55,14 @@ preprocess = weights.transforms()
 # Class names
 categories = weights.meta["categories"]
 print(f"Segmentation classes ({len(categories)}): {categories}")
+```
 
-# %% [markdown]
-# ## Run Segmentation on a Pet Photo
-#
-# We'll use the Oxford-IIIT Pet dataset. DeepLabV3 knows about cats and dogs
-# (COCO classes 8 and 12), so it should segment them well.
+## Run Segmentation on a Pet Photo
 
-# %%
+We'll use the Oxford-IIIT Pet dataset. DeepLabV3 knows about cats and dogs
+(COCO classes 8 and 12), so it should segment them well.
+
+```python
 # Load Oxford-IIIT Pet dataset (images only)
 pet_dataset = datasets.OxfordIIITPet(root="./data", split="test", download=True)
 
@@ -83,8 +82,9 @@ print(f"Output shape: {output.shape}")
 print(f"Prediction map shape: {predictions.shape}")
 unique_classes = np.unique(predictions)
 print(f"Classes found: {[categories[c] for c in unique_classes]}")
+```
 
-# %%
+```python
 from torchvision.utils import draw_segmentation_masks
 
 # Visualize original vs segmentation mask
@@ -113,17 +113,17 @@ axes[2].axis("off")
 plt.suptitle("DeepLabV3 Semantic Segmentation on a Pet Photo", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## Part 2: Real Segmentation Masks (Oxford-IIIT Pet Trimaps)
-#
-# The Oxford-IIIT Pet dataset includes **trimap segmentation masks** for
-# every image — real, human-annotated pixel labels:
-# - **1** = foreground (the pet)
-# - **2** = background
-# - **3** = boundary/uncertain
+## Part 2: Real Segmentation Masks (Oxford-IIIT Pet Trimaps)
 
-# %%
+The Oxford-IIIT Pet dataset includes **trimap segmentation masks** for
+every image — real, human-annotated pixel labels:
+- **1** = foreground (the pet)
+- **2** = background
+- **3** = boundary/uncertain
+
+```python
 # Load the dataset with segmentation masks
 pet_seg = datasets.OxfordIIITPet(
     root="./data", split="test", download=True,
@@ -138,8 +138,9 @@ print(f"Image size: {img.size}")
 print(f"Mask shape: {mask_array.shape}")
 print(f"Mask unique values: {np.unique(mask_array)}")
 print(f"  1 = foreground (pet), 2 = background, 3 = boundary")
+```
 
-# %%
+```python
 # Display image alongside its ground-truth segmentation mask
 fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -163,16 +164,16 @@ axes[2].axis("off")
 plt.suptitle("Oxford-IIIT Pet: Image + Ground Truth Segmentation", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## Part 3: Computing Dice Score
-#
-# The **Dice coefficient** measures overlap between predicted and ground truth
-# masks. It ranges from 0 (no overlap) to 1 (perfect match).
-# `torchmetrics.Dice` handles thresholding, batching, and multi-class cases.
+## Part 3: Computing Dice Score
 
-# %%
-from torchmetrics import Dice
+The **Dice coefficient** measures overlap between predicted and ground truth
+masks. It ranges from 0 (no overlap) to 1 (perfect match).
+`torchmetrics.segmentation.DiceScore` handles batching and multi-class cases.
+
+```python
+from torchmetrics.segmentation import DiceScore
 from torch.nn.functional import interpolate
 
 # Compare DeepLabV3 prediction with the ground truth
@@ -195,19 +196,22 @@ animal_pred_resized = interpolate(
     align_corners=False,
 ).squeeze()
 
+# Convert to index format for DiceScore: (N, H, W) with integer class labels
+pred_idx = (animal_pred_resized > 0.5).long().unsqueeze(0)  # (1, H, W)
+gt_idx = gt_binary.long().unsqueeze(0)                       # (1, H, W)
+
 # Compute Dice with torchmetrics
-dice_metric = Dice(threshold=0.5)
-score = dice_metric(
-    animal_pred_resized.unsqueeze(0),   # (1, H, W)
-    gt_binary.unsqueeze(0).long(),       # (1, H, W)
-)
+dice_metric = DiceScore(num_classes=2, input_format="index")
+score = dice_metric(pred_idx, gt_idx)
 print(f"Dice Score (DeepLabV3 vs ground truth): {score:.4f}")
 
 # A perfect prediction scores 1.0
-perfect = dice_metric(gt_binary.unsqueeze(0).long(), gt_binary.unsqueeze(0).long())
+dice_metric.reset()
+perfect = dice_metric(gt_idx, gt_idx)
 print(f"Perfect Dice Score: {perfect:.4f}")
+```
 
-# %%
+```python
 # Visualize what Dice score actually measures:
 # Dice = 2×|Intersection| / (|Pred| + |GT|)
 pred_binary = (animal_pred_resized > 0.5).numpy()
@@ -241,16 +245,16 @@ axes[3].axis("off")
 plt.suptitle("Anatomy of a Dice Score: 2×|Intersection| / (|Pred| + |GT|)", fontsize=13)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## Part 4: U-Net with segmentation_models_pytorch
-#
-# For medical segmentation tasks, `segmentation_models_pytorch` (smp) makes
-# it easy to create a U-Net with a pretrained backbone.
-#
-# Install: `pip install segmentation-models-pytorch`
+## Part 4: U-Net with segmentation_models_pytorch
 
-# %%
+For medical segmentation tasks, `segmentation_models_pytorch` (smp) makes
+it easy to create a U-Net with a pretrained backbone.
+
+Install: `pip install segmentation-models-pytorch`
+
+```python
 try:
     import segmentation_models_pytorch as smp
 
@@ -278,13 +282,13 @@ try:
 except ImportError:
     print("segmentation_models_pytorch not installed.")
     print("Install with: pip install segmentation-models-pytorch")
+```
 
-# %% [markdown]
-# ## Multiple Segmentation Examples
-#
-# Let's see segmentation on a few different pet photos.
+## Multiple Segmentation Examples
 
-# %%
+Let's see segmentation on a few different pet photos.
+
+```python
 fig, axes = plt.subplots(3, 3, figsize=(15, 14))
 sample_indices = [0, 15, 30]
 
@@ -316,4 +320,5 @@ for row, idx in enumerate(sample_indices):
 plt.suptitle("Segmentation: Ground Truth vs DeepLabV3 Predictions", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 

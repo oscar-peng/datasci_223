@@ -1,27 +1,26 @@
 ---
 jupyter:
   jupytext:
-    formats: md,ipynb
     text_representation:
       extension: .md
-      format_name: percent
+      format_name: markdown
+      format_version: '1.3'
   kernelspec:
     display_name: Python 3
     language: python
     name: python3
 ---
 
-# %% [markdown]
-# # Demo 1a: Loading Medical Images (DICOM & Standard Formats)
-#
-# Medical images come in several formats — DICOM (the clinical standard),
-# PNG, and JPEG. This demo walks through loading each and converting to
-# tensors that PyTorch can work with.
+# Demo 1a: Loading Medical Images (DICOM & Standard Formats)
 
-# %% [markdown]
-# ## Setup
+Medical images come in several formats — DICOM (the clinical standard),
+PNG, and JPEG. This demo walks through loading each and converting to
+tensors that PyTorch can work with.
 
-# %%
+
+## Setup
+
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -33,14 +32,14 @@ from pydicom.data import get_testdata_file
 # PyTorch
 import torch
 from torchvision import transforms
+```
 
-# %% [markdown]
-# ## 1. Loading a DICOM File
-#
-# DICOM files contain both **pixel data** and **metadata** (patient info,
-# acquisition parameters, etc.). Let's use one of pydicom's built-in test files.
+## 1. Loading a DICOM File
 
-# %%
+DICOM files contain both **pixel data** and **metadata** (patient info,
+acquisition parameters, etc.). Let's use one of pydicom's built-in test files.
+
+```python
 # Load a DICOM test file
 dcm_path = get_testdata_file("CT_small.dcm")
 ds = pydicom.dcmread(dcm_path)
@@ -51,8 +50,9 @@ print(f"Patient Name:    {ds.PatientName}")
 print(f"Image Size:      {ds.Rows} x {ds.Columns}")
 print(f"Bits Allocated:  {ds.BitsAllocated}")
 print(f"Pixel Spacing:   {getattr(ds, 'PixelSpacing', 'N/A')}")
+```
 
-# %%
+```python
 # Extract pixel data
 pixels = ds.pixel_array
 print(f"Pixel array shape: {pixels.shape}")
@@ -67,15 +67,15 @@ plt.colorbar(label="Pixel intensity")
 plt.axis("off")
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 2. Normalizing DICOM Pixel Values
-#
-# DICOM pixel values can be in many ranges depending on the modality and bit
-# depth. We need to normalize them to a standard range before using them with
-# PyTorch.
+## 2. Normalizing DICOM Pixel Values
 
-# %%
+DICOM pixel values can be in many ranges depending on the modality and bit
+depth. We need to normalize them to a standard range before using them with
+PyTorch.
+
+```python
 # Normalize to [0, 1] range
 pixels_float = pixels.astype(np.float32)
 pixels_norm = (pixels_float - pixels_float.min()) / (pixels_float.max() - pixels_float.min())
@@ -84,13 +84,13 @@ print(f"Normalized range: [{pixels_norm.min():.2f}, {pixels_norm.max():.2f}]")
 # Convert to PIL Image (expects uint8 or float32 in [0, 1])
 img_pil = Image.fromarray((pixels_norm * 255).astype(np.uint8))
 print(f"PIL Image mode: {img_pil.mode}, size: {img_pil.size}")
+```
 
-# %% [markdown]
-# ## 3. Loading Standard Image Formats
-#
-# PNG and JPEG files are straightforward with Pillow.
+## 3. Loading Standard Image Formats
 
-# %%
+PNG and JPEG files are straightforward with Pillow.
+
+```python
 # If you have a local chest X-ray image, load it like this:
 # img = Image.open("chest_xray.png")
 
@@ -103,8 +103,9 @@ print(f"Image size: {img.size}")  # (width, height) in PIL
 # Convert grayscale to RGB (needed for pretrained models)
 img_rgb = img.convert("RGB")
 print(f"RGB image mode: {img_rgb.mode}")
+```
 
-# %%
+```python
 # Display side by side
 fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 axes[0].imshow(img, cmap="gray")
@@ -115,15 +116,15 @@ axes[1].set_title("RGB (3 channels)")
 axes[1].axis("off")
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 4. Converting to PyTorch Tensors
-#
-# PyTorch expects tensors in **(C, H, W)** format — channels first. The
-# `ToTensor()` transform handles the conversion and scales pixel values from
-# [0, 255] to [0.0, 1.0].
+## 4. Converting to PyTorch Tensors
 
-# %%
+PyTorch expects tensors in **(C, H, W)** format — channels first. The
+`ToTensor()` transform handles the conversion and scales pixel values from
+[0, 255] to [0.0, 1.0].
+
+```python
 to_tensor = transforms.ToTensor()
 
 # Grayscale → tensor
@@ -135,14 +136,14 @@ print(f"Value range: [{tensor_gray.min():.3f}, {tensor_gray.max():.3f}]")
 tensor_rgb = to_tensor(img_rgb)
 print(f"RGB tensor shape: {tensor_rgb.shape}")          # (3, H, W)
 print(f"Value range: [{tensor_rgb.min():.3f}, {tensor_rgb.max():.3f}]")
+```
 
-# %% [markdown]
-# ## 5. Visualizing the Conversion Pipeline
-#
-# Each step changes the data format and value range. Seeing them side by
-# side makes the pipeline concrete.
+## 5. Visualizing the Conversion Pipeline
 
-# %%
+Each step changes the data format and value range. Seeing them side by
+side makes the pipeline concrete.
+
+```python
 fig, axes = plt.subplots(1, 4, figsize=(18, 4))
 
 # Step 1: Raw DICOM — integer pixel values, often 12- or 16-bit
@@ -170,31 +171,11 @@ axes[3].axis("off")
 plt.suptitle("DICOM → Tensor: What changes at each step", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 6. The Full Pipeline with MONAI
-#
-# MONAI provides composable transforms that handle DICOM loading natively —
-# including medical-specific edge cases like rescale slope/intercept, CT
-# windowing, and multi-frame DICOM that a manual pipeline would miss.
+## What's Next?
 
-# %%
-from monai.transforms import (
-    Compose, LoadImage, EnsureChannelFirst,
-    ScaleIntensity, Resize, RepeatChannel,
-)
-
-dicom_pipeline = Compose([
-    LoadImage(image_only=True),         # reads DICOM, NIfTI, PNG, etc.
-    EnsureChannelFirst(),               # (H, W) → (1, H, W)
-    ScaleIntensity(minv=0.0, maxv=1.0), # normalize to [0, 1]
-    Resize(spatial_size=(224, 224)),
-    RepeatChannel(repeats=3),           # grayscale → 3-channel for pretrained models
-])
-
-tensor = dicom_pipeline(dcm_path)
-print(f"Output shape: {tensor.shape}")
-print(f"Output dtype: {tensor.dtype}")
-print(f"Output range: [{tensor.min():.3f}, {tensor.max():.3f}]")
-print(f"Ready for a pretrained model!")
+For more advanced medical imaging pipelines (3D volumes, CT windowing,
+DICOM series handling), check out [MONAI](https://monai.io/) — a PyTorch
+framework built specifically for healthcare imaging.
 

@@ -1,30 +1,29 @@
 ---
 jupyter:
   jupytext:
-    formats: md,ipynb
     text_representation:
       extension: .md
-      format_name: percent
+      format_name: markdown
+      format_version: '1.3'
   kernelspec:
     display_name: Python 3
     language: python
     name: python3
 ---
 
-# %% [markdown]
-# # Demo 2: Transfer Learning for Image Classification
-#
-# A pretrained ResNet-18 classifies images with a frozen backbone and a
-# replaced classification head — the standard pipeline for medical imaging.
-#
-# **Dataset**: CIFAR-10 filtered to 2 classes (airplane vs automobile) for
-# quick iteration. The workflow is identical for medical data — just swap
-# in an `ImageFolder` pointing at your chest X-ray directory.
+# Demo 2: Transfer Learning for Image Classification
 
-# %% [markdown]
-# ## Setup
+A pretrained ResNet-18 classifies images with a frozen backbone and a
+replaced classification head — the standard pipeline for medical imaging.
 
-# %%
+**Dataset**: CIFAR-10 filtered to 2 classes (airplane vs automobile) for
+quick iteration. The workflow is identical for medical data — just swap
+in an `ImageFolder` pointing at your chest X-ray directory.
+
+
+## Setup
+
+```python
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -36,15 +35,15 @@ from pathlib import Path
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+```
 
-# %% [markdown]
-# ## 1. Prepare the Data
-#
-# We'll use CIFAR-10 with just 2 classes for quick iteration.
-# To use your own images, swap `Subset(CIFAR10(...))` with
-# `ImageFolder("data/your_dataset/")` — everything else stays the same.
+## 1. Prepare the Data
 
-# %%
+We'll use CIFAR-10 with just 2 classes for quick iteration.
+To use your own images, swap `Subset(CIFAR10(...))` with
+`ImageFolder("data/your_dataset/")` — everything else stays the same.
+
+```python
 # Transforms
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -59,8 +58,9 @@ eval_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
+```
 
-# %%
+```python
 # Option A: Use CIFAR-10 subset (2 classes, quick download)
 full_train = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transform)
 full_test = datasets.CIFAR10(root="./data", train=False, download=True, transform=eval_transform)
@@ -80,8 +80,9 @@ test_data = filter_classes(full_test)
 
 print(f"Training samples: {len(train_data)}")
 print(f"Test samples:     {len(test_data)}")
+```
 
-# %%
+```python
 # Split training into train + val
 train_size = int(0.8 * len(train_data))
 val_size = len(train_data) - train_size
@@ -92,22 +93,23 @@ val_loader = DataLoader(val_set, batch_size=32, shuffle=False, num_workers=2)
 test_loader = DataLoader(test_data, batch_size=32, shuffle=False, num_workers=2)
 
 print(f"Train: {len(train_set)}, Val: {len(val_set)}, Test: {len(test_data)}")
+```
 
-# %% [markdown]
-# ## 2. Load Pretrained ResNet-18
-#
-# We load a ResNet-18 pretrained on ImageNet, freeze the backbone, and
-# replace the final classification layer.
+## 2. Load Pretrained ResNet-18
 
-# %%
+We load a ResNet-18 pretrained on ImageNet, freeze the backbone, and
+replace the final classification layer.
+
+```python
 # Load pretrained model
 model = models.resnet18(weights="DEFAULT")
 
 # Look at the original classification head
 print(f"Original fc layer: {model.fc}")
 print(f"Total parameters: {sum(p.numel() for p in model.parameters()):,}")
+```
 
-# %%
+```python
 # Freeze all backbone parameters
 for param in model.parameters():
     param.requires_grad = False
@@ -126,15 +128,15 @@ total = sum(p.numel() for p in model.parameters())
 print(f"Trainable parameters: {trainable:,} / {total:,} ({100*trainable/total:.1f}%)")
 
 model = model.to(device)
+```
 
-# %% [markdown]
-# ## 3. What the Frozen Backbone Sees
-#
-# The frozen layers extract features learned on ImageNet — edges, textures,
-# shapes — that transfer to new tasks. Here are the first 16 feature maps
-# from `layer1` for a single input image.
+## 3. What the Frozen Backbone Sees
 
-# %%
+The frozen layers extract features learned on ImageNet — edges, textures,
+shapes — that transfer to new tasks. Here are the first 16 feature maps
+from `layer1` for a single input image.
+
+```python
 # Hook into an intermediate layer to capture feature maps
 activations = {}
 def hook_fn(module, input, output):
@@ -160,13 +162,13 @@ plt.suptitle("Frozen Backbone Feature Maps (layer1): edges, textures, and shapes
              fontsize=12)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 4. Train the Model
-#
-# Only the classification head is learning — the backbone features stay fixed.
+## 4. Train the Model
 
-# %%
+Only the classification head is learning — the backbone features stay fixed.
+
+```python
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.fc.parameters(), lr=1e-3)
 
@@ -216,11 +218,11 @@ for epoch in range(num_epochs):
           f"Train Loss: {avg_train_loss:.4f}, "
           f"Val Loss: {avg_val_loss:.4f}, "
           f"Val Acc: {val_acc:.1f}%")
+```
 
-# %% [markdown]
-# ## 5. Plot Training Curves
+## 5. Plot Training Curves
 
-# %%
+```python
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
 ax1.plot(history["train_loss"], label="Train Loss")
@@ -238,11 +240,11 @@ ax2.legend()
 
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 6. Evaluate on Test Set
+## 6. Evaluate on Test Set
 
-# %%
+```python
 from sklearn.metrics import classification_report, confusion_matrix
 import seaborn as sns
 
@@ -275,11 +277,11 @@ ax.set_ylabel("Actual")
 ax.set_title("Confusion Matrix")
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 7. Visualize Predictions
+## 7. Visualize Predictions
 
-# %%
+```python
 from torchvision.transforms.functional import to_pil_image
 
 # Inverse normalization as a standard transform (negated mean/std)
@@ -313,14 +315,15 @@ for i, ax in enumerate(axes.flat):
 plt.suptitle("Model Predictions (green=correct, red=wrong)", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 8. Save the Model
+## 8. Save the Model
 
-# %%
+```python
 torch.save(model.state_dict(), "resnet18_classifier.pt")
 print("Model saved to resnet18_classifier.pt")
 
 # To load later:
 # model.load_state_dict(torch.load("resnet18_classifier.pt"))
+```
 

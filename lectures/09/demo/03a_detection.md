@@ -1,31 +1,30 @@
 ---
 jupyter:
   jupytext:
-    formats: md,ipynb
     text_representation:
       extension: .md
-      format_name: percent
+      format_name: markdown
+      format_version: '1.3'
   kernelspec:
     display_name: Python 3
     language: python
     name: python3
 ---
 
-# %% [markdown]
-# # Demo 3a: Object Detection with Pretrained Models
-#
-# Pretrained **Faster R-CNN** from torchvision detects objects in images.
-# The model is trained on COCO (80 everyday object classes). A brief look
-# at **Ultralytics YOLOv8** shows the fastest path to detection.
-#
-# **Dataset**: Oxford-IIIT Pet — real photos of cats and dogs in natural
-# settings. The COCO-trained model knows both "cat" and "dog" classes, so
-# detection works on these images immediately.
+# Demo 3a: Object Detection with Pretrained Models
 
-# %% [markdown]
-# ## Setup
+Pretrained **Faster R-CNN** from torchvision detects objects in images.
+The model is trained on COCO (80 everyday object classes). A brief look
+at **Ultralytics YOLOv8** shows the fastest path to detection.
 
-# %%
+**Dataset**: Oxford-IIIT Pet — real photos of cats and dogs in natural
+settings. The COCO-trained model knows both "cat" and "dog" classes, so
+detection works on these images immediately.
+
+
+## Setup
+
+```python
 import torch
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -37,11 +36,11 @@ from torchvision.transforms.functional import to_tensor, to_pil_image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+```
 
-# %% [markdown]
-# ## 1. Load Pretrained Faster R-CNN
+## 1. Load Pretrained Faster R-CNN
 
-# %%
+```python
 # Load model and weights
 weights = FasterRCNN_ResNet50_FPN_Weights.DEFAULT
 model = fasterrcnn_resnet50_fpn(weights=weights)
@@ -52,14 +51,14 @@ model.eval()
 categories = weights.meta["categories"]
 print(f"Model trained on {len(categories)} COCO classes")
 print(f"First 10 classes: {categories[:10]}")
+```
 
-# %% [markdown]
-# ## 2. Load a Real Image
-#
-# We'll use the Oxford-IIIT Pet dataset — photos of cats and dogs in
-# natural settings. The COCO model was trained on images like these.
+## 2. Load a Real Image
 
-# %%
+We'll use the Oxford-IIIT Pet dataset — photos of cats and dogs in
+natural settings. The COCO model was trained on images like these.
+
+```python
 # Download the Oxford-IIIT Pet dataset
 pet_dataset = datasets.OxfordIIITPet(root="./data", split="test", download=True)
 
@@ -74,11 +73,11 @@ plt.imshow(img)
 plt.title("Input Image (Oxford-IIIT Pet)")
 plt.axis("off")
 plt.show()
+```
 
-# %% [markdown]
-# ## 3. Run Detection
+## 3. Run Detection
 
-# %%
+```python
 # Preprocess
 preprocess = weights.transforms()
 img_tensor = preprocess(img).to(device)
@@ -89,27 +88,29 @@ with torch.no_grad():
 
 print(f"Detected {len(predictions['boxes'])} objects (before filtering)")
 print(f"Prediction keys: {list(predictions.keys())}")
+```
 
-# %%
+```python
 # Examine raw predictions
 for i in range(min(5, len(predictions["boxes"]))):
     box = predictions["boxes"][i].cpu().numpy()
     label = categories[predictions["labels"][i]]
     score = predictions["scores"][i].item()
     print(f"  {label}: {score:.3f} — box: [{box[0]:.0f}, {box[1]:.0f}, {box[2]:.0f}, {box[3]:.0f}]")
+```
 
-# %%
+```python
 # Convert image to uint8 tensor for drawing bounding boxes
 img_uint8 = (to_tensor(img) * 255).byte()
+```
 
-# %% [markdown]
-# ## 4. What the Model Actually Outputs
-#
-# Detection models produce hundreds of candidate boxes, most with very low
-# confidence. Confidence filtering discards the noise. This is what the raw
-# output looks like vs. the filtered result.
+## 4. What the Model Actually Outputs
 
-# %%
+Detection models produce hundreds of candidate boxes, most with very low
+confidence. Confidence filtering discards the noise. This is what the raw
+output looks like vs. the filtered result.
+
+```python
 # Raw output: show all predictions (capped at 20 for readability)
 n_raw = min(20, len(predictions["boxes"]))
 raw_names = [f"{categories[l]}: {s:.2f}"
@@ -138,14 +139,14 @@ axes[1].axis("off")
 plt.suptitle("Detection Pipeline: Raw Proposals → Filtered Results", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 5. Visualize Filtered Detections
-#
-# Each surviving detection gets a labeled bounding box with its class name
-# and confidence score.
+## 5. Visualize Filtered Detections
 
-# %%
+Each surviving detection gets a labeled bounding box with its class name
+and confidence score.
+
+```python
 confidence_threshold = 0.5
 
 # Filter predictions
@@ -155,8 +156,9 @@ labels_idx = predictions["labels"][keep]
 scores = predictions["scores"][keep]
 
 print(f"Detections above {confidence_threshold} confidence: {len(boxes)}")
+```
 
-# %%
+```python
 # Draw bounding boxes
 label_names = [f"{categories[l]}: {s:.2f}" for l, s in zip(labels_idx, scores)]
 result = draw_bounding_boxes(img_uint8, boxes.cpu(), label_names, width=3, font_size=14)
@@ -166,14 +168,14 @@ plt.imshow(to_pil_image(result))
 plt.title(f"Faster R-CNN Detections (confidence > {confidence_threshold})")
 plt.axis("off")
 plt.show()
+```
 
-# %% [markdown]
-# ## 6. Detection on Multiple Images
-#
-# Let's run detection on several pet photos to see how the model performs
-# across different images and poses.
+## 6. Detection on Multiple Images
 
-# %%
+Let's run detection on several pet photos to see how the model performs
+across different images and poses.
+
+```python
 fig, axes = plt.subplots(2, 2, figsize=(14, 12))
 for ax, idx in zip(axes.flat, sample_indices):
     pet_img, _ = pet_dataset[idx]
@@ -194,14 +196,14 @@ for ax, idx in zip(axes.flat, sample_indices):
 plt.suptitle("Faster R-CNN on Oxford-IIIT Pet Photos", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 7. Effect of Confidence Threshold
-#
-# The threshold controls the precision-recall tradeoff: lower threshold =
-# more detections (higher recall) but more false positives (lower precision).
+## 7. Effect of Confidence Threshold
 
-# %%
+The threshold controls the precision-recall tradeoff: lower threshold =
+more detections (higher recall) but more false positives (lower precision).
+
+```python
 # Use the first sample image
 img_for_thresh, _ = pet_dataset[sample_indices[0]]
 thresh_tensor = preprocess(img_for_thresh).to(device)
@@ -228,23 +230,25 @@ for ax, thresh in zip(axes, [0.3, 0.5, 0.8]):
 plt.suptitle("Effect of Confidence Threshold", fontsize=14)
 plt.tight_layout()
 plt.show()
+```
 
-# %% [markdown]
-# ## 8. (Optional) Ultralytics YOLOv8
-#
-# For the simplest path to detection, Ultralytics provides a one-liner:
-#
-# ```python
-# from ultralytics import YOLO
-#
-# model = YOLO("yolov8n.pt")  # nano model, fast
-# results = model("my_image.jpg")
-# results[0].show()
-#
-# # Fine-tune on custom dataset
-# model.train(data="dataset.yaml", epochs=50)
-# ```
-#
-# Install with: `pip install ultralytics`
+<!-- #region -->
+## 8. (Optional) Ultralytics YOLOv8
+
+For the simplest path to detection, Ultralytics provides a one-liner:
+
+```python
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")  # nano model, fast
+results = model("my_image.jpg")
+results[0].show()
+
+# Fine-tune on custom dataset
+model.train(data="dataset.yaml", epochs=50)
+```
+
+Install with: `pip install ultralytics`
+<!-- #endregion -->
 
 

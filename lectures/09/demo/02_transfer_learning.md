@@ -33,7 +33,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else
+                      "mps" if torch.backends.mps.is_available() else "cpu")
 print(f"Using device: {device}")
 ```
 
@@ -144,24 +145,49 @@ def hook_fn(module, input, output):
 
 handle = model.layer1.register_forward_hook(hook_fn)
 
-# Run one image through the frozen backbone
-sample_batch, _ = next(iter(test_loader))
-with torch.no_grad():
-    _ = model(sample_batch[:1].to(device))
+# Inverse normalization for display
+inv_normalize = transforms.Normalize(
+    mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+    std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
+)
+
+# Run two sample images through the frozen backbone
+sample_batch, sample_labels = next(iter(test_loader))
+num_samples = 2
+feature_maps = []
+
+for i in range(num_samples):
+    with torch.no_grad():
+        _ = model(sample_batch[i:i+1].to(device))
+    feature_maps.append(activations["layer1"][0].cpu())
 
 handle.remove()
 
-# Display the first 16 feature maps
-feat = activations["layer1"][0].cpu()
-fig, axes = plt.subplots(2, 8, figsize=(16, 4))
-for i, ax in enumerate(axes.flat):
-    ax.imshow(feat[i], cmap="viridis")
-    ax.set_title(f"#{i}", fontsize=8)
-    ax.axis("off")
-plt.suptitle("Frozen Backbone Feature Maps (layer1): edges, textures, and shapes from ImageNet",
-             fontsize=12)
-plt.tight_layout()
-plt.show()
+# Show each input image alongside its feature maps
+for idx in range(num_samples):
+    fig, axes = plt.subplots(2, 9, figsize=(18, 4),
+                             gridspec_kw={"width_ratios": [2] + [1]*8})
+    # Input image spans both rows
+    ax_img = fig.add_subplot(2, 9, (1, 10))
+    img_display = inv_normalize(sample_batch[idx]).clamp(0, 1)
+    ax_img.imshow(img_display.permute(1, 2, 0).numpy())
+    ax_img.set_title(f"Input ({class_names[sample_labels[idx]]})", fontsize=10)
+    ax_img.axis("off")
+    # Hide the original grid cells behind the merged subplot
+    axes[0, 0].axis("off")
+    axes[1, 0].axis("off")
+
+    # Feature maps in remaining columns
+    feat = feature_maps[idx]
+    for i in range(16):
+        row, col = divmod(i, 8)
+        axes[row, col + 1].imshow(feat[i], cmap="viridis")
+        axes[row, col + 1].set_title(f"#{i}", fontsize=7)
+        axes[row, col + 1].axis("off")
+
+    fig.suptitle("Input → Frozen layer1 feature maps", fontsize=12)
+    fig.tight_layout()
+    plt.show()
 ```
 
 ## 4. Train the Model

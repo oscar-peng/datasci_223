@@ -3,7 +3,7 @@ lecture_number: 09
 pdf: false
 ---
 
-Computer Vision: Seeing with Silicon
+Computer Vision: Mirrorshades
 
 # Links
 
@@ -145,7 +145,7 @@ PyTorch provides all CNN components through `torch.nn`:
 
 A typical CNN architecture follows this pattern:
 
-```
+```shell
 INPUT → [CONV → BN → ReLU → POOL] × N → FLATTEN → LINEAR → OUTPUT
 ```
 
@@ -332,7 +332,7 @@ eval_transform = transforms.Compose([
 
 **`ImageFolder`** — the simplest approach for custom datasets. Expects a directory structure where each subdirectory is a class:
 
-```
+```shell
 data/
 ├── normal/
 │   ├── xray_001.png
@@ -717,8 +717,8 @@ Standard cross-entropy works but struggles with the extreme class imbalance comm
 | :--- | :--- | :--- | :--- |
 | **BCEWithLogitsLoss** | `nn.BCEWithLogitsLoss()` | Binary segmentation, balanced classes | Pixel-level cross-entropy with sigmoid built-in |
 | **CrossEntropyLoss** | `nn.CrossEntropyLoss(weight=class_weights)` | Multi-class segmentation | Pass `weight` tensor for class balancing |
-| **Dice Loss** | `smp.losses.DiceLoss()` | Imbalanced classes (most medical tasks) | Optimizes `1 - (2|X∩Y|) / (|X|+|Y|)` directly |
-| **Jaccard Loss** | `smp.losses.JaccardLoss()` | Similar to Dice | Optimizes `1 - |X∩Y| / |X∪Y|`, slightly different gradients |
+| **Dice Loss** | `smp.losses.DiceLoss()` | Imbalanced classes (most medical tasks) | Optimizes $$ 1 - (2|X∩Y|) / (|X|+|Y|) $$ directly |
+| **Jaccard Loss** | `smp.losses.JaccardLoss()` | Similar to Dice | Optimizes $$ 1 - |X∩Y| / |X∪Y|$$ , slightly different gradients |
 | **Focal Loss** | `smp.losses.FocalLoss()` | Severe class imbalance | Downweights easy pixels, γ parameter controls focus |
 | **BCE + Dice** | Sum both losses | General-purpose | Combines pixel-level and region-level optimization |
 

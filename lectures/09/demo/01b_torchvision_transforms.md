@@ -26,9 +26,13 @@ High-resolution natural images that show augmentation effects clearly.
 import matplotlib.pyplot as plt
 import torch
 from torchvision import transforms, datasets
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, ConcatDataset
 from PIL import Image
 import numpy as np
+
+device = torch.device("cuda" if torch.cuda.is_available() else
+                      "mps" if torch.backends.mps.is_available() else "cpu")
+print(f"Using device: {device}")
 ```
 
 ## 1. Transform Pipelines
@@ -40,10 +44,11 @@ preprocessing pipeline.
 # Training transforms: augmentation + normalization
 train_transform = transforms.Compose([
     transforms.Resize((256, 256)),
-    transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
+    transforms.RandomResizedCrop(224, scale=(0.6, 1.0)),
     transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomRotation(15),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2),
+    transforms.RandomRotation(20),
+    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),
+    transforms.RandomPerspective(distortion_scale=0.2, p=0.3),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
@@ -79,19 +84,19 @@ print(f"Sample image size: {sample_img.size}, label: {sample_label}")
 ## 3. What Each Transform Does
 
 Before combining transforms, it helps to see each one in isolation.
-Each row below applies a single transform to the same image.
+The parameters here are exaggerated so the effect is obvious.
 
 ```python
-# Apply each transform individually so we can see its effect
+# Apply each transform individually — parameters cranked up for visibility
 base_img = sample_img.resize((224, 224))
 
 step_transforms = [
-    ("Original", None),
-    ("Resize(256)", transforms.Resize((256, 256))),
-    ("RandomCrop(224)", transforms.RandomResizedCrop(224, scale=(0.6, 1.0))),
+    ("Original",      None),
+    ("RandomCrop",    transforms.RandomResizedCrop(224, scale=(0.3, 0.5))),
     ("HorizontalFlip", transforms.RandomHorizontalFlip(p=1.0)),
-    ("Rotation(15°)", transforms.RandomRotation(15)),
-    ("ColorJitter", transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.3)),
+    ("Rotation(45°)", transforms.RandomRotation(45)),
+    ("ColorJitter",   transforms.ColorJitter(brightness=0.8, contrast=0.8, saturation=0.8, hue=0.3)),
+    ("Perspective",   transforms.RandomPerspective(distortion_scale=0.5, p=1.0)),
 ]
 
 fig, axes = plt.subplots(1, len(step_transforms), figsize=(18, 3.5))
@@ -102,7 +107,7 @@ for ax, (name, tfm) in zip(axes, step_transforms):
         ax.imshow(tfm(base_img))
     ax.set_title(name, fontsize=10)
     ax.axis("off")
-plt.suptitle("Each Transform Applied Individually", fontsize=14)
+plt.suptitle("Each Transform Applied Individually (exaggerated)", fontsize=14)
 plt.tight_layout()
 plt.show()
 ```
@@ -111,23 +116,24 @@ plt.show()
 
 In practice, transforms are chained together with `Compose`. Each call
 produces a different random variant — this is how we create "new" training
-examples from a single photo.
+examples from a single photo. We reuse the same transforms from above,
+but with toned-down parameters suitable for actual training.
 
 ```python
-# Augmentation-only transforms (no normalize, for visualization)
+# Reuse the same transform types, but with training-appropriate parameters
 augment_viz = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((256, 256)),
+    transforms.RandomResizedCrop(224, scale=(0.6, 1.0)),
     transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomRotation(15),
-    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
-    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
+    transforms.RandomRotation(20),
+    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),
+    transforms.RandomPerspective(distortion_scale=0.2, p=0.3),
 ])
 
 # Generate 8 augmented versions of the same flower
 fig, axes = plt.subplots(2, 4, figsize=(14, 7))
 for i, ax in enumerate(axes.flat):
     if i == 0:
-        # Show original
         ax.imshow(sample_img.resize((224, 224)))
         ax.set_title("Original", fontweight="bold")
     else:
@@ -159,20 +165,18 @@ Flowers102 downloads automatically. For your own images, organize them
 into this folder structure and use `ImageFolder`.
 
 ```python
-# Load Flowers102 with our transform pipelines
-train_dataset = datasets.Flowers102(
-    root="./data", split="train", download=True, transform=train_transform
-)
-val_dataset = datasets.Flowers102(
-    root="./data", split="val", download=True, transform=eval_transform
-)
+# Flowers102 splits are oddly sized: "train" and "val" have 1,020 each,
+# "test" has 6,149. Combine the two larger pools for training, hold out one for eval.
+train_dataset = ConcatDataset([
+    datasets.Flowers102(root="./data", split="test", download=True, transform=train_transform),
+    datasets.Flowers102(root="./data", split="val", download=True, transform=train_transform),
+])
 test_dataset = datasets.Flowers102(
-    root="./data", split="test", download=True, transform=eval_transform
+    root="./data", split="train", download=True, transform=eval_transform
 )
 
-print(f"Training samples:   {len(train_dataset)}")
-print(f"Validation samples: {len(val_dataset)}")
-print(f"Test samples:       {len(test_dataset)}")
+print(f"Training samples: {len(train_dataset)}")
+print(f"Test samples:     {len(test_dataset)}")
 ```
 
 ## 6. Building DataLoaders
@@ -187,7 +191,6 @@ train_loader = DataLoader(
     num_workers=2,       # parallel data loading (set 0 for debugging)
     pin_memory=True,     # faster CPU→GPU transfer
 )
-val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=2)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=2)
 
 print(f"Batches per epoch: {len(train_loader)}")
@@ -220,5 +223,105 @@ plt.title("Sample batch from DataLoader (normalized + augmented)")
 plt.axis("off")
 plt.tight_layout()
 plt.show()
+```
+
+## 8. Train a Simple CNN
+
+Now let's use those DataLoaders for real. We'll build the same `SimpleCNN`
+from lecture — two conv blocks followed by a classifier — and train it on
+Flowers102 for a few epochs.
+
+102 classes is a lot for a tiny CNN. Don't expect great accuracy — the
+point is to see the full pipeline: transforms → DataLoader → model → training
+loop → evaluation. Demo 2 shows how transfer learning solves the accuracy
+problem.
+
+```python
+import torch.nn as nn
+
+class SimpleCNN(nn.Module):
+    def __init__(self, num_classes=102):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+
+            nn.AdaptiveAvgPool2d((4, 4)),   # collapse to 4×4 regardless of input size
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 4 * 4, 256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(256, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
+
+model = SimpleCNN(num_classes=102).to(device)
+print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
+```
+
+```python
+# The five-step training loop from lecture
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+num_epochs = 5
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for inputs, labels in train_loader:
+        inputs, labels = inputs.to(device), labels.to(device)
+
+        optimizer.zero_grad()              # 1. clear old gradients
+        outputs = model(inputs)            # 2. forward pass
+        loss = criterion(outputs, labels)  # 3. compute loss
+        loss.backward()                    # 4. backpropagation
+        optimizer.step()                   # 5. update weights
+
+        running_loss += loss.item()
+        correct += (outputs.argmax(1) == labels).sum().item()
+        total += labels.size(0)
+
+    train_acc = correct / total
+    print(f"Epoch {epoch+1}/{num_epochs} — Loss: {running_loss/len(train_loader):.4f}, "
+          f"Train Acc: {train_acc:.1%}")
+```
+
+```python
+# Evaluate on the test set
+model.eval()
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for inputs, labels in test_loader:
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = model(inputs)
+        correct += (outputs.argmax(1) == labels).sum().item()
+        total += labels.size(0)
+
+val_acc = correct / total
+print(f"Validation accuracy: {val_acc:.1%}")
+print(f"\nRandom guessing would be ~1%. Demo 2 shows how transfer learning does much better.")
 ```
 

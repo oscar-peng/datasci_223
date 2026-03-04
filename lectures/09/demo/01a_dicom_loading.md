@@ -144,34 +144,51 @@ Each step changes the data format and value range. Seeing them side by
 side makes the pipeline concrete.
 
 ```python
-fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+# The images look identical — the pipeline preserves visual content.
+# What actually changes is the VALUE RANGE and DATA TYPE at each step.
+# Histograms make that visible.
 
-# Step 1: Raw DICOM — integer pixel values, often 12- or 16-bit
-axes[0].imshow(pixels, cmap="gray")
-axes[0].set_title(f"1. Raw DICOM\n{pixels.dtype}, [{pixels.min()}, {pixels.max()}]",
-                  fontsize=10)
-axes[0].axis("off")
+stages = [
+    ("1. Raw DICOM",    pixels.ravel(),                        f"{pixels.dtype}"),
+    ("2. Normalized",   pixels_norm.ravel(),                   "float32"),
+    ("3. PIL (uint8)",  np.array(img).ravel(),                 "uint8"),
+    ("4. Tensor",       tensor_gray.numpy().ravel(),           "float32"),
+]
 
-# Step 2: Normalized to [0, 1]
-axes[1].imshow(pixels_norm, cmap="gray")
-axes[1].set_title(f"2. Normalized\nfloat32, [0.0, 1.0]", fontsize=10)
-axes[1].axis("off")
+fig, axes = plt.subplots(2, 4, figsize=(18, 6),
+                         gridspec_kw={"height_ratios": [3, 2]})
 
-# Step 3: PIL Image (uint8, H×W or H×W×3)
-axes[2].imshow(img_rgb)
-axes[2].set_title(f"3. PIL RGB\nuint8, {img_rgb.size[0]}×{img_rgb.size[1]}×3",
-                  fontsize=10)
-axes[2].axis("off")
+for i, (title, vals, dtype) in enumerate(stages):
+    # Top row: the image (always looks the same — that's the point)
+    axes[0, i].imshow(pixels_norm, cmap="gray")
+    axes[0, i].set_title(title, fontsize=11, fontweight="bold")
+    axes[0, i].axis("off")
 
-# Step 4: Tensor (float32, C×H×W)
-axes[3].imshow(tensor_rgb.permute(1, 2, 0).numpy())
-axes[3].set_title(f"4. PyTorch Tensor\nfloat32, {tuple(tensor_rgb.shape)}", fontsize=10)
-axes[3].axis("off")
+    # Bottom row: histogram shows the real difference
+    axes[1, i].hist(vals, bins=50, color="steelblue", edgecolor="none")
+    axes[1, i].set_xlabel(f"{dtype}  [{vals.min():.4g}, {vals.max():.4g}]", fontsize=9)
+    axes[1, i].set_ylabel("Pixels" if i == 0 else "")
+    axes[1, i].tick_params(labelsize=8)
 
-plt.suptitle("DICOM → Tensor: What changes at each step", fontsize=14)
+plt.suptitle("DICOM → Tensor: Same image, different value ranges",
+             fontsize=14, y=1.01)
 plt.tight_layout()
 plt.show()
 ```
+
+Notice all four panels look identical — that's the point. A good conversion
+pipeline preserves the visual content while changing the **data representation**
+underneath. What differs at each step:
+
+- **Raw DICOM** — 16-bit integers in scanner-specific units (e.g., Hounsfield units for CT). Use this when you need the original clinical values for diagnosis or windowing.
+- **Normalized [0, 1]** — float32 scaled to a standard range. Required before feeding data into most neural networks, which expect small, bounded inputs.
+- **PIL Image (uint8)** — 8-bit integers in [0, 255]. The standard format for `torchvision.transforms`, image I/O (`save`/`load`), and display libraries.
+- **PyTorch Tensor (C, H, W)** — float32, channels-first. This is what `DataLoader`, loss functions, and model layers actually consume.
+
+Each format exists because a different part of the pipeline needs it.
+Getting the conversions wrong (e.g., feeding uint8 to a model expecting [0, 1],
+or losing precision by normalizing too early) is one of the most common silent
+bugs in medical imaging pipelines.
 
 ## What's Next?
 

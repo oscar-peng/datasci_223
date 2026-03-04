@@ -46,56 +46,25 @@ Computer Vision: Seeing with Silicon
 
 # What Is Computer Vision?
 
-**Computer vision (CV)** is a field of AI that enables computers to interpret and understand visual information. It involves extracting meaningful, structured data from digital images or videos — turning pixels into decisions.
-
-Computer vision systems can:
-
-- Detect and classify objects in images
-- Track movement across video frames
-- Measure features and extract quantitative data
-- Recognize patterns and anomalies
-- Segment regions of interest at the pixel level
-- Generate new images from learned representations
+**Computer vision (CV)** is a field of AI that enables computers to interpret and understand visual information — turning pixels into decisions. CV systems can classify objects, detect their locations, track movement across video, segment regions at the pixel level, and measure quantitative features from images.
 
 ![Chest X-ray with Nodule Highlighted](media/xray_nodule_example.png)
 
-In healthcare, computer vision is transforming how clinicians work with visual data. Radiology, pathology, dermatology, ophthalmology, and surgery all generate enormous volumes of images that benefit from automated analysis. A single hospital can produce millions of imaging studies per year — far more than radiologists can review with full attention.
+In healthcare, CV is transforming radiology, pathology, dermatology, ophthalmology, and surgery. A single hospital can produce millions of imaging studies per year — far more than radiologists can review with full attention. Modern CV systems now match or exceed human-level performance on specific tasks like detecting diabetic retinopathy from retinal scans or classifying skin lesions from dermoscopy images.
 
 ![Digital Pathology Slide with Cell Classification](media/pathology_slide_example.png)
 
-The field combines techniques from image processing, pattern recognition, and deep learning to achieve increasingly sophisticated visual understanding. Modern CV systems now match or exceed human-level performance on specific tasks — like detecting diabetic retinopathy from retinal scans or classifying skin lesions from dermoscopy images.
-
-![Robotic Surgery with Computer Vision Assistance](media/robotic_surgery.webp)
-
 ## Digital Image Representation
 
-Before a computer can "see" an image, the image must be represented as numbers.
+Before a computer can "see" an image, the image must be represented as numbers. An image is a grid of **pixels** — each pixel stores a color or intensity value at coordinates (x, y). **Resolution** is the number of pixels (width × height), and medical images range widely: dermoscopy (3000×4000) to ultrasound (640×480).
 
-- **Pixels**: The fundamental units of digital images
-    - Grid of values representing color or intensity
-    - Each pixel has specific coordinates (x, y)
-    - Images are stored as 2D arrays (or 3D for color)
+![Zoomed-in view of an image showing pixels](media/pixel_grid_example.png)
 
-    ![Zoomed-in view of an image showing pixels](media/pixel_grid_example.png)
-
-- **Resolution**: Number of pixels in an image
-    - Expressed as width × height (e.g., 1920×1080)
-    - Higher resolution = more detail but larger file size
-    - Medical images range widely: dermoscopy (3000×4000) to ultrasound (640×480)
-
-    ![Low Resolution vs. High Resolution](media/resolution_comparison.png)
-
-- **Color Spaces**:
-    - **Grayscale**: Single intensity value per pixel (0–255 for 8-bit)
-        - Used in many medical images (X-rays, CT scans)
-        - 0 = black, 255 = white
+- **Grayscale**: Single intensity value per pixel (0–255 for 8-bit). 0 = black, 255 = white. Used in many medical images (X-rays, CT scans).
 
     ![Grayscale X-ray and Pixel Intensity Values](media/grayscale_example.png)
 
-    - **RGB**: Three values per pixel (Red, Green, Blue)
-        - Each channel typically ranges from 0–255
-        - Example: (255, 0, 0) = red, (0, 255, 0) = green, (255, 255, 255) = white
-        - Shape in memory: (height, width, 3) for NumPy, (3, height, width) for PyTorch
+- **RGB**: Three values per pixel (Red, Green, Blue), each 0–255. Shape in memory: (height, width, 3) for NumPy, (3, height, width) for PyTorch.
 
     ![RGB Image Decomposed into Red, Green, and Blue Channels](media/rgb_channels_example.png)
 
@@ -171,19 +140,23 @@ img_tensor = to_tensor(img_pil)         # shape: (C, H, W), range [0, 1]
 
 # CNNs in PyTorch
 
-In lecture 06 you built CNNs with Keras. Now let's learn the same ideas in **PyTorch** — the framework used in most research and increasingly in production. The concepts are identical (convolutions, pooling, feature maps); the API style is different.
+In lecture 06 you were introduced to CNNs using Keras. Now let's apply those same ideas in **PyTorch** — the framework used in most research and increasingly in production. The core concepts are identical; the API style is different.
 
 ## Quick CNN Recap
 
-Recall from lecture 06: CNNs solve the problems of **parameter explosion** and **loss of spatial structure** through local connectivity, parameter sharing, and hierarchical feature learning. Small learnable filters slide across the image, producing **feature maps** that capture increasingly complex patterns — edges → textures → parts → objects.
+Why not just flatten an image and feed it into a dense neural network? Consider a 224×224×3 RGB image — that's 150,528 input values. Connecting each to just 1,000 neurons means 150+ million weights in the first layer alone. That's a **parameter explosion**, and it also destroys the spatial structure of the image (neighboring pixels end up far apart in a flat vector).
+
+CNNs solve both problems. Each convolutional layer applies small learned **filters** (e.g., 3×3) that slide across the image. The same filter is reused at every position — this **parameter sharing** means a 3×3 filter has only 9 weights regardless of image size. The output of applying a filter across the image is a **feature map**: a 2D grid showing where that pattern was detected.
 
 ![Convolutional Filter Operation](media/convolution_filter_static.png)
 
+Stacking convolutional layers builds a hierarchy of features — edges → textures → parts → objects:
+
 ![Features Learned by Early CNN Layers](media/cnn_early_features.png)
 
-![Features Learned by Deep CNN Layers](media/cnn_deep_features.png)
+![Features Learned by Mid-Level CNN Layers](media/cnn_mid_features.png)
 
-The concepts are identical to what you learned in Keras — the difference here is the **PyTorch API** and the explicit control it gives you over the training process.
+![Features Learned by Deep CNN Layers](media/cnn_deep_features.png)
 
 ## PyTorch CNN Building Blocks
 
@@ -242,7 +215,7 @@ class SimpleCNN(nn.Module):
         )
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(64 * 56 * 56, 128),  # assuming 224×224 input
+            nn.Linear(64 * 56 * 56, 128),  # 224 / 2 / 2 = 56 after two MaxPool2d(2)
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
             nn.Linear(128, num_classes),
@@ -298,7 +271,7 @@ for epoch in range(10):
 
 One key difference between frameworks: **PyTorch uses NCHW** (batch, channels, height, width), while Keras/TensorFlow uses NHWC (batch, height, width, channels).
 
-![NCHW vs NHWC Tensor Layout](media/nchw_vs_nhwc.png)
+![NCHW vs NHWC Tensor Layout](media/nchw_vs_nhwc.png) #FIXME-missing-media
 
 | Framework | Convention | Example (batch of 16 RGB 224×224 images) |
 | :--- | :--- | :--- |
@@ -340,6 +313,8 @@ Rather than building everything from scratch, lean on torchvision. It's well-tes
 - `GaussianBlur(kernel_size)` — apply Gaussian blur
 - `RandomAffine(degrees, translate, scale)` — combined rotation, translation, scaling
 - `RandomErasing(p)` — randomly erase a rectangular patch (regularization)
+
+For more advanced augmentation pipelines, the **`albumentations`** library is popular in medical imaging — it offers elastic deformations, grid distortion, and CLAHE, all optimized for speed.
 
 **Why augmentation matters**: Medical imaging datasets are often small — hundreds or low thousands of images. Augmentation artificially increases diversity by creating modified versions of each training image. This helps the model generalize instead of memorizing the training set. A chest X-ray flipped horizontally is still a valid chest X-ray. A rotated pathology slide is still valid tissue.
 
@@ -495,19 +470,24 @@ These features transfer remarkably well to new domains — including medical ima
 
 ## Two Approaches
 
-**1. Feature Extraction** — Freeze the pretrained **backbone** (the main body of the network that extracts features — everything except the final classification layer), only train a new classification **head**:
+A pretrained model has two logical parts:
+
+- **Backbone**: The main body of the network that extracts features — all the convolutional layers that turn pixels into feature maps. This is the expensive part that learned from millions of images.
+- **Head**: The final classification layer(s) that map features to class predictions. This is the part you replace for your task.
+
+**1. Feature Extraction** — Freeze the pretrained backbone, only train a new head:
 
 - The pretrained layers act as a fixed feature extractor
 - Only the new head layers are trained
 - Fast to train, works well with very small datasets
-- Best when: few images (<1,000), or target domain is very different from ImageNet
+- Best when: few images (<1,000) and the pretrained features are general enough for your domain
 
 **2. Fine-Tuning** — Start frozen, then unfreeze some or all backbone layers:
 
 - First train the head (feature extraction phase)
 - Then unfreeze later backbone layers and continue training with a smaller learning rate
 - Allows the model to adapt its learned features to your domain
-- Best when: moderate dataset size (1,000–100,000), target domain has some similarity to natural images
+- Best when: moderate dataset size (1,000–100,000), or target domain differs significantly from ImageNet (e.g., medical images vs natural photos)
 
 ![Fine-Tuning with Transfer Learning](media/feature_extraction_vs_fine_tuning2.png)
 
@@ -520,7 +500,7 @@ These features transfer remarkably well to new domains — including medical ima
 | AlexNet | 2012 | Deep CNN + ReLU + dropout + GPU training | 61M | `alexnet` |
 | VGG-16 | 2014 | Deeper networks with small 3×3 filters | 138M | `vgg16` |
 | Inception v3 | 2015 | Parallel filters at multiple scales | 24M | `inception_v3` |
-| ResNet-18/50 | 2015 | Skip connections → very deep networks | 11M/25M | `resnet18`, `resnet50` |
+| ResNet-18/50 | 2015 | Skip connections (shortcut paths that let information bypass layers) → very deep networks | 11M/25M | `resnet18`, `resnet50` |
 | MobileNetV2 | 2018 | Depthwise separable convolutions — splits expensive operations into cheaper steps → mobile-friendly | 3.4M | `mobilenet_v2` |
 | EfficientNet-B0 | 2019 | Compound scaling — simultaneously scales network depth, width, and input resolution using a fixed ratio | 5.3M | `efficientnet_b0` |
 | ConvNeXt-Tiny | 2022 | Modernized ConvNet matching ViT performance | 28M | `convnext_tiny` |
@@ -586,6 +566,8 @@ model = timm.create_model("resnet18", pretrained=True, num_classes=2)
 
 Choosing the right evaluation metric depends on the clinical context. A model with 98% accuracy might still be dangerous if it misses 50% of cancers (low recall on the positive class).
 
+# FIXME: Add confusion matrix heatmap or ROC curve example image
+
 The classification metrics from lecture 05 apply directly to image classification:
 
 - **Accuracy**: Fraction of correct predictions. Misleading when classes are imbalanced.
@@ -603,8 +585,8 @@ In medical imaging, **class imbalance** is the norm. A chest X-ray dataset might
 
 **Handling class imbalance:**
 
-- **Weighted loss**: `nn.CrossEntropyLoss(weight=torch.tensor([1.0, 9.0]))` penalizes missed minorities
-- **Weighted sampling**: `WeightedRandomSampler` oversamples the minority class in each batch
+- **Weighted loss**: `nn.CrossEntropyLoss(weight=torch.tensor([1.0, 9.0]).to(device))` penalizes missed minorities
+- **Weighted sampling**: `WeightedRandomSampler` (from `torch.utils.data`) oversamples the minority class in each batch
 - **Threshold tuning**: Adjust the classification threshold to trade precision for recall (don't always use 0.5)
 
 **Critical: patient-level splits.** Medical datasets often contain multiple images per patient (different views, time points, slices). If the same patient's images appear in both training and test sets, the model may learn patient-specific features rather than disease features — and test metrics will be misleadingly high. Always split by **patient ID**, not by image.
@@ -627,7 +609,7 @@ import torchmetrics
 # Initialize metrics
 accuracy = torchmetrics.Accuracy(task="binary").to(device)
 f1 = torchmetrics.F1Score(task="binary").to(device)
-confusion = torchmetrics.ConfusionMatrix(task="binary", num_classes=2).to(device)
+confusion = torchmetrics.ConfusionMatrix(task="binary").to(device)
 
 # Evaluation loop
 model.eval()
@@ -647,9 +629,13 @@ print(f"Confusion Matrix:\n{confusion.compute()}")
 
 # LIVE DEMO!!
 
+[![xkcd: Precision vs Accuracy](media/xkcd_precision_vs_accuracy.png)](https://xkcd.com/2696/)
+
 # Object Detection
 
-Object detection goes beyond classification — it answers not just _what_ is in an image, but _where_. The output is a set of bounding boxes, each with a class label and confidence score.
+Image classification tells you *what's* in an image. Object detection tells you *what* and *where*. It's the difference between "this chest X-ray contains a nodule" and "there is a 12mm nodule in the right upper lobe." In clinical settings, location matters — a radiologist needs to know not just that something is abnormal, but exactly where to look.
+
+The output of a detection model is a set of **bounding boxes**, each with a class label and a confidence score.
 
 ## Medical Applications
 
@@ -700,13 +686,13 @@ Two-stage detectors like **Faster R-CNN** first propose "interesting" regions, t
 
 ## Detection with torchvision
 
-`torchvision.models.detection` provides pretrained detection models:
+`torchvision.models.detection` provides pretrained detection models. Most use a **Feature Pyramid Network (FPN)** on top of the backbone — FPN builds feature maps at multiple resolutions so the model can detect both small and large objects (a 3-pixel nodule and a full-lung opacity need different scales).
 
 ### Reference Card: torchvision.models.detection
 
 | Model | Function | Backbone | Speed | Accuracy |
 | :--- | :--- | :--- | :--- | :--- |
-| **Faster R-CNN** | `fasterrcnn_resnet50_fpn(weights="DEFAULT")` | ResNet-50 + FPN (Feature Pyramid Network — builds multi-scale feature maps for detecting objects at different sizes) | Medium | High |
+| **Faster R-CNN** | `fasterrcnn_resnet50_fpn(weights="DEFAULT")` | ResNet-50 + FPN | Medium | High |
 | **FCOS** | `fcos_resnet50_fpn(weights="DEFAULT")` | ResNet-50 + FPN | Medium | High |
 | **RetinaNet** | `retinanet_resnet50_fpn_v2(weights="DEFAULT")` | ResNet-50 + FPN | Medium | High |
 | **SSD** | `ssd300_vgg16(weights="DEFAULT")` | VGG-16 | Fast | Moderate |
@@ -756,7 +742,7 @@ For the fastest path to object detection in practice, **Ultralytics YOLO** provi
 ```python
 from ultralytics import YOLO
 
-model = YOLO("yolov8n.pt")  # load pretrained YOLOv8-nano
+model = YOLO("yolo11n.pt")  # load pretrained YOLO11-nano
 results = model("chest_xray.png")
 results[0].show()  # display with bounding boxes
 
@@ -770,7 +756,7 @@ YOLO models are pretrained on COCO. For medical use, fine-tune on annotated medi
 
 # Image Segmentation
 
-Segmentation is the most detailed form of visual understanding — it classifies every pixel in an image. Instead of one label per image (classification) or boxes around objects (detection), segmentation produces a **mask** that precisely outlines each region of interest.
+Segmentation is the most detailed form of visual understanding — it classifies every pixel in an image. Instead of one label per image (classification) or boxes around objects (detection), segmentation produces a **mask** that precisely outlines each region of interest. This matters clinically: a bounding box around a tumor tells you roughly where it is, but a segmentation mask tells you its exact shape, volume, and boundaries — critical for surgical planning and radiation therapy.
 
 ![Image Segmentation Example: Input and Mask](media/segmentation_example.png)
 
@@ -823,30 +809,24 @@ Segmentation is arguably the most impactful CV task in medicine:
 
 ## Loss Functions for Segmentation
 
-Standard cross-entropy works but struggles with the extreme class imbalance common in medical segmentation (e.g., a small tumor in a large image).
-
-| Loss Function | Formula | Best For |
-| :--- | :--- | :--- |
-| **Cross-Entropy** | Pixel-wise classification loss | Balanced classes, multi-class |
-| **Dice Loss** | `1 - (2 × \|X ∩ Y\|) / (\|X\| + \|Y\|)` | Imbalanced classes, binary segmentation |
-| **Jaccard / IoU Loss** | `1 - \|X ∩ Y\| / \|X ∪ Y\|` | Similar to Dice, slightly different gradient |
-| **BCE + Dice** | Sum of binary cross-entropy and Dice loss | Combined pixel-level and region-level optimization |
-| **Focal Loss** | Downweights easy examples, focuses on hard ones | Severe class imbalance |
+Standard cross-entropy works but struggles with the extreme class imbalance common in medical segmentation (e.g., a small tumor in a large image). Specialized losses like **Dice Loss** optimize overlap directly, making them less sensitive to imbalance.
 
 ### Reference Card: Segmentation Loss Functions
 
-| Loss | Signature | Purpose | Key Behavior |
+| Loss | Signature | Best For | Key Behavior |
 | :--- | :--- | :--- | :--- |
-| **BCEWithLogitsLoss** | `nn.BCEWithLogitsLoss()` | Binary cross-entropy (sigmoid built-in) | Pixel-level, sensitive to imbalance |
+| **BCEWithLogitsLoss** | `nn.BCEWithLogitsLoss()` | Binary segmentation, balanced classes | Pixel-level cross-entropy with sigmoid built-in |
 | **CrossEntropyLoss** | `nn.CrossEntropyLoss(weight=class_weights)` | Multi-class segmentation | Pass `weight` tensor for class balancing |
-| **Dice Loss** | Custom or `smp.losses.DiceLoss()` | Optimizes overlap directly | Less sensitive to class imbalance |
-| **Jaccard Loss** | Custom or `smp.losses.JaccardLoss()` | IoU-based optimization | Similar to Dice with different gradients |
-| **Focal Loss** | `smp.losses.FocalLoss()` | Focuses on hard examples | γ parameter controls focus strength |
+| **Dice Loss** | `smp.losses.DiceLoss()` | Imbalanced classes (most medical tasks) | Optimizes `1 - (2|X∩Y|) / (|X|+|Y|)` directly |
+| **Jaccard Loss** | `smp.losses.JaccardLoss()` | Similar to Dice | Optimizes `1 - |X∩Y| / |X∪Y|`, slightly different gradients |
+| **Focal Loss** | `smp.losses.FocalLoss()` | Severe class imbalance | Downweights easy pixels, γ parameter controls focus |
+| **BCE + Dice** | Sum both losses | General-purpose | Combines pixel-level and region-level optimization |
 
 ## Segmentation Metrics
 
-- **Dice Coefficient**: `Dice = 2 * |X ∩ Y| / (|X| + |Y|)`. Ranges from 0 to 1. The standard metric for medical image segmentation — directly measures mask overlap.
-- **IoU / Jaccard Index**: Same concept as in detection, applied per-pixel. `IoU = |X ∩ Y| / |X ∪ Y|`. Very similar to Dice but penalizes errors slightly differently.
+- **Dice Coefficient**: `Dice = 2|X∩Y| / (|X|+|Y|)`. Ranges from 0 to 1. The standard metric for medical image segmentation — directly measures mask overlap. Dice = 1.0 means perfect agreement.
+- **IoU / Jaccard Index**: `IoU = |X∩Y| / |X∪Y|`. Same concept as in detection, applied per-pixel. Penalizes errors slightly more than Dice.
+- **Pixel Accuracy**: Fraction of pixels correctly classified. Like accuracy in classification — misleading when one class dominates (e.g., 99% background).
 
 ### Reference Card: Segmentation Metrics
 
@@ -854,6 +834,7 @@ Standard cross-entropy works but struggles with the extreme class imbalance comm
 | :--- | :--- | :--- |
 | **Dice** | 2\|X∩Y\| / (\|X\|+\|Y\|) | Medical segmentation standard |
 | **IoU / Jaccard** | \|X∩Y\| / \|X∪Y\| | Alternative overlap metric |
+| **Pixel Accuracy** | Correct pixels / Total pixels | Quick sanity check (not for imbalanced masks) |
 
 ## Segmentation with Packages
 
@@ -865,7 +846,7 @@ Rather than implementing U-Net from scratch, use **`segmentation_models_pytorch`
 | :--- | :--- |
 | **Signature** | `smp.Unet(encoder_name, encoder_weights, in_channels, classes, activation)` |
 | **Purpose** | Creates a U-Net segmentation model with a pretrained encoder backbone. |
-| **Parameters** | • **encoder_name** (str): Backbone architecture (e.g., `"resnet18"`, `"efficientnet-b0"`, `"mobilenet_v2"`)<br>• **encoder_weights** (str): Pretrained weights (e.g., `"imagenet"`) or `None`<br>• **in_channels** (int): Input channels (3 for RGB, 1 for grayscale)<br>• **classes** (int): Number of output segmentation classes<br>• **activation** (str/None): Output activation (`"sigmoid"` for binary, `None` for logits) |
+| **Parameters** | • **encoder_name** (str): Backbone architecture (e.g., `"resnet18"`, `"efficientnet-b0"`, `"mobilenet_v2"`)<br>• **encoder_weights** (str): Pretrained weights (e.g., `"imagenet"`) or `None`<br>• **in_channels** (int): Input channels (3 for RGB, 1 for grayscale)<br>• **classes** (int): Number of output segmentation classes<br>• **activation** (str/None): Output activation (`"sigmoid"` for binary, `None` for logits — raw unnormalized scores) |
 | **Returns** | `nn.Module` with `.encoder`, `.decoder`, `.segmentation_head` attributes |
 
 `torchvision.models.segmentation` also provides pretrained models:
@@ -926,6 +907,8 @@ model = UNet(
 )
 ```
 
+[![xkcd: Heatmap](media/xkcd_heatmap.png)](https://xkcd.com/1138/)
+
 # Advanced Topics & The Bigger Picture
 
 Computer vision is evolving rapidly. Here's what's on the frontier — concepts to be aware of, not necessarily to implement today.
@@ -969,6 +952,20 @@ Most medical images are unlabeled — getting expert annotations is expensive an
 
 Key approaches include **contrastive learning** (SimCLR, MoCo — learn that augmented versions of the same image should look similar), **masked image modeling** (MAE — reconstruct masked patches), and **DINO/DINOv2** (a model teaches itself by matching outputs between two copies of the network, with no human labels needed).
 
+![Self-Supervised Learning Concept](media/self_supervised_learning.png)
+
+## Video Analysis & Tracking
+
+Medical video (surgical recordings, endoscopy, ultrasound) is increasingly analyzed with CV. Object detection models like YOLO can process video frame-by-frame, while dedicated tracking algorithms (DeepSORT, ByteTrack) maintain object identity across frames. OpenCV's `VideoCapture` handles video I/O, and Ultralytics YOLO supports video inference out of the box with `model("surgery.mp4")`.
+
+![Robotic Surgery Computer Vision](media/robotic_surgery_cv.png)
+
+## Generative Models
+
+Generative models like **diffusion models** can synthesize realistic medical images for data augmentation, translate between modalities (CT → MRI), and generate training data when labeled examples are scarce. **GANs** (Generative Adversarial Networks) were the earlier approach and are still used for image-to-image translation tasks like converting low-dose CT to standard-dose quality.
+
+![Generative Model Concept](media/generative_model_concept.png)
+
 ## 3D Medical Imaging
 
 Many medical modalities produce volumetric data — CT scans are stacks of 2D slices forming a 3D volume; MRI can be 3D or 4D (including time).
@@ -987,7 +984,7 @@ Many medical modalities produce volumetric data — CT scans are stacks of 2D sl
 | **timm** | Pretrained models | 1000+ architectures with uniform API |
 | **smp** | Segmentation | U-Net/FPN/DeepLab with any backbone |
 | **Albumentations** | Fast augmentation | Highly optimized, rich transform library |
-| **Ultralytics** | Object detection | YOLOv8+, batteries-included training |
+| **Ultralytics** | Object detection | YOLO11+, batteries-included training |
 
 ### Datasets for Medical CV
 
